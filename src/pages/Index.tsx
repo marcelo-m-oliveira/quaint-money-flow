@@ -3,6 +3,7 @@ import { Transaction } from '@/types/transaction';
 import { TransactionForm } from '@/components/TransactionForm';
 import { TransactionList } from '@/components/TransactionList';
 import { TransactionSummary } from '@/components/TransactionSummary';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
@@ -45,9 +46,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 max-w-4xl">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Quaint Money</h1>
-          <p className="text-muted-foreground">Controle suas finanças de forma simples</p>
+        <header className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Quaint Money</h1>
+            <p className="text-muted-foreground">Controle suas finanças de forma simples</p>
+          </div>
+          <ThemeToggle />
         </header>
 
         <div className="space-y-6">
