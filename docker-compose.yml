@@ -7,4 +7,4 @@ services:
     environment:
       - POSTGRES_USER=docker
       - POSTGRES_PASSWORD=docker
-      - POSTGRES_DB=quaint-money
+      - POSTGRES_DB=saas-quaint-money

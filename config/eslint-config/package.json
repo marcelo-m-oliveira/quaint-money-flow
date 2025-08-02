@@ -1,5 +1,5 @@
 {
-  "name": "@quaint-money-saas/eslint-config",
+  "name": "@saas/eslint-config",
   "version": "0.0.0",
   "private": true,
   "files": [
@@ -9,11 +9,14 @@
   ],
   "devDependencies": {
     "@rocketseat/eslint-config": "^2.2.2",
+    "@saas/prettier": "workspace:*",
     "eslint-plugin-simple-import-sort": "^12.0.0",
-    "@quaint-money-saas/prettier": "workspace:*"
+    "eslint-plugin-unused-imports": "^4.1.4"
   },
-  "prettier": "@quaint-money-saas/prettier",
+  "prettier": "@saas/prettier",
   "eslintConfig": {
-    "extends": ["./library.js"]
+    "extends": [
+      "./library.js"
+    ]
   }
 }

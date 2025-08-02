@@ -1,5 +1,5 @@
 {
-  "name": "quaint-money-saas",
+  "name": "saas-quaint-money",
   "private": true,
   "scripts": {
     "build": "turbo build",
@@ -7,9 +7,9 @@
     "lint": "turbo lint"
   },
   "devDependencies": {
-    "turbo": "^2.5.5"
+    "turbo": "latest"
   },
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@8.9.0",
   "engines": {
     "node": ">=18"
   }
