@@ -1,0 +1,33 @@
+{
+  "name": "@quaint-money-saas/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint --fix"
+  },
+  "dependencies": {
+    "react": "^18",
+    "react-dom": "^18",
+    "next": "14.2.31"
+  },
+  "devDependencies": {
+    "@quaint-money-saas/prettier": "workspace:*",
+    "@quaint-money-saas/eslint-config": "workspace:*",
+    "@quaint-money-saas/tsconfig": "workspace:*",
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  },
+  "prettier": "@quaint-money-saas/prettier",
+  "eslintConfig": {
+    "extends": [
+      "@quaint-money-saas/eslint-config/next"
+    ]
+  }
+}

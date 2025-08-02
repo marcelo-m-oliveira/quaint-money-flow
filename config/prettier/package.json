@@ -1,10 +1,10 @@
 {
   "name": "@quaint-money-saas/prettier",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "main": "index.mjs",
   "private": true,
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.6.14"
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.13"
   }
 }

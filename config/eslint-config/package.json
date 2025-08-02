@@ -9,15 +9,11 @@
   ],
   "devDependencies": {
     "@rocketseat/eslint-config": "^2.2.2",
-    "@quaint-money-saas/prettier": "workspace:*",
-    "eslint-plugin-simple-import-sort": "^12.1.1"
+    "eslint-plugin-simple-import-sort": "^12.0.0",
+    "@quaint-money-saas/prettier": "workspace:*"
   },
   "prettier": "@quaint-money-saas/prettier",
   "eslintConfig": {
-    "extends": [
-      "./library.js",
-      "./next.js",
-      "./node.js"
-    ]
+    "extends": ["./library.js"]
   }
 }
