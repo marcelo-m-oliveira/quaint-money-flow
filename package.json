@@ -1,0 +1,17 @@
+{
+  "name": "quaint-money-saas",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint --fix"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.5"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=18"
+  }
+}
