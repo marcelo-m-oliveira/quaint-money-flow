@@ -1,13 +1,13 @@
 'use client'
 
-import { Plus, Edit, Trash2, FolderPlus } from 'lucide-react'
+import { Edit, FolderPlus, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { Category, CategoryFormData } from '@/lib/types'
 
 import { CategoryFormModal } from './category-form-modal'
 import { Button } from './ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Card, CardContent } from './ui/card'
 import { ConfirmationDialog } from './ui/confirmation-dialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Separator } from './ui/separator'
@@ -33,7 +33,9 @@ export function CategoriesManagement({
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense')
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | undefined>()
-  const [categoryType, setCategoryType] = useState<'income' | 'expense'>('expense')
+  const [categoryType, setCategoryType] = useState<'income' | 'expense'>(
+    'expense',
+  )
   const [parentCategory, setParentCategory] = useState<Category | undefined>()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
@@ -43,15 +45,15 @@ export function CategoriesManagement({
   }>({ isOpen: false, title: '', description: '', onConfirm: () => {} })
 
   // Filtrar categorias por tipo
-  const expenseCategories = categories.filter(cat => cat.type === 'expense')
-  const incomeCategories = categories.filter(cat => cat.type === 'income')
+  const expenseCategories = categories.filter((cat) => cat.type === 'expense')
+  const incomeCategories = categories.filter((cat) => cat.type === 'income')
 
   // Separar categorias principais e subcategorias
-  const getMainCategories = (categoryList: Category[]) => 
-    categoryList.filter(cat => !cat.parentId)
-  
-  const getSubCategories = (categoryList: Category[], parentId: string) => 
-    categoryList.filter(cat => cat.parentId === parentId)
+  const getMainCategories = (categoryList: Category[]) =>
+    categoryList.filter((cat) => !cat.parentId)
+
+  const getSubCategories = (categoryList: Category[], parentId: string) =>
+    categoryList.filter((cat) => cat.parentId === parentId)
 
   const handleAddCategory = (type: 'income' | 'expense', parent?: Category) => {
     setEditingCategory(undefined)
@@ -69,30 +71,36 @@ export function CategoriesManagement({
 
   const handleDeleteCategory = (category: Category) => {
     // Verificar se há subcategorias
-    const hasSubcategories = categories.some(cat => cat.parentId === category.id)
-    
+    const hasSubcategories = categories.some(
+      (cat) => cat.parentId === category.id,
+    )
+
     if (hasSubcategories) {
       setConfirmDialog({
         isOpen: true,
         title: 'Categoria possui subcategorias',
-        description: 'Esta categoria possui subcategorias. Ao excluí-la, todas as subcategorias também serão removidas. Deseja continuar?',
+        description:
+          'Esta categoria possui subcategorias. Ao excluí-la, todas as subcategorias também serão removidas. Deseja continuar?',
         onConfirm: () => {
           // Deletar categoria e suas subcategorias
-          const subcategories = categories.filter(cat => cat.parentId === category.id)
-          subcategories.forEach(sub => onDeleteCategory(sub.id))
+          const subcategories = categories.filter(
+            (cat) => cat.parentId === category.id,
+          )
+          subcategories.forEach((sub) => onDeleteCategory(sub.id))
           onDeleteCategory(category.id)
           setConfirmDialog({ ...confirmDialog, isOpen: false })
-        }
+        },
       })
     } else {
       setConfirmDialog({
         isOpen: true,
         title: 'Excluir categoria',
-        description: 'Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.',
+        description:
+          'Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.',
         onConfirm: () => {
           onDeleteCategory(category.id)
           setConfirmDialog({ ...confirmDialog, isOpen: false })
-        }
+        },
       })
     }
   }
@@ -101,7 +109,7 @@ export function CategoriesManagement({
     const categoryData = {
       ...data,
       type: categoryType,
-      parentId: parentCategory?.id
+      parentId: parentCategory?.id,
     }
 
     if (editingCategory) {
@@ -109,7 +117,7 @@ export function CategoriesManagement({
     } else {
       onAddCategory(categoryData)
     }
-    
+
     setIsCategoryFormOpen(false)
     setEditingCategory(undefined)
     setParentCategory(undefined)
@@ -117,12 +125,12 @@ export function CategoriesManagement({
 
   const renderCategoryList = (categoryList: Category[]) => {
     const mainCategories = getMainCategories(categoryList)
-    
+
     return (
       <div className="space-y-4">
         {mainCategories.map((category) => {
           const subcategories = getSubCategories(categoryList, category.id)
-          
+
           return (
             <Card key={category.id} className="border border-border">
               <CardContent className="p-4">
@@ -130,7 +138,7 @@ export function CategoriesManagement({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-4 h-4 rounded-full flex-shrink-0"
+                      className="h-4 w-4 flex-shrink-0 rounded-full"
                       style={{ backgroundColor: category.color }}
                     />
                     <span className="font-medium">{category.name}</span>
@@ -168,12 +176,17 @@ export function CategoriesManagement({
                   <>
                     <Separator className="my-3" />
                     <div className="space-y-2">
-                      <span className="text-sm text-muted-foreground">Subcategorias:</span>
+                      <span className="text-sm text-muted-foreground">
+                        Subcategorias:
+                      </span>
                       {subcategories.map((subcategory) => (
-                        <div key={subcategory.id} className="flex items-center justify-between pl-4">
+                        <div
+                          key={subcategory.id}
+                          className="flex items-center justify-between pl-4"
+                        >
                           <div className="flex items-center gap-3">
                             <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              className="h-3 w-3 flex-shrink-0 rounded-full"
                               style={{ backgroundColor: subcategory.color }}
                             />
                             <span className="text-sm">{subcategory.name}</span>
@@ -205,9 +218,9 @@ export function CategoriesManagement({
             </Card>
           )
         })}
-        
+
         {mainCategories.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="py-8 text-center text-muted-foreground">
             <p>Nenhuma categoria encontrada</p>
             <p className="text-sm">Clique em "Nova Categoria" para começar</p>
           </div>
@@ -219,20 +232,26 @@ export function CategoriesManagement({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+        <DialogContent className="max-h-[80vh] max-w-4xl overflow-hidden">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-semibold">
               Gerenciar Categorias
             </DialogTitle>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'expense' | 'income')} className="flex-1">
-            <div className="flex items-center justify-between mb-4">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) =>
+              setActiveTab(value as 'expense' | 'income')
+            }
+            className="flex-1"
+          >
+            <div className="mb-4 flex items-center justify-between">
               <TabsList className="grid w-[400px] grid-cols-2">
                 <TabsTrigger value="expense">Despesas</TabsTrigger>
                 <TabsTrigger value="income">Receitas</TabsTrigger>
               </TabsList>
-              
+
               <Button
                 onClick={() => handleAddCategory(activeTab)}
                 className="flex items-center gap-2"
@@ -242,11 +261,11 @@ export function CategoriesManagement({
               </Button>
             </div>
 
-            <div className="overflow-y-auto max-h-[50vh]">
+            <div className="max-h-[50vh] overflow-y-auto">
               <TabsContent value="expense" className="mt-0">
                 {renderCategoryList(expenseCategories)}
               </TabsContent>
-              
+
               <TabsContent value="income" className="mt-0">
                 {renderCategoryList(incomeCategories)}
               </TabsContent>

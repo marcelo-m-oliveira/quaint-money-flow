@@ -46,17 +46,29 @@ export function Topbar() {
           </div>
 
           {/* Menu de Navegação Central */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+          <nav className="hidden items-center gap-6 md:flex">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Dashboard
             </Button>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Transações
             </Button>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Relatórios
             </Button>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
               Metas
             </Button>
           </nav>
@@ -140,14 +152,23 @@ export function Topbar() {
             {/* Menu do Usuário */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 px-2">
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 px-2"
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" alt={userName} />
-                    <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+                    <AvatarFallback className="text-xs">
+                      {userInitials}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="hidden md:flex flex-col items-start">
-                    <span className="text-sm font-medium text-foreground">{userName}</span>
-                    <span className="text-xs text-muted-foreground">Plano Gratuito</span>
+                  <div className="hidden flex-col items-start md:flex">
+                    <span className="text-sm font-medium text-foreground">
+                      {userName}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Plano Gratuito
+                    </span>
                   </div>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
@@ -155,7 +176,9 @@ export function Topbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{userName}</p>
+                    <p className="text-sm font-medium leading-none">
+                      {userName}
+                    </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       marcelo@example.com
                     </p>

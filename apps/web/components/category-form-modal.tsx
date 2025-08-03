@@ -1,15 +1,51 @@
 'use client'
 
-import { Palette, Save, Trash2 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import {
+  Briefcase,
+  Car,
+  Clock,
+  Coffee,
+  CreditCard,
+  DollarSign,
+  FileText,
+  Heart,
+  Home,
+  MapPin,
+  Monitor,
+  Moon,
+  Plus,
+  Settings,
+  ShoppingCart,
+  Star,
+  Sun,
+  Trash2,
+  Truck,
+  User,
+  Wrench,
+} from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 
 import { Category, CategoryFormData } from '@/lib/types'
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from './ui/accordion'
 import { Button } from './ui/button'
 import { ConfirmationDialog } from './ui/confirmation-dialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
+import { RadioGroup, RadioGroupItem } from './ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
 
 interface CategoryFormModalProps {
   isOpen: boolean
@@ -23,16 +59,54 @@ interface CategoryFormModalProps {
 }
 
 const PRESET_COLORS = [
-  '#10B981', // Verde
-  '#3B82F6', // Azul
-  '#F59E0B', // Amarelo
-  '#EF4444', // Vermelho
-  '#8B5CF6', // Roxo
-  '#F97316', // Laranja
-  '#06B6D4', // Ciano
-  '#84CC16', // Lima
-  '#EC4899', // Rosa
-  '#6B7280', // Cinza
+  // Primeira linha
+  '#E91E63',
+  '#673AB7',
+  '#3F51B5',
+  '#2196F3',
+  '#9C27B0',
+  '#F44336',
+  '#FF5722',
+  '#3F51B5',
+  '#4CAF50',
+  '#FF9800',
+  '#E91E63',
+  // Segunda linha
+  '#4CAF50',
+  '#FF5722',
+  '#FF9800',
+  '#795548',
+  '#2196F3',
+  '#9E9E9E',
+  '#009688',
+  '#00695C',
+  '#80CBC4',
+  '#F44336',
+]
+
+const PRESET_ICONS = [
+  // Primeira linha
+  { icon: Home, name: 'Casa' },
+  { icon: Heart, name: 'Saúde' },
+  { icon: Car, name: 'Carro' },
+  { icon: ShoppingCart, name: 'Compras' },
+  { icon: Coffee, name: 'Café' },
+  { icon: Settings, name: 'Configurações' },
+  { icon: User, name: 'Pessoa' },
+  { icon: DollarSign, name: 'Dinheiro' },
+  { icon: Star, name: 'Favorito' },
+  { icon: Plus, name: 'Adicionar' },
+  // Segunda linha
+  { icon: Briefcase, name: 'Trabalho' },
+  { icon: Monitor, name: 'Tecnologia' },
+  { icon: FileText, name: 'Documentos' },
+  { icon: CreditCard, name: 'Cartão' },
+  { icon: MapPin, name: 'Local' },
+  { icon: Clock, name: 'Tempo' },
+  { icon: Sun, name: 'Dia' },
+  { icon: Moon, name: 'Noite' },
+  { icon: Truck, name: 'Transporte' },
+  { icon: Wrench, name: 'Ferramentas' },
 ]
 
 export function CategoryFormModal({
@@ -52,6 +126,10 @@ export function CategoryFormModal({
     parentId: category?.parentId || parentCategory?.id,
   })
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [categoryMode, setCategoryMode] = useState<'main' | 'sub'>(
+    category?.parentId || parentCategory ? 'sub' : 'main',
+  )
+  const [selectedIcon, setSelectedIcon] = useState(PRESET_ICONS[0])
 
   // Resetar formData quando as props mudarem
   useEffect(() => {
@@ -61,6 +139,8 @@ export function CategoryFormModal({
       type: category?.type || categoryType,
       parentId: category?.parentId || parentCategory?.id,
     })
+    setCategoryMode(category?.parentId || parentCategory ? 'sub' : 'main')
+    setSelectedIcon(PRESET_ICONS[0])
   }, [category, categoryType, parentCategory])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -95,6 +175,8 @@ export function CategoryFormModal({
       type: categoryType,
       parentId: parentCategory?.id,
     })
+    setCategoryMode('main')
+    setSelectedIcon(PRESET_ICONS[0])
     onClose()
   }
 
@@ -111,103 +193,197 @@ export function CategoryFormModal({
     }
   }
 
+  // Filtrar categorias principais para o dropdown de subcategoria
+  const mainCategories = categories.filter(
+    (cat) => !cat.parentId && cat.type === categoryType,
+  )
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="pb-4">
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="pb-6">
             <DialogTitle className="text-xl font-semibold">
-              {category ? 'Editar Categoria' : 
-                parentCategory ? `Nova Subcategoria - ${parentCategory.name}` : 
-                `Nova Categoria de ${categoryType === 'expense' ? 'Despesa' : 'Receita'}`
-              }
+              Criando categoria de despesa
             </DialogTitle>
-            {parentCategory && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: parentCategory.color }}
-                />
-                <span>Categoria pai: {parentCategory.name}</span>
-              </div>
-            )}
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nome da Categoria */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium">
-                Nome da Categoria
-              </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="Digite o nome da categoria..."
-                className="h-12"
-                required
-              />
+            {/* Seleção do tipo de categoria */}
+            <div className="space-y-4">
+              <RadioGroup
+                value={categoryMode}
+                onValueChange={(value: 'main' | 'sub') => {
+                  setCategoryMode(value)
+                  setFormData({
+                    ...formData,
+                    parentId: value === 'main' ? undefined : formData.parentId,
+                  })
+                }}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="main" id="main" />
+                  <Label
+                    htmlFor="main"
+                    className="cursor-pointer text-sm font-medium"
+                  >
+                    Categoria principal
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="sub" id="sub" />
+                  <Label
+                    htmlFor="sub"
+                    className="cursor-pointer text-sm font-medium"
+                  >
+                    Subcategoria
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
 
-            {/* Cor da Categoria */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Palette className="h-4 w-4" />
-                Cor da Categoria
-              </Label>
-              <div className="grid grid-cols-5 gap-3">
-                {PRESET_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, color })}
-                    className={`w-12 h-12 rounded-lg border-2 transition-all hover:scale-110 ${
-                      formData.color === color
-                        ? 'border-foreground shadow-lg'
-                        : 'border-border hover:border-foreground/50'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={color}
+            {/* Avatar/Ícone da categoria */}
+            <div className="flex items-center gap-4">
+              <div
+                className="flex h-20 w-20 items-center justify-center rounded-full text-white"
+                style={{ backgroundColor: formData.color }}
+              >
+                {selectedIcon &&
+                  React.createElement(selectedIcon.icon, {
+                    className: 'w-10 h-10',
+                  })}
+              </div>
+              <div className="flex-1 space-y-3">
+                {/* Nome da categoria */}
+                <div>
+                  <Label htmlFor="name" className="text-sm font-medium">
+                    Nome da categoria
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    placeholder="Digite o nome da categoria"
+                    className="mt-1"
+                    required
                   />
-                ))}
+                </div>
               </div>
+            </div>
 
-              {/* Input de cor customizada */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
+            {/* Seletor de ícones */}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="icons">
+                <AccordionTrigger className="text-sm font-medium">
+                  Escolha um ícone
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid max-h-48 grid-cols-10 gap-2 overflow-y-auto rounded-lg bg-muted p-4">
+                    {PRESET_ICONS.map((icon, index) => {
+                      const IconComponent = icon.icon
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setSelectedIcon(icon)}
+                          className={`flex h-10 w-10 items-center justify-center rounded-full transition-all hover:bg-background ${
+                            selectedIcon === icon
+                              ? 'bg-background shadow-md'
+                              : 'bg-muted-foreground/10'
+                          }`}
+                          title={icon.name}
+                        >
+                          <IconComponent className="h-5 w-5 text-muted-foreground" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Seletor de cores */}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="colors">
+                <AccordionTrigger className="text-sm font-medium">
+                  Escolha uma cor
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-3 rounded-lg bg-muted p-4">
+                    {/* Primeira linha de cores */}
+                    <div className="flex justify-center gap-2">
+                      {PRESET_COLORS.slice(0, 11).map((color, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, color })}
+                          className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 ${
+                            formData.color === color
+                              ? 'border-foreground shadow-lg'
+                              : 'border-transparent'
+                          }`}
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                    {/* Segunda linha de cores */}
+                    <div className="flex justify-center gap-2">
+                      {PRESET_COLORS.slice(11, 21).map((color, index) => (
+                        <button
+                          key={index + 11}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, color })}
+                          className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 ${
+                            formData.color === color
+                              ? 'border-foreground shadow-lg'
+                              : 'border-transparent'
+                          }`}
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Seleção de categoria pai para subcategorias */}
+            {categoryMode === 'sub' && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Categoria pai</Label>
+                <Select
+                  value={formData.parentId || ''}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, parentId: value })
                   }
-                  className="w-12 h-8 rounded border border-border cursor-pointer"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Ou escolha uma cor personalizada
-                </span>
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione a categoria pai" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mainCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-4 w-4 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          {category.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-
-            {/* Preview da Categoria */}
-            <div className="p-4 bg-muted rounded-lg">
-              <Label className="text-sm font-medium mb-2 block">
-                Visualização
-              </Label>
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: formData.color }}
-                />
-                <span className="font-medium">
-                  {formData.name || 'Nome da categoria'}
-                </span>
-              </div>
-            </div>
+            )}
 
             {/* Footer com botões */}
-            <div className="flex gap-3 pt-6">
+            <div className="flex justify-end gap-3 pt-6">
               {category && onDelete && (
                 <Button
                   type="button"
@@ -215,23 +391,18 @@ export function CategoryFormModal({
                   onClick={handleDelete}
                   className="h-12 px-4"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               )}
               <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                className="flex-1 h-12"
-              >
-                Cancelar
-              </Button>
-              <Button
                 type="submit"
-                className="flex-1 h-12 bg-primary hover:bg-primary/90"
+                className="h-12 bg-primary px-8 hover:bg-primary/90"
+                disabled={
+                  !formData.name.trim() ||
+                  (categoryMode === 'sub' && !formData.parentId)
+                }
               >
-                <Save className="w-4 h-4 mr-2" />
-                {category ? 'Atualizar' : 'Criar'}
+                {category ? 'Atualizar categoria' : 'Criar categoria'}
               </Button>
             </div>
           </form>

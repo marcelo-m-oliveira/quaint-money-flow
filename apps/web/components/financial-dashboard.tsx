@@ -5,13 +5,7 @@ import { useState } from 'react'
 
 import { formatCurrency } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import {
-  Category,
-  CategoryFormData,
-  Transaction,
-  TransactionFormData,
-} from '@/lib/types'
-
+import { Transaction, TransactionFormData } from '@/lib/types'
 
 import { Topbar } from './topbar'
 import { TransactionFormModal } from './transaction-form-modal'
@@ -25,12 +19,9 @@ export function FinancialDashboard() {
     addTransaction,
     updateTransaction,
     deleteTransaction,
-    addCategory,
-    updateCategory,
     deleteCategory,
     getTotals,
   } = useFinancialData()
-
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = useState(false)
@@ -79,8 +70,6 @@ export function FinancialDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _unusedFunctions = { handleDeleteTransaction, handleDeleteCategory }
 
-
-
   const closeExpenseDialog = () => {
     setIsExpenseDialogOpen(false)
     setEditingTransaction(undefined)
@@ -90,8 +79,6 @@ export function FinancialDashboard() {
     setIsIncomeDialogOpen(false)
     setEditingTransaction(undefined)
   }
-
-
 
   const handleExpenseSubmit = (
     data: TransactionFormData,
@@ -146,21 +133,21 @@ export function FinancialDashboard() {
         <div className="w-full">
           {/* Card Principal - Saudação, Totais e Acesso Rápido */}
           <Card>
-            <CardContent className="p-6 flex flex-wrap gap-6">
+            <CardContent className="flex flex-wrap gap-6 p-6">
               <div className="flex-auto md:w-1/2">
                 {/* Saudação */}
                 <div className="mb-6 text-center md:text-start">
-                  <p className="text-muted-foreground mb-1">Boa noite,</p>
-                  <p className="text-2xl font-bold text-foreground flex flex-wrap items-center gap-2">
+                  <p className="mb-1 text-muted-foreground">Boa noite,</p>
+                  <p className="flex flex-wrap items-center gap-2 text-2xl font-bold text-foreground">
                     Marcelo Oliveira!
-                    <span className="text-2xl hidden md:block">🌙</span>
+                    <span className="hidden text-2xl md:block">🌙</span>
                   </p>
                 </div>
 
                 {/* Totais */}
-                <div className="flex flex-wrap text-center md:text-start gap-6 mb-6">
+                <div className="mb-6 flex flex-wrap gap-6 text-center md:text-start">
                   <div className="flex-auto md:w-1/4">
-                    <p className="text-sm text-muted-foreground mb-1">
+                    <p className="mb-1 text-sm text-muted-foreground">
                       Receitas no mês atual
                     </p>
                     <p className="text-2xl font-bold text-green-600">
@@ -168,7 +155,7 @@ export function FinancialDashboard() {
                     </p>
                   </div>
                   <div className="flex-auto md:w-1/4">
-                    <p className="text-sm text-muted-foreground mb-1">
+                    <p className="mb-1 text-sm text-muted-foreground">
                       Despesas no mês atual
                     </p>
                     <p className="text-2xl font-bold text-red-600">
@@ -177,17 +164,17 @@ export function FinancialDashboard() {
                   </div>
                 </div>
               </div>
-              <div className="border-l px-3 hidden md:block"></div>
-              <div className="border-t w-full px-3 block md:hidden"></div>
+              <div className="hidden border-l px-3 md:block"></div>
+              <div className="block w-full border-t px-3 md:hidden"></div>
               <div className="flex-auto md:w-1/3">
                 {/* Acesso Rápido */}
                 <div className="mt-6 pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Acesso rápido</h3>
+                  <h3 className="mb-4 text-lg font-semibold">Acesso rápido</h3>
 
                   <div className="flex flex-wrap gap-4">
                     <Button
                       variant="outline"
-                      className="h-auto w-full md:w-auto flex flex-col items-center justify-center gap-2"
+                      className="flex h-auto w-full flex-col items-center justify-center gap-2 md:w-auto"
                       onClick={() => setIsExpenseDialogOpen(true)}
                     >
                       <CircleMinus className="h-8 w-8 text-red-600" />
@@ -198,7 +185,7 @@ export function FinancialDashboard() {
 
                     <Button
                       variant="outline"
-                      className="w-full md:w-auto h-auto flex flex-col items-center justify-center gap-2"
+                      className="flex h-auto w-full flex-col items-center justify-center gap-2 md:w-auto"
                       onClick={() => setIsIncomeDialogOpen(true)}
                     >
                       <CirclePlus className="h-8 w-8 text-green-600" />
@@ -228,8 +215,6 @@ export function FinancialDashboard() {
                     type="income"
                     title="Nova receita"
                   />
-
-
                 </div>
               </div>
             </CardContent>

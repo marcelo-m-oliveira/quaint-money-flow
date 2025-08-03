@@ -1,17 +1,8 @@
 'use client'
 
-import {
-  Settings,
-  Tag,
-  CreditCard,
-  User,
-  Bell,
-  Database,
-  ArrowRight,
-} from 'lucide-react'
+import { ArrowRight, Bell, CreditCard, Settings, Tag, User } from 'lucide-react'
 import Link from 'next/link'
 
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const quickActions = [
@@ -66,21 +57,21 @@ export default function ConfiguracoesPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Ações Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h2 className="mb-4 text-lg font-semibold">Ações Rápidas</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {quickActions.map((action) => {
             const Icon = action.icon
             return (
               <Link key={action.id} href={action.href}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <Card className="cursor-pointer transition-shadow hover:shadow-md">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-lg ${action.bgColor}`}>
+                        <div className={`rounded-lg p-3 ${action.bgColor}`}>
                           <Icon className={`h-6 w-6 ${action.color}`} />
                         </div>
                         <div>
-                          <h3 className="font-semibold mb-1">{action.label}</h3>
+                          <h3 className="mb-1 font-semibold">{action.label}</h3>
                           <p className="text-sm text-muted-foreground">
                             {action.description}
                           </p>
@@ -97,7 +88,7 @@ export default function ConfiguracoesPage() {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -147,8 +138,8 @@ export default function ConfiguracoesPage() {
           <CardTitle>Atividade Recente</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <div className="py-8 text-center text-muted-foreground">
+            <User className="mx-auto mb-4 h-12 w-12 opacity-50" />
             <p className="text-sm">Nenhuma atividade recente</p>
           </div>
         </CardContent>

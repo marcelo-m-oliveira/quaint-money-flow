@@ -17,9 +17,9 @@ export default function TagsPage() {
         </p>
       </CardHeader>
       <CardContent>
-        <div className="text-center py-12 text-muted-foreground">
-          <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium mb-2">Em desenvolvimento</p>
+        <div className="py-12 text-center text-muted-foreground">
+          <Tag className="mx-auto mb-4 h-12 w-12 opacity-50" />
+          <p className="mb-2 text-lg font-medium">Em desenvolvimento</p>
           <p className="text-sm">
             Esta funcionalidade estará disponível em breve
           </p>

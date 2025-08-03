@@ -144,7 +144,7 @@ export function TransactionFormModal({
                   className="h-12 pr-10"
                   required
                 />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Calendar className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </div>
           </div>
@@ -177,13 +177,16 @@ export function TransactionFormModal({
                   })
                   .map((category) => (
                     <SelectItem key={category.id} value={category.id}>
-                      <div className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}>
+                      <div
+                        className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}
+                      >
                         <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          className="h-3 w-3 flex-shrink-0 rounded-full"
                           style={{ backgroundColor: category.color }}
                         />
                         <span className={category.parentId ? 'text-sm' : ''}>
-                          {category.parentId && '└ '}{category.name}
+                          {category.parentId && '└ '}
+                          {category.name}
                         </span>
                       </div>
                     </SelectItem>
@@ -198,23 +201,23 @@ export function TransactionFormModal({
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="flex-1 h-12"
+              className="h-12 flex-1"
             >
               Cancelar
             </Button>
             <Button
               type="button"
               onClick={(e) => handleSubmit(e, false)}
-              className="h-12 px-4 bg-green-600 hover:bg-green-700 text-white"
+              className="h-12 bg-green-600 px-4 text-white hover:bg-green-700"
             >
-              <Save className="w-4 h-4" />
+              <Save className="h-4 w-4" />
             </Button>
             <Button
               type="button"
               onClick={(e) => handleSubmit(e, true)}
-              className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white"
+              className="h-12 flex-1 bg-green-600 text-white hover:bg-green-700"
             >
-              <Check className="w-4 h-4 mr-2" />
+              <Check className="mr-2 h-4 w-4" />
               Salvar e criar outra
             </Button>
           </div>
