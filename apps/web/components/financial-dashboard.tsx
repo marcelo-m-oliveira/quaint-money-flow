@@ -3,7 +3,7 @@
 import { CircleMinus, CirclePlus, DollarSign, Moon, Sun } from 'lucide-react'
 import { useState } from 'react'
 
-import { formatCurrency, formatDateForInput } from '@/lib/format'
+import { formatCurrency } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
 import {
@@ -13,155 +13,9 @@ import {
   TransactionFormData,
 } from '@/lib/types'
 
+import { TransactionFormModal } from './transaction-form-modal'
 import { Button } from './ui/button'
-import { CurrencyInput } from './ui/currency-input'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from './ui/dialog'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select'
 import { Switch } from './ui/switch'
-
-interface TransactionFormProps {
-  transaction?: Transaction
-  onSubmit: (data: TransactionFormData) => void
-  categories: Category[]
-  onClose: () => void
-  fixedType?: 'income' | 'expense'
-}
-
-function TransactionForm({
-  transaction,
-  onSubmit,
-  categories,
-  onClose,
-  fixedType,
-}: TransactionFormProps) {
-  const [formData, setFormData] = useState<TransactionFormData>({
-    description: transaction?.description || '',
-    amount: transaction?.amount.toString() || '',
-    type: transaction?.type || fixedType || 'expense',
-    categoryId: transaction?.categoryId || '',
-    date: transaction
-      ? formatDateForInput(transaction.date)
-      : formatDateForInput(new Date()),
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.description || !formData.amount || !formData.categoryId) {
-      alert('Por favor, preencha todos os campos obrigatórios.')
-      return
-    }
-    onSubmit(formData)
-    onClose()
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="description">Descrição *</Label>
-        <Input
-          id="description"
-          value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
-          placeholder="Ex: Compra no supermercado"
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="amount">Valor *</Label>
-        <CurrencyInput
-          id="amount"
-          value={formData.amount}
-          onChange={(value) => setFormData({ ...formData, amount: value })}
-          required
-        />
-      </div>
-
-      {!fixedType && (
-        <div>
-          <Label htmlFor="type">Tipo *</Label>
-          <Select
-            value={formData.type}
-            onValueChange={(value: 'income' | 'expense') =>
-              setFormData({ ...formData, type: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="income">Receita</SelectItem>
-              <SelectItem value="expense">Despesa</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div>
-        <Label htmlFor="category">Categoria *</Label>
-        <Select
-          value={formData.categoryId}
-          onValueChange={(value) =>
-            setFormData({ ...formData, categoryId: value })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione uma categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  />
-                  {category.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="date">Data *</Label>
-        <Input
-          id="date"
-          type="date"
-          value={formData.date}
-          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          required
-        />
-      </div>
-
-      <div className="flex gap-2 pt-4">
-        <Button type="submit" className="flex-1">
-          {transaction ? 'Atualizar' : 'Adicionar'} Transação
-        </Button>
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancelar
-        </Button>
-      </div>
-    </form>
-  )
-}
 
 export function FinancialDashboard() {
   const {
@@ -243,7 +97,7 @@ export function FinancialDashboard() {
     setEditingCategory(undefined)
   }
 
-  const handleExpenseSubmit = (data: TransactionFormData) => {
+  const handleExpenseSubmit = (data: TransactionFormData, shouldClose = true) => {
     const expenseData = { ...data, type: 'expense' as const }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, expenseData)
@@ -251,10 +105,12 @@ export function FinancialDashboard() {
     } else {
       addTransaction(expenseData)
     }
-    closeExpenseDialog()
+    if (shouldClose) {
+      closeExpenseDialog()
+    }
   }
 
-  const handleIncomeSubmit = (data: TransactionFormData) => {
+  const handleIncomeSubmit = (data: TransactionFormData, shouldClose = true) => {
     const incomeData = { ...data, type: 'income' as const }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, incomeData)
@@ -262,7 +118,9 @@ export function FinancialDashboard() {
     } else {
       addTransaction(incomeData)
     }
-    closeIncomeDialog()
+    if (shouldClose) {
+      closeIncomeDialog()
+    }
   }
 
   // if (isLoading) {
@@ -343,64 +201,49 @@ export function FinancialDashboard() {
                 <h3 className="text-lg font-semibold mb-4">Acesso rápido</h3>
 
                 <div className="flex flex-wrap gap-4">
-                  <Dialog
-                    open={isExpenseDialogOpen}
-                    onOpenChange={setIsExpenseDialogOpen}
+                  <Button
+                    variant="outline"
+                    className="h-auto w-full md:w-auto flex flex-col items-center justify-center gap-2"
+                    onClick={() => setIsExpenseDialogOpen(true)}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="h-auto w-full md:w-auto flex flex-col items-center justify-center gap-2 "
-                      >
-                        <CircleMinus className="h-8 w-8 text-red-600" />
-                        <span className="text-sm font-medium text-red-600">
-                          DESPESA
-                        </span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Nova Despesa</DialogTitle>
-                      </DialogHeader>
-                      <TransactionForm
-                        transaction={editingTransaction}
-                        onSubmit={handleExpenseSubmit}
-                        categories={categories}
-                        onClose={closeExpenseDialog}
-                        fixedType="expense"
-                      />
-                    </DialogContent>
-                  </Dialog>
+                    <CircleMinus className="h-8 w-8 text-red-600" />
+                    <span className="text-sm font-medium text-red-600">
+                      DESPESA
+                    </span>
+                  </Button>
 
-                  <Dialog
-                    open={isIncomeDialogOpen}
-                    onOpenChange={setIsIncomeDialogOpen}
+                  <Button
+                    variant="outline"
+                    className="w-full md:w-auto h-auto flex flex-col items-center justify-center gap-2"
+                    onClick={() => setIsIncomeDialogOpen(true)}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full md:w-auto h-auto flex flex-col items-center justify-center gap-2"
-                      >
-                        <CirclePlus className="h-8 w-8 text-green-600" />
-                        <span className="text-sm font-medium text-green-600">
-                          RECEITA
-                        </span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Nova Receita</DialogTitle>
-                      </DialogHeader>
-                      <TransactionForm
-                        transaction={editingTransaction}
-                        onSubmit={handleIncomeSubmit}
-                        categories={categories}
-                        onClose={closeIncomeDialog}
-                        fixedType="income"
-                      />
-                    </DialogContent>
-                  </Dialog>
+                    <CirclePlus className="h-8 w-8 text-green-600" />
+                    <span className="text-sm font-medium text-green-600">
+                      RECEITA
+                    </span>
+                  </Button>
                 </div>
+
+                {/* Modais reformulados */}
+                <TransactionFormModal
+                  isOpen={isExpenseDialogOpen}
+                  onClose={closeExpenseDialog}
+                  transaction={editingTransaction}
+                  onSubmit={handleExpenseSubmit}
+                  categories={categories}
+                  type="expense"
+                  title="Nova despesa"
+                />
+
+                <TransactionFormModal
+                  isOpen={isIncomeDialogOpen}
+                  onClose={closeIncomeDialog}
+                  transaction={editingTransaction}
+                  onSubmit={handleIncomeSubmit}
+                  categories={categories}
+                  type="income"
+                  title="Nova receita"
+                />
               </div>
             </div>
           </div>
