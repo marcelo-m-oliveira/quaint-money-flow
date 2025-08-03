@@ -51,7 +51,8 @@ export function TransactionFormModal({
   const handleSubmit = (e: React.FormEvent, shouldCreateAnother = false) => {
     e.preventDefault()
     if (!formData.description || !formData.amount || !formData.categoryId) {
-      alert('Por favor, preencha todos os campos obrigatórios.')
+      // TODO: Implementar toast para mostrar erro
+      console.error('Por favor, preencha todos os campos obrigatórios.')
       return
     }
 

@@ -63,7 +63,13 @@ export function useFinancialData() {
 
         if (storedTransactions) {
           const parsedTransactions = JSON.parse(storedTransactions).map(
-            (t: any) => ({
+            (
+              t: Omit<Transaction, 'date' | 'createdAt' | 'updatedAt'> & {
+                date: string
+                createdAt: string
+                updatedAt: string
+              },
+            ) => ({
               ...t,
               date: new Date(t.date),
               createdAt: new Date(t.createdAt),
@@ -75,7 +81,7 @@ export function useFinancialData() {
 
         if (storedCategories) {
           const parsedCategories = JSON.parse(storedCategories).map(
-            (c: any) => ({
+            (c: Omit<Category, 'createdAt'> & { createdAt: string }) => ({
               ...c,
               createdAt: new Date(c.createdAt),
             }),
