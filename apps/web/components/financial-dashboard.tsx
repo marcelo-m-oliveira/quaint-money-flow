@@ -97,7 +97,10 @@ export function FinancialDashboard() {
     setEditingCategory(undefined)
   }
 
-  const handleExpenseSubmit = (data: TransactionFormData, shouldClose = true) => {
+  const handleExpenseSubmit = (
+    data: TransactionFormData,
+    shouldClose = true,
+  ) => {
     const expenseData = { ...data, type: 'expense' as const }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, expenseData)
@@ -110,7 +113,10 @@ export function FinancialDashboard() {
     }
   }
 
-  const handleIncomeSubmit = (data: TransactionFormData, shouldClose = true) => {
+  const handleIncomeSubmit = (
+    data: TransactionFormData,
+    shouldClose = true,
+  ) => {
     const incomeData = { ...data, type: 'income' as const }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, incomeData)

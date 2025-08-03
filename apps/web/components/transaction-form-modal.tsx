@@ -54,7 +54,7 @@ export function TransactionFormModal({
       alert('Por favor, preencha todos os campos obrigatórios.')
       return
     }
-    
+
     // Passa shouldClose baseado em shouldCreateAnother
     const shouldClose = !shouldCreateAnother
     onSubmit(formData, shouldClose)
