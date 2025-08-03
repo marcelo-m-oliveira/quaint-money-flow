@@ -14,6 +14,7 @@ import {
   User,
   Zap,
 } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 
 import { useTheme } from '@/lib/hooks/use-theme'
@@ -29,11 +30,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 
-interface TopbarProps {
-  onCategoriesClick?: () => void
-}
-
-export function Topbar({ onCategoriesClick }: TopbarProps) {
+export function Topbar() {
   const { toggleTheme, isDark } = useTheme()
   const [userName] = useState('Marcelo Oliveira')
   const [userInitials] = useState('MO')
@@ -50,20 +47,17 @@ export function Topbar({ onCategoriesClick }: TopbarProps) {
 
           {/* Menu de Navegação Central */}
           <nav className="hidden md:flex items-center gap-6">
-            <Button variant="ghost" className="text-sm font-medium">
-              visão geral
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              Dashboard
             </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              lançamentos
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              Transações
             </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              relatórios
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              Relatórios
             </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              limite de gastos
-            </Button>
-            <Button variant="ghost" className="text-sm font-medium">
-              conexão bancária
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              Metas
             </Button>
           </nav>
 
@@ -86,76 +80,87 @@ export function Topbar({ onCategoriesClick }: TopbarProps) {
                   <span>{isDark ? 'Tema Claro' : 'Tema Escuro'}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onCategoriesClick}>
-                  <Tag className="mr-2 h-4 w-4" />
-                  <span>Categorias</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  <span>Contas</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Cartões de crédito</span>
-                </DropdownMenuItem>
+                <Link href="/configuracoes/categorias">
+                  <DropdownMenuItem>
+                    <Tag className="mr-2 h-4 w-4" />
+                    <span>Categorias</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/configuracoes/contas">
+                  <DropdownMenuItem>
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    <span>Contas</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/configuracoes/cartoes">
+                  <DropdownMenuItem>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Cartões de crédito</span>
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <Link href="/configuracoes/preferencias">
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Preferências</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/configuracoes/plano">
+                  <DropdownMenuItem>
+                    <Zap className="mr-2 h-4 w-4" />
+                    <span>Meu Plano</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/configuracoes/tags">
+                  <DropdownMenuItem>
+                    <Tag className="mr-2 h-4 w-4" />
+                    <span>Tags</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/configuracoes/alertas">
+                  <DropdownMenuItem>
+                    <Bell className="mr-2 h-4 w-4" />
+                    <span>Alertas</span>
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/configuracoes/atividades">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Atividades</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Preferências</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Zap className="mr-2 h-4 w-4" />
-                  <span>Meu Plano</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Tag className="mr-2 h-4 w-4" />
-                  <span>Tags</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Alertas</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Atividades</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <MoreHorizontal className="mr-2 h-4 w-4" />
-                  <span>mais opções</span>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Notificações */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
-                3
-              </span>
-            </Button>
-
             {/* Menu do Usuário */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 px-2"
-                >
+                <Button variant="ghost" className="flex items-center gap-2 px-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="" alt={userName} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-                      {userInitials}
-                    </AvatarFallback>
+                    <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:block text-sm font-medium">
-                    {userName}
-                  </span>
-                  <ChevronDown className="h-4 w-4" />
+                  <div className="hidden md:flex flex-col items-start">
+                    <span className="text-sm font-medium text-foreground">{userName}</span>
+                    <span className="text-xs text-muted-foreground">Plano Gratuito</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      marcelo@example.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
@@ -165,13 +170,42 @@ export function Topbar({ onCategoriesClick }: TopbarProps) {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Configurações</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Zap className="mr-2 h-4 w-4" />
+                  <span>Upgrade</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Menu Mobile */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem>
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <span>Transações</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <span>Relatórios</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <span>Metas</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>

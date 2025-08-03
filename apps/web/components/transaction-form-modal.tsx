@@ -167,27 +167,24 @@ export function TransactionFormModal({
                 {categories
                   .filter((category) => {
                     // Filtrar categorias baseado no tipo de transação
-                    const incomeCategories = ['Salário', 'Freelance']
-                    const expenseCategories = [
-                      'Alimentação',
-                      'Moradia',
-                      'Transporte',
-                    ]
-
-                    if (type === 'income') {
-                      return incomeCategories.includes(category.name)
-                    } else {
-                      return expenseCategories.includes(category.name)
-                    }
+                    return category.type === type
+                  })
+                  // Ordenar categorias principais primeiro, depois subcategorias
+                  .sort((a, b) => {
+                    if (!a.parentId && b.parentId) return -1
+                    if (a.parentId && !b.parentId) return 1
+                    return a.name.localeCompare(b.name)
                   })
                   .map((category) => (
                     <SelectItem key={category.id} value={category.id}>
-                      <div className="flex items-center gap-3">
+                      <div className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}>
                         <div
                           className="w-3 h-3 rounded-full flex-shrink-0"
                           style={{ backgroundColor: category.color }}
                         />
-                        <span>{category.name}</span>
+                        <span className={category.parentId ? 'text-sm' : ''}>
+                          {category.parentId && '└ '}{category.name}
+                        </span>
                       </div>
                     </SelectItem>
                   ))}

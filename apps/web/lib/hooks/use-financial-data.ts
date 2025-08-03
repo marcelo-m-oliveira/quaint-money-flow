@@ -19,30 +19,35 @@ const DEFAULT_CATEGORIES: Category[] = [
     id: '1',
     name: 'Alimentação',
     color: '#10B981',
+    type: 'expense',
     createdAt: new Date(),
   },
   {
     id: '2',
     name: 'Moradia',
     color: '#3B82F6',
+    type: 'expense',
     createdAt: new Date(),
   },
   {
     id: '3',
     name: 'Transporte',
     color: '#F59E0B',
+    type: 'expense',
     createdAt: new Date(),
   },
   {
     id: '4',
     name: 'Salário',
     color: '#10B981',
+    type: 'income',
     createdAt: new Date(),
   },
   {
     id: '5',
     name: 'Freelance',
     color: '#8B5CF6',
+    type: 'income',
     createdAt: new Date(),
   },
 ]
@@ -171,6 +176,8 @@ export function useFinancialData() {
       id: Date.now().toString(),
       name: data.name,
       color: data.color,
+      type: data.type,
+      parentId: data.parentId,
       createdAt: new Date(),
     }
 
@@ -186,6 +193,8 @@ export function useFinancialData() {
           ...category,
           name: data.name,
           color: data.color,
+          type: data.type,
+          parentId: data.parentId,
         }
       }
       return category

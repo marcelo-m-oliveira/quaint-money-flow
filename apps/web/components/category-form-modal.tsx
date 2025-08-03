@@ -1,7 +1,7 @@
 'use client'
 
 import { Palette, Save, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { Category, CategoryFormData } from '@/lib/types'
 
@@ -18,6 +18,8 @@ interface CategoryFormModalProps {
   onSubmit: (data: CategoryFormData) => void
   onDelete?: (id: string) => void
   categories: Category[]
+  categoryType?: 'income' | 'expense'
+  parentCategory?: Category
 }
 
 const PRESET_COLORS = [
@@ -40,12 +42,26 @@ export function CategoryFormModal({
   onSubmit,
   onDelete,
   categories,
+  categoryType = 'expense',
+  parentCategory,
 }: CategoryFormModalProps) {
   const [formData, setFormData] = useState<CategoryFormData>({
     name: category?.name || '',
     color: category?.color || PRESET_COLORS[0],
+    type: category?.type || categoryType,
+    parentId: category?.parentId || parentCategory?.id,
   })
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  // Resetar formData quando as props mudarem
+  useEffect(() => {
+    setFormData({
+      name: category?.name || '',
+      color: category?.color || PRESET_COLORS[0],
+      type: category?.type || categoryType,
+      parentId: category?.parentId || parentCategory?.id,
+    })
+  }, [category, categoryType, parentCategory])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,6 +92,8 @@ export function CategoryFormModal({
     setFormData({
       name: '',
       color: PRESET_COLORS[0],
+      type: categoryType,
+      parentId: parentCategory?.id,
     })
     onClose()
   }
@@ -99,8 +117,20 @@ export function CategoryFormModal({
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-semibold">
-              {category ? 'Editar Categoria' : 'Nova Categoria'}
+              {category ? 'Editar Categoria' : 
+                parentCategory ? `Nova Subcategoria - ${parentCategory.name}` : 
+                `Nova Categoria de ${categoryType === 'expense' ? 'Despesa' : 'Receita'}`
+              }
             </DialogTitle>
+            {parentCategory && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: parentCategory.color }}
+                />
+                <span>Categoria pai: {parentCategory.name}</span>
+              </div>
+            )}
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-6">

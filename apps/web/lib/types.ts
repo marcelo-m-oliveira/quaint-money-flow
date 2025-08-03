@@ -2,6 +2,8 @@ export interface Category {
   id: string
   name: string
   color: string
+  type: 'income' | 'expense'
+  parentId?: string // Para subcategorias
   createdAt: Date
 }
 
@@ -28,4 +30,6 @@ export interface TransactionFormData {
 export interface CategoryFormData {
   name: string
   color: string
+  type: 'income' | 'expense'
+  parentId?: string // Para subcategorias
 }

@@ -12,7 +12,7 @@ import {
   TransactionFormData,
 } from '@/lib/types'
 
-import { CategoryFormModal } from './category-form-modal'
+
 import { Topbar } from './topbar'
 import { TransactionFormModal } from './transaction-form-modal'
 import { Button } from './ui/button'
@@ -31,13 +31,13 @@ export function FinancialDashboard() {
     getTotals,
   } = useFinancialData()
 
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
+
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<
     Transaction | undefined
   >()
-  const [editingCategory, setEditingCategory] = useState<Category | undefined>()
+
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -79,14 +79,7 @@ export function FinancialDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _unusedFunctions = { handleDeleteTransaction, handleDeleteCategory }
 
-  const handleCategorySubmit = (data: CategoryFormData) => {
-    if (editingCategory) {
-      updateCategory(editingCategory.id, data)
-      setEditingCategory(undefined)
-    } else {
-      addCategory(data)
-    }
-  }
+
 
   const closeExpenseDialog = () => {
     setIsExpenseDialogOpen(false)
@@ -98,10 +91,7 @@ export function FinancialDashboard() {
     setEditingTransaction(undefined)
   }
 
-  const closeCategoryDialog = () => {
-    setIsCategoryDialogOpen(false)
-    setEditingCategory(undefined)
-  }
+
 
   const handleExpenseSubmit = (
     data: TransactionFormData,
@@ -149,7 +139,7 @@ export function FinancialDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <Topbar onCategoriesClick={() => setIsCategoryDialogOpen(true)} />
+      <Topbar />
 
       <main className="container mx-auto px-4 py-8">
         {/* Saudação e Resumo */}
@@ -239,15 +229,7 @@ export function FinancialDashboard() {
                     title="Nova receita"
                   />
 
-                  {/* Modal de Categorias */}
-                  <CategoryFormModal
-                    isOpen={isCategoryDialogOpen}
-                    onClose={closeCategoryDialog}
-                    category={editingCategory}
-                    onSubmit={handleCategorySubmit}
-                    onDelete={deleteCategory}
-                    categories={categories}
-                  />
+
                 </div>
               </div>
             </CardContent>
