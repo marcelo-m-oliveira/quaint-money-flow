@@ -22,6 +22,26 @@ import {
   Truck,
   User,
   Wrench,
+  Utensils,
+  Gamepad2,
+  Book,
+  Plane,
+  Gift,
+  Smartphone,
+  Shirt,
+  Fuel,
+  GraduationCap,
+  Stethoscope,
+  Dumbbell,
+  Music,
+  Camera,
+  Scissors,
+  PiggyBank,
+  TrendingUp,
+  Wallet,
+  Building,
+  Zap,
+  Wifi,
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 
@@ -85,28 +105,50 @@ const PRESET_COLORS = [
 ]
 
 const PRESET_ICONS = [
-  // Primeira linha
+  // Primeira linha - Essenciais
   { icon: Home, name: 'Casa' },
   { icon: Heart, name: 'Saúde' },
   { icon: Car, name: 'Carro' },
   { icon: ShoppingCart, name: 'Compras' },
   { icon: Coffee, name: 'Café' },
-  { icon: Settings, name: 'Configurações' },
+  { icon: Utensils, name: 'Alimentação' },
   { icon: User, name: 'Pessoa' },
   { icon: DollarSign, name: 'Dinheiro' },
   { icon: Star, name: 'Favorito' },
   { icon: Plus, name: 'Adicionar' },
-  // Segunda linha
+  // Segunda linha - Trabalho e Tecnologia
   { icon: Briefcase, name: 'Trabalho' },
   { icon: Monitor, name: 'Tecnologia' },
   { icon: FileText, name: 'Documentos' },
   { icon: CreditCard, name: 'Cartão' },
-  { icon: MapPin, name: 'Local' },
+  { icon: Smartphone, name: 'Celular' },
+  { icon: Wifi, name: 'Internet' },
+  { icon: Settings, name: 'Configurações' },
   { icon: Clock, name: 'Tempo' },
+  { icon: MapPin, name: 'Local' },
+  { icon: Wrench, name: 'Ferramentas' },
+  // Terceira linha - Entretenimento e Lazer
+  { icon: Gamepad2, name: 'Jogos' },
+  { icon: Book, name: 'Livros' },
+  { icon: Music, name: 'Música' },
+  { icon: Camera, name: 'Fotografia' },
+  { icon: Plane, name: 'Viagem' },
+  { icon: Gift, name: 'Presentes' },
   { icon: Sun, name: 'Dia' },
   { icon: Moon, name: 'Noite' },
   { icon: Truck, name: 'Transporte' },
-  { icon: Wrench, name: 'Ferramentas' },
+  { icon: Fuel, name: 'Combustível' },
+  // Quarta linha - Saúde e Educação
+  { icon: Stethoscope, name: 'Médico' },
+  { icon: Dumbbell, name: 'Academia' },
+  { icon: GraduationCap, name: 'Educação' },
+  { icon: Shirt, name: 'Roupas' },
+  { icon: Scissors, name: 'Beleza' },
+  { icon: PiggyBank, name: 'Poupança' },
+  { icon: TrendingUp, name: 'Investimentos' },
+  { icon: Wallet, name: 'Carteira' },
+  { icon: Building, name: 'Imóveis' },
+  { icon: Zap, name: 'Energia' },
 ]
 
 export function CategoryFormModal({
@@ -243,118 +285,147 @@ export function CategoryFormModal({
               </RadioGroup>
             </div>
 
-            {/* Avatar/Ícone da categoria */}
-            <div className="flex items-center gap-4">
-              <div
-                className="flex h-20 w-20 items-center justify-center rounded-full text-white"
-                style={{ backgroundColor: formData.color }}
-              >
-                {selectedIcon &&
-                  React.createElement(selectedIcon.icon, {
-                    className: 'w-10 h-10',
-                  })}
-              </div>
-              <div className="flex-1 space-y-3">
-                {/* Nome da categoria */}
-                <div>
-                  <Label htmlFor="name" className="text-sm font-medium">
-                    Nome da categoria
-                  </Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Digite o nome da categoria"
-                    className="mt-1"
-                    required
-                  />
+            {/* Avatar/Ícone da categoria - apenas para categoria principal */}
+            {categoryMode === 'main' && (
+              <div className="flex items-center gap-4 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                <div
+                  className="flex h-20 w-20 items-center justify-center rounded-full text-white transition-all duration-300"
+                  style={{ backgroundColor: formData.color }}
+                >
+                  {selectedIcon &&
+                    React.createElement(selectedIcon.icon, {
+                      className: 'w-10 h-10 transition-all duration-300',
+                    })}
+                </div>
+                <div className="flex-1 space-y-3">
+                  {/* Nome da categoria */}
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Nome da categoria
+                    </Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      placeholder="Digite o nome da categoria"
+                      className="mt-1 transition-all duration-200"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Seletor de ícones */}
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="icons">
-                <AccordionTrigger className="text-sm font-medium">
-                  Escolha um ícone
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="grid max-h-48 grid-cols-10 gap-2 overflow-y-auto rounded-lg bg-muted p-4">
-                    {PRESET_ICONS.map((icon, index) => {
-                      const IconComponent = icon.icon
-                      return (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setSelectedIcon(icon)}
-                          className={`flex h-10 w-10 items-center justify-center rounded-full transition-all hover:bg-background ${
-                            selectedIcon === icon
-                              ? 'bg-background shadow-md'
-                              : 'bg-muted-foreground/10'
-                          }`}
-                          title={icon.name}
-                        >
-                          <IconComponent className="h-5 w-5 text-muted-foreground" />
-                        </button>
-                      )
-                    })}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            {/* Nome da subcategoria - apenas para subcategoria */}
+            {categoryMode === 'sub' && (
+              <div className="animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Nome da subcategoria
+                </Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="Digite o nome da subcategoria"
+                  className="mt-1 transition-all duration-200"
+                  required
+                />
+              </div>
+            )}
 
-            {/* Seletor de cores */}
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="colors">
-                <AccordionTrigger className="text-sm font-medium">
-                  Escolha uma cor
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-3 rounded-lg bg-muted p-4">
-                    {/* Primeira linha de cores */}
-                    <div className="flex justify-center gap-2">
-                      {PRESET_COLORS.slice(0, 11).map((color, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, color })}
-                          className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 ${
-                            formData.color === color
-                              ? 'border-foreground shadow-lg'
-                              : 'border-transparent'
-                          }`}
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
-                    </div>
-                    {/* Segunda linha de cores */}
-                    <div className="flex justify-center gap-2">
-                      {PRESET_COLORS.slice(11, 21).map((color, index) => (
-                        <button
-                          key={index + 11}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, color })}
-                          className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 ${
-                            formData.color === color
-                              ? 'border-foreground shadow-lg'
-                              : 'border-transparent'
-                          }`}
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            {/* Seletor de ícones - apenas para categoria principal */}
+            {categoryMode === 'main' && (
+              <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-100">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="icons">
+                    <AccordionTrigger className="text-sm font-medium hover:no-underline transition-all duration-200">
+                      Escolha um ícone
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-10 gap-2 rounded-lg bg-muted p-4">
+                        {PRESET_ICONS.map((icon, index) => {
+                          const IconComponent = icon.icon
+                          return (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => setSelectedIcon(icon)}
+                              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 hover:bg-background hover:scale-105 ${
+                                selectedIcon === icon
+                                  ? 'bg-background shadow-md scale-105'
+                                  : 'bg-muted-foreground/10'
+                              }`}
+                              title={icon.name}
+                            >
+                              <IconComponent className="h-5 w-5 text-muted-foreground transition-all duration-200" />
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            )}
+
+            {/* Seletor de cores - apenas para categoria principal */}
+            {categoryMode === 'main' && (
+              <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-200">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="colors">
+                    <AccordionTrigger className="text-sm font-medium hover:no-underline transition-all duration-200">
+                      Escolha uma cor
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-3 rounded-lg bg-muted p-4">
+                        {/* Primeira linha de cores */}
+                        <div className="flex justify-center gap-2">
+                          {PRESET_COLORS.slice(0, 11).map((color, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, color })}
+                              className={`h-8 w-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                                formData.color === color
+                                  ? 'border-foreground shadow-lg scale-110'
+                                  : 'border-transparent'
+                              }`}
+                              style={{ backgroundColor: color }}
+                              title={color}
+                            />
+                          ))}
+                        </div>
+                        {/* Segunda linha de cores */}
+                        <div className="flex justify-center gap-2">
+                          {PRESET_COLORS.slice(11, 21).map((color, index) => (
+                            <button
+                              key={index + 11}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, color })}
+                              className={`h-8 w-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                                formData.color === color
+                                  ? 'border-foreground shadow-lg scale-110'
+                                  : 'border-transparent'
+                              }`}
+                              style={{ backgroundColor: color }}
+                              title={color}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            )}
 
             {/* Seleção de categoria pai para subcategorias */}
             {categoryMode === 'sub' && (
-              <div className="space-y-2">
+              <div className="space-y-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-100">
                 <Label className="text-sm font-medium">Categoria pai</Label>
                 <Select
                   value={formData.parentId || ''}
@@ -362,7 +433,7 @@ export function CategoryFormModal({
                     setFormData({ ...formData, parentId: value })
                   }
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full transition-all duration-200">
                     <SelectValue placeholder="Selecione a categoria pai" />
                   </SelectTrigger>
                   <SelectContent>
@@ -370,7 +441,7 @@ export function CategoryFormModal({
                       <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
                           <div
-                            className="h-4 w-4 rounded-full"
+                            className="h-4 w-4 rounded-full transition-all duration-200"
                             style={{ backgroundColor: category.color }}
                           />
                           {category.name}
@@ -396,13 +467,15 @@ export function CategoryFormModal({
               )}
               <Button
                 type="submit"
-                className="h-12 bg-primary px-8 hover:bg-primary/90"
+                className="h-12 bg-primary px-8 hover:bg-primary/90 transition-all duration-200 hover:scale-105"
                 disabled={
                   !formData.name.trim() ||
                   (categoryMode === 'sub' && !formData.parentId)
                 }
               >
-                {category ? 'Atualizar categoria' : 'Criar categoria'}
+                {category 
+                  ? `Atualizar ${categoryMode === 'main' ? 'categoria' : 'subcategoria'}` 
+                  : `Criar ${categoryMode === 'main' ? 'categoria' : 'subcategoria'}`}
               </Button>
             </div>
           </form>
