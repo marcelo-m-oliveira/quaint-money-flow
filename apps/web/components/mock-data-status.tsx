@@ -14,6 +14,7 @@ interface MockDataInfo {
   categories: number
   transactions: number
   accounts: number
+  creditCards: number
   hasData: boolean
 }
 
@@ -22,6 +23,7 @@ export function MockDataStatus() {
     categories: 0,
     transactions: 0,
     accounts: 0,
+    creditCards: 0,
     hasData: false,
   })
 
@@ -31,20 +33,28 @@ export function MockDataStatus() {
         const categories = localStorage.getItem('quaint-money-categories')
         const transactions = localStorage.getItem('quaint-money-transactions')
         const accounts = localStorage.getItem('quaint-money-accounts')
+        const creditCards = localStorage.getItem('quaint-money-credit-cards')
 
         const categoriesCount = categories ? JSON.parse(categories).length : 0
         const transactionsCount = transactions
           ? JSON.parse(transactions).length
           : 0
         const accountsCount = accounts ? JSON.parse(accounts).length : 0
+        const creditCardsCount = creditCards
+          ? JSON.parse(creditCards).length
+          : 0
 
         const hasData =
-          categoriesCount > 5 || transactionsCount > 0 || accountsCount > 0
+          categoriesCount > 5 ||
+          transactionsCount > 0 ||
+          accountsCount > 0 ||
+          creditCardsCount > 0
 
         setMockInfo({
           categories: categoriesCount,
           transactions: transactionsCount,
           accounts: accountsCount,
+          creditCards: creditCardsCount,
           hasData,
         })
       } catch (error) {
@@ -53,6 +63,7 @@ export function MockDataStatus() {
           categories: 0,
           transactions: 0,
           accounts: 0,
+          creditCards: 0,
           hasData: false,
         })
       }
@@ -104,6 +115,7 @@ export function MockDataStatus() {
                 <p>📊 {mockInfo.categories} categorias</p>
                 <p>💰 {mockInfo.transactions} transações</p>
                 <p>🏦 {mockInfo.accounts} contas</p>
+                <p>💳 {mockInfo.creditCards} cartões</p>
               </div>
             ) : (
               <p>Nenhum dado mock encontrado</p>

@@ -40,6 +40,7 @@ export function MockDataLoader() {
     localStorage.removeItem('quaint-money-categories')
     localStorage.removeItem('quaint-money-transactions')
     localStorage.removeItem('quaint-money-accounts')
+    localStorage.removeItem('quaint-money-credit-cards')
 
     console.log('🗑️ Dados limpos do localStorage')
 
@@ -74,6 +75,7 @@ export function MockDataLoader() {
               <li>📊 12+ categorias (despesas e receitas)</li>
               <li>💰 100 transações variadas</li>
               <li>🏦 6 contas diferentes (banco, cartão, etc.)</li>
+              <li>💳 4 cartões de crédito com limites realistas</li>
             </ul>
             <Button
               onClick={handleLoadMockData}

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 
-import { Account, Category, Transaction } from './types'
+import { Account, Category, CreditCard, Transaction } from './types'
 
 // Cores predefinidas para categorias
 const CATEGORY_COLORS = [
@@ -285,17 +285,94 @@ export function generateMockAccounts(count: number = 5): Account[] {
 }
 
 /**
+ * Gera um cartão de crédito mock
+ */
+export function generateMockCreditCard(): CreditCard {
+  const bank = faker.helpers.arrayElement(BRAZILIAN_BANKS)
+  const cardTypes = ['Platinum', 'Gold', 'Black', 'Infinite', 'Standard']
+  const cardType = faker.helpers.arrayElement(cardTypes)
+
+  const name = `${bank} ${cardType}`
+  const icon = bank.toLowerCase().replace(/\s+/g, '-')
+  const iconType: 'bank' | 'generic' = 'bank'
+
+  // Limites realistas baseados no tipo do cartão
+  let limitRange: { min: number; max: number }
+  switch (cardType) {
+    case 'Infinite':
+    case 'Black':
+      limitRange = { min: 10000, max: 50000 }
+      break
+    case 'Platinum':
+      limitRange = { min: 5000, max: 20000 }
+      break
+    case 'Gold':
+      limitRange = { min: 2000, max: 10000 }
+      break
+    default:
+      limitRange = { min: 500, max: 5000 }
+  }
+
+  const limit = faker.number.int(limitRange)
+  // Saldo atual usado (0 a 80% do limite)
+  const currentBalance = faker.number.float({
+    min: 0,
+    max: limit * 0.8,
+    fractionDigits: 2,
+  })
+
+  // Dias de fechamento e vencimento realistas
+  const closingDay = faker.number.int({ min: 1, max: 31 })
+  // Vencimento geralmente 7-10 dias após o fechamento
+  let dueDay = closingDay + faker.number.int({ min: 7, max: 10 })
+  if (dueDay > 31) {
+    dueDay = dueDay - 31
+  }
+
+  const createdAt = faker.date.past({ years: 2 })
+
+  return {
+    id: faker.string.uuid(),
+    name,
+    icon,
+    iconType,
+    limit,
+    currentBalance,
+    closingDay,
+    dueDay,
+    defaultPaymentAccountId: undefined, // Será definido posteriormente se necessário
+    createdAt,
+    updatedAt: createdAt,
+  }
+}
+
+/**
+ * Gera múltiplos cartões de crédito mock
+ */
+export function generateMockCreditCards(count: number = 3): CreditCard[] {
+  const creditCards: CreditCard[] = []
+
+  for (let i = 0; i < count; i++) {
+    creditCards.push(generateMockCreditCard())
+  }
+
+  return creditCards
+}
+
+/**
  * Gera um dataset completo de dados mock
  */
 export function generateMockDataset() {
   const categories = generateMockCategories(12, true)
   const transactions = generateMockTransactions(categories, 100)
   const accounts = generateMockAccounts(6)
+  const creditCards = generateMockCreditCards(4)
 
   return {
     categories,
     transactions,
     accounts,
+    creditCards,
   }
 }
 
@@ -303,7 +380,8 @@ export function generateMockDataset() {
  * Popula o localStorage com dados mock
  */
 export function populateWithMockData() {
-  const { categories, transactions, accounts } = generateMockDataset()
+  const { categories, transactions, accounts, creditCards } =
+    generateMockDataset()
 
   // Salvar no localStorage
   localStorage.setItem('quaint-money-categories', JSON.stringify(categories))
@@ -312,11 +390,13 @@ export function populateWithMockData() {
     JSON.stringify(transactions),
   )
   localStorage.setItem('quaint-money-accounts', JSON.stringify(accounts))
+  localStorage.setItem('quaint-money-credit-cards', JSON.stringify(creditCards))
 
   console.log('✅ Dados mock carregados com sucesso!')
   console.log(`📊 ${categories.length} categorias criadas`)
   console.log(`💰 ${transactions.length} transações criadas`)
   console.log(`🏦 ${accounts.length} contas criadas`)
+  console.log(`💳 ${creditCards.length} cartões de crédito criados`)
 
-  return { categories, transactions, accounts }
+  return { categories, transactions, accounts, creditCards }
 }
