@@ -1,9 +1,9 @@
 'use client'
 
 import { CircleMinus, CirclePlus } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency, getDayPeriod } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { Transaction, TransactionFormData } from '@/lib/types'
 
@@ -35,6 +35,23 @@ export function FinancialDashboard() {
     description: string
     onConfirm: () => void
   }>({ isOpen: false, title: '', description: '', onConfirm: () => {} })
+
+  // Estado para armazenar o período do dia
+  const [dayPeriod, setDayPeriod] = useState(getDayPeriod())
+
+  // Atualiza o período do dia a cada minuto
+  useEffect(() => {
+    const updateDayPeriod = () => setDayPeriod(getDayPeriod())
+
+    // Atualiza imediatamente
+    updateDayPeriod()
+
+    // Configura intervalo para atualizar a cada minuto
+    const intervalId = setInterval(updateDayPeriod, 60000)
+
+    // Limpa o intervalo quando o componente é desmontado
+    return () => clearInterval(intervalId)
+  }, [])
 
   const totals = getTotals()
 
@@ -134,19 +151,21 @@ export function FinancialDashboard() {
           {/* Card Principal - Saudação, Totais e Acesso Rápido */}
           <Card>
             <CardContent className="flex flex-wrap gap-6 p-6">
-              <div className="flex-auto md:w-1/2">
+              <div className="w-full flex-auto md:w-1/2">
                 {/* Saudação */}
                 <div className="mb-6 text-center md:text-start">
-                  <p className="mb-1 text-muted-foreground">Boa noite,</p>
-                  <p className="flex flex-wrap items-center gap-2 text-2xl font-bold text-foreground">
+                  <p className="mb-1 text-muted-foreground">
+                    {dayPeriod.greeting},
+                  </p>
+                  <p className="flex flex-wrap items-center justify-center gap-2 text-2xl font-bold text-foreground md:justify-start">
                     Marcelo Oliveira!
-                    <span className="hidden text-2xl md:block">🌙</span>
+                    <span className="text-2xl">{dayPeriod.icon}</span>
                   </p>
                 </div>
 
                 {/* Totais */}
-                <div className="mb-6 flex flex-wrap gap-6 text-center md:text-start">
-                  <div className="flex-auto md:w-1/4">
+                <div className="mb-6 grid grid-cols-1 gap-6 text-center sm:grid-cols-2 md:text-start">
+                  <div className="flex flex-col">
                     <p className="mb-1 text-sm text-muted-foreground">
                       Receitas no mês atual
                     </p>
@@ -154,7 +173,7 @@ export function FinancialDashboard() {
                       {formatCurrency(totals.income)}
                     </p>
                   </div>
-                  <div className="flex-auto md:w-1/4">
+                  <div className="flex flex-col">
                     <p className="mb-1 text-sm text-muted-foreground">
                       Despesas no mês atual
                     </p>
@@ -166,15 +185,17 @@ export function FinancialDashboard() {
               </div>
               <div className="hidden border-l px-3 md:block"></div>
               <div className="block w-full border-t px-3 md:hidden"></div>
-              <div className="flex-auto md:w-1/3">
+              <div className="w-full flex-auto md:w-1/3">
                 {/* Acesso Rápido */}
                 <div className="mt-6 pt-6">
-                  <h3 className="mb-4 text-lg font-semibold">Acesso rápido</h3>
+                  <h3 className="mb-4 text-center text-lg font-semibold md:text-start">
+                    Acesso rápido
+                  </h3>
 
-                  <div className="flex flex-wrap gap-4">
+                  <div className="flex flex-wrap justify-center gap-4 md:justify-start">
                     <Button
                       variant="outline"
-                      className="flex h-auto w-full flex-col items-center justify-center gap-2 md:w-auto"
+                      className="flex h-auto w-full flex-col items-center justify-center gap-2 sm:w-auto"
                       onClick={() => setIsExpenseDialogOpen(true)}
                     >
                       <CircleMinus className="h-8 w-8 text-red-600" />
@@ -185,7 +206,7 @@ export function FinancialDashboard() {
 
                     <Button
                       variant="outline"
-                      className="flex h-auto w-full flex-col items-center justify-center gap-2 md:w-auto"
+                      className="flex h-auto w-full flex-col items-center justify-center gap-2 sm:w-auto"
                       onClick={() => setIsIncomeDialogOpen(true)}
                     >
                       <CirclePlus className="h-8 w-8 text-green-600" />

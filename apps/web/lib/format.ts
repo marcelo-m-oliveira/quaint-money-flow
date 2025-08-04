@@ -44,3 +44,19 @@ export function formatCurrencyInput(value: string): string {
     maximumFractionDigits: 2,
   })
 }
+
+/**
+ * Determina o período do dia com base na hora atual
+ * @returns Objeto contendo a saudação e o ícone correspondente
+ */
+export function getDayPeriod(): { greeting: string; icon: string } {
+  const hour = new Date().getHours()
+
+  if (hour >= 5 && hour < 12) {
+    return { greeting: 'Bom dia', icon: '☀️' } // Manhã: sol
+  } else if (hour >= 12 && hour < 18) {
+    return { greeting: 'Boa tarde', icon: '🌤️' } // Tarde: sol com nuvem
+  } else {
+    return { greeting: 'Boa noite', icon: '🌙' } // Noite: lua
+  }
+}

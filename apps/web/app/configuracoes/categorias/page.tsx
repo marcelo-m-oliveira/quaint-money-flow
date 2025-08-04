@@ -51,7 +51,15 @@ export default function CategoriasPage() {
   const handleEditCategory = (category: Category) => {
     setEditingCategory(category)
     setCategoryType(category.type)
-    setParentCategory(undefined)
+
+    // Se for uma subcategoria, precisamos encontrar e definir a categoria pai
+    if (category.parentId) {
+      const parent = categories.find((cat) => cat.id === category.parentId)
+      setParentCategory(parent)
+    } else {
+      setParentCategory(undefined)
+    }
+
     setIsCategoryFormOpen(true)
   }
 
@@ -92,10 +100,14 @@ export default function CategoriasPage() {
   }
 
   const handleCategorySubmit = (data: CategoryFormData) => {
+    // Não sobrescrever o parentId que vem do formulário
+    // Isso garante que o status de subcategoria seja mantido
     const categoryData = {
       ...data,
       type: categoryType,
-      parentId: parentCategory?.id,
+      // Usar o parentId que vem do formulário, ou o parentCategory.id se for uma nova subcategoria
+      parentId:
+        data.parentId !== undefined ? data.parentId : parentCategory?.id,
     }
 
     if (editingCategory) {

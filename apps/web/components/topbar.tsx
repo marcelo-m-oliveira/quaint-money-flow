@@ -51,7 +51,7 @@ export function Topbar() {
               variant="ghost"
               className="text-muted-foreground hover:text-foreground"
             >
-              Dashboard
+              Visão Geral
             </Button>
             <Button
               variant="ghost"

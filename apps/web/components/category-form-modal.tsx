@@ -206,7 +206,13 @@ export function CategoryFormModal({
       return
     }
 
-    onSubmit(formData)
+    // Garantir que o parentId seja mantido corretamente baseado no categoryMode
+    const finalFormData = {
+      ...formData,
+      parentId: categoryMode === 'sub' ? formData.parentId : undefined,
+    }
+
+    onSubmit(finalFormData)
     handleClose()
   }
 
@@ -246,44 +252,49 @@ export function CategoryFormModal({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader className="pb-6">
             <DialogTitle className="text-xl font-semibold">
-              Criando categoria de despesa
+              {category
+                ? `Editando ${category.parentId ? 'subcategoria' : 'categoria'}`
+                : `Criando ${categoryMode === 'sub' ? 'subcategoria' : 'categoria'} de ${categoryType === 'income' ? 'receita' : 'despesa'}`}
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Seleção do tipo de categoria */}
-            <div className="space-y-4">
-              <RadioGroup
-                value={categoryMode}
-                onValueChange={(value: 'main' | 'sub') => {
-                  setCategoryMode(value)
-                  setFormData({
-                    ...formData,
-                    parentId: value === 'main' ? undefined : formData.parentId,
-                  })
-                }}
-                className="flex gap-6"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="main" id="main" />
-                  <Label
-                    htmlFor="main"
-                    className="cursor-pointer text-sm font-medium"
-                  >
-                    Categoria principal
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="sub" id="sub" />
-                  <Label
-                    htmlFor="sub"
-                    className="cursor-pointer text-sm font-medium"
-                  >
-                    Subcategoria
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
+            {/* Seleção do tipo de categoria - apenas para criação */}
+            {!category && (
+              <div className="space-y-4">
+                <RadioGroup
+                  value={categoryMode}
+                  onValueChange={(value: 'main' | 'sub') => {
+                    setCategoryMode(value)
+                    setFormData({
+                      ...formData,
+                      parentId:
+                        value === 'main' ? undefined : formData.parentId,
+                    })
+                  }}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="main" id="main" />
+                    <Label
+                      htmlFor="main"
+                      className="cursor-pointer text-sm font-medium"
+                    >
+                      Categoria principal
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="sub" id="sub" />
+                    <Label
+                      htmlFor="sub"
+                      className="cursor-pointer text-sm font-medium"
+                    >
+                      Subcategoria
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
 
             {/* Avatar/Ícone da categoria - apenas para categoria principal */}
             {categoryMode === 'main' && (
@@ -318,8 +329,56 @@ export function CategoryFormModal({
               </div>
             )}
 
-            {/* Nome da subcategoria - apenas para subcategoria */}
-            {categoryMode === 'sub' && (
+            {/* Edição de subcategoria - apenas nome e categoria pai */}
+            {category && category.parentId && (
+              <div className="space-y-4 duration-300 animate-in fade-in-0 slide-in-from-top-2">
+                <div>
+                  <Label htmlFor="name" className="text-sm font-medium">
+                    Nome da subcategoria
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    placeholder="Digite o nome da subcategoria"
+                    className="mt-1 transition-all duration-200"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Categoria pai</Label>
+                  <Select
+                    value={formData.parentId || ''}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, parentId: value })
+                    }
+                  >
+                    <SelectTrigger className="w-full transition-all duration-200">
+                      <SelectValue placeholder="Selecione a categoria pai" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mainCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-4 w-4 rounded-full transition-all duration-200"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            {category.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Nome da subcategoria - apenas para criação de subcategoria */}
+            {!category && categoryMode === 'sub' && (
               <div className="duration-300 animate-in fade-in-0 slide-in-from-top-2">
                 <Label htmlFor="name" className="text-sm font-medium">
                   Nome da subcategoria
@@ -337,8 +396,8 @@ export function CategoryFormModal({
               </div>
             )}
 
-            {/* Seletor de ícones - apenas para categoria principal */}
-            {categoryMode === 'main' && (
+            {/* Seletor de ícones - apenas para categoria principal e não edição de subcategoria */}
+            {categoryMode === 'main' && !(category && category.parentId) && (
               <div className="delay-100 duration-500 animate-in fade-in-0 slide-in-from-bottom-2">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="icons">
@@ -372,8 +431,8 @@ export function CategoryFormModal({
               </div>
             )}
 
-            {/* Seletor de cores - apenas para categoria principal */}
-            {categoryMode === 'main' && (
+            {/* Seletor de cores - apenas para categoria principal e não edição de subcategoria */}
+            {categoryMode === 'main' && !(category && category.parentId) && (
               <div className="delay-200 duration-500 animate-in fade-in-0 slide-in-from-bottom-2">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="colors">
@@ -427,8 +486,8 @@ export function CategoryFormModal({
               </div>
             )}
 
-            {/* Seleção de categoria pai para subcategorias */}
-            {categoryMode === 'sub' && (
+            {/* Seleção de categoria pai para subcategorias - apenas na criação */}
+            {!category && categoryMode === 'sub' && (
               <div className="space-y-2 delay-100 duration-500 animate-in fade-in-0 slide-in-from-bottom-2">
                 <Label className="text-sm font-medium">Categoria pai</Label>
                 <Select
