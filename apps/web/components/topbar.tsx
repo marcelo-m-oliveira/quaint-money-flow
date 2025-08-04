@@ -149,7 +149,6 @@ export function Topbar() {
                     <span>Atividades</span>
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuSeparator />
               </DropdownMenuContent>
             </DropdownMenu>
 
