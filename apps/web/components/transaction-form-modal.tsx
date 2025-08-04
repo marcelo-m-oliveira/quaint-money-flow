@@ -1,6 +1,6 @@
 'use client'
 
-import { Calendar, Check, Save } from 'lucide-react'
+import { Check, Save } from 'lucide-react'
 import { useState } from 'react'
 
 import { formatDateForInput } from '@/lib/format'
@@ -8,6 +8,7 @@ import { Category, Transaction, TransactionFormData } from '@/lib/types'
 
 import { Button } from './ui/button'
 import { CurrencyInput } from './ui/currency-input'
+import { DatePicker } from './ui/date-picker'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -48,6 +49,10 @@ export function TransactionFormModal({
       : formatDateForInput(new Date()),
   })
 
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    transaction?.date || new Date(),
+  )
+
   const handleSubmit = (e: React.FormEvent, shouldCreateAnother = false) => {
     e.preventDefault()
     if (!formData.description || !formData.amount || !formData.categoryId) {
@@ -61,24 +66,35 @@ export function TransactionFormModal({
     onSubmit(formData, shouldClose)
 
     // Sempre limpa o formulário após salvar
+    const today = new Date()
     setFormData({
       description: '',
       amount: '',
       type,
       categoryId: '',
-      date: formatDateForInput(new Date()),
+      date: formatDateForInput(today),
     })
+    setSelectedDate(today)
   }
 
   const handleClose = () => {
+    const today = new Date()
     setFormData({
       description: '',
       amount: '',
       type,
       categoryId: '',
-      date: formatDateForInput(new Date()),
+      date: formatDateForInput(today),
     })
+    setSelectedDate(today)
     onClose()
+  }
+
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date)
+    if (date) {
+      setFormData({ ...formData, date: formatDateForInput(date) })
+    }
   }
 
   return (
@@ -133,19 +149,13 @@ export function TransactionFormModal({
               <Label htmlFor="date" className="text-sm font-medium">
                 Data
               </Label>
-              <div className="relative">
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                  className="h-12 pr-10"
-                  required
-                />
-                <Calendar className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <DatePicker
+                value={selectedDate}
+                onChange={handleDateChange}
+                placeholder="Selecione a data"
+                className="h-12"
+                required
+              />
             </div>
           </div>
 
