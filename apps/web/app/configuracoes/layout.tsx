@@ -1,6 +1,14 @@
 'use client'
 
-import { ArrowLeft, Bell, CreditCard, Database, Settings, Tag, User } from 'lucide-react'
+import {
+  ArrowLeft,
+  Bell,
+  CreditCard,
+  Database,
+  Settings,
+  Tag,
+  User,
+} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -80,7 +88,6 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
       <Topbar />
 
       <div className="container mx-auto px-4 py-6">
-        
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Sidebar */}
           <div className="lg:col-span-1">
@@ -90,13 +97,13 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
                   <h3 className="mb-4 text-sm font-medium text-muted-foreground">
                     CONFIGURAÇÕES
                   </h3>
-                  
+
                   {/* Botão Voltar para Configurações */}
                   {pathname !== '/configuracoes' && (
                     <Link href="/configuracoes">
                       <Button
                         variant="outline"
-                        className="mb-4 h-auto w-full justify-start gap-3 p-3 border-dashed"
+                        className="mb-4 h-auto w-full justify-start gap-3 border-dashed p-3"
                       >
                         <ArrowLeft className="h-4 w-4 flex-shrink-0" />
                         <div className="text-left">
@@ -107,7 +114,7 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
                       </Button>
                     </Link>
                   )}
-                  
+
                   {menuItems.map((item) => {
                     const Icon = item.icon
                     const isActive = pathname === item.href
