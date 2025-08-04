@@ -14,43 +14,7 @@ const STORAGE_KEYS = {
   CATEGORIES: 'quaint-money-categories',
 }
 
-const DEFAULT_CATEGORIES: Category[] = [
-  {
-    id: '1',
-    name: 'Alimentação',
-    color: '#10B981',
-    type: 'expense',
-    createdAt: new Date(),
-  },
-  {
-    id: '2',
-    name: 'Moradia',
-    color: '#3B82F6',
-    type: 'expense',
-    createdAt: new Date(),
-  },
-  {
-    id: '3',
-    name: 'Transporte',
-    color: '#F59E0B',
-    type: 'expense',
-    createdAt: new Date(),
-  },
-  {
-    id: '4',
-    name: 'Salário',
-    color: '#10B981',
-    type: 'income',
-    createdAt: new Date(),
-  },
-  {
-    id: '5',
-    name: 'Freelance',
-    color: '#8B5CF6',
-    type: 'income',
-    createdAt: new Date(),
-  },
-]
+// Removido DEFAULT_CATEGORIES - agora só carrega dados do localStorage ou mock
 
 export function useFinancialData() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -92,16 +56,11 @@ export function useFinancialData() {
             }),
           )
           setCategories(parsedCategories)
-        } else {
-          setCategories(DEFAULT_CATEGORIES)
-          localStorage.setItem(
-            STORAGE_KEYS.CATEGORIES,
-            JSON.stringify(DEFAULT_CATEGORIES),
-          )
         }
+        // Não criar categorias padrão - deixar vazio até que dados sejam inseridos
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
-        setCategories(DEFAULT_CATEGORIES)
+        // Não definir categorias padrão em caso de erro
       } finally {
         setIsLoading(false)
       }

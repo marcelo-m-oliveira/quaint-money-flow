@@ -4,6 +4,8 @@ import { ArrowRight, Bell, CreditCard, Settings, Tag, User } from 'lucide-react'
 import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useFinancialData } from '@/lib/hooks/use-financial-data'
 
 const quickActions = [
   {
@@ -45,6 +47,15 @@ const quickActions = [
 ]
 
 export default function ConfiguracoesPage() {
+  const { categories, isLoading: categoriesLoading } = useFinancialData()
+  const { accounts, isLoading: accountsLoading } = useAccounts()
+
+  // Calcular estatísticas
+  const expenseCategories = categories.filter((cat) => cat.type === 'expense')
+  const incomeCategories = categories.filter((cat) => cat.type === 'income')
+  const connectedAccounts = accounts.length
+  const activeAlerts = 0 // Por enquanto fixo, pode ser implementado futuramente
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -96,9 +107,13 @@ export default function ConfiguracoesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">
+              {categoriesLoading ? '...' : categories.length}
+            </div>
             <p className="text-xs text-muted-foreground">
-              8 despesas, 4 receitas
+              {categoriesLoading
+                ? 'Carregando...'
+                : `${expenseCategories.length} despesas, ${incomeCategories.length} receitas`}
             </p>
           </CardContent>
         </Card>
@@ -110,9 +125,15 @@ export default function ConfiguracoesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {accountsLoading ? '...' : connectedAccounts}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Nenhuma conta conectada
+              {accountsLoading
+                ? 'Carregando...'
+                : connectedAccounts === 0
+                  ? 'Nenhuma conta conectada'
+                  : `${connectedAccounts} conta${connectedAccounts > 1 ? 's' : ''} conectada${connectedAccounts > 1 ? 's' : ''}`}
             </p>
           </CardContent>
         </Card>
@@ -124,9 +145,11 @@ export default function ConfiguracoesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{activeAlerts}</div>
             <p className="text-xs text-muted-foreground">
-              Nenhum alerta configurado
+              {activeAlerts === 0
+                ? 'Nenhum alerta configurado'
+                : `${activeAlerts} alerta${activeAlerts > 1 ? 's' : ''} ativo${activeAlerts > 1 ? 's' : ''}`}
             </p>
           </CardContent>
         </Card>
