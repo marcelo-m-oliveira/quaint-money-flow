@@ -1,9 +1,10 @@
 'use client'
 
-import { Bell, CreditCard, Database, Settings, Tag, User } from 'lucide-react'
+import { ArrowLeft, Bell, CreditCard, Database, Settings, Tag, User } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { Topbar } from '@/components/topbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -75,19 +76,11 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80">
-              <Settings className="h-6 w-6 text-primary" />
-              <span className="text-lg font-semibold">Configurações</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Topbar Principal */}
+      <Topbar />
 
       <div className="container mx-auto px-4 py-6">
+        
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Sidebar */}
           <div className="lg:col-span-1">
@@ -97,6 +90,24 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
                   <h3 className="mb-4 text-sm font-medium text-muted-foreground">
                     CONFIGURAÇÕES
                   </h3>
+                  
+                  {/* Botão Voltar para Configurações */}
+                  {pathname !== '/configuracoes' && (
+                    <Link href="/configuracoes">
+                      <Button
+                        variant="outline"
+                        className="mb-4 h-auto w-full justify-start gap-3 p-3 border-dashed"
+                      >
+                        <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">
+                            Voltar para Configurações
+                          </div>
+                        </div>
+                      </Button>
+                    </Link>
+                  )}
+                  
                   {menuItems.map((item) => {
                     const Icon = item.icon
                     const isActive = pathname === item.href

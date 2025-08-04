@@ -47,30 +47,38 @@ export function Topbar() {
 
           {/* Menu de Navegação Central */}
           <nav className="hidden items-center gap-6 md:flex">
-            <Button
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Visão Geral
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Transações
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Relatórios
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Metas
-            </Button>
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Visão Geral
+              </Button>
+            </Link>
+            <Link href="/transacoes">
+              <Button
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Transações
+              </Button>
+            </Link>
+            <Link href="/relatorios">
+              <Button
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Relatórios
+              </Button>
+            </Link>
+            <Link href="/metas">
+              <Button
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Metas
+              </Button>
+            </Link>
           </nav>
 
           {/* Menu de Ações */}
@@ -142,10 +150,6 @@ export function Topbar() {
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -189,10 +193,12 @@ export function Topbar() {
                   <User className="mr-2 h-4 w-4" />
                   <span>Perfil</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
-                </DropdownMenuItem>
+                <Link href="/configuracoes">
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem>
                   <Zap className="mr-2 h-4 w-4" />
                   <span>Upgrade</span>
