@@ -133,11 +133,6 @@ export function DatePicker({
     }
   }
 
-  const handleTodayClick = () => {
-    const today = new Date()
-    handleCalendarSelect(today)
-  }
-
   return (
     <div className={cn('relative', className)}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -150,7 +145,7 @@ export function DatePicker({
               placeholder={placeholder}
               disabled={disabled}
               required={required}
-              className="pr-10"
+              className={cn('pr-10', className)}
               maxLength={10}
             />
             <Button
@@ -166,26 +161,13 @@ export function DatePicker({
           </div>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <div className="p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-medium">Selecionar data</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTodayClick}
-                className="h-7 text-xs"
-              >
-                Hoje
-              </Button>
-            </div>
-            <Calendar
-              mode="single"
-              selected={inputDate}
-              onSelect={handleCalendarSelect}
-              locale={ptBR}
-              initialFocus
-            />
-          </div>
+          <Calendar
+            mode="single"
+            selected={inputDate}
+            onSelect={handleCalendarSelect}
+            locale={ptBR}
+            initialFocus
+          />
         </PopoverContent>
       </Popover>
     </div>
