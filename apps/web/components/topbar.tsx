@@ -19,6 +19,8 @@ import { useState } from 'react'
 
 import { useTheme } from '@/lib/hooks/use-theme'
 
+import { MockDataLoader } from './mock-data-loader'
+import { MockDataStatus } from './mock-data-status'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import {
@@ -83,6 +85,9 @@ export function Topbar() {
 
           {/* Menu de Ações */}
           <div className="flex items-center gap-4">
+            {/* Mock Data Loader - apenas para desenvolvimento */}
+            <MockDataLoader />
+            <MockDataStatus />
             {/* Menu de Configurações */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
