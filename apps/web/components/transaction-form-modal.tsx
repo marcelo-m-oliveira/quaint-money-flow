@@ -1,10 +1,13 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Check, Save } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 
 import { formatDateForInput } from '@/lib/format'
-import { Category, Transaction, TransactionFormData } from '@/lib/types'
+import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
+import { Category, Transaction } from '@/lib/types'
 
 import { Button } from './ui/button'
 import { CurrencyInput } from './ui/currency-input'
@@ -24,7 +27,7 @@ interface TransactionFormModalProps {
   isOpen: boolean
   onClose: () => void
   transaction?: Transaction
-  onSubmit: (data: TransactionFormData, shouldClose?: boolean) => void
+  onSubmit: (data: TransactionFormSchema, shouldClose?: boolean) => void
   categories: Category[]
   type: 'income' | 'expense'
   title: string
@@ -39,63 +42,87 @@ export function TransactionFormModal({
   type,
   title,
 }: TransactionFormModalProps) {
-  const [formData, setFormData] = useState<TransactionFormData>({
-    description: transaction?.description || '',
-    amount: transaction?.amount.toString() || '',
-    type: transaction?.type || type,
-    categoryId: transaction?.categoryId || '',
-    date: transaction
-      ? formatDateForInput(transaction.date)
-      : formatDateForInput(new Date()),
-  })
-
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    transaction?.date || new Date(),
-  )
-
-  const handleSubmit = (e: React.FormEvent, shouldCreateAnother = false) => {
-    e.preventDefault()
-    if (!formData.description || !formData.amount || !formData.categoryId) {
-      // TODO: Implementar toast para mostrar erro
-      console.error('Por favor, preencha todos os campos obrigatórios.')
-      return
-    }
-
-    // Passa shouldClose baseado em shouldCreateAnother
-    const shouldClose = !shouldCreateAnother
-    onSubmit(formData, shouldClose)
-
-    // Sempre limpa o formulário após salvar
-    const today = new Date()
-    setFormData({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch,
+    control,
+  } = useForm<TransactionFormSchema>({
+    resolver: zodResolver(transactionSchema),
+    defaultValues: {
       description: '',
       amount: '',
       type,
       categoryId: '',
-      date: formatDateForInput(today),
-    })
-    setSelectedDate(today)
+      date: formatDateForInput(new Date()),
+    },
+  })
+
+  // Atualizar formulário quando transaction mudar
+  useEffect(() => {
+    if (transaction) {
+      reset({
+        description: transaction.description,
+        amount: transaction.amount.toString(),
+        type: transaction.type,
+        categoryId: transaction.categoryId,
+        date: formatDateForInput(transaction.date),
+      })
+    } else {
+      reset({
+        description: '',
+        amount: '',
+        type,
+        categoryId: '',
+        date: formatDateForInput(new Date()),
+      })
+    }
+  }, [transaction, type, reset])
+
+  const handleFormSubmit = (
+    data: TransactionFormSchema,
+    shouldCreateAnother = false,
+  ) => {
+    const shouldClose = !shouldCreateAnother
+    onSubmit(data, shouldClose)
+
+    if (!shouldCreateAnother) {
+      handleClose()
+    } else {
+      // Limpar formulário mas manter tipo e data
+      reset({
+        description: '',
+        amount: '',
+        type,
+        categoryId: '',
+        date: formatDateForInput(new Date()),
+      })
+    }
+  }
+
+  // Wrapper para o react-hook-form
+  const onSubmitForm = (data: TransactionFormSchema) => {
+    handleFormSubmit(data, false)
   }
 
   const handleClose = () => {
-    const today = new Date()
-    setFormData({
-      description: '',
-      amount: '',
-      type,
-      categoryId: '',
-      date: formatDateForInput(today),
-    })
-    setSelectedDate(today)
+    reset()
     onClose()
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setSelectedDate(date)
     if (date) {
-      setFormData({ ...formData, date: formatDateForInput(date) })
+      setValue('date', formatDateForInput(date))
     }
   }
+
+  const watchedDate = watch('date')
+  const selectedDate = watchedDate
+    ? new Date(watchedDate.split('/').reverse().join('-'))
+    : new Date()
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -104,7 +131,7 @@ export function TransactionFormModal({
           <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
           {/* Descrição */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-sm font-medium">
@@ -112,14 +139,15 @@ export function TransactionFormModal({
             </Label>
             <Input
               id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              {...register('description')}
               placeholder="Digite a descrição..."
               className="h-12"
-              required
             />
+            {errors.description && (
+              <p className="text-sm text-red-500">
+                {errors.description.message}
+              </p>
+            )}
           </div>
 
           {/* Valor e Data */}
@@ -132,17 +160,23 @@ export function TransactionFormModal({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                   R$
                 </span>
-                <CurrencyInput
-                  id="amount"
-                  value={formData.amount}
-                  onChange={(value) =>
-                    setFormData({ ...formData, amount: value })
-                  }
-                  className="h-12 pl-10"
-                  placeholder="0,00"
-                  required
+                <Controller
+                  name="amount"
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
+                    <CurrencyInput
+                      id="amount"
+                      value={value}
+                      onChange={onChange}
+                      className="h-12 pl-10"
+                      placeholder="0,00"
+                    />
+                  )}
                 />
               </div>
+              {errors.amount && (
+                <p className="text-sm text-red-500">{errors.amount.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -165,10 +199,8 @@ export function TransactionFormModal({
               Categoria
             </Label>
             <Select
-              value={formData.categoryId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, categoryId: value })
-              }
+              value={watch('categoryId')}
+              onValueChange={(value) => setValue('categoryId', value)}
             >
               <SelectTrigger className="h-12">
                 <SelectValue placeholder="Buscar a categoria..." />
@@ -203,6 +235,11 @@ export function TransactionFormModal({
                   ))}
               </SelectContent>
             </Select>
+            {errors.categoryId && (
+              <p className="text-sm text-red-500">
+                {errors.categoryId.message}
+              </p>
+            )}
           </div>
 
           {/* Footer com botões */}
@@ -216,15 +253,14 @@ export function TransactionFormModal({
               Cancelar
             </Button>
             <Button
-              type="button"
-              onClick={(e) => handleSubmit(e, false)}
+              type="submit"
               className="h-12 bg-green-600 px-4 text-white hover:bg-green-700"
             >
               <Save className="h-4 w-4" />
             </Button>
             <Button
               type="button"
-              onClick={(e) => handleSubmit(e, true)}
+              onClick={handleSubmit((data) => handleFormSubmit(data, true))}
               className="h-12 flex-1 bg-green-600 text-white hover:bg-green-700"
             >
               <Check className="mr-2 h-4 w-4" />

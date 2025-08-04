@@ -1,5 +1,6 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Book,
   Briefcase,
@@ -44,8 +45,10 @@ import {
   Zap,
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 
-import { Category, CategoryFormData } from '@/lib/types'
+import { CategoryFormSchema, categorySchema } from '@/lib/schemas'
+import { Category } from '@/lib/types'
 
 import {
   Accordion,
@@ -71,7 +74,7 @@ interface CategoryFormModalProps {
   isOpen: boolean
   onClose: () => void
   category?: Category
-  onSubmit: (data: CategoryFormData) => void
+  onSubmit: (data: CategoryFormSchema) => void
   onDelete?: (id: string) => void
   categories: Category[]
   categoryType?: 'income' | 'expense'
@@ -161,21 +164,32 @@ export function CategoryFormModal({
   categoryType = 'expense',
   parentCategory,
 }: CategoryFormModalProps) {
-  const [formData, setFormData] = useState<CategoryFormData>({
-    name: category?.name || '',
-    color: category?.color || PRESET_COLORS[0],
-    type: category?.type || categoryType,
-    parentId: category?.parentId || parentCategory?.id,
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CategoryFormSchema>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: '',
+      color: PRESET_COLORS[0],
+      type: categoryType,
+      parentId: parentCategory?.id,
+    },
   })
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [categoryMode, setCategoryMode] = useState<'main' | 'sub'>(
     category?.parentId || parentCategory ? 'sub' : 'main',
   )
   const [selectedIcon, setSelectedIcon] = useState(PRESET_ICONS[0])
 
-  // Resetar formData quando as props mudarem
+  // Resetar form quando as props mudarem
   useEffect(() => {
-    setFormData({
+    reset({
       name: category?.name || '',
       color: category?.color || PRESET_COLORS[0],
       type: category?.type || categoryType,
@@ -183,20 +197,13 @@ export function CategoryFormModal({
     })
     setCategoryMode(category?.parentId || parentCategory ? 'sub' : 'main')
     setSelectedIcon(PRESET_ICONS[0])
-  }, [category, categoryType, parentCategory])
+  }, [category, categoryType, parentCategory, reset])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.name.trim()) {
-      // TODO: Implementar toast para mostrar erro
-      console.error('Por favor, digite o nome da categoria.')
-      return
-    }
-
+  const onSubmitForm = (data: CategoryFormSchema) => {
     // Verificar se já existe uma categoria com o mesmo nome (exceto a atual)
     const existingCategory = categories.find(
       (cat) =>
-        cat.name.toLowerCase() === formData.name.toLowerCase() &&
+        cat.name.toLowerCase() === data.name.toLowerCase() &&
         cat.id !== category?.id,
     )
 
@@ -208,8 +215,8 @@ export function CategoryFormModal({
 
     // Garantir que o parentId seja mantido corretamente baseado no categoryMode
     const finalFormData = {
-      ...formData,
-      parentId: categoryMode === 'sub' ? formData.parentId : undefined,
+      ...data,
+      parentId: categoryMode === 'sub' ? data.parentId : undefined,
     }
 
     onSubmit(finalFormData)
@@ -217,7 +224,7 @@ export function CategoryFormModal({
   }
 
   const handleClose = () => {
-    setFormData({
+    reset({
       name: '',
       color: PRESET_COLORS[0],
       type: categoryType,
@@ -258,7 +265,7 @@ export function CategoryFormModal({
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
             {/* Seleção do tipo de categoria - apenas para criação */}
             {!category && (
               <div className="space-y-4">
@@ -266,11 +273,10 @@ export function CategoryFormModal({
                   value={categoryMode}
                   onValueChange={(value: 'main' | 'sub') => {
                     setCategoryMode(value)
-                    setFormData({
-                      ...formData,
-                      parentId:
-                        value === 'main' ? undefined : formData.parentId,
-                    })
+                    setValue(
+                      'parentId',
+                      value === 'main' ? undefined : watch('parentId'),
+                    )
                   }}
                   className="flex gap-6"
                 >
@@ -301,7 +307,7 @@ export function CategoryFormModal({
               <div className="flex items-center gap-4 duration-300 animate-in fade-in-0 slide-in-from-top-2">
                 <div
                   className="flex h-20 w-20 items-center justify-center rounded-full text-white transition-all duration-300"
-                  style={{ backgroundColor: formData.color }}
+                  style={{ backgroundColor: watch('color') }}
                 >
                   {selectedIcon &&
                     React.createElement(selectedIcon.icon, {
@@ -316,14 +322,15 @@ export function CategoryFormModal({
                     </Label>
                     <Input
                       id="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
+                      {...register('name')}
                       placeholder="Digite o nome da categoria"
                       className="mt-1 transition-all duration-200"
-                      required
                     />
+                    {errors.name && (
+                      <p className="text-sm text-red-500">
+                        {errors.name.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -338,10 +345,7 @@ export function CategoryFormModal({
                   </Label>
                   <Input
                     id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    {...register('name')}
                     placeholder="Digite o nome da subcategoria"
                     className="mt-1 transition-all duration-200"
                     required
@@ -351,10 +355,8 @@ export function CategoryFormModal({
                 <div>
                   <Label className="text-sm font-medium">Categoria pai</Label>
                   <Select
-                    value={formData.parentId || ''}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, parentId: value })
-                    }
+                    value={watch('parentId') || ''}
+                    onValueChange={(value) => setValue('parentId', value)}
                   >
                     <SelectTrigger className="w-full transition-all duration-200">
                       <SelectValue placeholder="Selecione a categoria pai" />
@@ -385,14 +387,13 @@ export function CategoryFormModal({
                 </Label>
                 <Input
                   id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  {...register('name')}
                   placeholder="Digite o nome da subcategoria"
                   className="mt-1 transition-all duration-200"
-                  required
                 />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
               </div>
             )}
 
@@ -447,11 +448,9 @@ export function CategoryFormModal({
                             <button
                               key={index}
                               type="button"
-                              onClick={() =>
-                                setFormData({ ...formData, color })
-                              }
+                              onClick={() => setValue('color', color)}
                               className={`h-8 w-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
-                                formData.color === color
+                                watch('color') === color
                                   ? 'scale-110 border-foreground shadow-lg'
                                   : 'border-transparent'
                               }`}
@@ -466,11 +465,9 @@ export function CategoryFormModal({
                             <button
                               key={index + 11}
                               type="button"
-                              onClick={() =>
-                                setFormData({ ...formData, color })
-                              }
+                              onClick={() => setValue('color', color)}
                               className={`h-8 w-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
-                                formData.color === color
+                                watch('color') === color
                                   ? 'scale-110 border-foreground shadow-lg'
                                   : 'border-transparent'
                               }`}
@@ -491,10 +488,8 @@ export function CategoryFormModal({
               <div className="space-y-2 delay-100 duration-500 animate-in fade-in-0 slide-in-from-bottom-2">
                 <Label className="text-sm font-medium">Categoria pai</Label>
                 <Select
-                  value={formData.parentId || ''}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, parentId: value })
-                  }
+                  value={watch('parentId') || ''}
+                  onValueChange={(value) => setValue('parentId', value)}
                 >
                   <SelectTrigger className="w-full transition-all duration-200">
                     <SelectValue placeholder="Selecione a categoria pai" />
@@ -532,8 +527,8 @@ export function CategoryFormModal({
                 type="submit"
                 className="h-12 bg-primary px-8 transition-all duration-200 hover:scale-105 hover:bg-primary/90"
                 disabled={
-                  !formData.name.trim() ||
-                  (categoryMode === 'sub' && !formData.parentId)
+                  !watch('name')?.trim() ||
+                  (categoryMode === 'sub' && !watch('parentId'))
                 }
               >
                 {category

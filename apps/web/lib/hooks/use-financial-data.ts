@@ -236,6 +236,7 @@ export function useFinancialData() {
           id: '',
           name: 'Categoria não encontrada',
           color: '#6B7280',
+          type: 'expense' as const,
           createdAt: new Date(),
         },
       }
