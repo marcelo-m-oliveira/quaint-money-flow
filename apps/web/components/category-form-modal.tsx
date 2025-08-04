@@ -1,47 +1,47 @@
 'use client'
 
 import {
+  Book,
   Briefcase,
+  Building,
+  Camera,
   Car,
   Clock,
   Coffee,
   CreditCard,
   DollarSign,
+  Dumbbell,
   FileText,
+  Fuel,
+  Gamepad2,
+  Gift,
+  GraduationCap,
   Heart,
   Home,
   MapPin,
   Monitor,
   Moon,
+  Music,
+  PiggyBank,
+  Plane,
   Plus,
+  Scissors,
   Settings,
+  Shirt,
   ShoppingCart,
+  Smartphone,
   Star,
+  Stethoscope,
   Sun,
   Trash2,
+  TrendingUp,
   Truck,
   User,
-  Wrench,
   Utensils,
-  Gamepad2,
-  Book,
-  Plane,
-  Gift,
-  Smartphone,
-  Shirt,
-  Fuel,
-  GraduationCap,
-  Stethoscope,
-  Dumbbell,
-  Music,
-  Camera,
-  Scissors,
-  PiggyBank,
-  TrendingUp,
   Wallet,
-  Building,
-  Zap,
   Wifi,
+  Wrench,
+  Zap,
 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 
@@ -287,7 +287,7 @@ export function CategoryFormModal({
 
             {/* Avatar/Ícone da categoria - apenas para categoria principal */}
             {categoryMode === 'main' && (
-              <div className="flex items-center gap-4 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-4 duration-300 animate-in fade-in-0 slide-in-from-top-2">
                 <div
                   className="flex h-20 w-20 items-center justify-center rounded-full text-white transition-all duration-300"
                   style={{ backgroundColor: formData.color }}
@@ -320,7 +320,7 @@ export function CategoryFormModal({
 
             {/* Nome da subcategoria - apenas para subcategoria */}
             {categoryMode === 'sub' && (
-              <div className="animate-in fade-in-0 slide-in-from-top-2 duration-300">
+              <div className="duration-300 animate-in fade-in-0 slide-in-from-top-2">
                 <Label htmlFor="name" className="text-sm font-medium">
                   Nome da subcategoria
                 </Label>
@@ -339,10 +339,10 @@ export function CategoryFormModal({
 
             {/* Seletor de ícones - apenas para categoria principal */}
             {categoryMode === 'main' && (
-              <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-100">
+              <div className="delay-100 duration-500 animate-in fade-in-0 slide-in-from-bottom-2">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="icons">
-                    <AccordionTrigger className="text-sm font-medium hover:no-underline transition-all duration-200">
+                    <AccordionTrigger className="text-sm font-medium transition-all duration-200 hover:no-underline">
                       Escolha um ícone
                     </AccordionTrigger>
                     <AccordionContent>
@@ -354,9 +354,9 @@ export function CategoryFormModal({
                               key={index}
                               type="button"
                               onClick={() => setSelectedIcon(icon)}
-                              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 hover:bg-background hover:scale-105 ${
+                              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 hover:bg-background ${
                                 selectedIcon === icon
-                                  ? 'bg-background shadow-md scale-105'
+                                  ? 'scale-105 bg-background shadow-md'
                                   : 'bg-muted-foreground/10'
                               }`}
                               title={icon.name}
@@ -374,10 +374,10 @@ export function CategoryFormModal({
 
             {/* Seletor de cores - apenas para categoria principal */}
             {categoryMode === 'main' && (
-              <div className="animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-200">
+              <div className="delay-200 duration-500 animate-in fade-in-0 slide-in-from-bottom-2">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="colors">
-                    <AccordionTrigger className="text-sm font-medium hover:no-underline transition-all duration-200">
+                    <AccordionTrigger className="text-sm font-medium transition-all duration-200 hover:no-underline">
                       Escolha uma cor
                     </AccordionTrigger>
                     <AccordionContent>
@@ -388,10 +388,12 @@ export function CategoryFormModal({
                             <button
                               key={index}
                               type="button"
-                              onClick={() => setFormData({ ...formData, color })}
+                              onClick={() =>
+                                setFormData({ ...formData, color })
+                              }
                               className={`h-8 w-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
                                 formData.color === color
-                                  ? 'border-foreground shadow-lg scale-110'
+                                  ? 'scale-110 border-foreground shadow-lg'
                                   : 'border-transparent'
                               }`}
                               style={{ backgroundColor: color }}
@@ -405,10 +407,12 @@ export function CategoryFormModal({
                             <button
                               key={index + 11}
                               type="button"
-                              onClick={() => setFormData({ ...formData, color })}
+                              onClick={() =>
+                                setFormData({ ...formData, color })
+                              }
                               className={`h-8 w-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
                                 formData.color === color
-                                  ? 'border-foreground shadow-lg scale-110'
+                                  ? 'scale-110 border-foreground shadow-lg'
                                   : 'border-transparent'
                               }`}
                               style={{ backgroundColor: color }}
@@ -425,7 +429,7 @@ export function CategoryFormModal({
 
             {/* Seleção de categoria pai para subcategorias */}
             {categoryMode === 'sub' && (
-              <div className="space-y-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-100">
+              <div className="space-y-2 delay-100 duration-500 animate-in fade-in-0 slide-in-from-bottom-2">
                 <Label className="text-sm font-medium">Categoria pai</Label>
                 <Select
                   value={formData.parentId || ''}
@@ -467,14 +471,14 @@ export function CategoryFormModal({
               )}
               <Button
                 type="submit"
-                className="h-12 bg-primary px-8 hover:bg-primary/90 transition-all duration-200 hover:scale-105"
+                className="h-12 bg-primary px-8 transition-all duration-200 hover:scale-105 hover:bg-primary/90"
                 disabled={
                   !formData.name.trim() ||
                   (categoryMode === 'sub' && !formData.parentId)
                 }
               >
-                {category 
-                  ? `Atualizar ${categoryMode === 'main' ? 'categoria' : 'subcategoria'}` 
+                {category
+                  ? `Atualizar ${categoryMode === 'main' ? 'categoria' : 'subcategoria'}`
                   : `Criar ${categoryMode === 'main' ? 'categoria' : 'subcategoria'}`}
               </Button>
             </div>

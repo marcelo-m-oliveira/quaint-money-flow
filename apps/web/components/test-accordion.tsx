@@ -10,7 +10,7 @@ import {
 export function TestAccordion() {
   return (
     <div className="p-4">
-      <h2 className="text-lg font-semibold mb-4">Teste do Accordion</h2>
+      <h2 className="mb-4 text-lg font-semibold">Teste do Accordion</h2>
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="item-1">
           <AccordionTrigger>Teste 1</AccordionTrigger>

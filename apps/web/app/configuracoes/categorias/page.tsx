@@ -222,8 +222,6 @@ export default function CategoriasPage() {
 
   return (
     <>
-      
-      
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">

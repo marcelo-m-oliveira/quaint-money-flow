@@ -1,7 +1,7 @@
 'use client'
 
+import { Car, Heart, Home } from 'lucide-react'
 import React, { useState } from 'react'
-import { Home, Heart, Car } from 'lucide-react'
 
 import { Category, CategoryFormData } from '@/lib/types'
 
@@ -57,7 +57,7 @@ export function CategoryFormModalSimple({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
             {category ? 'Editar Categoria' : 'Nova Categoria'}
@@ -89,7 +89,7 @@ export function CategoryFormModalSimple({
                 Escolha um ícone
               </AccordionTrigger>
               <AccordionContent>
-                <div className="grid grid-cols-3 gap-2 p-4 bg-muted rounded-lg">
+                <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-4">
                   {SIMPLE_ICONS.map((icon, index) => {
                     const IconComponent = icon.icon
                     return (
@@ -97,14 +97,14 @@ export function CategoryFormModalSimple({
                         key={index}
                         type="button"
                         onClick={() => setSelectedIcon(icon)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-background ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-full transition-all hover:bg-background ${
                           selectedIcon === icon
                             ? 'bg-background shadow-md'
                             : 'bg-muted-foreground/10'
                         }`}
                         title={icon.name}
                       >
-                        <IconComponent className="w-5 h-5 text-muted-foreground" />
+                        <IconComponent className="h-5 w-5 text-muted-foreground" />
                       </button>
                     )
                   })}
@@ -120,13 +120,13 @@ export function CategoryFormModalSimple({
                 Escolha uma cor
               </AccordionTrigger>
               <AccordionContent>
-                <div className="flex gap-2 justify-center p-4 bg-muted rounded-lg">
+                <div className="flex justify-center gap-2 rounded-lg bg-muted p-4">
                   {SIMPLE_COLORS.map((color, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => setFormData({ ...formData, color })}
-                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                      className={`h-8 w-8 rounded-full border-2 transition-all hover:scale-110 ${
                         formData.color === color
                           ? 'border-foreground shadow-lg'
                           : 'border-transparent'
