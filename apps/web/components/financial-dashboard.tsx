@@ -195,22 +195,22 @@ export function FinancialDashboard() {
                   <div className="flex flex-wrap justify-center gap-4 md:justify-start">
                     <Button
                       variant="outline"
-                      className="flex h-auto w-full flex-col items-center justify-center gap-2 sm:w-auto"
+                      className="flex h-auto w-full flex-col items-center justify-center gap-2 p-4 sm:w-auto [&_svg]:!size-9"
                       onClick={() => setIsExpenseDialogOpen(true)}
                     >
-                      <CircleMinus className="h-8 w-8 text-red-600" />
-                      <span className="text-sm font-medium text-red-600">
+                      <CircleMinus className="text-red-600" />
+                      <span className="text-xs font-medium opacity-40">
                         DESPESA
                       </span>
                     </Button>
 
                     <Button
                       variant="outline"
-                      className="flex h-auto w-full flex-col items-center justify-center gap-2 sm:w-auto"
+                      className="flex h-auto w-full flex-col items-center justify-center gap-2 p-4 sm:w-auto [&_svg]:!size-9"
                       onClick={() => setIsIncomeDialogOpen(true)}
                     >
-                      <CirclePlus className="h-8 w-8 text-green-600" />
-                      <span className="text-sm font-medium text-green-600">
+                      <CirclePlus className="text-green-600" />
+                      <span className="text-xs font-medium opacity-40">
                         RECEITA
                       </span>
                     </Button>
