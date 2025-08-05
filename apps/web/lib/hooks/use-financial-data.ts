@@ -14,38 +14,7 @@ const STORAGE_KEYS = {
   CATEGORIES: 'quaint-money-categories',
 }
 
-const DEFAULT_CATEGORIES: Category[] = [
-  {
-    id: '1',
-    name: 'Alimentação',
-    color: '#10B981',
-    createdAt: new Date(),
-  },
-  {
-    id: '2',
-    name: 'Moradia',
-    color: '#3B82F6',
-    createdAt: new Date(),
-  },
-  {
-    id: '3',
-    name: 'Transporte',
-    color: '#F59E0B',
-    createdAt: new Date(),
-  },
-  {
-    id: '4',
-    name: 'Salário',
-    color: '#10B981',
-    createdAt: new Date(),
-  },
-  {
-    id: '5',
-    name: 'Freelance',
-    color: '#8B5CF6',
-    createdAt: new Date(),
-  },
-]
+// Removido DEFAULT_CATEGORIES - agora só carrega dados do localStorage ou mock
 
 export function useFinancialData() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -63,7 +32,13 @@ export function useFinancialData() {
 
         if (storedTransactions) {
           const parsedTransactions = JSON.parse(storedTransactions).map(
-            (t: any) => ({
+            (
+              t: Omit<Transaction, 'date' | 'createdAt' | 'updatedAt'> & {
+                date: string
+                createdAt: string
+                updatedAt: string
+              },
+            ) => ({
               ...t,
               date: new Date(t.date),
               createdAt: new Date(t.createdAt),
@@ -75,22 +50,17 @@ export function useFinancialData() {
 
         if (storedCategories) {
           const parsedCategories = JSON.parse(storedCategories).map(
-            (c: any) => ({
+            (c: Omit<Category, 'createdAt'> & { createdAt: string }) => ({
               ...c,
               createdAt: new Date(c.createdAt),
             }),
           )
           setCategories(parsedCategories)
-        } else {
-          setCategories(DEFAULT_CATEGORIES)
-          localStorage.setItem(
-            STORAGE_KEYS.CATEGORIES,
-            JSON.stringify(DEFAULT_CATEGORIES),
-          )
         }
+        // Não criar categorias padrão - deixar vazio até que dados sejam inseridos
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
-        setCategories(DEFAULT_CATEGORIES)
+        // Não definir categorias padrão em caso de erro
       } finally {
         setIsLoading(false)
       }
@@ -165,6 +135,8 @@ export function useFinancialData() {
       id: Date.now().toString(),
       name: data.name,
       color: data.color,
+      type: data.type,
+      parentId: data.parentId,
       createdAt: new Date(),
     }
 
@@ -180,6 +152,8 @@ export function useFinancialData() {
           ...category,
           name: data.name,
           color: data.color,
+          type: data.type,
+          parentId: data.parentId,
         }
       }
       return category
@@ -221,6 +195,7 @@ export function useFinancialData() {
           id: '',
           name: 'Categoria não encontrada',
           color: '#6B7280',
+          type: 'expense' as const,
           createdAt: new Date(),
         },
       }
