@@ -12,9 +12,9 @@ import {
   TrendingUp,
   Wallet,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import { useBankIconsCache } from '@/lib/contexts/bank-icons-context'
+import { useBankIcons } from '@/lib/contexts/bank-icons-context'
 
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
@@ -54,12 +54,19 @@ export function IconSelector({
 }: IconSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'banks' | 'generic'>('banks')
-  const { searchBanksWithCache, isLoading } = useBankIconsCache()
+  const { searchBanks, isLoading, loadBankIcons } = useBankIcons()
+
+  // Carrega os ícones dos bancos apenas quando o modal for aberto
+  useEffect(() => {
+    if (isOpen) {
+      loadBankIcons()
+    }
+  }, [isOpen, loadBankIcons])
 
   // Usa useMemo para otimizar a busca
   const filteredBanks = useMemo(() => {
-    return searchBanksWithCache(searchQuery)
-  }, [searchQuery, searchBanksWithCache])
+    return searchBanks(searchQuery)
+  }, [searchQuery, searchBanks])
 
   const handleIconSelect = (iconId: string, iconType: 'bank' | 'generic') => {
     onSelect(iconId, iconType)
