@@ -132,11 +132,14 @@ export function AccountFormModal({
       const bankIcon = BANK_ICONS.find((bank) => bank.id === icon)
       if (bankIcon) {
         return (
-          <img
-            src={bankIcon.icon}
-            alt={bankIcon.name}
-            className="h-16 w-16 object-contain"
-          />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-background p-1">
+            <img
+              src={bankIcon.icon}
+              alt={bankIcon.name}
+              className="h-full w-full rounded-full object-contain"
+              loading="lazy"
+            />
+          </div>
         )
       } else {
         // Fallback para ícone genérico se não encontrar o banco

@@ -6,14 +6,15 @@ import {
   CreditCard,
   DollarSign,
   Landmark,
+  Loader2,
   PiggyBank,
   Search,
   TrendingUp,
   Wallet,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
-import { searchBanks } from '@/lib/data/banks'
+import { useBankIconsCache } from '@/lib/contexts/bank-icons-context'
 
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
@@ -53,8 +54,12 @@ export function IconSelector({
 }: IconSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'banks' | 'generic'>('banks')
+  const { searchBanksWithCache, isLoading } = useBankIconsCache()
 
-  const filteredBanks = searchBanks(searchQuery)
+  // Usa useMemo para otimizar a busca
+  const filteredBanks = useMemo(() => {
+    return searchBanksWithCache(searchQuery)
+  }, [searchQuery, searchBanksWithCache])
 
   const handleIconSelect = (iconId: string, iconType: 'bank' | 'generic') => {
     onSelect(iconId, iconType)
@@ -128,42 +133,56 @@ export function IconSelector({
               </div>
 
               <div className="max-h-80 overflow-y-auto">
-                <div className="grid grid-cols-5 gap-2 p-1">
-                  {filteredBanks.map((bank) => (
-                    <TooltipProvider key={bank.id}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => handleIconSelect(bank.id, 'bank')}
-                            className={`flex h-16 w-16 items-center justify-center rounded-full border-2 p-1 transition-all duration-200 hover:scale-105 hover:shadow-md ${
-                              selectedIcon === bank.id &&
-                              selectedIconType === 'bank'
-                                ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20'
-                                : 'border-border bg-transparent hover:border-primary/50'
-                            }`}
-                          >
-                            <img
-                              src={bank.icon}
-                              alt={bank.name}
-                              className="h-full w-full rounded-full object-contain"
-                            />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{bank.name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
-                </div>
-              </div>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      Carregando ícones...
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-5 gap-2 p-1">
+                      {filteredBanks.map((bank) => (
+                        <TooltipProvider key={bank.id}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() =>
+                                  handleIconSelect(bank.id, 'bank')
+                                }
+                                className={`flex h-16 w-16 items-center justify-center rounded-full border-2 p-1 transition-all duration-200 hover:scale-105 hover:shadow-md ${
+                                  selectedIcon === bank.id &&
+                                  selectedIconType === 'bank'
+                                    ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20'
+                                    : 'border-border bg-transparent hover:border-primary/50'
+                                }`}
+                              >
+                                <img
+                                  src={bank.icon}
+                                  alt={bank.name}
+                                  className="h-full w-full rounded-full object-contain"
+                                  loading="lazy"
+                                />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{bank.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ))}
+                    </div>
 
-              {filteredBanks.length === 0 && (
-                <div className="py-8 text-center text-muted-foreground">
-                  <p>Nenhum banco encontrado</p>
-                  <p className="text-sm">Tente buscar por outro termo</p>
-                </div>
-              )}
+                    {filteredBanks.length === 0 && !isLoading && (
+                      <div className="py-8 text-center text-muted-foreground">
+                        <p>Nenhum banco encontrado</p>
+                        <p className="text-sm">Tente buscar por outro termo</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </TabsContent>
 

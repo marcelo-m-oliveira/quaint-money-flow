@@ -155,22 +155,39 @@ export function CreditCardFormModal({
       const bankIcon = BANK_ICONS.find((bank) => bank.id === watchedIcon)
       if (bankIcon) {
         return (
-          <img
-            src={bankIcon.icon}
-            alt={bankIcon.name}
-            className="h-12 w-12 object-contain"
-          />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-background p-1">
+            <img
+              src={bankIcon.icon}
+              alt={bankIcon.name}
+              className="h-full w-full rounded-full object-contain"
+              loading="lazy"
+            />
+          </div>
+        )
+      } else {
+        // Fallback para ícone genérico se não encontrar o banco
+        const bankName = watchedIcon
+          ?.split('-')
+          .map((word) => word.charAt(0).toUpperCase())
+          .join('')
+          .slice(0, 2)
+        return (
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-xl font-bold text-white">
+            {bankName}
+          </div>
         )
       }
+    } else {
+      // Para ícones genéricos, mostrar o ícone do Lucide
+      const GenericIcon =
+        GENERIC_ICON_MAP[watchedIcon as keyof typeof GENERIC_ICON_MAP] ||
+        CreditCard
+      return (
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+          <GenericIcon className="h-8 w-8 text-muted-foreground" />
+        </div>
+      )
     }
-
-    const GenericIcon =
-      GENERIC_ICON_MAP[watchedIcon as keyof typeof GENERIC_ICON_MAP]
-    if (GenericIcon) {
-      return <GenericIcon className="h-12 w-12 text-muted-foreground" />
-    }
-
-    return <CreditCard className="h-12 w-12 text-muted-foreground" />
   }
 
   // Todas as contas disponíveis para pagamento
@@ -190,11 +207,18 @@ export function CreditCardFormModal({
               <button
                 type="button"
                 onClick={() => setIsIconSelectorOpen(true)}
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80"
+                className="group relative"
               >
                 {renderSelectedIcon()}
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="text-xs font-medium text-white">
+                    Alterar
+                  </span>
+                </div>
               </button>
-              <p className="text-sm text-muted-foreground">escolha um ícone</p>
+              <p className="text-center text-sm text-muted-foreground">
+                Escolha um ícone
+              </p>
             </div>
 
             {/* Nome do Cartão */}
