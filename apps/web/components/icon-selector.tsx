@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  ArrowLeft,
   Building2,
   CreditCard,
   DollarSign,
@@ -13,12 +14,17 @@ import {
 import { useState } from 'react'
 
 import { searchBanks } from '@/lib/data/banks'
-import { BankIcon } from '@/lib/types'
 
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip'
 
 interface IconSelectorProps {
   isOpen: boolean
@@ -55,61 +61,31 @@ export function IconSelector({
     onClose()
   }
 
-  const renderBankIcon = (bank: BankIcon) => {
-    const isSelected = selectedIcon === bank.id && selectedIconType === 'bank'
-
-    return (
-      <button
-        key={bank.id}
-        onClick={() => handleIconSelect(bank.id, 'bank')}
-        className={`flex h-16 w-16 items-center justify-center rounded-full border-2 transition-all duration-200 hover:scale-105 ${
-          isSelected
-            ? 'border-primary bg-primary/10 shadow-md'
-            : 'border-border bg-background hover:border-primary/50'
-        }`}
-        title={bank.name}
-      >
-        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white p-1">
-          <img
-            src={bank.logo}
-            alt={bank.name}
-            className="h-full w-full object-contain"
-            onError={(e) => {
-              // Fallback para círculo com letra se a imagem falhar
-              const target = e.target as HTMLImageElement
-              target.style.display = 'none'
-              const fallback = target.nextElementSibling as HTMLElement
-              if (fallback) fallback.style.display = 'flex'
-            }}
-          />
-          <div
-            className="h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-xs font-bold text-white"
-            style={{ display: 'none' }}
-          >
-            {bank.name.charAt(0).toUpperCase()}
-          </div>
-        </div>
-      </button>
-    )
-  }
-
   const renderGenericIcon = (iconData: (typeof GENERIC_ICONS)[0]) => {
     const isSelected =
       selectedIcon === iconData.id && selectedIconType === 'generic'
     const Icon = iconData.icon
 
     return (
-      <button
-        key={iconData.id}
-        onClick={() => handleIconSelect(iconData.id, 'generic')}
-        className={`flex h-16 w-16 items-center justify-center rounded-full border-2 transition-all duration-200 hover:scale-105 ${
-          isSelected
-            ? 'border-primary bg-primary/10 shadow-md'
-            : 'border-border bg-background hover:border-primary/50'
-        }`}
-      >
-        <Icon className="h-6 w-6 text-muted-foreground" />
-      </button>
+      <TooltipProvider key={iconData.id}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => handleIconSelect(iconData.id, 'generic')}
+              className={`flex h-16 w-16 items-center justify-center rounded-full border-2 bg-muted transition-all duration-200 hover:scale-105 hover:shadow-md ${
+                isSelected
+                  ? 'border-primary shadow-lg ring-2 ring-primary/20'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <Icon className="h-8 w-8 text-muted-foreground" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{iconData.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     )
   }
 
@@ -117,7 +93,17 @@ export function IconSelector({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Selecione um ícone</DialogTitle>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <DialogTitle>Selecione um ícone</DialogTitle>
+          </div>
         </DialogHeader>
 
         <Tabs
@@ -141,8 +127,35 @@ export function IconSelector({
                 />
               </div>
 
-              <div className="grid max-h-64 grid-cols-4 gap-3 overflow-y-auto p-2">
-                {filteredBanks.map(renderBankIcon)}
+              <div className="max-h-80 overflow-y-auto">
+                <div className="grid grid-cols-5 gap-2 p-1">
+                  {filteredBanks.map((bank) => (
+                    <TooltipProvider key={bank.id}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => handleIconSelect(bank.id, 'bank')}
+                            className={`flex h-16 w-16 items-center justify-center rounded-full border-2 p-1 transition-all duration-200 hover:scale-105 hover:shadow-md ${
+                              selectedIcon === bank.id &&
+                              selectedIconType === 'bank'
+                                ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20'
+                                : 'border-border bg-transparent hover:border-primary/50'
+                            }`}
+                          >
+                            <img
+                              src={bank.icon}
+                              alt={bank.name}
+                              className="h-full w-full rounded-full object-contain"
+                            />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{bank.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
               </div>
 
               {filteredBanks.length === 0 && (
@@ -160,18 +173,12 @@ export function IconSelector({
                 Você pode mudar a cor de fundo após selecionar um ícone genérico
               </p>
 
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-5 gap-2">
                 {GENERIC_ICONS.map(renderGenericIcon)}
               </div>
             </div>
           </TabsContent>
         </Tabs>
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   )

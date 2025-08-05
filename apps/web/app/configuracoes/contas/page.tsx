@@ -1,12 +1,24 @@
 'use client'
 
-import { CreditCard, Edit, Plus, Trash2 } from 'lucide-react'
+import {
+  Building2,
+  CreditCard,
+  DollarSign,
+  Edit,
+  Landmark,
+  PiggyBank,
+  Plus,
+  Trash2,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react'
 import { useState } from 'react'
 
 import { AccountFormModal } from '@/components/account-form-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import { getBankIcon } from '@/lib/data/banks'
 import { formatCurrency } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { Account, AccountFormData } from '@/lib/types'
@@ -136,15 +148,42 @@ export default function ContasPage() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                            {account.icon ? (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
+                            {account.iconType === 'bank' && account.icon ? (
                               <img
-                                src={account.icon}
+                                src={
+                                  getBankIcon(account.icon, 'icon') ||
+                                  account.icon
+                                }
                                 alt={account.name}
-                                className="h-6 w-6 rounded-full object-contain"
+                                className="h-full w-full rounded-full object-contain p-0.5"
                               />
+                            ) : account.iconType === 'generic' &&
+                              account.icon ? (
+                              <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                                {(() => {
+                                  const GENERIC_ICON_MAP = {
+                                    wallet: Wallet,
+                                    'credit-card': CreditCard,
+                                    bank: Landmark,
+                                    building: Building2,
+                                    'piggy-bank': PiggyBank,
+                                    'trending-up': TrendingUp,
+                                    'dollar-sign': DollarSign,
+                                  }
+                                  const IconComponent =
+                                    GENERIC_ICON_MAP[
+                                      account.icon as keyof typeof GENERIC_ICON_MAP
+                                    ] || CreditCard
+                                  return (
+                                    <IconComponent className="h-5 w-5 text-muted-foreground" />
+                                  )
+                                })()}
+                              </div>
                             ) : (
-                              <CreditCard className="h-5 w-5 text-muted-foreground" />
+                              <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                              </div>
                             )}
                           </div>
                           <div>

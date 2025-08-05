@@ -81,6 +81,7 @@ export interface CreditCardFormData {
 
 export interface BankIcon {
   id: string
+  icon: string
   name: string
   logo: string
   searchTerms: string[]

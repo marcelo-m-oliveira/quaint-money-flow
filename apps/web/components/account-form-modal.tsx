@@ -125,38 +125,26 @@ export function AccountFormModal({
   }
 
   const renderSelectedIcon = () => {
-    const iconType = watch('iconType')
     const icon = watch('icon')
+    const iconType = watch('iconType')
 
     if (iconType === 'bank') {
-      // Para bancos, mostrar a imagem real do banco
-      const bank = BANK_ICONS.find((b) => b.id === icon)
-      if (bank) {
+      const bankIcon = BANK_ICONS.find((bank) => bank.id === icon)
+      if (bankIcon) {
         return (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-white p-2 shadow-sm">
-            <img
-              src={bank.logo}
-              alt={bank.name}
-              className="h-full w-full object-contain"
-              onError={(e) => {
-                // Fallback para círculo com letra se a imagem falhar
-                const target = e.target as HTMLImageElement
-                target.style.display = 'none'
-                const fallback = target.nextElementSibling as HTMLElement
-                if (fallback) fallback.style.display = 'flex'
-              }}
-            />
-            <div
-              className="h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-xl font-bold text-white"
-              style={{ display: 'none' }}
-            >
-              {bank.name.charAt(0).toUpperCase()}
-            </div>
-          </div>
+          <img
+            src={bankIcon.icon}
+            alt={bankIcon.name}
+            className="h-16 w-16 object-contain"
+          />
         )
       } else {
-        // Fallback se o banco não for encontrado
-        const bankName = icon.charAt(0).toUpperCase()
+        // Fallback para ícone genérico se não encontrar o banco
+        const bankName = icon
+          ?.split('-')
+          .map((word) => word.charAt(0).toUpperCase())
+          .join('')
+          .slice(0, 2)
         return (
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-xl font-bold text-white">
             {bankName}

@@ -1,6 +1,17 @@
 'use client'
 
-import { CreditCard, Edit, Plus, Trash2 } from 'lucide-react'
+import {
+  Building2,
+  CreditCard,
+  DollarSign,
+  Edit,
+  Landmark,
+  PiggyBank,
+  Plus,
+  Trash2,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react'
 import { useState } from 'react'
 
 import { CreditCardFormModal } from '@/components/credit-card-form-modal'
@@ -153,24 +164,44 @@ export default function CartoesPage() {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-border">
                               {creditCard.iconType === 'bank' ? (
                                 <img
-                                  src={`https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/${creditCard.icon}/${creditCard.icon}-original.svg`}
+                                  src={
+                                    creditCard.icon.startsWith('/')
+                                      ? creditCard.icon
+                                      : `/icons/banks/${creditCard.icon}.png`
+                                  }
                                   alt={creditCard.name}
-                                  className="h-8 w-8 rounded-full object-contain"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement
-                                    target.style.display = 'none'
-                                    target.nextElementSibling?.classList.remove(
-                                      'hidden',
-                                    )
-                                  }}
+                                  className="h-full w-full rounded-full object-contain p-0.5"
                                 />
+                              ) : creditCard.iconType === 'generic' &&
+                                creditCard.icon ? (
+                                <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                                  {(() => {
+                                    const GENERIC_ICON_MAP = {
+                                      wallet: Wallet,
+                                      'credit-card': CreditCard,
+                                      bank: Landmark,
+                                      building: Building2,
+                                      'piggy-bank': PiggyBank,
+                                      'trending-up': TrendingUp,
+                                      'dollar-sign': DollarSign,
+                                    }
+                                    const IconComponent =
+                                      GENERIC_ICON_MAP[
+                                        creditCard.icon as keyof typeof GENERIC_ICON_MAP
+                                      ] || CreditCard
+                                    return (
+                                      <IconComponent className="h-5 w-5 text-muted-foreground" />
+                                    )
+                                  })()}
+                                </div>
                               ) : (
-                                <CreditCard className="h-6 w-6 text-muted-foreground" />
+                                <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                                  <CreditCard className="h-5 w-5 text-muted-foreground" />
+                                </div>
                               )}
-                              <CreditCard className="hidden h-6 w-6 text-muted-foreground" />
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2">

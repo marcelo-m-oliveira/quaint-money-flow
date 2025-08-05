@@ -156,9 +156,9 @@ export function CreditCardFormModal({
       if (bankIcon) {
         return (
           <img
-            src={bankIcon.logo}
+            src={bankIcon.icon}
             alt={bankIcon.name}
-            className="h-12 w-12 rounded-full object-contain"
+            className="h-12 w-12 object-contain"
           />
         )
       }

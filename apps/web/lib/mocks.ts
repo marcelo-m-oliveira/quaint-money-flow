@@ -63,12 +63,12 @@ const ACCOUNT_TYPES: Array<Account['type']> = [
   'other',
 ]
 
-// Bancos brasileiros para contas
+// Bancos brasileiros para contas - mapeamento para IDs existentes
 const BRAZILIAN_BANKS = [
   'Nubank',
+  'Santander',
   'Itaú',
   'Bradesco',
-  'Santander',
   'Banco do Brasil',
   'Caixa Econômica',
   'Inter',
@@ -76,6 +76,20 @@ const BRAZILIAN_BANKS = [
   'PicPay',
   'Mercado Pago',
 ]
+
+// Mapeamento dos nomes dos bancos para IDs válidos no sistema
+const BANK_NAME_TO_ID: Record<string, string> = {
+  Nubank: 'nubank',
+  Santander: 'santander',
+  Itaú: 'placeholder', // Usar placeholder até ter ícone específico
+  Bradesco: 'placeholder',
+  'Banco do Brasil': 'placeholder',
+  'Caixa Econômica': 'placeholder',
+  Inter: 'placeholder',
+  'C6 Bank': 'placeholder',
+  PicPay: 'placeholder',
+  'Mercado Pago': 'placeholder',
+}
 
 /**
  * Gera uma categoria mock
@@ -230,26 +244,28 @@ export function generateMockAccount(): Account {
   let iconType: 'bank' | 'generic' = 'generic'
 
   switch (type) {
-    case 'bank':
-      name = `${faker.helpers.arrayElement(BRAZILIAN_BANKS)} - Conta Corrente`
-      icon = faker.helpers.arrayElement(BRAZILIAN_BANKS).toLowerCase()
+    case 'bank': {
+      const bankName = faker.helpers.arrayElement(BRAZILIAN_BANKS)
+      name = `${bankName} - Conta Corrente`
+      icon = 'c6bank.png'
       iconType = 'bank'
       break
+    }
     case 'credit_card':
       name = `Cartão ${faker.helpers.arrayElement(BRAZILIAN_BANKS)}`
-      icon = 'credit-card'
+      icon = 'c6bank.png'
       break
     case 'investment':
       name = 'Conta Investimento'
-      icon = 'trending-up'
+      icon = 'c6bank.png'
       break
     case 'cash':
       name = 'Dinheiro'
-      icon = 'wallet'
+      icon = 'c6bank.png'
       break
     default:
       name = 'Conta Outros'
-      icon = 'piggy-bank'
+      icon = 'c6bank.png'
   }
 
   const createdAt = faker.date.past({ years: 2 })
@@ -293,7 +309,7 @@ export function generateMockCreditCard(): CreditCard {
   const cardType = faker.helpers.arrayElement(cardTypes)
 
   const name = `${bank} ${cardType}`
-  const icon = bank.toLowerCase().replace(/\s+/g, '-')
+  const icon = BANK_NAME_TO_ID[bank] || 'placeholder'
   const iconType: 'bank' | 'generic' = 'bank'
 
   // Limites realistas baseados no tipo do cartão
