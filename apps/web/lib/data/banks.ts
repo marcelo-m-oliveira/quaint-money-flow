@@ -317,13 +317,6 @@ export const BANK_ICONS: BankIcon[] = [
     searchTerms: ['bancaopopularedisondrio'],
   },
   {
-    id: 'banco-20galicia',
-    name: 'Banco 20galicia',
-    logo: '/icons/banks/banco%20galicia.png',
-    icon: '/icons/banks/banco%20galicia.png',
-    searchTerms: ['banco 20galicia', 'banco', '20galicia', 'banco-20galicia'],
-  },
-  {
     id: 'banco-bai',
     name: 'Banco Bai',
     logo: '/icons/banks/banco-bai.png',
@@ -369,6 +362,13 @@ export const BANK_ICONS: BankIcon[] = [
       'credito',
       'banco-poupanca-credito',
     ],
+  },
+  {
+    id: 'banco20galicia',
+    name: 'Banco20galicia',
+    logo: '/icons/banks/banco20galicia.png',
+    icon: '/icons/banks/banco20galicia.png',
+    searchTerms: ['banco20galicia'],
   },
   {
     id: 'bancobpm',

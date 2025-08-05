@@ -73,8 +73,3 @@ export function useBankIcons() {
   }
   return context
 }
-
-// Mantém compatibilidade com o hook antigo
-export function useBankIconsCache() {
-  return useBankIcons()
-}
