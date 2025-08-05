@@ -1,12 +1,6 @@
 'use client'
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react'
+import React, { createContext, useCallback, useContext, useState } from 'react'
 
 import { BANK_ICONS, searchBanks } from '../data/banks'
 import { BankIcon } from '../types'
@@ -14,9 +8,8 @@ import { BankIcon } from '../types'
 interface BankIconsContextType {
   bankIcons: BankIcon[]
   isLoading: boolean
-  searchBanksWithCache: (query: string) => BankIcon[]
-  preloadBankImages: (banks: BankIcon[]) => void
-  clearCache: () => void
+  searchBanks: (query: string) => BankIcon[]
+  loadBankIcons: () => void
 }
 
 const BankIconsContext = createContext<BankIconsContextType | undefined>(
@@ -24,14 +17,15 @@ const BankIconsContext = createContext<BankIconsContextType | undefined>(
 )
 
 export function BankIconsProvider({ children }: { children: React.ReactNode }) {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [bankIcons, setBankIcons] = useState<BankIcon[]>([])
-  const [searchCache, setSearchCache] = useState<Map<string, BankIcon[]>>(
-    new Map(),
-  )
 
-  // Carrega os ícones apenas uma vez quando o provider é montado
-  useEffect(() => {
+  // Função para carregar os ícones dos bancos quando necessário
+  const loadBankIcons = useCallback(() => {
+    if (bankIcons.length > 0) {
+      return // Já carregados
+    }
+
     setIsLoading(true)
     // Simula um pequeno delay para mostrar que está carregando
     const timer = setTimeout(() => {
@@ -40,72 +34,27 @@ export function BankIconsProvider({ children }: { children: React.ReactNode }) {
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [bankIcons.length])
 
-  // Função de busca com cache
-  const searchBanksWithCache = useCallback(
+  // Função de busca simples sem cache
+  const searchBanksFunction = useCallback(
     (query: string): BankIcon[] => {
       // Se não há query, retorna todos os ícones
       if (!query.trim()) {
         return bankIcons
       }
 
-      // Verifica se já temos o resultado em cache
-      const cacheKey = query.toLowerCase().trim()
-      if (searchCache.has(cacheKey)) {
-        return searchCache.get(cacheKey)!
-      }
-
-      // Faz a busca e armazena no cache
-      const results = searchBanks(query)
-      setSearchCache((prev) => {
-        const newCache = new Map(prev)
-        newCache.set(cacheKey, results)
-
-        // Limita o cache para não crescer indefinidamente
-        if (newCache.size > 100) {
-          const firstKey = newCache.keys().next().value
-          if (firstKey) {
-            newCache.delete(firstKey)
-          }
-        }
-
-        return newCache
-      })
-
-      return results
+      // Faz a busca diretamente
+      return searchBanks(query)
     },
-    [bankIcons], // Removido searchCache das dependências para evitar recriação
+    [bankIcons],
   )
-
-  // Função para pré-carregar imagens
-  const preloadBankImages = useCallback((banks: BankIcon[]) => {
-    banks.forEach((bank) => {
-      const img = new Image()
-      img.src = bank.icon
-    })
-  }, [])
-
-  // Função para limpar o cache
-  const clearCache = useCallback(() => {
-    setSearchCache(new Map())
-  }, [])
-
-  // Pré-carrega as primeiras imagens quando os ícones são carregados
-  useEffect(() => {
-    if (bankIcons.length > 0) {
-      // Pré-carrega os primeiros 50 ícones mais comuns
-      const commonBanks = bankIcons.slice(0, 50)
-      preloadBankImages(commonBanks)
-    }
-  }, [bankIcons, preloadBankImages])
 
   const value: BankIconsContextType = {
     bankIcons,
     isLoading,
-    searchBanksWithCache,
-    preloadBankImages,
-    clearCache,
+    searchBanks: searchBanksFunction,
+    loadBankIcons,
   }
 
   return (
@@ -115,18 +64,12 @@ export function BankIconsProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function useBankIconsCache() {
+export function useBankIcons() {
   const context = useContext(BankIconsContext)
   if (context === undefined) {
     throw new Error(
-      'useBankIconsCache deve ser usado dentro de um BankIconsProvider',
+      'useBankIcons deve ser usado dentro de um BankIconsProvider',
     )
   }
   return context
-}
-
-// Hook para limpar o cache (útil para desenvolvimento)
-export function useClearBankIconsCache() {
-  const { clearCache } = useBankIconsCache()
-  return clearCache
 }
