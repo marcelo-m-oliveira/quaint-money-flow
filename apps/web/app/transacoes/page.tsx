@@ -231,7 +231,7 @@ export default function TransacoesPage() {
   const filteredTransactions = useMemo(() => {
     const { start, end } = getCurrentPeriodRange()
 
-    return transactionsWithCategories.filter((transaction) => {
+    const filtered = transactionsWithCategories.filter((transaction) => {
       const transactionDate = new Date(transaction.date)
       const matchesSearch = transaction.description
         .toLowerCase()
@@ -264,6 +264,9 @@ export default function TransacoesPage() {
 
       return matchesSearch && matchesCategory && matchesType && matchesPeriod
     })
+
+    console.log('📊 Total de transações após filtro:', filtered.length)
+    return filtered
   }, [
     transactionsWithCategories,
     searchTerm,
@@ -436,14 +439,16 @@ export default function TransacoesPage() {
   }
 
   const handleTogglePaidStatus = (transaction: Transaction) => {
+    // Apenas alterar o status de pagamento, preservando todos os outros dados
     const updatedData = {
       description: transaction.description,
       amount: transaction.amount.toString(),
       type: transaction.type,
       categoryId: transaction.categoryId,
-      date: transaction.date.toISOString().split('T')[0],
+      date: transaction.date.toISOString().split('T')[0], // Converter Date para string no formato YYYY-MM-DD
       paid: !transaction.paid,
     }
+
     updateTransaction(transaction.id, updatedData)
   }
 

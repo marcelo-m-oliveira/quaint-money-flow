@@ -108,16 +108,17 @@ export function useFinancialData() {
   const updateTransaction = (id: string, data: TransactionFormData) => {
     const updatedTransactions = transactions.map((transaction) => {
       if (transaction.id === id) {
-        return {
+        const updatedTransaction = {
           ...transaction,
           description: data.description,
           amount: parseFloat(data.amount),
           type: data.type,
           categoryId: data.categoryId,
-          date: new Date(data.date),
+          date: typeof data.date === 'string' ? new Date(data.date) : data.date,
           paid: data.paid,
           updatedAt: new Date(),
         }
+        return updatedTransaction
       }
       return transaction
     })

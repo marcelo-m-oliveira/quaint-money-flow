@@ -11,14 +11,14 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { usePreferences, UserPreferences } from '@/lib/hooks/use-preferences'
+import { usePreferences } from '@/lib/hooks/use-preferences'
 import {
   PreferencesFormSchema,
   preferencesSchema,
 } from '@/lib/schemas/preferences'
 
 export default function PreferenciasPage() {
-  const { preferences, updatePreference, clearAllTransactions, deleteAccount } =
+  const { preferences, clearAllTransactions, deleteAccount, savePreferences } =
     usePreferences()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
@@ -45,12 +45,20 @@ export default function PreferenciasPage() {
 
   const onSubmit = (data: PreferencesFormSchema) => {
     try {
-      // Atualizar cada preferência individualmente
-      Object.entries(data).forEach(([key, value]) => {
-        updatePreference(key as keyof UserPreferences, value)
-      })
+      // Salvar todas as preferências de uma vez usando o hook
+      const updatedPreferences = {
+        ...preferences,
+        ...data,
+      }
+
+      savePreferences(updatedPreferences)
+
+      // Resetar o formulário para remover o estado isDirty
+      reset(updatedPreferences)
+
+      console.log('✅ Preferências salvas com sucesso!')
     } catch (error) {
-      console.error('Erro ao salvar preferências:', error)
+      console.error('❌ Erro ao salvar preferências:', error)
     }
   }
 
