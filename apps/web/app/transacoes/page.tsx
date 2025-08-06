@@ -11,8 +11,11 @@ import {
   CirclePlus,
   CreditCard,
   Edit,
+  Eye,
   Plus,
   Search,
+  ThumbsDown,
+  ThumbsUp,
   Trash2,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -22,6 +25,15 @@ import { TransactionFormModal } from '@/components/transaction-form-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +49,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { usePreferences } from '@/lib/hooks/use-preferences'
@@ -118,6 +136,10 @@ export default function TransacoesPage() {
   const [currentPeriod, setCurrentPeriod] = useState(
     preferences.defaultNavigationPeriod,
   )
+
+  // Estados para modo de visualização
+  const [viewMode, setViewMode] = useState<'cashflow' | 'all'>('all')
+  const [isViewModeModalOpen, setIsViewModeModalOpen] = useState(false)
 
   // Funções para navegação de período
   const navigatePeriod = (direction: 'prev' | 'next') => {
@@ -303,6 +325,18 @@ export default function TransacoesPage() {
     setDeleteConfirmation({ isOpen: false, transactionId: null })
   }
 
+  const handleTogglePaidStatus = (transaction: Transaction) => {
+    const updatedData = {
+      description: transaction.description,
+      amount: transaction.amount.toString(),
+      type: transaction.type,
+      categoryId: transaction.categoryId,
+      date: transaction.date.toISOString().split('T')[0],
+      paid: !transaction.paid,
+    }
+    updateTransaction(transaction.id, updatedData)
+  }
+
   const incomeCategories = categories.filter((cat) => cat.type === 'income')
   const expenseCategories = categories.filter((cat) => cat.type === 'expense')
 
@@ -406,6 +440,113 @@ export default function TransacoesPage() {
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
+
+                  {/* Botão de Modo de Visualização */}
+                  <Dialog
+                    open={isViewModeModalOpen}
+                    onOpenChange={setIsViewModeModalOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Modo
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Modo de visualização</DialogTitle>
+                        <DialogDescription>
+                          Escolha como você deseja visualizar suas transações
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-1 gap-3">
+                          <Button
+                            variant={
+                              viewMode === 'cashflow' ? 'default' : 'outline'
+                            }
+                            className="h-auto p-4 text-left"
+                            onClick={() => setViewMode('cashflow')}
+                          >
+                            <div>
+                              <div className="font-medium">Fluxo de caixa</div>
+                              <div className="mt-1 text-sm text-muted-foreground">
+                                Apenas lançamentos que afetam seu saldo
+                                diretamente
+                              </div>
+                            </div>
+                          </Button>
+
+                          <Button
+                            variant={viewMode === 'all' ? 'default' : 'outline'}
+                            className="h-auto p-4 text-left"
+                            onClick={() => setViewMode('all')}
+                          >
+                            <div>
+                              <div className="font-medium">
+                                Todos os lançamentos
+                              </div>
+                              <div className="mt-1 text-sm text-muted-foreground">
+                                Todos os gastos feitos por você, incluindo
+                                cartão de crédito
+                              </div>
+                            </div>
+                          </Button>
+                        </div>
+
+                        <div className="text-sm text-muted-foreground">
+                          <p className="mb-2">O que você verá com este modo:</p>
+                          {viewMode === 'cashflow' ? (
+                            <ul className="list-inside list-disc space-y-1">
+                              <li>
+                                Apenas lançamentos que afetam seu saldo
+                                diretamente;
+                              </li>
+                              <li>
+                                Não vai aparecer gastos de cartão de crédito;
+                              </li>
+                              <li>
+                                Vai aparecer Faturas e Pagamentos de Fatura;
+                              </li>
+                              <li>
+                                Barra de Resultados ao final da listagem para
+                                mostrar apenas um somatório simples do período.
+                              </li>
+                            </ul>
+                          ) : (
+                            <ul className="list-inside list-disc space-y-1">
+                              <li>Todos os lançamentos feitos por você;</li>
+                              <li>
+                                Todos os gastos feitos por cartão de crédito;
+                              </li>
+                              <li>
+                                Não vamos mostrar Faturas e Pagamentos de
+                                Fatura;
+                              </li>
+                              <li>
+                                Barra de Resultados ao final da listagem para
+                                mostrar seu Saldo e Previsão de Saldo.
+                              </li>
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+
+                      <DialogFooter>
+                        <Button
+                          onClick={() => setIsViewModeModalOpen(false)}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
+                          OK
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
               {/* Filtros */}
@@ -622,6 +763,40 @@ export default function TransacoesPage() {
                                     {formatCurrency(transaction.amount)}
                                   </p>
                                   <div className="flex gap-1">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() =>
+                                              handleTogglePaidStatus(
+                                                transaction,
+                                              )
+                                            }
+                                            className={`${
+                                              transaction.paid
+                                                ? 'text-green-600 hover:text-green-700'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                          >
+                                            {transaction.paid ? (
+                                              <ThumbsUp className="h-4 w-4" />
+                                            ) : (
+                                              <ThumbsDown className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>
+                                            Marcar como{' '}
+                                            {transaction.paid
+                                              ? 'não pago'
+                                              : 'pago'}
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                     <Button
                                       variant="ghost"
                                       size="icon"

@@ -22,6 +22,7 @@ export const transactionSchema = z.object({
   }),
   categoryId: z.string().min(1, 'Categoria é obrigatória'),
   date: z.string().min(1, 'Data é obrigatória'),
+  paid: z.boolean(), // Indica se o lançamento foi pago ou não
 })
 
 // Tipo inferido do schema

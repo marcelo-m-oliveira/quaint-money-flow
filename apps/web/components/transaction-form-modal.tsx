@@ -10,6 +10,7 @@ import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
 import { Category, Transaction } from '@/lib/types'
 
 import { Button } from './ui/button'
+import { Checkbox } from './ui/checkbox'
 import { CurrencyInput } from './ui/currency-input'
 import { DatePicker } from './ui/date-picker'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
@@ -58,6 +59,7 @@ export function TransactionFormModal({
       type,
       categoryId: '',
       date: formatDateForInput(new Date()),
+      paid: false,
     },
   })
 
@@ -70,6 +72,7 @@ export function TransactionFormModal({
         type: transaction.type,
         categoryId: transaction.categoryId,
         date: formatDateForInput(transaction.date),
+        paid: transaction.paid || false,
       })
     } else {
       reset({
@@ -78,6 +81,7 @@ export function TransactionFormModal({
         type,
         categoryId: '',
         date: formatDateForInput(new Date()),
+        paid: false,
       })
     }
   }, [transaction, type, reset])
@@ -99,6 +103,7 @@ export function TransactionFormModal({
         type,
         categoryId: '',
         date: formatDateForInput(new Date()),
+        paid: false,
       })
     }
   }
@@ -240,6 +245,29 @@ export function TransactionFormModal({
                 {errors.categoryId.message}
               </p>
             )}
+          </div>
+
+          {/* Status de Pagamento */}
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Controller
+                name="paid"
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <Checkbox
+                    id="paid"
+                    checked={value}
+                    onCheckedChange={onChange}
+                  />
+                )}
+              />
+              <Label
+                htmlFor="paid"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                {type === 'income' ? 'Receita recebida' : 'Despesa paga'}
+              </Label>
+            </div>
           </div>
 
           {/* Footer com botões */}
