@@ -5,8 +5,9 @@ import { useState } from 'react'
 
 import { CategoryFormModal } from '@/components/category-form-modal'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import { PageCard } from '@/components/ui/page-card'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -139,15 +140,17 @@ export default function CategoriasPage() {
             <Card key={category.id} className="border border-border">
               <CardContent className="p-4">
                 {/* Categoria Principal */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
                     <div
                       className="h-4 w-4 flex-shrink-0 rounded-full"
                       style={{ backgroundColor: category.color }}
                     />
-                    <span className="font-medium">{category.name}</span>
+                    <span className="truncate font-medium">
+                      {category.name}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-shrink-0 items-center gap-1">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -215,16 +218,18 @@ export default function CategoriasPage() {
                       {subcategories.map((subcategory) => (
                         <div
                           key={subcategory.id}
-                          className="flex items-center justify-between pl-4"
+                          className="flex items-center justify-between gap-2 pl-4"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
                             <div
                               className="h-3 w-3 flex-shrink-0 rounded-full"
                               style={{ backgroundColor: subcategory.color }}
                             />
-                            <span className="text-sm">{subcategory.name}</span>
+                            <span className="truncate text-sm">
+                              {subcategory.name}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-shrink-0 items-center gap-1">
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -286,38 +291,47 @@ export default function CategoriasPage() {
 
   return (
     <>
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold">
-              Gerenciar Categorias
-            </CardTitle>
-            <Button
-              onClick={() => handleAddCategory(activeTab)}
-              className="flex items-center gap-2"
+      <PageCard
+        title="Categorias"
+        description="Organize suas transações criando categorias e subcategorias personalizadas"
+        className="space-y-6"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) =>
+                setActiveTab(value as 'expense' | 'income')
+              }
             >
-              <Plus className="h-4 w-4" />
-              Nova Categoria
-            </Button>
+              <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+                <TabsTrigger value="expense" className="text-sm">
+                  Despesas
+                </TabsTrigger>
+                <TabsTrigger value="income" className="text-sm">
+                  Receitas
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Organize suas transações criando categorias e subcategorias
-            personalizadas
-          </p>
-        </CardHeader>
+          <Button
+            onClick={() => handleAddCategory(activeTab)}
+            className="flex shrink-0 items-center gap-2"
+            size="sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Nova Categoria</span>
+            <span className="sm:hidden">Nova</span>
+          </Button>
+        </div>
 
-        <CardContent>
+        <div className="mt-6">
           <Tabs
             value={activeTab}
             onValueChange={(value) =>
               setActiveTab(value as 'expense' | 'income')
             }
           >
-            <TabsList className="mb-6 grid w-[400px] grid-cols-2">
-              <TabsTrigger value="expense">Despesas</TabsTrigger>
-              <TabsTrigger value="income">Receitas</TabsTrigger>
-            </TabsList>
-
             <TabsContent value="expense" className="mt-0">
               {renderCategoryList(expenseCategories)}
             </TabsContent>
@@ -326,8 +340,8 @@ export default function CategoriasPage() {
               {renderCategoryList(incomeCategories)}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+      </PageCard>
 
       {/* Modal de Formulário de Categoria */}
       <CategoryFormModal

@@ -21,7 +21,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import { AccountCardIcon } from '@/components/account-card-icon'
-import { Topbar } from '@/components/topbar'
+import { PageLayout } from '@/components/layouts/page-layout'
 import { TransactionFormModal } from '@/components/transaction-form-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -465,616 +465,724 @@ export default function TransacoesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Topbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Carregando transações...
-              </p>
-            </div>
+      <PageLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Carregando transações...
+            </p>
           </div>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
   return (
-    <div className="flex h-screen flex-col">
-      <Topbar />
-      <div className="flex-1 overflow-auto p-4 pb-80">
-        <div className="mx-auto max-w-4xl space-y-6">
-          <Card>
-            <CardHeader>
-              {/* Controle de Período e Lançamentos */}
-              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="sm" className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        Lançamentos
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={() => handleAddTransaction('income')}
-                        className="text-green-600"
-                      >
-                        <CirclePlus className="mr-2 h-4 w-4" />
-                        Nova Receita
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleAddTransaction('expense')}
-                        className="text-red-600"
-                      >
-                        <CircleMinus className="mr-2 h-4 w-4" />
-                        Nova Despesa
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+    <PageLayout>
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Card className="overflow-hidden">
+          <CardHeader className="px-4 sm:px-6">
+            {/* Controle de Período e Lançamentos */}
+            <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Lançamentos
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => handleAddTransaction('income')}
+                      className="text-green-600"
+                    >
+                      <CirclePlus className="mr-2 h-4 w-4" />
+                      Nova Receita
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleAddTransaction('expense')}
+                      className="text-red-600"
+                    >
+                      <CircleMinus className="mr-2 h-4 w-4" />
+                      Nova Despesa
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-                <div className="flex items-center gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigatePeriod('prev')}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Período anterior</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex min-w-[140px] items-center gap-2"
-                      >
-                        {getPeriodTitle()}
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={() => setCurrentPeriod('diario')}
-                      >
-                        Diário
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setCurrentPeriod('semanal')}
-                      >
-                        Semanal
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setCurrentPeriod('mensal')}
-                      >
-                        Mensal
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigatePeriod('next')}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Próximo período</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  {/* Botão de Modo de Visualização */}
-                  <Dialog
-                    open={isViewModeModalOpen}
-                    onOpenChange={setIsViewModeModalOpen}
-                  >
-                    <DialogTrigger asChild>
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex items-center gap-2"
-                        onClick={handleOpenViewModeModal}
+                        onClick={() => navigatePeriod('prev')}
                       >
-                        <Eye className="h-4 w-4" />
-                        Modo
+                        <ChevronLeft className="h-4 w-4" />
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-lg">
-                      <DialogHeader>
-                        <DialogTitle>Modo de visualização</DialogTitle>
-                        <DialogDescription>
-                          Escolha como você deseja visualizar suas transações
-                        </DialogDescription>
-                      </DialogHeader>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Período anterior</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-                      <div className="py-4">
-                        <Tabs
-                          value={tempViewMode}
-                          onValueChange={(value) =>
-                            setTempViewMode(value as 'cashflow' | 'all')
-                          }
-                        >
-                          <TabsList className="mb-6 grid w-full grid-cols-2">
-                            <TabsTrigger value="cashflow">
-                              Fluxo de caixa
-                            </TabsTrigger>
-                            <TabsTrigger value="all">
-                              Todos os lançamentos
-                            </TabsTrigger>
-                          </TabsList>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex min-w-[140px] items-center gap-2"
+                    >
+                      {getPeriodTitle()}
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => setCurrentPeriod('diario')}
+                    >
+                      Diário
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setCurrentPeriod('semanal')}
+                    >
+                      Semanal
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setCurrentPeriod('mensal')}
+                    >
+                      Mensal
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                          <TabsContent value="cashflow" className="mt-0">
-                            <div className="space-y-4">
-                              <div className="rounded-lg border p-4">
-                                <h4 className="mb-2 font-medium">
-                                  Fluxo de caixa
-                                </h4>
-                                <p className="mb-3 text-sm text-muted-foreground">
-                                  Apenas lançamentos que afetam seu saldo
-                                  diretamente
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigatePeriod('next')}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Próximo período</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Botão de Modo de Visualização */}
+                <Dialog
+                  open={isViewModeModalOpen}
+                  onOpenChange={setIsViewModeModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={handleOpenViewModeModal}
+                    >
+                      <Eye className="h-4 w-4" />
+                      Modo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Modo de visualização</DialogTitle>
+                      <DialogDescription>
+                        Escolha como você deseja visualizar suas transações
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-4">
+                      <Tabs
+                        value={tempViewMode}
+                        onValueChange={(value) =>
+                          setTempViewMode(value as 'cashflow' | 'all')
+                        }
+                      >
+                        <TabsList className="mb-6 grid w-full grid-cols-2">
+                          <TabsTrigger value="cashflow">
+                            Fluxo de caixa
+                          </TabsTrigger>
+                          <TabsTrigger value="all">
+                            Todos os lançamentos
+                          </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="cashflow" className="mt-0">
+                          <div className="space-y-4">
+                            <div className="rounded-lg border p-4">
+                              <h4 className="mb-2 font-medium">
+                                Fluxo de caixa
+                              </h4>
+                              <p className="mb-3 text-sm text-muted-foreground">
+                                Apenas lançamentos que afetam seu saldo
+                                diretamente
+                              </p>
+                              <div className="text-sm text-muted-foreground">
+                                <p className="mb-2 font-medium">
+                                  O que você verá:
                                 </p>
-                                <div className="text-sm text-muted-foreground">
-                                  <p className="mb-2 font-medium">
-                                    O que você verá:
-                                  </p>
-                                  <ul className="list-inside list-disc space-y-1">
-                                    <li>
-                                      Apenas lançamentos que afetam seu saldo
-                                      diretamente
-                                    </li>
-                                    <li>
-                                      Não vai aparecer gastos de cartão de
-                                      crédito
-                                    </li>
-                                    <li>
-                                      Vai aparecer Faturas e Pagamentos de
-                                      Fatura
-                                    </li>
-                                    <li>
-                                      Barra de Resultados com somatório simples
-                                      do período
-                                    </li>
-                                  </ul>
-                                </div>
+                                <ul className="list-inside list-disc space-y-1">
+                                  <li>
+                                    Apenas lançamentos que afetam seu saldo
+                                    diretamente
+                                  </li>
+                                  <li>
+                                    Não vai aparecer gastos de cartão de crédito
+                                  </li>
+                                  <li>
+                                    Vai aparecer Faturas e Pagamentos de Fatura
+                                  </li>
+                                  <li>
+                                    Barra de Resultados com somatório simples do
+                                    período
+                                  </li>
+                                </ul>
                               </div>
                             </div>
-                          </TabsContent>
+                          </div>
+                        </TabsContent>
 
-                          <TabsContent value="all" className="mt-0">
-                            <div className="space-y-4">
-                              <div className="rounded-lg border p-4">
-                                <h4 className="mb-2 font-medium">
-                                  Todos os lançamentos
-                                </h4>
-                                <p className="mb-3 text-sm text-muted-foreground">
-                                  Todos os gastos feitos por você, incluindo
-                                  cartão de crédito
+                        <TabsContent value="all" className="mt-0">
+                          <div className="space-y-4">
+                            <div className="rounded-lg border p-4">
+                              <h4 className="mb-2 font-medium">
+                                Todos os lançamentos
+                              </h4>
+                              <p className="mb-3 text-sm text-muted-foreground">
+                                Todos os gastos feitos por você, incluindo
+                                cartão de crédito
+                              </p>
+                              <div className="text-sm text-muted-foreground">
+                                <p className="mb-2 font-medium">
+                                  O que você verá:
                                 </p>
-                                <div className="text-sm text-muted-foreground">
-                                  <p className="mb-2 font-medium">
-                                    O que você verá:
-                                  </p>
-                                  <ul className="list-inside list-disc space-y-1">
-                                    <li>
-                                      Todos os lançamentos feitos por você
-                                    </li>
-                                    <li>
-                                      Todos os gastos feitos por cartão de
-                                      crédito
-                                    </li>
-                                    <li>
-                                      Não vamos mostrar Faturas e Pagamentos de
-                                      Fatura
-                                    </li>
-                                    <li>
-                                      Barra de Resultados com Saldo e Previsão
-                                      de Saldo
-                                    </li>
-                                  </ul>
-                                </div>
+                                <ul className="list-inside list-disc space-y-1">
+                                  <li>Todos os lançamentos feitos por você</li>
+                                  <li>
+                                    Todos os gastos feitos por cartão de crédito
+                                  </li>
+                                  <li>
+                                    Não vamos mostrar Faturas e Pagamentos de
+                                    Fatura
+                                  </li>
+                                  <li>
+                                    Barra de Resultados com Saldo e Previsão de
+                                    Saldo
+                                  </li>
+                                </ul>
                               </div>
                             </div>
-                          </TabsContent>
-                        </Tabs>
-                      </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
 
-                      <DialogFooter>
-                        <Button
-                          onClick={handleConfirmViewMode}
-                          className="w-full bg-green-600 hover:bg-green-700"
-                        >
-                          Confirmar
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                    <DialogFooter>
+                      <Button
+                        onClick={handleConfirmViewMode}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        Confirmar
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+            {/* Filtros */}
+            <div className="!mb-4 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+              <div className="min-w-0 flex-1">
+                <Label htmlFor="search">Buscar</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+                  <Input
+                    id="search"
+                    placeholder="Buscar transações..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
               </div>
-              {/* Filtros */}
-              <div className="!mb-4 grid grid-cols-1 gap-4 md:grid-cols-4">
-                <div>
-                  <Label htmlFor="search">Buscar</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-                    <Input
-                      id="search"
-                      placeholder="Buscar transações..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="type-filter">Tipo</Label>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os tipos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os tipos</SelectItem>
-                      <SelectItem value="income">Receitas</SelectItem>
-                      <SelectItem value="income-paid">
-                        Receitas Pagas
-                      </SelectItem>
-                      <SelectItem value="income-unpaid">
-                        Receitas Não Pagas
-                      </SelectItem>
-                      <SelectItem value="expense">Despesas</SelectItem>
-                      <SelectItem value="expense-paid">
-                        Despesas Pagas
-                      </SelectItem>
-                      <SelectItem value="expense-unpaid">
-                        Despesas Não Pagas
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="category-filter">Categoria</Label>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas as categorias" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as categorias</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-3 w-3 rounded-full"
-                              style={{ backgroundColor: category.color }}
-                            />
-                            {category.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchTerm('')
-                      setSelectedCategory('all')
-                      setSelectedType('all')
-                    }}
-                    className="w-full"
-                  >
-                    Limpar Filtros
-                  </Button>
-                </div>
+              <div className="min-w-0 flex-1">
+                <Label htmlFor="type-filter">Tipo</Label>
+                <Select value={selectedType} onValueChange={setSelectedType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os tipos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    <SelectItem value="income">Receitas</SelectItem>
+                    <SelectItem value="income-paid">Receitas Pagas</SelectItem>
+                    <SelectItem value="income-unpaid">
+                      Receitas Não Pagas
+                    </SelectItem>
+                    <SelectItem value="expense">Despesas</SelectItem>
+                    <SelectItem value="expense-paid">Despesas Pagas</SelectItem>
+                    <SelectItem value="expense-unpaid">
+                      Despesas Não Pagas
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <CardTitle>Transações ({sortedTransactions.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Lista de transações */}
-              {sortedTransactions.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                  <p className="mb-2 text-lg font-medium">
-                    {searchTerm ||
-                    selectedCategory !== 'all' ||
-                    selectedType !== 'all'
-                      ? 'Nenhuma transação encontrada'
-                      : 'Nenhuma transação cadastrada'}
-                  </p>
-                  <p className="mb-4 text-sm">
-                    {searchTerm ||
-                    selectedCategory !== 'all' ||
-                    selectedType !== 'all'
-                      ? 'Tente ajustar os filtros para encontrar suas transações'
-                      : 'Comece adicionando sua primeira transação'}
-                  </p>
-                  {!searchTerm &&
-                    selectedCategory === 'all' &&
-                    selectedType === 'all' && (
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          onClick={() => handleAddTransaction('income')}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CirclePlus className="mr-2 h-4 w-4" />
-                          Nova Receita
-                        </Button>
-                        <Button
-                          onClick={() => handleAddTransaction('expense')}
-                          variant="destructive"
-                        >
-                          <CircleMinus className="mr-2 h-4 w-4" />
-                          Nova Despesa
-                        </Button>
-                      </div>
-                    )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {groupedTransactions.map(([dateString, transactions]) => {
-                    const date = new Date(dateString)
-                    const today = new Date()
-                    const yesterday = new Date(today)
-                    yesterday.setDate(yesterday.getDate() - 1)
-
-                    let dateLabel = formatDate(date)
-                    if (date.toDateString() === today.toDateString()) {
-                      dateLabel = 'Hoje'
-                    } else if (
-                      date.toDateString() === yesterday.toDateString()
-                    ) {
-                      dateLabel = 'Ontem'
-                    }
-
-                    const dayTotal = transactions.reduce((sum, t) => {
-                      return sum + (t.type === 'income' ? t.amount : -t.amount)
-                    }, 0)
-
-                    return (
-                      <div key={dateString} className="space-y-3">
-                        {/* Cabeçalho do grupo de data */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                            <h3 className="text-sm font-medium text-muted-foreground">
-                              {dateLabel}
-                            </h3>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              {transactions.length} transaç
-                              {transactions.length === 1 ? 'ão' : 'ões'}
-                            </span>
-                            <span className="text-xs">•</span>
-                            <span
-                              className={`text-sm font-medium ${
-                                dayTotal >= 0
-                                  ? 'text-green-600'
-                                  : 'text-red-600'
-                              }`}
-                            >
-                              {dayTotal >= 0 ? '+' : ''}
-                              {formatCurrency(Math.abs(dayTotal))}
-                            </span>
-                          </div>
+              <div className="min-w-0 flex-1">
+                <Label htmlFor="category-filter">Categoria</Label>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas as categorias" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as categorias</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          {category.name}
                         </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-shrink-0 items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedCategory('all')
+                    setSelectedType('all')
+                  }}
+                  className="w-full whitespace-nowrap sm:w-auto"
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </div>
+            <CardTitle>Transações ({sortedTransactions.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="overflow-x-auto px-4 py-4 sm:px-6">
+            {/* Lista de transações */}
+            {sortedTransactions.length === 0 ? (
+              <div className="py-12 text-center text-muted-foreground">
+                <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
+                <p className="mb-2 text-lg font-medium">
+                  {searchTerm ||
+                  selectedCategory !== 'all' ||
+                  selectedType !== 'all'
+                    ? 'Nenhuma transação encontrada'
+                    : 'Nenhuma transação cadastrada'}
+                </p>
+                <p className="mb-4 text-sm">
+                  {searchTerm ||
+                  selectedCategory !== 'all' ||
+                  selectedType !== 'all'
+                    ? 'Tente ajustar os filtros para encontrar suas transações'
+                    : 'Comece adicionando sua primeira transação'}
+                </p>
+                {!searchTerm &&
+                  selectedCategory === 'all' &&
+                  selectedType === 'all' && (
+                    <div className="flex justify-center gap-2">
+                      <Button
+                        onClick={() => handleAddTransaction('income')}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CirclePlus className="mr-2 h-4 w-4" />
+                        Nova Receita
+                      </Button>
+                      <Button
+                        onClick={() => handleAddTransaction('expense')}
+                        variant="destructive"
+                      >
+                        <CircleMinus className="mr-2 h-4 w-4" />
+                        Nova Despesa
+                      </Button>
+                    </div>
+                  )}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {groupedTransactions.map(([dateString, transactions]) => {
+                  const date = new Date(dateString)
+                  const today = new Date()
+                  const yesterday = new Date(today)
+                  yesterday.setDate(yesterday.getDate() - 1)
 
-                        {/* Lista de transações do dia */}
-                        <div className="space-y-2">
-                          {transactions.map((transaction) => (
-                            <div key={transaction.id}>
-                              <div className="flex items-center rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                                {/* Coluna esquerda: Ícone + Nome + Categoria */}
-                                <div className="flex flex-1 items-center gap-4">
-                                  <div
-                                    className={`rounded-full p-2 ${
-                                      transaction.type === 'income'
-                                        ? 'bg-green-100 dark:bg-green-900'
-                                        : 'bg-red-100 dark:bg-red-900'
-                                    }`}
-                                  >
-                                    {transaction.type === 'income' ? (
-                                      <ArrowUpIcon
-                                        className={`h-4 w-4 ${
-                                          transaction.type === 'income'
-                                            ? 'text-green-600'
-                                            : 'text-red-600'
-                                        }`}
+                  let dateLabel = formatDate(date)
+                  if (date.toDateString() === today.toDateString()) {
+                    dateLabel = 'Hoje'
+                  } else if (date.toDateString() === yesterday.toDateString()) {
+                    dateLabel = 'Ontem'
+                  }
+
+                  const dayTotal = transactions.reduce((sum, t) => {
+                    return sum + (t.type === 'income' ? t.amount : -t.amount)
+                  }, 0)
+
+                  return (
+                    <div key={dateString} className="space-y-3">
+                      {/* Cabeçalho do grupo de data */}
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <CalendarIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                          <h3 className="truncate text-sm font-medium text-muted-foreground">
+                            {dateLabel}
+                          </h3>
+                        </div>
+                        <div className="flex flex-shrink-0 items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {transactions.length} transaç
+                            {transactions.length === 1 ? 'ão' : 'ões'}
+                          </span>
+                          <span className="text-xs">•</span>
+                          <span
+                            className={`text-sm font-medium ${
+                              dayTotal >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}
+                          >
+                            {dayTotal >= 0 ? '+' : ''}
+                            {formatCurrency(Math.abs(dayTotal))}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Lista de transações do dia */}
+                      <div className="space-y-2">
+                        {transactions.map((transaction) => (
+                          <div key={transaction.id}>
+                            <div className="flex flex-col gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:gap-4">
+                              {/* Linha superior em mobile / Coluna esquerda em desktop: Ícone + Nome + Categoria */}
+                              <div className="flex min-w-0 flex-1 items-center gap-3">
+                                <div
+                                  className={`flex-shrink-0 rounded-full p-2 ${
+                                    transaction.type === 'income'
+                                      ? 'bg-green-100 dark:bg-green-900'
+                                      : 'bg-red-100 dark:bg-red-900'
+                                  }`}
+                                >
+                                  {transaction.type === 'income' ? (
+                                    <ArrowUpIcon
+                                      className={`h-4 w-4 ${
+                                        transaction.type === 'income'
+                                          ? 'text-green-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    />
+                                  ) : (
+                                    <ArrowDownIcon className="h-4 w-4 text-red-600" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate font-medium">
+                                    {transaction.description}
+                                  </p>
+                                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                                    <div className="flex min-w-0 items-center gap-1">
+                                      <div
+                                        className="h-2 w-2 flex-shrink-0 rounded-full"
+                                        style={{
+                                          backgroundColor:
+                                            transaction.category.color,
+                                        }}
                                       />
-                                    ) : (
-                                      <ArrowDownIcon className="h-4 w-4 text-red-600" />
-                                    )}
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-medium">
-                                      {transaction.description}
-                                    </p>
-                                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                                      <div className="flex items-center gap-1">
-                                        <div
-                                          className="h-2 w-2 rounded-full"
-                                          style={{
-                                            backgroundColor:
-                                              transaction.category.color,
-                                          }}
-                                        />
+                                      <span className="truncate">
                                         {transaction.category.name}
-                                      </div>
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
+                              </div>
 
-                                {/* Coluna centro: Conta/Cartão */}
-                                <div className="flex flex-1 justify-center">
-                                  {(transaction.accountId ||
-                                    transaction.creditCardId) && (
-                                    <AccountCardIcon
-                                      transaction={transaction}
-                                      accounts={accounts}
-                                      creditCards={creditCards}
-                                    />
-                                  )}
-                                </div>
+                              {/* Linha do meio em mobile / Coluna centro em desktop: Conta/Cartão */}
+                              <div className="flex justify-center sm:flex-1 sm:justify-center">
+                                {(transaction.accountId ||
+                                  transaction.creditCardId) && (
+                                  <AccountCardIcon
+                                    transaction={transaction}
+                                    accounts={accounts}
+                                    creditCards={creditCards}
+                                  />
+                                )}
+                              </div>
 
-                                {/* Coluna direita: Valor + Ações */}
-                                <div className="flex flex-1 items-center justify-end gap-2">
-                                  <p
-                                    className={`text-lg font-semibold ${
-                                      transaction.type === 'income'
-                                        ? 'text-green-600'
-                                        : 'text-red-600'
-                                    }`}
-                                  >
-                                    {transaction.type === 'income' ? '+' : '-'}
-                                    {formatCurrency(transaction.amount)}
-                                  </p>
-                                  <div className="flex gap-1">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                              handleTogglePaidStatus(
-                                                transaction,
-                                              )
-                                            }
-                                            className={`${
-                                              transaction.paid
-                                                ? 'text-green-600 hover:text-green-700'
-                                                : 'text-gray-400 hover:text-gray-600'
-                                            }`}
-                                          >
-                                            {transaction.paid ? (
-                                              <ThumbsUp className="h-4 w-4" />
-                                            ) : (
-                                              <ThumbsDown className="h-4 w-4" />
-                                            )}
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>
-                                            Marcar como{' '}
-                                            {transaction.paid
-                                              ? 'não pago'
-                                              : 'pago'}
-                                          </p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                              handleEditTransaction(transaction)
-                                            }
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Editar transação</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive hover:text-destructive"
-                                            onClick={() =>
-                                              handleDeleteTransaction(
-                                                transaction.id,
-                                              )
-                                            }
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Excluir transação</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </div>
+                              {/* Linha inferior em mobile / Coluna direita em desktop: Valor + Ações */}
+                              <div className="flex flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
+                                <p
+                                  className={`truncate text-lg font-semibold ${
+                                    transaction.type === 'income'
+                                      ? 'text-green-600'
+                                      : 'text-red-600'
+                                  }`}
+                                >
+                                  {transaction.type === 'income' ? '+' : '-'}
+                                  {formatCurrency(transaction.amount)}
+                                </p>
+                                <div className="flex flex-shrink-0 gap-1">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            handleTogglePaidStatus(transaction)
+                                          }
+                                          className={`${
+                                            transaction.paid
+                                              ? 'text-green-600 hover:text-green-700'
+                                              : 'text-gray-400 hover:text-gray-600'
+                                          }`}
+                                        >
+                                          {transaction.paid ? (
+                                            <ThumbsUp className="h-4 w-4" />
+                                          ) : (
+                                            <ThumbsDown className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          Marcar como{' '}
+                                          {transaction.paid
+                                            ? 'não pago'
+                                            : 'pago'}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            handleEditTransaction(transaction)
+                                          }
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Editar transação</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="text-destructive hover:text-destructive"
+                                          onClick={() =>
+                                            handleDeleteTransaction(
+                                              transaction.id,
+                                            )
+                                          }
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Excluir transação</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </div>
                             </div>
-                          ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Resumo financeiro fixo na parte inferior */}
+        {(viewMode === 'all' || viewMode === 'cashflow') && (
+          <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="mx-auto max-w-4xl p-4">
+              {viewMode === 'cashflow' ? (
+                // Visualização de Fluxo de Caixa
+                !isFinancialSummaryExpanded ? (
+                  // Visualização simplificada - apenas saldo e previsto
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          Fluxo de Caixa
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`text-lg font-bold ${
+                            cashflowData.currentBalance >= 0
+                              ? 'text-blue-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {formatCurrency(cashflowData.currentBalance)}
+                        </p>
+                        <p
+                          className={`text-xs ${
+                            cashflowData.projectedBalance >= 0
+                              ? 'text-muted-foreground'
+                              : 'text-red-500'
+                          }`}
+                        >
+                          Prev: {formatCurrency(cashflowData.projectedBalance)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleToggleExpansion}
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="text-sm">Expandir</span>
+                    </Button>
+                  </div>
+                ) : (
+                  // Visualização expandida - detalhamento completo
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Detalhamento do Fluxo de Caixa
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleToggleExpansion}
+                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                        <span className="text-sm">Recolher</span>
+                      </Button>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          saldo anterior
+                        </span>
+                        <span
+                          className={`font-medium ${
+                            cashflowData.previousBalance >= 0
+                              ? 'text-foreground'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {formatCurrency(cashflowData.previousBalance)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          receita realizada
+                        </span>
+                        <span className="font-medium text-green-600">
+                          {formatCurrency(cashflowData.realizedIncome)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          receita prevista
+                        </span>
+                        <span className="font-medium text-green-600">
+                          {formatCurrency(cashflowData.expectedIncome)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          despesa realizada
+                        </span>
+                        <span className="font-medium text-red-600">
+                          -{formatCurrency(cashflowData.realizedExpense)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          despesa prevista
+                        </span>
+                        <span className="font-medium text-red-600">
+                          -{formatCurrency(cashflowData.expectedExpense)}
+                        </span>
+                      </div>
+
+                      {/* Separador */}
+                      <div className="mt-3 border-t pt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-muted-foreground">
+                            saldo
+                          </span>
+                          <span
+                            className={`text-lg font-bold ${
+                              cashflowData.currentBalance >= 0
+                                ? 'text-blue-600'
+                                : 'text-red-600'
+                            }`}
+                          >
+                            {formatCurrency(cashflowData.currentBalance)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-muted-foreground">
+                            previsto
+                          </span>
+                          <span
+                            className={`text-lg font-bold ${
+                              cashflowData.projectedBalance >= 0
+                                ? 'text-foreground'
+                                : 'text-red-600'
+                            }`}
+                          >
+                            {formatCurrency(cashflowData.projectedBalance)}
+                          </span>
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Resumo financeiro fixo na parte inferior */}
-      {(viewMode === 'all' || viewMode === 'cashflow') && (
-        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="mx-auto max-w-4xl p-4">
-            {viewMode === 'cashflow' ? (
-              // Visualização de Fluxo de Caixa
+                    </div>
+                  </div>
+                )
+              ) : // Visualização para modo 'all'
               !isFinancialSummaryExpanded ? (
-                // Visualização simplificada - apenas saldo e previsto
+                // Visualização simplificada - apenas saldo
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        Fluxo de Caixa
-                      </span>
+                      <span className="text-sm font-medium">Saldo Total</span>
                     </div>
-                    <div className="text-right">
-                      <p
-                        className={`text-lg font-bold ${
-                          cashflowData.currentBalance >= 0
-                            ? 'text-blue-600'
-                            : 'text-red-600'
-                        }`}
-                      >
-                        {formatCurrency(cashflowData.currentBalance)}
-                      </p>
-                      <p
-                        className={`text-xs ${
-                          cashflowData.projectedBalance >= 0
-                            ? 'text-muted-foreground'
-                            : 'text-red-500'
-                        }`}
-                      >
-                        Prev: {formatCurrency(cashflowData.projectedBalance)}
-                      </p>
-                    </div>
+                    <p
+                      className={`text-xl font-bold ${
+                        filteredTotals.balance >= 0
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}
+                    >
+                      {formatCurrency(filteredTotals.balance)}
+                    </p>
                   </div>
                   <Button
                     variant="ghost"
@@ -1087,11 +1195,11 @@ export default function TransacoesPage() {
                   </Button>
                 </div>
               ) : (
-                // Visualização expandida - detalhamento completo
+                // Visualização expandida - receitas, despesas e saldo
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-muted-foreground">
-                      Detalhamento do Fluxo de Caixa
+                      Detalhamento Financeiro
                     </span>
                     <Button
                       variant="ghost"
@@ -1105,209 +1213,82 @@ export default function TransacoesPage() {
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        saldo anterior
-                      </span>
-                      <span
-                        className={`font-medium ${
-                          cashflowData.previousBalance >= 0
-                            ? 'text-foreground'
-                            : 'text-red-600'
-                        }`}
-                      >
-                        {formatCurrency(cashflowData.previousBalance)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        receita realizada
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <ArrowUpIcon className="h-4 w-4 text-green-600" />
+                        Receitas
                       </span>
                       <span className="font-medium text-green-600">
-                        {formatCurrency(cashflowData.realizedIncome)}
+                        {formatCurrency(filteredTotals.income)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        receita prevista
-                      </span>
-                      <span className="font-medium text-green-600">
-                        {formatCurrency(cashflowData.expectedIncome)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        despesa realizada
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <ArrowDownIcon className="h-4 w-4 text-red-600" />
+                        Despesas
                       </span>
                       <span className="font-medium text-red-600">
-                        -{formatCurrency(cashflowData.realizedExpense)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        despesa prevista
-                      </span>
-                      <span className="font-medium text-red-600">
-                        -{formatCurrency(cashflowData.expectedExpense)}
+                        {formatCurrency(filteredTotals.expense)}
                       </span>
                     </div>
 
                     {/* Separador */}
                     <div className="mt-3 border-t pt-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-muted-foreground">
-                          saldo
+                        <span className="flex items-center gap-2 font-medium text-muted-foreground">
+                          <CreditCard className="h-4 w-4 text-muted-foreground" />
+                          Saldo
                         </span>
                         <span
                           className={`text-lg font-bold ${
-                            cashflowData.currentBalance >= 0
-                              ? 'text-blue-600'
+                            filteredTotals.balance >= 0
+                              ? 'text-green-600'
                               : 'text-red-600'
                           }`}
                         >
-                          {formatCurrency(cashflowData.currentBalance)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-muted-foreground">
-                          previsto
-                        </span>
-                        <span
-                          className={`text-lg font-bold ${
-                            cashflowData.projectedBalance >= 0
-                              ? 'text-foreground'
-                              : 'text-red-600'
-                          }`}
-                        >
-                          {formatCurrency(cashflowData.projectedBalance)}
+                          {formatCurrency(filteredTotals.balance)}
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
-              )
-            ) : // Visualização para modo 'all'
-            !isFinancialSummaryExpanded ? (
-              // Visualização simplificada - apenas saldo
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm font-medium">Saldo Total</span>
-                  </div>
-                  <p
-                    className={`text-xl font-bold ${
-                      filteredTotals.balance >= 0
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                    }`}
-                  >
-                    {formatCurrency(filteredTotals.balance)}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleToggleExpansion}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="text-sm">Expandir</span>
-                </Button>
-              </div>
-            ) : (
-              // Visualização expandida - receitas, despesas e saldo
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Detalhamento Financeiro
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleToggleExpansion}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                    <span className="text-sm">Recolher</span>
-                  </Button>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <ArrowUpIcon className="h-4 w-4 text-green-600" />
-                      Receitas
-                    </span>
-                    <span className="font-medium text-green-600">
-                      {formatCurrency(filteredTotals.income)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <ArrowDownIcon className="h-4 w-4 text-red-600" />
-                      Despesas
-                    </span>
-                    <span className="font-medium text-red-600">
-                      {formatCurrency(filteredTotals.expense)}
-                    </span>
-                  </div>
-
-                  {/* Separador */}
-                  <div className="mt-3 border-t pt-2">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2 font-medium text-muted-foreground">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        Saldo
-                      </span>
-                      <span
-                        className={`text-lg font-bold ${
-                          filteredTotals.balance >= 0
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
-                      >
-                        {formatCurrency(filteredTotals.balance)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Modal de transação */}
-      <TransactionFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setEditingTransaction(undefined)
-        }}
-        transaction={editingTransaction}
-        onSubmit={handleSubmitTransaction}
-        categories={
-          transactionType === 'income' ? incomeCategories : expenseCategories
-        }
-        type={transactionType}
-        title={
-          editingTransaction
-            ? `Editar ${transactionType === 'income' ? 'Receita' : 'Despesa'}`
-            : `Nova ${transactionType === 'income' ? 'Receita' : 'Despesa'}`
-        }
-      />
+        {/* Modal de transação */}
+        <TransactionFormModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setEditingTransaction(undefined)
+          }}
+          transaction={editingTransaction}
+          onSubmit={handleSubmitTransaction}
+          categories={
+            transactionType === 'income' ? incomeCategories : expenseCategories
+          }
+          type={transactionType}
+          title={
+            editingTransaction
+              ? `Editar ${transactionType === 'income' ? 'Receita' : 'Despesa'}`
+              : `Nova ${transactionType === 'income' ? 'Receita' : 'Despesa'}`
+          }
+        />
 
-      {/* Confirmação de exclusão */}
-      <ConfirmationDialog
-        isOpen={deleteConfirmation.isOpen}
-        onClose={() =>
-          setDeleteConfirmation({ isOpen: false, transactionId: null })
-        }
-        onConfirm={confirmDelete}
-        title="Excluir Transação"
-        description="Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita."
-        confirmText="Excluir"
-        cancelText="Cancelar"
-      />
-    </div>
+        {/* Confirmação de exclusão */}
+        <ConfirmationDialog
+          isOpen={deleteConfirmation.isOpen}
+          onClose={() =>
+            setDeleteConfirmation({ isOpen: false, transactionId: null })
+          }
+          onConfirm={confirmDelete}
+          title="Excluir Transação"
+          description="Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+        />
+      </div>
+    </PageLayout>
   )
 }

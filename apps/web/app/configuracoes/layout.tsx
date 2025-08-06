@@ -12,7 +12,7 @@ import {
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-import { Topbar } from '@/components/topbar'
+import { PageLayout } from '@/components/layouts/page-layout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -83,72 +83,67 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
   const pathname = usePathname()
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Topbar Principal */}
-      <Topbar />
+    <PageLayout>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        {/* Sidebar */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardContent className="p-4">
+              <div className="space-y-2">
+                <h3 className="mb-4 text-sm font-medium text-muted-foreground">
+                  CONFIGURAÇÕES
+                </h3>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <h3 className="mb-4 text-sm font-medium text-muted-foreground">
-                    CONFIGURAÇÕES
-                  </h3>
+                {/* Botão Voltar para Configurações */}
+                {pathname !== '/configuracoes' && (
+                  <Link href="/configuracoes">
+                    <Button
+                      variant="outline"
+                      className="mb-4 h-auto w-full justify-start gap-3 border-dashed p-3"
+                    >
+                      <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+                      <div className="text-left">
+                        <div className="text-sm font-medium">
+                          Voltar para Configurações
+                        </div>
+                      </div>
+                    </Button>
+                  </Link>
+                )}
 
-                  {/* Botão Voltar para Configurações */}
-                  {pathname !== '/configuracoes' && (
-                    <Link href="/configuracoes">
+                {menuItems.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href
+
+                  return (
+                    <Link key={item.id} href={item.href}>
                       <Button
-                        variant="outline"
-                        className="mb-4 h-auto w-full justify-start gap-3 border-dashed p-3"
+                        variant={isActive ? 'secondary' : 'ghost'}
+                        className={`h-auto w-full justify-start gap-3 p-3 ${
+                          isActive ? 'bg-primary/10 text-primary' : ''
+                        }`}
                       >
-                        <ArrowLeft className="h-4 w-4 flex-shrink-0" />
+                        <Icon className="h-4 w-4 flex-shrink-0" />
                         <div className="text-left">
                           <div className="text-sm font-medium">
-                            Voltar para Configurações
+                            {item.label}
+                          </div>
+                          <div className="mt-1 hidden text-xs text-muted-foreground sm:block">
+                            {item.description}
                           </div>
                         </div>
                       </Button>
                     </Link>
-                  )}
-
-                  {menuItems.map((item) => {
-                    const Icon = item.icon
-                    const isActive = pathname === item.href
-
-                    return (
-                      <Link key={item.id} href={item.href}>
-                        <Button
-                          variant={isActive ? 'secondary' : 'ghost'}
-                          className={`h-auto w-full justify-start gap-3 p-3 ${
-                            isActive ? 'bg-primary/10 text-primary' : ''
-                          }`}
-                        >
-                          <Icon className="h-4 w-4 flex-shrink-0" />
-                          <div className="text-left">
-                            <div className="text-sm font-medium">
-                              {item.label}
-                            </div>
-                            <div className="mt-1 hidden text-xs text-muted-foreground sm:block">
-                              {item.description}
-                            </div>
-                          </div>
-                        </Button>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3">{children}</div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Main Content */}
+        <div className="lg:col-span-3">{children}</div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

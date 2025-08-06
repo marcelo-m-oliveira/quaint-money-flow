@@ -7,7 +7,7 @@ import { formatCurrency, getDayPeriod } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { Transaction, TransactionFormData } from '@/lib/types'
 
-import { Topbar } from './topbar'
+import { PageLayout } from './layouts/page-layout'
 import { TransactionFormModal } from './transaction-form-modal'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -142,107 +142,101 @@ export function FinancialDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <Topbar />
+    <PageLayout>
+      {/* Saudação e Resumo */}
+      <div className="w-full">
+        {/* Card Principal - Saudação, Totais e Acesso Rápido */}
+        <Card>
+          <CardContent className="flex flex-col gap-6 p-4 sm:p-6 lg:flex-row lg:gap-8">
+            <div className="min-w-0 flex-1">
+              {/* Saudação */}
+              <div className="mb-6 text-center lg:text-start">
+                <p className="mb-2 text-sm text-muted-foreground">
+                  {dayPeriod.greeting},
+                </p>
+                <p className="flex flex-wrap items-center justify-center gap-2 text-xl font-bold text-foreground lg:justify-start lg:text-2xl">
+                  Marcelo Oliveira!
+                  <span className="text-xl lg:text-2xl">{dayPeriod.icon}</span>
+                </p>
+              </div>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Saudação e Resumo */}
-        <div className="w-full">
-          {/* Card Principal - Saudação, Totais e Acesso Rápido */}
-          <Card>
-            <CardContent className="flex flex-wrap gap-6 p-6">
-              <div className="w-full flex-auto md:w-1/2">
-                {/* Saudação */}
-                <div className="mb-6 text-center md:text-start">
-                  <p className="mb-1 text-muted-foreground">
-                    {dayPeriod.greeting},
+              {/* Totais */}
+              <div className="grid grid-cols-1 gap-4 text-center sm:grid-cols-2 lg:text-start">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    Receitas no mês atual
                   </p>
-                  <p className="flex flex-wrap items-center justify-center gap-2 text-2xl font-bold text-foreground md:justify-start">
-                    Marcelo Oliveira!
-                    <span className="text-2xl">{dayPeriod.icon}</span>
+                  <p className="text-xl font-bold text-green-600 lg:text-2xl">
+                    {formatCurrency(totals.income)}
                   </p>
                 </div>
-
-                {/* Totais */}
-                <div className="mb-6 grid grid-cols-1 gap-6 text-center sm:grid-cols-2 md:text-start">
-                  <div className="flex flex-col">
-                    <p className="mb-1 text-sm text-muted-foreground">
-                      Receitas no mês atual
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(totals.income)}
-                    </p>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="mb-1 text-sm text-muted-foreground">
-                      Despesas no mês atual
-                    </p>
-                    <p className="text-2xl font-bold text-red-600">
-                      {formatCurrency(totals.expenses)}
-                    </p>
-                  </div>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    Despesas no mês atual
+                  </p>
+                  <p className="text-xl font-bold text-red-600 lg:text-2xl">
+                    {formatCurrency(totals.expenses)}
+                  </p>
                 </div>
               </div>
-              <div className="hidden border-l px-3 md:block"></div>
-              <div className="block w-full border-t px-3 md:hidden"></div>
-              <div className="w-full flex-auto md:w-1/3">
-                {/* Acesso Rápido */}
-                <div className="mt-6 pt-6">
-                  <h3 className="mb-4 text-center text-lg font-semibold md:text-start">
-                    Acesso rápido
-                  </h3>
+            </div>
 
-                  <div className="flex flex-wrap justify-center gap-4 md:justify-start">
-                    <Button
-                      variant="outline"
-                      className="flex h-auto w-full flex-col items-center justify-center gap-2 p-4 sm:w-auto [&_svg]:!size-9"
-                      onClick={() => setIsExpenseDialogOpen(true)}
-                    >
-                      <CircleMinus className="text-red-600" />
-                      <span className="text-xs font-medium opacity-40">
-                        DESPESA
-                      </span>
-                    </Button>
+            <div className="flex-shrink-0 lg:w-80">
+              {/* Acesso Rápido */}
+              <div className="lg:border-l lg:pl-6">
+                <h3 className="mb-4 text-center text-lg font-semibold lg:text-start">
+                  Acesso rápido
+                </h3>
 
-                    <Button
-                      variant="outline"
-                      className="flex h-auto w-full flex-col items-center justify-center gap-2 p-4 sm:w-auto [&_svg]:!size-9"
-                      onClick={() => setIsIncomeDialogOpen(true)}
-                    >
-                      <CirclePlus className="text-green-600" />
-                      <span className="text-xs font-medium opacity-40">
-                        RECEITA
-                      </span>
-                    </Button>
-                  </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-center lg:flex-col lg:justify-start">
+                  <Button
+                    variant="outline"
+                    className="flex h-auto w-full flex-col items-center justify-center gap-2 p-4 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20 [&_svg]:!size-8"
+                    onClick={() => setIsExpenseDialogOpen(true)}
+                  >
+                    <CircleMinus className="text-red-600" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      NOVA DESPESA
+                    </span>
+                  </Button>
 
-                  {/* Modais reformulados */}
-                  <TransactionFormModal
-                    isOpen={isExpenseDialogOpen}
-                    onClose={closeExpenseDialog}
-                    transaction={editingTransaction}
-                    onSubmit={handleExpenseSubmit}
-                    categories={categories}
-                    type="expense"
-                    title="Nova despesa"
-                  />
-
-                  <TransactionFormModal
-                    isOpen={isIncomeDialogOpen}
-                    onClose={closeIncomeDialog}
-                    transaction={editingTransaction}
-                    onSubmit={handleIncomeSubmit}
-                    categories={categories}
-                    type="income"
-                    title="Nova receita"
-                  />
+                  <Button
+                    variant="outline"
+                    className="flex h-auto w-full flex-col items-center justify-center gap-2 p-4 hover:border-green-200 hover:bg-green-50 dark:hover:bg-green-950/20 [&_svg]:!size-8"
+                    onClick={() => setIsIncomeDialogOpen(true)}
+                  >
+                    <CirclePlus className="text-green-600" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      NOVA RECEITA
+                    </span>
+                  </Button>
                 </div>
+
+                {/* Modais reformulados */}
+                <TransactionFormModal
+                  isOpen={isExpenseDialogOpen}
+                  onClose={closeExpenseDialog}
+                  transaction={editingTransaction}
+                  onSubmit={handleExpenseSubmit}
+                  categories={categories}
+                  type="expense"
+                  title="Nova despesa"
+                />
+
+                <TransactionFormModal
+                  isOpen={isIncomeDialogOpen}
+                  onClose={closeIncomeDialog}
+                  transaction={editingTransaction}
+                  onSubmit={handleIncomeSubmit}
+                  categories={categories}
+                  type="income"
+                  title="Nova receita"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Dialog de Confirmação */}
       <ConfirmationDialog
@@ -255,6 +249,6 @@ export function FinancialDashboard() {
         cancelText="Cancelar"
         variant="destructive"
       />
-    </div>
+    </PageLayout>
   )
 }

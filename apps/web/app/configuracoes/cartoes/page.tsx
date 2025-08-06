@@ -77,25 +77,26 @@ export default function CartoesPage() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+      <Card className="overflow-hidden">
+        <CardHeader className="px-4 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1">
               <CardTitle className="flex items-center gap-2">
-                <CreditCardIcon className="h-5 w-5" />
-                Cartões de Crédito
+                <CreditCardIcon className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate">Cartões de Crédito</span>
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 Gerencie seus cartões de crédito
               </p>
             </div>
-            <Button onClick={handleAddCreditCard}>
+            <Button onClick={handleAddCreditCard} className="flex-shrink-0">
               <Plus className="mr-2 h-4 w-4" />
-              Adicionar Cartão
+              <span className="hidden sm:inline">Adicionar Cartão</span>
+              <span className="sm:hidden">Adicionar</span>
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto px-4 py-4 sm:px-6">
           {creditCards.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
               <CreditCardIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
@@ -120,9 +121,9 @@ export default function CartoesPage() {
                     className="transition-colors hover:bg-muted/50"
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 overflow-hidden rounded-full border">
+                      <div className="flex items-center gap-2 sm:gap-4">
+                        <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border">
                             {creditCard.iconType === 'bank' &&
                             creditCard.icon ? (
                               <img
@@ -161,32 +162,36 @@ export default function CartoesPage() {
                               </div>
                             )}
                           </div>
-                          <div>
-                            <div className="font-medium">{creditCard.name}</div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium">
+                              {creditCard.name}
+                            </div>
+                            <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-4">
+                              <span className="truncate">
                                 Limite: {formatCurrency(creditCard.limit)}
                               </span>
-                              <span>
+                              <span className="truncate">
                                 Usado:{' '}
                                 {formatCurrency(creditCard.currentBalance)}
                               </span>
-                              <span>
+                              <span className="truncate">
                                 Disponível:{' '}
                                 {formatCurrency(
                                   creditCard.limit - creditCard.currentBalance,
                                 )}
                               </span>
                             </div>
-                            <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>
+                            <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4">
+                              <span className="truncate">
                                 Fechamento: dia {creditCard.closingDay}
                               </span>
-                              <span>Vencimento: dia {creditCard.dueDay}</span>
+                              <span className="truncate">
+                                Vencimento: dia {creditCard.dueDay}
+                              </span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-shrink-0 items-center gap-1">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>

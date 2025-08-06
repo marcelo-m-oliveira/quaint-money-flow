@@ -38,20 +38,23 @@ export function Topbar() {
 
   return (
     <header className="border-b bg-card">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between gap-4">
           {/* Logo e Título */}
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Quaint Money</h1>
+          <div className="flex min-w-0 items-center gap-2">
+            <DollarSign className="h-6 w-6 flex-shrink-0 text-primary" />
+            <h1 className="truncate text-lg font-bold text-foreground sm:text-xl lg:text-2xl">
+              Quaint Money
+            </h1>
           </div>
 
           {/* Menu de Navegação Central */}
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="hidden items-center gap-2 lg:flex xl:gap-4">
             <Link href="/">
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
+                size="sm"
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Visão Geral
               </Button>
@@ -59,7 +62,8 @@ export function Topbar() {
             <Link href="/transacoes">
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
+                size="sm"
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Transações
               </Button>
@@ -67,7 +71,8 @@ export function Topbar() {
             <Link href="/relatorios">
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
+                size="sm"
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Relatórios
               </Button>
@@ -75,7 +80,8 @@ export function Topbar() {
             <Link href="/metas">
               <Button
                 variant="ghost"
-                className="text-muted-foreground hover:text-foreground"
+                size="sm"
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Metas
               </Button>
@@ -83,10 +89,14 @@ export function Topbar() {
           </nav>
 
           {/* Menu de Ações */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-3">
             {/* Mock Data Loader - apenas para desenvolvimento */}
-            <MockDataLoader />
-            <MockDataStatus />
+            <div className="hidden sm:block">
+              <MockDataLoader />
+            </div>
+            <div className="hidden sm:block">
+              <MockDataStatus />
+            </div>
 
             {/* Menu de Configurações */}
             <DropdownMenu>
@@ -167,23 +177,23 @@ export function Topbar() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-2 px-2"
+                  className="flex h-auto items-center gap-2 px-2 py-2"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-7 w-7">
                     <AvatarImage src="" alt={userName} />
                     <AvatarFallback className="text-xs">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden flex-col items-start md:flex">
-                    <span className="text-sm font-medium text-foreground">
+                  <div className="hidden flex-col items-start lg:flex">
+                    <span className="text-sm font-medium leading-tight text-foreground">
                       {userName}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs leading-tight text-muted-foreground">
                       Plano Gratuito
                     </span>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -221,26 +231,40 @@ export function Topbar() {
             </DropdownMenu>
 
             {/* Menu Mobile */}
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-5 w-5" />
+                  <Button variant="ghost" size="sm" className="px-2">
+                    <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem>
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Transações</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Relatórios</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Metas</span>
-                  </DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-48">
+                  <Link href="/">
+                    <DropdownMenuItem>
+                      <span>Visão Geral</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/transacoes">
+                    <DropdownMenuItem>
+                      <span>Transações</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/relatorios">
+                    <DropdownMenuItem>
+                      <span>Relatórios</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/metas">
+                    <DropdownMenuItem>
+                      <span>Metas</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <div className="sm:hidden">
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <span>Mock Data</span>
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
