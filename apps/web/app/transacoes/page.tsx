@@ -882,8 +882,9 @@ export default function TransacoesPage() {
                         <div className="space-y-2">
                           {transactions.map((transaction) => (
                             <div key={transaction.id}>
-                              <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                                <div className="flex items-center gap-4">
+                              <div className="flex items-center rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                                {/* Coluna esquerda: Ícone + Nome + Categoria */}
+                                <div className="flex flex-1 items-center gap-4">
                                   <div
                                     className={`rounded-full p-2 ${
                                       transaction.type === 'income'
@@ -903,11 +904,11 @@ export default function TransacoesPage() {
                                       <ArrowDownIcon className="h-4 w-4 text-red-600" />
                                     )}
                                   </div>
-                                  <div>
+                                  <div className="flex-1">
                                     <p className="font-medium">
                                       {transaction.description}
                                     </p>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                                       <div className="flex items-center gap-1">
                                         <div
                                           className="h-2 w-2 rounded-full"
@@ -918,19 +919,24 @@ export default function TransacoesPage() {
                                         />
                                         {transaction.category.name}
                                       </div>
-                                      {/* Ícone da conta/cartão */}
-                                      {(transaction.accountId ||
-                                        transaction.creditCardId) && (
-                                        <AccountCardIcon
-                                          transaction={transaction}
-                                          accounts={accounts}
-                                          creditCards={creditCards}
-                                        />
-                                      )}
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+
+                                {/* Coluna centro: Conta/Cartão */}
+                                <div className="flex flex-1 justify-center">
+                                  {(transaction.accountId ||
+                                    transaction.creditCardId) && (
+                                    <AccountCardIcon
+                                      transaction={transaction}
+                                      accounts={accounts}
+                                      creditCards={creditCards}
+                                    />
+                                  )}
+                                </div>
+
+                                {/* Coluna direita: Valor + Ações */}
+                                <div className="flex flex-1 items-center justify-end gap-2">
                                   <p
                                     className={`text-lg font-semibold ${
                                       transaction.type === 'income'

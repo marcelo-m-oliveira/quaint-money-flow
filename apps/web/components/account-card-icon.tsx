@@ -29,23 +29,20 @@ export function AccountCardIcon({
   if (!account) return null
 
   return (
-    <div className="flex items-center gap-1">
-      <span>•</span>
-      <div className="flex items-center gap-1">
-        {account.iconType === 'bank' ? (
-          <img
-            src={getBankIcon(account.icon, 'icon') || account.icon}
-            alt={account.name}
-            className="h-3 w-3 rounded-full object-contain"
-          />
-        ) : (
-          <div className="flex h-3 w-3 items-center justify-center">
-            {GENERIC_ICON_MAP[account.icon as keyof typeof GENERIC_ICON_MAP] ||
-              '💳'}
-          </div>
-        )}
-        <span className="max-w-20 truncate">{account.name}</span>
-      </div>
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      {account.iconType === 'bank' ? (
+        <img
+          src={getBankIcon(account.icon, 'icon') || account.icon}
+          alt={account.name}
+          className="h-5 w-5 rounded-full object-contain"
+        />
+      ) : (
+        <div className="flex h-5 w-5 items-center justify-center text-sm">
+          {GENERIC_ICON_MAP[account.icon as keyof typeof GENERIC_ICON_MAP] ||
+            '💳'}
+        </div>
+      )}
+      <span className="max-w-24 truncate font-medium">{account.name}</span>
     </div>
   )
 }
