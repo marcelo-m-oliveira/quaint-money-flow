@@ -11,7 +11,6 @@ import {
   CirclePlus,
   CreditCard,
   Edit,
-  Filter,
   Plus,
   Search,
   Trash2,
@@ -330,10 +329,10 @@ export default function TransacoesPage() {
       <Topbar />
       <div className="flex-1 overflow-auto p-4 pb-80">
         <div className="mx-auto max-w-4xl space-y-6">
-          {/* Controle de Período */}
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+            <CardHeader>
+              {/* Controle de Período e Lançamentos */}
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -375,7 +374,7 @@ export default function TransacoesPage() {
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex items-center gap-2"
+                        className="flex min-w-[140px] items-center gap-2"
                       >
                         {getPeriodTitle()}
                         <ChevronDown className="h-4 w-4" />
@@ -409,19 +408,8 @@ export default function TransacoesPage() {
                   </Button>
                 </div>
               </div>
-            </CardHeader>
-          </Card>
-
-          {/* Filtros */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filtros
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+              {/* Filtros */}
+              <div className="!mb-4 grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div>
                   <Label htmlFor="search">Buscar</Label>
                   <div className="relative">
@@ -487,15 +475,10 @@ export default function TransacoesPage() {
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Lista de transações */}
-          <Card>
-            <CardHeader>
               <CardTitle>Transações ({sortedTransactions.length})</CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Lista de transações */}
               {sortedTransactions.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
@@ -558,7 +541,7 @@ export default function TransacoesPage() {
                     return (
                       <div key={dateString} className="space-y-3">
                         {/* Cabeçalho do grupo de data */}
-                        <div className="flex items-center justify-between border-b pb-2">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                             <h3 className="text-sm font-medium text-muted-foreground">
@@ -587,78 +570,77 @@ export default function TransacoesPage() {
                         {/* Lista de transações do dia */}
                         <div className="space-y-2">
                           {transactions.map((transaction) => (
-                            <div
-                              key={transaction.id}
-                              className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                            >
-                              <div className="flex items-center gap-4">
-                                <div
-                                  className={`rounded-full p-2 ${
-                                    transaction.type === 'income'
-                                      ? 'bg-green-100 dark:bg-green-900'
-                                      : 'bg-red-100 dark:bg-red-900'
-                                  }`}
-                                >
-                                  {transaction.type === 'income' ? (
-                                    <ArrowUpIcon
-                                      className={`h-4 w-4 ${
-                                        transaction.type === 'income'
-                                          ? 'text-green-600'
-                                          : 'text-red-600'
-                                      }`}
-                                    />
-                                  ) : (
-                                    <ArrowDownIcon className="h-4 w-4 text-red-600" />
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="font-medium">
-                                    {transaction.description}
-                                  </p>
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <div
-                                        className="h-2 w-2 rounded-full"
-                                        style={{
-                                          backgroundColor:
-                                            transaction.category.color,
-                                        }}
+                            <div key={transaction.id}>
+                              <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                                <div className="flex items-center gap-4">
+                                  <div
+                                    className={`rounded-full p-2 ${
+                                      transaction.type === 'income'
+                                        ? 'bg-green-100 dark:bg-green-900'
+                                        : 'bg-red-100 dark:bg-red-900'
+                                    }`}
+                                  >
+                                    {transaction.type === 'income' ? (
+                                      <ArrowUpIcon
+                                        className={`h-4 w-4 ${
+                                          transaction.type === 'income'
+                                            ? 'text-green-600'
+                                            : 'text-red-600'
+                                        }`}
                                       />
-                                      {transaction.category.name}
+                                    ) : (
+                                      <ArrowDownIcon className="h-4 w-4 text-red-600" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">
+                                      {transaction.description}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <div className="flex items-center gap-1">
+                                        <div
+                                          className="h-2 w-2 rounded-full"
+                                          style={{
+                                            backgroundColor:
+                                              transaction.category.color,
+                                          }}
+                                        />
+                                        {transaction.category.name}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <p
-                                  className={`text-lg font-semibold ${
-                                    transaction.type === 'income'
-                                      ? 'text-green-600'
-                                      : 'text-red-600'
-                                  }`}
-                                >
-                                  {transaction.type === 'income' ? '+' : '-'}
-                                  {formatCurrency(transaction.amount)}
-                                </p>
-                                <div className="flex gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() =>
-                                      handleEditTransaction(transaction)
-                                    }
+                                <div className="flex items-center gap-2">
+                                  <p
+                                    className={`text-lg font-semibold ${
+                                      transaction.type === 'income'
+                                        ? 'text-green-600'
+                                        : 'text-red-600'
+                                    }`}
                                   >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() =>
-                                      handleDeleteTransaction(transaction.id)
-                                    }
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                    {transaction.type === 'income' ? '+' : '-'}
+                                    {formatCurrency(transaction.amount)}
+                                  </p>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleEditTransaction(transaction)
+                                      }
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleDeleteTransaction(transaction.id)
+                                      }
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
