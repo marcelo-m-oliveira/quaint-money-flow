@@ -126,7 +126,7 @@ export function TransactionFormModal({
 
   const watchedDate = watch('date')
   const selectedDate = watchedDate
-    ? new Date(watchedDate.split('/').reverse().join('-'))
+    ? new Date(watchedDate + 'T00:00:00')
     : new Date()
 
   return (
