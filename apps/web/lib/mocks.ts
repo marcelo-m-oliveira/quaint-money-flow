@@ -211,6 +211,7 @@ export function generateMockTransaction(
     category,
     date: faker.date.past({ years: 1 }),
     createdAt,
+    paid: faker.helpers.arrayElement([true, false]),
     updatedAt: createdAt,
   }
 }
@@ -393,11 +394,29 @@ export function generateMockDataset() {
 }
 
 /**
+ * Gera preferências mock
+ */
+export function generateMockPreferences() {
+  return {
+    transactionOrder: faker.helpers.arrayElement(['crescente', 'decrescente']),
+    defaultNavigationPeriod: faker.helpers.arrayElement([
+      'diario',
+      'semanal',
+      'mensal',
+    ]),
+    showDailyBalance: faker.datatype.boolean(),
+    viewMode: faker.helpers.arrayElement(['all', 'cashflow']),
+    isFinancialSummaryExpanded: faker.datatype.boolean(),
+  }
+}
+
+/**
  * Popula o localStorage com dados mock
  */
 export function populateWithMockData() {
   const { categories, transactions, accounts, creditCards } =
     generateMockDataset()
+  const preferences = generateMockPreferences()
 
   // Salvar no localStorage
   localStorage.setItem('quaint-money-categories', JSON.stringify(categories))
@@ -407,12 +426,14 @@ export function populateWithMockData() {
   )
   localStorage.setItem('quaint-money-accounts', JSON.stringify(accounts))
   localStorage.setItem('quaint-money-credit-cards', JSON.stringify(creditCards))
+  localStorage.setItem('quaint-money-preferences', JSON.stringify(preferences))
 
   console.log('✅ Dados mock carregados com sucesso!')
   console.log(`📊 ${categories.length} categorias criadas`)
   console.log(`💰 ${transactions.length} transações criadas`)
   console.log(`🏦 ${accounts.length} contas criadas`)
   console.log(`💳 ${creditCards.length} cartões de crédito criados`)
+  console.log(`⚙️ Preferências configuradas`)
 
-  return { categories, transactions, accounts, creditCards }
+  return { categories, transactions, accounts, creditCards, preferences }
 }

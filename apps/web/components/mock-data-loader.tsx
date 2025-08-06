@@ -76,6 +76,7 @@ export function MockDataLoader() {
               <li>💰 100 transações variadas</li>
               <li>🏦 6 contas diferentes (banco, cartão, etc.)</li>
               <li>💳 4 cartões de crédito com limites realistas</li>
+              <li>⚙️ Preferências de usuário configuradas</li>
             </ul>
             <Button
               onClick={handleLoadMockData}

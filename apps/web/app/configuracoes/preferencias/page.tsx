@@ -11,14 +11,14 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { usePreferences, UserPreferences } from '@/lib/hooks/use-preferences'
+import { usePreferences } from '@/lib/hooks/use-preferences'
 import {
   PreferencesFormSchema,
   preferencesSchema,
 } from '@/lib/schemas/preferences'
 
 export default function PreferenciasPage() {
-  const { preferences, updatePreference, clearAllTransactions, deleteAccount } =
+  const { preferences, clearAllTransactions, deleteAccount, savePreferences } =
     usePreferences()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
@@ -45,12 +45,20 @@ export default function PreferenciasPage() {
 
   const onSubmit = (data: PreferencesFormSchema) => {
     try {
-      // Atualizar cada preferência individualmente
-      Object.entries(data).forEach(([key, value]) => {
-        updatePreference(key as keyof UserPreferences, value)
-      })
+      // Salvar todas as preferências de uma vez usando o hook
+      const updatedPreferences = {
+        ...preferences,
+        ...data,
+      }
+
+      savePreferences(updatedPreferences)
+
+      // Resetar o formulário para remover o estado isDirty
+      reset(updatedPreferences)
+
+      console.log('✅ Preferências salvas com sucesso!')
     } catch (error) {
-      console.error('Erro ao salvar preferências:', error)
+      console.error('❌ Erro ao salvar preferências:', error)
     }
   }
 
@@ -107,7 +115,7 @@ export default function PreferenciasPage() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-base font-medium">
-                  § Ordenação dos seus Lançamentos
+                  Ordenação dos seus Lançamentos
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Ordem (baseado na data) que suas transações serão listadas na
@@ -214,6 +222,55 @@ export default function PreferenciasPage() {
               <p className="text-sm text-red-500">
                 {errors.defaultNavigationPeriod.message}
               </p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Modo de Visualização */}
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-base font-medium">Modo de Visualização</h3>
+                <p className="text-sm text-muted-foreground">
+                  Escolha como você deseja visualizar suas transações por padrão
+                </p>
+              </div>
+              <div className="w-32">
+                <Controller
+                  name="viewMode"
+                  control={control}
+                  render={({ field }) => (
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex flex-col space-y-3"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="cashflow" id="cashflow" />
+                        <Label
+                          htmlFor="cashflow"
+                          className="cursor-pointer text-sm font-normal"
+                        >
+                          Fluxo de caixa
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="all" id="all" />
+                        <Label
+                          htmlFor="all"
+                          className="cursor-pointer text-sm font-normal"
+                        >
+                          Todos os lançamentos
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  )}
+                />
+              </div>
+            </div>
+            {errors.viewMode && (
+              <p className="text-sm text-red-500">{errors.viewMode.message}</p>
             )}
           </div>
 

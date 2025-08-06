@@ -2,18 +2,13 @@
 
 import { useEffect, useState } from 'react'
 
-import { preferencesSchema } from '@/lib/schemas/preferences'
+import {
+  PreferencesFormSchema,
+  preferencesSchema,
+} from '@/lib/schemas/preferences'
 
-export interface UserPreferences {
-  // Ordenação dos lançamentos
-  transactionOrder: 'crescente' | 'decrescente'
-
-  // Período de navegação padrão
-  defaultNavigationPeriod: 'diario' | 'semanal' | 'mensal'
-
-  // Saldo diário
-  showDailyBalance: boolean
-}
+// Usar o tipo inferido do schema para garantir consistência
+export type UserPreferences = PreferencesFormSchema
 
 const PREFERENCES_STORAGE_KEY = 'quaint-money-preferences'
 
@@ -21,6 +16,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   transactionOrder: 'decrescente',
   defaultNavigationPeriod: 'mensal',
   showDailyBalance: false,
+  viewMode: 'all',
+  isFinancialSummaryExpanded: false,
 }
 
 export function usePreferences() {
@@ -30,28 +27,43 @@ export function usePreferences() {
 
   // Carregar preferências do localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(PREFERENCES_STORAGE_KEY)
-      if (stored) {
-        const parsedPreferences = JSON.parse(stored)
-        // Validar com Zod antes de aplicar
-        const validationResult = preferencesSchema.safeParse(parsedPreferences)
-        if (validationResult.success) {
-          setPreferences({ ...DEFAULT_PREFERENCES, ...validationResult.data })
-        } else {
-          console.warn(
-            'Preferências inválidas encontradas, usando padrões:',
-            validationResult.error,
-          )
-          setPreferences(DEFAULT_PREFERENCES)
+    const loadPreferences = () => {
+      try {
+        const stored = localStorage.getItem(PREFERENCES_STORAGE_KEY)
+        if (stored) {
+          const parsedPreferences = JSON.parse(stored)
+          // Validar com Zod antes de aplicar
+          const validationResult =
+            preferencesSchema.safeParse(parsedPreferences)
+          if (validationResult.success) {
+            setPreferences({ ...DEFAULT_PREFERENCES, ...validationResult.data })
+          } else {
+            console.warn(
+              'Preferências inválidas encontradas, usando padrões:',
+              validationResult.error,
+            )
+            setPreferences(DEFAULT_PREFERENCES)
+          }
         }
+      } catch (error) {
+        console.error('Erro ao carregar preferências:', error)
+        setPreferences(DEFAULT_PREFERENCES)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error('Erro ao carregar preferências:', error)
-      setPreferences(DEFAULT_PREFERENCES)
-    } finally {
-      setIsLoading(false)
     }
+
+    loadPreferences()
+
+    // Listener para mudanças no localStorage
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === PREFERENCES_STORAGE_KEY) {
+        loadPreferences()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
   // Salvar preferências no localStorage
@@ -61,7 +73,7 @@ export function usePreferences() {
       const validationResult = preferencesSchema.safeParse(newPreferences)
       if (!validationResult.success) {
         console.error(
-          'Erro de validação ao salvar preferências:',
+          '❌ Erro de validação ao salvar preferências:',
           validationResult.error,
         )
         throw new Error('Dados de preferências inválidos')
@@ -71,9 +83,10 @@ export function usePreferences() {
         PREFERENCES_STORAGE_KEY,
         JSON.stringify(validationResult.data),
       )
+
       setPreferences(validationResult.data)
     } catch (error) {
-      console.error('Erro ao salvar preferências:', error)
+      console.error('❌ Erro ao salvar preferências:', error)
       throw error
     }
   }
@@ -128,6 +141,7 @@ export function usePreferences() {
     preferences,
     isLoading,
     updatePreference,
+    savePreferences,
     resetPreferences,
     clearAllTransactions,
     deleteAccount,

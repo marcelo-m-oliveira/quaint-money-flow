@@ -37,12 +37,14 @@ export function useFinancialData() {
                 date: string
                 createdAt: string
                 updatedAt: string
+                paid?: boolean
               },
             ) => ({
               ...t,
               date: new Date(t.date),
               createdAt: new Date(t.createdAt),
               updatedAt: new Date(t.updatedAt),
+              paid: t.paid ?? false, // Garantir compatibilidade com transações existentes
             }),
           )
           setTransactions(parsedTransactions)
@@ -93,6 +95,7 @@ export function useFinancialData() {
       type: data.type,
       categoryId: data.categoryId,
       date: new Date(data.date),
+      paid: data.paid,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -105,15 +108,17 @@ export function useFinancialData() {
   const updateTransaction = (id: string, data: TransactionFormData) => {
     const updatedTransactions = transactions.map((transaction) => {
       if (transaction.id === id) {
-        return {
+        const updatedTransaction = {
           ...transaction,
           description: data.description,
           amount: parseFloat(data.amount),
           type: data.type,
           categoryId: data.categoryId,
-          date: new Date(data.date),
+          date: typeof data.date === 'string' ? new Date(data.date) : data.date,
+          paid: data.paid,
           updatedAt: new Date(),
         }
+        return updatedTransaction
       }
       return transaction
     })

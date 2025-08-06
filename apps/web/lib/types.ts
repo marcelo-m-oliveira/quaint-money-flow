@@ -15,6 +15,7 @@ export interface Transaction {
   categoryId: string
   category?: Category
   date: Date
+  paid: boolean // Indica se o lançamento foi pago ou não
   createdAt: Date
   updatedAt: Date
 }
@@ -25,6 +26,7 @@ export interface TransactionFormData {
   type: 'income' | 'expense'
   categoryId: string
   date: string
+  paid: boolean // Indica se o lançamento foi pago ou não
 }
 
 export interface CategoryFormData {
