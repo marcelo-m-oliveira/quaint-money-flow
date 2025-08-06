@@ -9,7 +9,7 @@
 export function getValidationMessage(
   fieldName: string,
   validatorName: string,
-  validatorValue?: any,
+  validatorValue?: unknown,
 ): string {
   const validator = validationMessages[validatorName]
   if (typeof validator === 'function') {
@@ -102,7 +102,7 @@ export function isValidZipcode(zipcode: string): boolean {
  * @param value - Valor a ser verificado
  * @returns `true` se o valor for valido. Caso contrário, `false`.
  */
-export function isNonEmptyValue(value: any): boolean {
+export function isNonEmptyValue(value: unknown): boolean {
   return !!value
 }
 
@@ -112,8 +112,8 @@ export function isNonEmptyValue(value: any): boolean {
  * @param value - Valor a ser verificado
  * @returns `true` se o value for valido, `0` ou `false`. Caso contrário, `false`.
  */
-export function isNonNullValue(value: any): boolean {
-  return value || value === 0 || value === false
+export function isNonNullValue(value: unknown): boolean {
+  return Boolean(value) || value === 0 || value === false
 }
 
 /**
@@ -126,7 +126,7 @@ export function isNonNullValue(value: any): boolean {
  * @param obj - Objeto a ser validado
  * @returns `true` se o objeto tiver alguma propriedade válida. Caso contrário, `false`.
  */
-export function isNonEmptyObject(obj: Record<string, any>): boolean {
+export function isNonEmptyObject(obj: Record<string, unknown>): boolean {
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const value = obj[key]
@@ -150,7 +150,7 @@ export function isNonEmptyObject(obj: Record<string, any>): boolean {
  * @param arr - Array a ser validado.
  * @returns `true` se o array for vazio ou `undefined`. Caso contrário, `false`.
  */
-export function isNonEmptyArray(arr: any[]): boolean {
+export function isNonEmptyArray(arr: unknown[]): boolean {
   return !!arr?.length
 }
 
@@ -163,7 +163,7 @@ export function isNonEmptyArray(arr: any[]): boolean {
  * @param array - Array com possíveis duplicados
  * @returns Um array novo sem elementos duplicados
  */
-export function removeDuplicateItems(array: any[]): any[] {
+export function removeDuplicateItems<T>(array: T[]): T[] {
   return [
     ...new Map(array.map((item) => [JSON.stringify(item), item])).values(),
   ]
@@ -176,7 +176,7 @@ export function removeDuplicateItems(array: any[]): any[] {
  * @returns `true` se todos os campos forem válidos. Caso contrário, `false`.
  */
 export function areFieldsNonEmptyOrNonZero(fields: {
-  [field: string]: any
+  [field: string]: unknown
 }): boolean {
   for (const field in fields) {
     if (isNonEmptyValue(fields[field]) || fields[field] === 0) {
@@ -192,7 +192,9 @@ export function areFieldsNonEmptyOrNonZero(fields: {
  * @param fields - Objeto com os campos a serem validados
  * @returns `true` se todos os campos forem válidos. Caso contrário, `false`.
  */
-export function areFieldsNonEmpty(fields: { [field: string]: any }): boolean {
+export function areFieldsNonEmpty(fields: {
+  [field: string]: unknown
+}): boolean {
   for (const field in fields) {
     if (isNonNullValue(fields[field])) {
       return true
@@ -207,7 +209,7 @@ export function areFieldsNonEmpty(fields: { [field: string]: any }): boolean {
  * @param value - String a ser limpa
  * @returns String contendo apenas números
  */
-function replaceNonDigits(value: string): string {
+export function replaceNonDigits(value: string): string {
   return value.replace(/\D+/g, '')
 }
 
@@ -215,16 +217,16 @@ function replaceNonDigits(value: string): string {
  * Contém todas as mensagens de validação utilizadas no sistema, centralizando mensagens específicas
  * e parâmetros que podem ser reutilizados e personalizados.
  */
-const validationMessages: Record<
+export const validationMessages: Record<
   string,
-  string | ((fieldName: string, validatorValue?: any) => string)
+  string | ((fieldName: string, validatorValue?: unknown) => string)
 > = {
   required: (fieldName) => `${fieldName} é obrigatório.`,
   max: (fieldName, validatorValue) =>
-    `${fieldName} precisa ter no máximo ${validatorValue?.max} dias.`,
+    `${fieldName} precisa ter no máximo ${(validatorValue as { max?: number })?.max} dias.`,
   passwordError: () => `As senhas devem ser iguais!`,
   maxlength: (fieldName, validatorValue) =>
-    `${fieldName} precisa ter no máximo ${validatorValue?.requiredLength} caracteres.`,
+    `${fieldName} precisa ter no máximo ${(validatorValue as { requiredLength?: number })?.requiredLength} caracteres.`,
   pattern: () => 'Campo inválido.',
   mask: (fieldName) => `${fieldName} está inválido.`,
   cpfInvalid: () => `CPF inválido.`,

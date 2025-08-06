@@ -202,7 +202,7 @@ export function generateMockTransaction(
       ? faker.number.float({ min: 10, max: 500, fractionDigits: 2 })
       : faker.number.float({ min: 100, max: 5000, fractionDigits: 2 })
 
-  const createdAt = faker.date.past({ years: 1 })
+  const createdAt = faker.date.past({ years: 1 }).getTime()
 
   // Vincular com conta ou cartão (70% das transações terão vínculo)
   let accountId: string | undefined
@@ -239,7 +239,7 @@ export function generateMockTransaction(
     category,
     accountId,
     creditCardId,
-    date: faker.date.past({ years: 1 }),
+    date: faker.date.past({ years: 1 }).getTime(),
     createdAt,
     paid: faker.helpers.arrayElement([true, false]),
     updatedAt: createdAt,
@@ -266,7 +266,7 @@ export function generateMockTransactions(
   }
 
   // Ordenar por data (mais recentes primeiro)
-  return transactions.sort((a, b) => b.date.getTime() - a.date.getTime())
+  return transactions.sort((a, b) => b.date - a.date)
 }
 
 /**

@@ -5,12 +5,7 @@ export function convertToDate(date: string): Date {
   return new Date(date)
 }
 
-/**
- * Formata uma data para o formato brasileiro (DD/MM/YYYY)
- */
-export function formatDate(date: Date, locale: string = 'pt-BR'): string {
-  return date.toLocaleDateString(locale)
-}
+// formatDate foi movida para date.utils.ts
 
 /**
  * Formata a data com o horário incluído (DD/MM/YYYY HH:mm:ss)
@@ -44,64 +39,14 @@ export function getTime(
   })
 }
 
-/**
- * Retorna apenas o ano de uma data
- */
-export function getYear(date: Date): number {
-  return date.getFullYear()
-}
-
-/**
- * Retorna apenas o mês de uma data (1-12)
- */
-export function getMonth(date: Date): number {
-  return date.getMonth() + 1 // Os meses começam de 0, por isso somamos 1
-}
-
-/**
- * Retorna apenas o dia do mês de uma data
- */
-export function getDay(date: Date): number {
-  return date.getDate()
-}
-
-/**
- * Retorna apenas a hora de uma data
- */
-export function getHours(date: Date): number {
-  return date.getHours()
-}
-
-/**
- * Retorna apenas os minutos de uma data
- */
-export function getMinutes(date: Date): number {
-  return date.getMinutes()
-}
-
-/**
- * Retorna apenas os segundos de uma data
- */
-export function getSeconds(date: Date): number {
-  return date.getSeconds()
-}
-
-/**
- * Trunca um texto para o tamanho máximo especificado, adicionando reticências
- */
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) {
-    return text
-  }
-
-  return text.substring(0, maxLength) + '...'
-}
+// Funções de data foram movidas para date.utils.ts
+// truncateText foi movida para format.utils.ts
 
 /**
  * Nomeia um relatório seguindo o formato padrão
  */
 export function nameReport(
-  rowData: any,
+  rowData: Record<string, unknown>,
   extension: string,
   reportName?: string,
 ): string {
@@ -112,29 +57,11 @@ export function nameReport(
   return `${defaultName}_${clientName}_AC_${year}.${extension}`
 }
 
-/**
- * Nomeia um template seguindo o formato padrão
- */
-export function nameTemplate(rowData: any): string {
-  const nameParts = rowData?.nomeTemplate.split('.')
-  return `${nameParts[0]}_${rowData.cliente}_AC_${rowData.anoCalendario}.${nameParts[1]}`
-}
-
-/**
- * Nomeia uma URL string para remover espaços
- */
-export function nameUrlString(res: string): string {
-  return res.replace(/\s/g, '-')
-}
-
-/**
- * Nomeia TemplateDF seguindo o formato específico
- */
-export function nameTemplateDF(rowData: any): string {
-  const nameParts = rowData?.nomeTemplate.split('_')
-  const extensionParts = rowData?.nomeTemplate.split('.')
-  return `${nameParts[0]}_${nameParts[1]}_${nameParts[2]}_${nameParts[3]}_${rowData.cliente}_AC_${rowData.anoCalendario}.${extensionParts[1]}`
-}
+// Funções movidas para arquivos específicos:
+// - nameTemplate -> format.utils.ts
+// - nameUrlString -> string.utils.ts
+// - replaceCpfCnpj -> string.utils.ts
+// - maskCpf -> string.utils.ts
 
 /**
  * Obtém o limite de caracteres com base na largura da tela
@@ -223,38 +150,6 @@ export function transformValueVerbose(value: number): string {
   return isNegative ? `- ${value}` : value.toString()
 }
 
-/**
- * Remove todos os caracteres não numéricos de uma string de CPF ou CNPJ
- * @param cpfCnpj - A string de CPF ou CNPJ a ser limpa
- * @returns Uma string contendo apenas números
- */
-export function replaceCpfCnpj(cpfCnpj: string): string {
-  return cpfCnpj.replace(/[^\d]+/g, '')
-}
+// Funções de CPF movidas para string.utils.ts
 
-/**
- * Aplica a máscara de CPF (XXX.XXX.XXX-XX) em uma string numérica
- * @param value - A string de CPF não formatada
- * @returns A string de CPF formatada
- */
-export function maskCpf(value: string): string {
-  return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/g, '$1.$2.$3-$4')
-}
-
-/**
- * Aplica a máscara de CNPJ (XX.XXX.XXX/XXXX-XX) em uma string numérica
- * @param value - A string de CNPJ não formatada
- * @returns A string de CNPJ formatada
- */
-export function maskCnpj(value: string): string {
-  return value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/g, '$1.$2.$3/$4-$5')
-}
-
-/**
- * Aplica a upperCase na primeira lestra do texto.
- * @param value - A string de texto
- * @returns A string de texto com a inicial maiúscula
- */
-export function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
+// maskCnpj e capitalize foram movidas para string.utils.ts

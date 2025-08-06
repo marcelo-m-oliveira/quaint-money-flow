@@ -140,9 +140,7 @@ export const inputTypes = {
 /**
  * Endpoints das APIs..
  */
-export const endpoints = {
-
-}
+export const endpoints = {}
 
 /**
  * Actions para validar permissões.
@@ -163,9 +161,7 @@ export const actions = {
 /**
  * Subject para classificar o modulo antes de conceder a permissão.
  */
-export const subjects = {
-
-}
+export const subjects = {}
 
 /**
  * Breadcrumbs e títulos das páginas.

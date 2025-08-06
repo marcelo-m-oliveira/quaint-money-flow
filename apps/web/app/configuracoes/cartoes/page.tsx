@@ -2,7 +2,7 @@
 
 import {
   Building2,
-  CreditCard,
+  CreditCard as CreditCardIcon,
   DollarSign,
   Edit,
   Landmark,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
-import { AccountFormModal } from '@/components/account-form-modal'
+import { CreditCardFormModal } from '@/components/credit-card-form-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
@@ -26,13 +26,16 @@ import {
 } from '@/components/ui/tooltip'
 import { getBankIcon } from '@/lib/data/banks'
 import { formatCurrency } from '@/lib/format'
-import { useAccounts } from '@/lib/hooks/use-accounts'
-import { Account, AccountFormData } from '@/lib/types'
+import { useCreditCards } from '@/lib/hooks/use-credit-cards'
+import { CreditCard, CreditCardFormData } from '@/lib/types'
 
-export default function ContasPage() {
-  const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts()
-  const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
-  const [editingAccount, setEditingAccount] = useState<Account | undefined>()
+export default function CartoesPage() {
+  const { creditCards, addCreditCard, updateCreditCard, deleteCreditCard } =
+    useCreditCards()
+  const [isCreditCardFormOpen, setIsCreditCardFormOpen] = useState(false)
+  const [editingCreditCard, setEditingCreditCard] = useState<
+    CreditCard | undefined
+  >()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -40,51 +43,37 @@ export default function ContasPage() {
     onConfirm: () => void
   }>({ isOpen: false, title: '', description: '', onConfirm: () => {} })
 
-  const handleAddAccount = () => {
-    setEditingAccount(undefined)
-    setIsAccountFormOpen(true)
+  const handleAddCreditCard = () => {
+    setEditingCreditCard(undefined)
+    setIsCreditCardFormOpen(true)
   }
 
-  const handleEditAccount = (account: Account) => {
-    setEditingAccount(account)
-    setIsAccountFormOpen(true)
+  const handleEditCreditCard = (creditCard: CreditCard) => {
+    setEditingCreditCard(creditCard)
+    setIsCreditCardFormOpen(true)
   }
 
-  const handleDeleteAccount = (account: Account) => {
+  const handleDeleteCreditCard = (creditCard: CreditCard) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Excluir conta',
-      description: `Tem certeza que deseja excluir a conta "${account.name}"? Esta ação não pode ser desfeita.`,
+      title: 'Excluir cartão',
+      description: `Tem certeza que deseja excluir o cartão "${creditCard.name}"? Esta ação não pode ser desfeita.`,
       onConfirm: () => {
-        deleteAccount(account.id)
+        deleteCreditCard(creditCard.id)
         setConfirmDialog({ ...confirmDialog, isOpen: false })
       },
     })
   }
 
-  const handleSubmitAccount = (accountData: AccountFormData) => {
-    if (editingAccount) {
-      updateAccount(editingAccount.id, accountData)
+  const handleSubmitCreditCard = (data: CreditCardFormData) => {
+    if (editingCreditCard) {
+      updateCreditCard(editingCreditCard.id, data)
     } else {
-      addAccount(accountData)
+      addCreditCard(data)
     }
-    setIsAccountFormOpen(false)
-    setEditingAccount(undefined)
+    setIsCreditCardFormOpen(false)
+    setEditingCreditCard(undefined)
   }
-
-  const handleCloseModal = () => {
-    setIsAccountFormOpen(false)
-    setEditingAccount(undefined)
-  }
-
-  // Calcular totais
-  const totalBalance = accounts.reduce(
-    (sum, account) => sum + account.balance,
-    0,
-  )
-  const generalBalance = accounts
-    .filter((account) => account.includeInGeneralBalance)
-    .reduce((sum, account) => sum + account.balance, 0)
 
   return (
     <>
@@ -93,84 +82,64 @@ export default function ContasPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Contas
+                <CreditCardIcon className="h-5 w-5" />
+                Cartões de Crédito
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Configure suas contas bancárias e cartões
+                Gerencie seus cartões de crédito
               </p>
             </div>
-            <Button onClick={handleAddAccount} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nova conta
+            <Button onClick={handleAddCreditCard}>
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Cartão
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {accounts.length === 0 ? (
+          {creditCards.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
-              <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
+              <CreditCardIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p className="mb-2 text-lg font-medium">
-                Nenhuma conta cadastrada
+                Nenhum cartão cadastrado
               </p>
               <p className="mb-4 text-sm">
-                Adicione suas contas bancárias e cartões para começar
+                Adicione seus cartões de crédito para começar a controlar seus
+                gastos
               </p>
-              <Button onClick={handleAddAccount} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Adicionar primeira conta
+              <Button onClick={handleAddCreditCard}>
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Primeiro Cartão
               </Button>
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Resumo */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground">
-                      Saldo Total
-                    </div>
-                    <div className="text-2xl font-bold">
-                      {formatCurrency(totalBalance)}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground">
-                      Saldo Geral (incluído no dashboard)
-                    </div>
-                    <div className="text-2xl font-bold">
-                      {formatCurrency(generalBalance)}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Lista de contas */}
-              <div className="space-y-3">
-                {accounts.map((account) => (
-                  <Card key={account.id}>
+            <div className="space-y-4">
+              <div className="grid gap-4">
+                {creditCards.map((creditCard) => (
+                  <Card
+                    key={creditCard.id}
+                    className="transition-colors hover:bg-muted/50"
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
-                            {account.iconType === 'bank' && account.icon ? (
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 overflow-hidden rounded-full border">
+                            {creditCard.iconType === 'bank' &&
+                            creditCard.icon ? (
                               <img
                                 src={
-                                  getBankIcon(account.icon, 'icon') ||
-                                  account.icon
+                                  getBankIcon(creditCard.icon, 'icon') ||
+                                  creditCard.icon
                                 }
-                                alt={account.name}
+                                alt={creditCard.name}
                                 className="h-full w-full rounded-full object-contain p-0.5"
                               />
-                            ) : account.iconType === 'generic' &&
-                              account.icon ? (
+                            ) : creditCard.iconType === 'generic' &&
+                              creditCard.icon ? (
                               <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
                                 {(() => {
                                   const GENERIC_ICON_MAP = {
                                     wallet: Wallet,
-                                    'credit-card': CreditCard,
+                                    'credit-card': CreditCardIcon,
                                     bank: Landmark,
                                     building: Building2,
                                     'piggy-bank': PiggyBank,
@@ -179,8 +148,8 @@ export default function ContasPage() {
                                   }
                                   const IconComponent =
                                     GENERIC_ICON_MAP[
-                                      account.icon as keyof typeof GENERIC_ICON_MAP
-                                    ] || CreditCard
+                                      creditCard.icon as keyof typeof GENERIC_ICON_MAP
+                                    ] || CreditCardIcon
                                   return (
                                     <IconComponent className="h-5 w-5 text-muted-foreground" />
                                   )
@@ -188,19 +157,32 @@ export default function ContasPage() {
                               </div>
                             ) : (
                               <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
-                                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                                <CreditCardIcon className="h-5 w-5 text-muted-foreground" />
                               </div>
                             )}
                           </div>
                           <div>
-                            <div className="font-medium">{account.name}</div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>{formatCurrency(account.balance)}</span>
-                              {!account.includeInGeneralBalance && (
-                                <span className="rounded bg-muted px-2 py-0.5 text-xs">
-                                  Não incluído no saldo geral
-                                </span>
-                              )}
+                            <div className="font-medium">{creditCard.name}</div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>
+                                Limite: {formatCurrency(creditCard.limit)}
+                              </span>
+                              <span>
+                                Usado:{' '}
+                                {formatCurrency(creditCard.currentBalance)}
+                              </span>
+                              <span>
+                                Disponível:{' '}
+                                {formatCurrency(
+                                  creditCard.limit - creditCard.currentBalance,
+                                )}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>
+                                Fechamento: dia {creditCard.closingDay}
+                              </span>
+                              <span>Vencimento: dia {creditCard.dueDay}</span>
                             </div>
                           </div>
                         </div>
@@ -210,14 +192,16 @@ export default function ContasPage() {
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEditAccount(account)}
+                                  size="sm"
+                                  onClick={() =>
+                                    handleEditCreditCard(creditCard)
+                                  }
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Editar conta</p>
+                                <p>Editar cartão</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -226,15 +210,17 @@ export default function ContasPage() {
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteAccount(account)}
+                                  size="sm"
+                                  onClick={() =>
+                                    handleDeleteCreditCard(creditCard)
+                                  }
                                   className="text-destructive hover:text-destructive"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Excluir conta</p>
+                                <p>Excluir cartão</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -250,11 +236,15 @@ export default function ContasPage() {
       </Card>
 
       {/* Modal de formulário */}
-      <AccountFormModal
-        isOpen={isAccountFormOpen}
-        onClose={handleCloseModal}
-        onSubmit={handleSubmitAccount}
-        account={editingAccount}
+      <CreditCardFormModal
+        isOpen={isCreditCardFormOpen}
+        onClose={() => {
+          setIsCreditCardFormOpen(false)
+          setEditingCreditCard(undefined)
+        }}
+        onSubmit={handleSubmitCreditCard}
+        creditCard={editingCreditCard}
+        title={editingCreditCard ? 'Editar Cartão' : 'Adicionar Cartão'}
       />
 
       {/* Dialog de confirmação */}

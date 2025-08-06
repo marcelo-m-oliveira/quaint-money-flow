@@ -11,11 +11,11 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { usePreferences } from '@/lib/hooks/use-preferences'
 import {
-  PreferencesFormSchema,
-  preferencesSchema,
-} from '@/lib/schemas/preferences'
+  PreferencesFormData,
+  usePreferences,
+} from '@/lib/hooks/use-preferences'
+import { preferencesSchema } from '@/lib/schemas'
 
 export default function PreferenciasPage() {
   const { preferences, clearAllTransactions, deleteAccount, savePreferences } =
@@ -33,7 +33,7 @@ export default function PreferenciasPage() {
     handleSubmit,
     reset,
     formState: { errors, isDirty },
-  } = useForm<PreferencesFormSchema>({
+  } = useForm<PreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
     defaultValues: preferences,
   })
@@ -43,7 +43,7 @@ export default function PreferenciasPage() {
     reset(preferences)
   }, [preferences, reset])
 
-  const onSubmit = (data: PreferencesFormSchema) => {
+  const onSubmit = (data: PreferencesFormData) => {
     try {
       // Salvar todas as preferências de uma vez usando o hook
       const updatedPreferences = {

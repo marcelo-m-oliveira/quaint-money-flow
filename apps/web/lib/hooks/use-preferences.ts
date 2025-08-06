@@ -2,13 +2,24 @@
 
 import { useEffect, useState } from 'react'
 
-import {
-  PreferencesFormSchema,
-  preferencesSchema,
-} from '@/lib/schemas/preferences'
+import { preferencesSchema } from '@/lib/schemas'
 
-// Usar o tipo inferido do schema para garantir consistência
-export type UserPreferences = PreferencesFormSchema
+// Definir tipo específico para as preferências do usuário
+export type UserPreferences = {
+  transactionOrder: 'crescente' | 'decrescente'
+  defaultNavigationPeriod:
+    | 'diario'
+    | 'semanal'
+    | 'mensal'
+    | 'trimestral'
+    | 'anual'
+  showDailyBalance: boolean
+  viewMode: 'all' | 'cashflow'
+  isFinancialSummaryExpanded: boolean
+}
+
+// Tipo para o formulário (campos opcionais)
+export type PreferencesFormData = Partial<UserPreferences>
 
 const PREFERENCES_STORAGE_KEY = 'quaint-money-preferences'
 
