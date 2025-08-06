@@ -1,70 +1,43 @@
 'use client'
 
+import { useTheme as useNextTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 
-type Theme = 'dark' | 'light'
-
-const THEME_STORAGE_KEY = 'quaint-money-theme'
-
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>('dark')
-  const [isLoading, setIsLoading] = useState(true)
+  const { theme, setTheme, resolvedTheme } = useNextTheme()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const loadTheme = () => {
-      try {
-        const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme
-        if (
-          storedTheme &&
-          (storedTheme === 'dark' || storedTheme === 'light')
-        ) {
-          setTheme(storedTheme)
-        } else {
-          // Default para dark mode
-          setTheme('dark')
-          localStorage.setItem(THEME_STORAGE_KEY, 'dark')
-        }
-      } catch (error) {
-        console.error('Erro ao carregar tema:', error)
-        setTheme('dark')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadTheme()
+    setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (!isLoading) {
-      const root = document.documentElement
-
-      if (theme === 'dark') {
-        root.classList.add('dark')
-        root.classList.remove('light')
-      } else {
-        root.classList.add('light')
-        root.classList.remove('dark')
-      }
-
-      localStorage.setItem(THEME_STORAGE_KEY, theme)
-    }
-  }, [theme, isLoading])
-
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'))
+    setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
   const setDarkTheme = () => setTheme('dark')
   const setLightTheme = () => setTheme('light')
 
+  // Evita hidratação mismatch
+  if (!mounted) {
+    return {
+      theme: undefined,
+      isLoading: true,
+      toggleTheme: () => {},
+      setDarkTheme: () => {},
+      setLightTheme: () => {},
+      isDark: false,
+      isLight: false,
+    }
+  }
+
   return {
-    theme,
-    isLoading,
+    theme: resolvedTheme,
+    isLoading: false,
     toggleTheme,
     setDarkTheme,
     setLightTheme,
-    isDark: theme === 'dark',
-    isLight: theme === 'light',
+    isDark: resolvedTheme === 'dark',
+    isLight: resolvedTheme === 'light',
   }
 }

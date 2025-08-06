@@ -15,9 +15,8 @@ import {
   Zap,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useTheme } from 'next-themes'
 import { useState } from 'react'
-
-import { useTheme } from '@/lib/hooks/use-theme'
 
 import { MockDataLoader } from './mock-data-loader'
 import { MockDataStatus } from './mock-data-status'
@@ -33,7 +32,7 @@ import {
 } from './ui/dropdown-menu'
 
 export function Topbar() {
-  const { toggleTheme, isDark } = useTheme()
+  const { setTheme } = useTheme()
   const [userName] = useState('Marcelo Oliveira')
   const [userInitials] = useState('MO')
 
@@ -88,6 +87,7 @@ export function Topbar() {
             {/* Mock Data Loader - apenas para desenvolvimento */}
             <MockDataLoader />
             <MockDataStatus />
+
             {/* Menu de Configurações */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -96,13 +96,18 @@ export function Topbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={toggleTheme}>
-                  {isDark ? (
-                    <Sun className="mr-2 h-4 w-4" />
-                  ) : (
-                    <Moon className="mr-2 h-4 w-4" />
-                  )}
-                  <span>{isDark ? 'Tema Claro' : 'Tema Escuro'}</span>
+                <DropdownMenuLabel>Tema</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setTheme('light')}>
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>Claro</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                  <Moon className="mr-2 h-4 w-4" />
+                  <span>Escuro</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('system')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Sistema</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <Link href="/configuracoes/categorias">

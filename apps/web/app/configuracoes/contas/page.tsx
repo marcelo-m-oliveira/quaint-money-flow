@@ -207,11 +207,12 @@ export default function ContasPage() {
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="destructive"
                             size="icon"
                             onClick={() => handleDeleteAccount(account)}
+                            title="Excluir conta"
                           >
-                            <Trash2 className="h-4 w-4 text-red-600" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
