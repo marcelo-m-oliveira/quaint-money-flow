@@ -138,9 +138,7 @@ export function TransactionFormModal({
   }
 
   const watchedDate = watch('date')
-  const selectedDate = watchedDate
-    ? new Date(watchedDate + 'T00:00:00')
-    : new Date()
+  const selectedDate = watchedDate ? new Date(watchedDate) : new Date()
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

@@ -14,11 +14,10 @@ export function formatDate(date: Date): string {
 }
 
 export function formatDateForInput(date: Date): string {
-  // Usar getFullYear, getMonth e getDate para evitar problemas de fuso horário
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  // Criar uma nova data para evitar mutação da original
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  // Usar toISOString e pegar apenas a parte da data
+  return localDate.toISOString().split('T')[0]
 }
 
 export function parseCurrencyInput(value: string): number {

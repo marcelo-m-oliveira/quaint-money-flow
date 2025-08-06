@@ -57,7 +57,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { formatCurrency, formatDate } from '@/lib/format'
+import { formatCurrency, formatDate, formatDateForInput } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
@@ -451,7 +451,9 @@ export default function TransacoesPage() {
       amount: transaction.amount.toString(),
       type: transaction.type,
       categoryId: transaction.categoryId,
-      date: transaction.date.toISOString().split('T')[0], // Converter Date para string no formato YYYY-MM-DD
+      accountId: transaction.accountId || undefined,
+      creditCardId: transaction.creditCardId || undefined,
+      date: formatDateForInput(transaction.date), // Usar formatDateForInput para evitar problemas de fuso horário
       paid: !transaction.paid,
     }
 

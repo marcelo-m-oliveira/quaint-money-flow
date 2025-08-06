@@ -96,7 +96,10 @@ export function useFinancialData() {
       categoryId: data.categoryId,
       accountId: data.accountId || undefined,
       creditCardId: data.creditCardId || undefined,
-      date: new Date(data.date),
+      date:
+        typeof data.date === 'string'
+          ? new Date(data.date + 'T00:00:00')
+          : data.date,
       paid: data.paid,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -118,7 +121,10 @@ export function useFinancialData() {
           categoryId: data.categoryId,
           accountId: data.accountId || undefined,
           creditCardId: data.creditCardId || undefined,
-          date: typeof data.date === 'string' ? new Date(data.date) : data.date,
+          date:
+            typeof data.date === 'string'
+              ? new Date(data.date + 'T00:00:00')
+              : data.date,
           paid: data.paid,
           updatedAt: new Date(),
         }

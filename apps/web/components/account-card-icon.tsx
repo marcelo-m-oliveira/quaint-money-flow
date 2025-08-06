@@ -1,6 +1,13 @@
 import { getBankIcon } from '@/lib/data/banks'
 import { Account, CreditCard, Transaction } from '@/lib/types'
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip'
+
 interface AccountCardIconProps {
   transaction: Transaction
   accounts: Account[]
@@ -42,7 +49,18 @@ export function AccountCardIcon({
             '💳'}
         </div>
       )}
-      <span className="max-w-24 truncate font-medium">{account.name}</span>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="max-w-24 cursor-help truncate font-medium">
+              {account.name}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{account.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }
