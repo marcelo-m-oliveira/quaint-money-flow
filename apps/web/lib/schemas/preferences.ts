@@ -11,6 +11,14 @@ export const preferencesSchema = z.object({
   showDailyBalance: z.boolean({
     message: 'Exibição do saldo diário deve ser verdadeiro ou falso',
   }),
+  // Configurações de visualização
+  viewMode: z.enum(['all', 'cashflow'], {
+    message: 'Modo de visualização deve ser all ou cashflow',
+  }),
+  isFinancialSummaryExpanded: z.boolean({
+    message:
+      'Estado de expansão do resumo financeiro deve ser verdadeiro ou falso',
+  }),
 })
 
 // Tipo inferido do schema

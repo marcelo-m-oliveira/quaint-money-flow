@@ -107,7 +107,7 @@ export default function PreferenciasPage() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-base font-medium">
-                  § Ordenação dos seus Lançamentos
+                  Ordenação dos seus Lançamentos
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Ordem (baseado na data) que suas transações serão listadas na
@@ -214,6 +214,55 @@ export default function PreferenciasPage() {
               <p className="text-sm text-red-500">
                 {errors.defaultNavigationPeriod.message}
               </p>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Modo de Visualização */}
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-base font-medium">Modo de Visualização</h3>
+                <p className="text-sm text-muted-foreground">
+                  Escolha como você deseja visualizar suas transações por padrão
+                </p>
+              </div>
+              <div className="w-32">
+                <Controller
+                  name="viewMode"
+                  control={control}
+                  render={({ field }) => (
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex flex-col space-y-3"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="cashflow" id="cashflow" />
+                        <Label
+                          htmlFor="cashflow"
+                          className="cursor-pointer text-sm font-normal"
+                        >
+                          Fluxo de caixa
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="all" id="all" />
+                        <Label
+                          htmlFor="all"
+                          className="cursor-pointer text-sm font-normal"
+                        >
+                          Todos os lançamentos
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  )}
+                />
+              </div>
+            </div>
+            {errors.viewMode && (
+              <p className="text-sm text-red-500">{errors.viewMode.message}</p>
             )}
           </div>
 

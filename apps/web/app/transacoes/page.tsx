@@ -18,7 +18,7 @@ import {
   ThumbsUp,
   Trash2,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { Topbar } from '@/components/topbar'
 import { TransactionFormModal } from '@/components/transaction-form-modal'
@@ -115,7 +115,7 @@ export default function TransacoesPage() {
     getTransactionsWithCategories,
   } = useFinancialData()
 
-  const { preferences } = usePreferences()
+  const { preferences, updatePreference } = usePreferences()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<
@@ -139,8 +139,50 @@ export default function TransacoesPage() {
   )
 
   // Estados para modo de visualização
-  const [viewMode, setViewMode] = useState<'cashflow' | 'all'>('all')
+  const [viewMode, setViewMode] = useState<'cashflow' | 'all'>(
+    preferences.viewMode,
+  )
   const [isViewModeModalOpen, setIsViewModeModalOpen] = useState(false)
+  const [tempViewMode, setTempViewMode] = useState<'cashflow' | 'all'>(
+    preferences.viewMode,
+  )
+
+  // Estado para controlar expansão do resumo financeiro
+  const [isFinancialSummaryExpanded, setIsFinancialSummaryExpanded] = useState(
+    preferences.isFinancialSummaryExpanded,
+  )
+
+  // Função para alterar modo de visualização e salvar preferência
+  const handleViewModeChange = (newViewMode: 'cashflow' | 'all') => {
+    setViewMode(newViewMode)
+    updatePreference('viewMode', newViewMode)
+  }
+
+  // Função para confirmar mudança de modo de visualização
+  const handleConfirmViewMode = () => {
+    handleViewModeChange(tempViewMode)
+    setIsViewModeModalOpen(false)
+  }
+
+  // Função para abrir modal e sincronizar estado temporário
+  const handleOpenViewModeModal = () => {
+    setTempViewMode(viewMode)
+    setIsViewModeModalOpen(true)
+  }
+
+  // Função para alterar expansão e salvar preferência
+  const handleToggleExpansion = () => {
+    const newExpanded = !isFinancialSummaryExpanded
+    setIsFinancialSummaryExpanded(newExpanded)
+    updatePreference('isFinancialSummaryExpanded', newExpanded)
+  }
+
+  // Sincronizar estados locais com preferências quando mudarem
+  useEffect(() => {
+    setViewMode(preferences.viewMode)
+    setTempViewMode(preferences.viewMode)
+    setIsFinancialSummaryExpanded(preferences.isFinancialSummaryExpanded)
+  }, [preferences.viewMode, preferences.isFinancialSummaryExpanded])
 
   // Funções para navegação de período
   const navigatePeriod = (direction: 'prev' | 'next') => {
@@ -304,6 +346,55 @@ export default function TransacoesPage() {
       balance: income - expense,
     }
   }, [filteredTransactions])
+
+  // Calcular dados do fluxo de caixa
+  const cashflowData = useMemo(() => {
+    const { start } = getCurrentPeriodRange()
+    const allTransactions = getTransactionsWithCategories()
+
+    // Saldo anterior (antes do período atual)
+    const previousBalance = allTransactions
+      .filter((t) => new Date(t.date) < start)
+      .reduce((sum, t) => {
+        return t.type === 'income' ? sum + t.amount : sum - t.amount
+      }, 0)
+
+    // Receitas e despesas realizadas (pagas)
+    const realizedIncome = filteredTransactions
+      .filter((t) => t.type === 'income' && t.paid)
+      .reduce((sum, t) => sum + t.amount, 0)
+
+    const realizedExpense = filteredTransactions
+      .filter((t) => t.type === 'expense' && t.paid)
+      .reduce((sum, t) => sum + t.amount, 0)
+
+    // Receitas e despesas previstas (não pagas)
+    const expectedIncome = filteredTransactions
+      .filter((t) => t.type === 'income' && !t.paid)
+      .reduce((sum, t) => sum + t.amount, 0)
+
+    const expectedExpense = filteredTransactions
+      .filter((t) => t.type === 'expense' && !t.paid)
+      .reduce((sum, t) => sum + t.amount, 0)
+
+    // Saldo atual e previsto
+    const currentBalance = previousBalance + realizedIncome - realizedExpense
+    const projectedBalance = currentBalance + expectedIncome - expectedExpense
+
+    return {
+      previousBalance,
+      realizedIncome,
+      expectedIncome,
+      realizedExpense,
+      expectedExpense,
+      currentBalance,
+      projectedBalance,
+    }
+  }, [
+    filteredTransactions,
+    getCurrentPeriodRange,
+    getTransactionsWithCategories,
+  ])
 
   const handleAddTransaction = (type: 'income' | 'expense') => {
     setTransactionType(type)
@@ -470,6 +561,7 @@ export default function TransacoesPage() {
                         variant="outline"
                         size="sm"
                         className="flex items-center gap-2"
+                        onClick={handleOpenViewModeModal}
                       >
                         <Eye className="h-4 w-4" />
                         Modo
@@ -485,9 +577,9 @@ export default function TransacoesPage() {
 
                       <div className="py-4">
                         <Tabs
-                          value={viewMode}
+                          value={tempViewMode}
                           onValueChange={(value) =>
-                            setViewMode(value as 'cashflow' | 'all')
+                            setTempViewMode(value as 'cashflow' | 'all')
                           }
                         >
                           <TabsList className="mb-6 grid w-full grid-cols-2">
@@ -576,10 +668,10 @@ export default function TransacoesPage() {
 
                       <DialogFooter>
                         <Button
-                          onClick={() => setIsViewModeModalOpen(false)}
+                          onClick={handleConfirmViewMode}
                           className="w-full bg-green-600 hover:bg-green-700"
                         >
-                          OK
+                          Confirmar
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -881,49 +973,241 @@ export default function TransacoesPage() {
       </div>
 
       {/* Resumo financeiro fixo na parte inferior */}
-      <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-4xl p-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2">
-                <ArrowUpIcon className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-600">
-                  Receitas
-                </span>
+      {(viewMode === 'all' || viewMode === 'cashflow') && (
+        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="mx-auto max-w-4xl p-4">
+            {viewMode === 'cashflow' ? (
+              // Visualização de Fluxo de Caixa
+              !isFinancialSummaryExpanded ? (
+                // Visualização simplificada - apenas saldo e previsto
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        Fluxo de Caixa
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className={`text-lg font-bold ${
+                          cashflowData.currentBalance >= 0
+                            ? 'text-blue-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {formatCurrency(cashflowData.currentBalance)}
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          cashflowData.projectedBalance >= 0
+                            ? 'text-muted-foreground'
+                            : 'text-red-500'
+                        }`}
+                      >
+                        Prev: {formatCurrency(cashflowData.projectedBalance)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleToggleExpansion}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="text-sm">Expandir</span>
+                  </Button>
+                </div>
+              ) : (
+                // Visualização expandida - detalhamento completo
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Detalhamento do Fluxo de Caixa
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleToggleExpansion}
+                      className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                      <span className="text-sm">Recolher</span>
+                    </Button>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        saldo anterior
+                      </span>
+                      <span
+                        className={`font-medium ${
+                          cashflowData.previousBalance >= 0
+                            ? 'text-foreground'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {formatCurrency(cashflowData.previousBalance)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        receita realizada
+                      </span>
+                      <span className="font-medium text-green-600">
+                        {formatCurrency(cashflowData.realizedIncome)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        receita prevista
+                      </span>
+                      <span className="font-medium text-green-600">
+                        {formatCurrency(cashflowData.expectedIncome)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        despesa realizada
+                      </span>
+                      <span className="font-medium text-red-600">
+                        -{formatCurrency(cashflowData.realizedExpense)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        despesa prevista
+                      </span>
+                      <span className="font-medium text-red-600">
+                        -{formatCurrency(cashflowData.expectedExpense)}
+                      </span>
+                    </div>
+
+                    {/* Separador */}
+                    <div className="mt-3 border-t pt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-muted-foreground">
+                          saldo
+                        </span>
+                        <span
+                          className={`text-lg font-bold ${
+                            cashflowData.currentBalance >= 0
+                              ? 'text-blue-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {formatCurrency(cashflowData.currentBalance)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-muted-foreground">
+                          previsto
+                        </span>
+                        <span
+                          className={`text-lg font-bold ${
+                            cashflowData.projectedBalance >= 0
+                              ? 'text-foreground'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {formatCurrency(cashflowData.projectedBalance)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : // Visualização para modo 'all'
+            !isFinancialSummaryExpanded ? (
+              // Visualização simplificada - apenas saldo
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm font-medium">Saldo Total</span>
+                  </div>
+                  <p
+                    className={`text-xl font-bold ${
+                      filteredTotals.balance >= 0
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}
+                  >
+                    {formatCurrency(filteredTotals.balance)}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleToggleExpansion}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="text-sm">Expandir</span>
+                </Button>
               </div>
-              <p className="text-lg font-bold text-green-600">
-                {formatCurrency(filteredTotals.income)}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2">
-                <ArrowDownIcon className="h-4 w-4 text-red-600" />
-                <span className="text-sm font-medium text-red-600">
-                  Despesas
-                </span>
+            ) : (
+              // Visualização expandida - receitas, despesas e saldo
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Detalhamento Financeiro
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleToggleExpansion}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                    <span className="text-sm">Recolher</span>
+                  </Button>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <ArrowUpIcon className="h-4 w-4 text-green-600" />
+                      Receitas
+                    </span>
+                    <span className="font-medium text-green-600">
+                      {formatCurrency(filteredTotals.income)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <ArrowDownIcon className="h-4 w-4 text-red-600" />
+                      Despesas
+                    </span>
+                    <span className="font-medium text-red-600">
+                      {formatCurrency(filteredTotals.expense)}
+                    </span>
+                  </div>
+
+                  {/* Separador */}
+                  <div className="mt-3 border-t pt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 font-medium text-muted-foreground">
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        Saldo
+                      </span>
+                      <span
+                        className={`text-lg font-bold ${
+                          filteredTotals.balance >= 0
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {formatCurrency(filteredTotals.balance)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-lg font-bold text-red-600">
-                {formatCurrency(filteredTotals.expense)}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Saldo</span>
-              </div>
-              <p
-                className={`text-lg font-bold ${
-                  filteredTotals.balance >= 0
-                    ? 'text-green-600'
-                    : 'text-red-600'
-                }`}
-              >
-                {formatCurrency(filteredTotals.balance)}
-              </p>
-            </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Modal de transação */}
       <TransactionFormModal

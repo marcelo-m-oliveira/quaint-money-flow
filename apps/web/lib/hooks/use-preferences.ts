@@ -13,6 +13,10 @@ export interface UserPreferences {
 
   // Saldo diário
   showDailyBalance: boolean
+
+  // Configurações de visualização
+  viewMode: 'all' | 'cashflow'
+  isFinancialSummaryExpanded: boolean
 }
 
 const PREFERENCES_STORAGE_KEY = 'quaint-money-preferences'
@@ -21,6 +25,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   transactionOrder: 'decrescente',
   defaultNavigationPeriod: 'mensal',
   showDailyBalance: false,
+  viewMode: 'all',
+  isFinancialSummaryExpanded: false,
 }
 
 export function usePreferences() {
