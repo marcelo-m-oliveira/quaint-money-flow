@@ -272,36 +272,43 @@ export function generateMockTransactions(
 /**
  * Gera uma conta mock
  */
+// Key mapping para configuração de contas por tipo
+const ACCOUNT_TYPE_CONFIG = {
+  bank: {
+    getName: () =>
+      `${faker.helpers.arrayElement(BRAZILIAN_BANKS)} - Conta Corrente`,
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'bank' as const,
+  },
+  credit_card: {
+    getName: () => `Cartão ${faker.helpers.arrayElement(BRAZILIAN_BANKS)}`,
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+  investment: {
+    getName: () => 'Conta Investimento',
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+  cash: {
+    getName: () => 'Dinheiro',
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+  other: {
+    getName: () => 'Conta Outros',
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+} as const
+
 export function generateMockAccount(): Account {
   const type = faker.helpers.arrayElement(ACCOUNT_TYPES)
-  let name: string
-  let icon: string
-  let iconType: 'bank' | 'generic' = 'generic'
+  const config = ACCOUNT_TYPE_CONFIG[type] || ACCOUNT_TYPE_CONFIG.other
 
-  switch (type) {
-    case 'bank': {
-      const bankName = faker.helpers.arrayElement(BRAZILIAN_BANKS)
-      name = `${bankName} - Conta Corrente`
-      icon = '/icons/banks/c6bank.png'
-      iconType = 'bank'
-      break
-    }
-    case 'credit_card':
-      name = `Cartão ${faker.helpers.arrayElement(BRAZILIAN_BANKS)}`
-      icon = '/icons/banks/c6bank.png'
-      break
-    case 'investment':
-      name = 'Conta Investimento'
-      icon = '/icons/banks/c6bank.png'
-      break
-    case 'cash':
-      name = 'Dinheiro'
-      icon = '/icons/banks/c6bank.png'
-      break
-    default:
-      name = 'Conta Outros'
-      icon = '/icons/banks/c6bank.png'
-  }
+  const name = config.getName()
+  const icon = config.icon
+  const iconType = config.iconType
 
   const createdAt = faker.date.past({ years: 2 })
   const balance =
@@ -347,22 +354,18 @@ export function generateMockCreditCard(): CreditCard {
   const icon = BANK_NAME_TO_ID[bank]
   const iconType: 'bank' | 'generic' = 'bank'
 
+  // Key mapping para limites de cartão por tipo
+  const CARD_TYPE_LIMITS = {
+    Infinite: { min: 10000, max: 50000 },
+    Black: { min: 10000, max: 50000 },
+    Platinum: { min: 5000, max: 20000 },
+    Gold: { min: 2000, max: 10000 },
+  } as const
+
   // Limites realistas baseados no tipo do cartão
-  let limitRange: { min: number; max: number }
-  switch (cardType) {
-    case 'Infinite':
-    case 'Black':
-      limitRange = { min: 10000, max: 50000 }
-      break
-    case 'Platinum':
-      limitRange = { min: 5000, max: 20000 }
-      break
-    case 'Gold':
-      limitRange = { min: 2000, max: 10000 }
-      break
-    default:
-      limitRange = { min: 500, max: 5000 }
-  }
+  const limitRange = CARD_TYPE_LIMITS[
+    cardType as keyof typeof CARD_TYPE_LIMITS
+  ] || { min: 500, max: 5000 }
 
   const limit = faker.number.int(limitRange)
   // Saldo atual usado (0 a 80% do limite)

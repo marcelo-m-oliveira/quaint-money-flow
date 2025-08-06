@@ -205,30 +205,29 @@ export default function TransacoesPage() {
     setCurrentDate(newDate)
   }
 
+  // Key mapping para funções de período
+  const PERIOD_RANGE_FUNCTIONS = {
+    diario: () => ({
+      start: getStartOfDay(currentDate),
+      end: getEndOfDay(currentDate),
+    }),
+    semanal: () => ({
+      start: getStartOfWeek(currentDate),
+      end: getEndOfWeek(currentDate),
+    }),
+    mensal: () => ({
+      start: getStartOfMonth(currentDate),
+      end: getEndOfMonth(currentDate),
+    }),
+  } as const
+
   // Função para obter o range de datas do período atual
   const getCurrentPeriodRange = () => {
-    switch (currentPeriod) {
-      case 'diario':
-        return {
-          start: getStartOfDay(currentDate),
-          end: getEndOfDay(currentDate),
-        }
-      case 'semanal':
-        return {
-          start: getStartOfWeek(currentDate),
-          end: getEndOfWeek(currentDate),
-        }
-      case 'mensal':
-        return {
-          start: getStartOfMonth(currentDate),
-          end: getEndOfMonth(currentDate),
-        }
-      default:
-        return {
-          start: getStartOfMonth(currentDate),
-          end: getEndOfMonth(currentDate),
-        }
-    }
+    const periodFunction =
+      PERIOD_RANGE_FUNCTIONS[
+        currentPeriod as keyof typeof PERIOD_RANGE_FUNCTIONS
+      ]
+    return periodFunction ? periodFunction() : PERIOD_RANGE_FUNCTIONS.mensal()
   }
 
   const transactionsWithCategories = getTransactionsWithCategories()
@@ -246,26 +245,19 @@ export default function TransacoesPage() {
         selectedCategory === 'all'
           ? true
           : transaction.categoryId === selectedCategory
-      const matchesType = (() => {
-        switch (selectedType) {
-          case 'all':
-            return true
-          case 'income':
-            return transaction.type === 'income'
-          case 'expense':
-            return transaction.type === 'expense'
-          case 'income-paid':
-            return transaction.type === 'income' && transaction.paid
-          case 'income-unpaid':
-            return transaction.type === 'income' && !transaction.paid
-          case 'expense-paid':
-            return transaction.type === 'expense' && transaction.paid
-          case 'expense-unpaid':
-            return transaction.type === 'expense' && !transaction.paid
-          default:
-            return true
-        }
-      })()
+      // Key mapping para filtros de tipo de transação
+      const TYPE_FILTERS = {
+        all: () => true,
+        income: (t: Transaction) => t.type === 'income',
+        expense: (t: Transaction) => t.type === 'expense',
+        'income-paid': (t: Transaction) => t.type === 'income' && t.paid,
+        'income-unpaid': (t: Transaction) => t.type === 'income' && !t.paid,
+        'expense-paid': (t: Transaction) => t.type === 'expense' && t.paid,
+        'expense-unpaid': (t: Transaction) => t.type === 'expense' && !t.paid,
+      } as const
+
+      const typeFilter = TYPE_FILTERS[selectedType as keyof typeof TYPE_FILTERS]
+      const matchesType = typeFilter ? typeFilter(transaction) : true
       const matchesPeriod =
         transactionTimestamp >= start.getTime() &&
         transactionTimestamp <= end.getTime()
@@ -310,33 +302,36 @@ export default function TransacoesPage() {
     )
   }, [sortedTransactions])
 
+  // Key mapping para formatação de títulos de período
+  const PERIOD_TITLE_FORMATTERS = {
+    diario: () => {
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }
+      return currentDate.toLocaleDateString('pt-BR', options)
+    },
+    semanal: () => {
+      const start = getStartOfWeek(currentDate)
+      const end = getEndOfWeek(currentDate)
+      return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
+    },
+    mensal: () => {
+      return currentDate.toLocaleDateString('pt-BR', {
+        year: 'numeric',
+        month: 'long',
+      })
+    },
+  } as const
+
   // Função para formatar o título do período
   const getPeriodTitle = () => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }
-
-    switch (currentPeriod) {
-      case 'diario':
-        return currentDate.toLocaleDateString('pt-BR', options)
-      case 'semanal': {
-        const start = getStartOfWeek(currentDate)
-        const end = getEndOfWeek(currentDate)
-        return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
-      }
-      case 'mensal':
-        return currentDate.toLocaleDateString('pt-BR', {
-          year: 'numeric',
-          month: 'long',
-        })
-      default:
-        return currentDate.toLocaleDateString('pt-BR', {
-          year: 'numeric',
-          month: 'long',
-        })
-    }
+    const formatter =
+      PERIOD_TITLE_FORMATTERS[
+        currentPeriod as keyof typeof PERIOD_TITLE_FORMATTERS
+      ]
+    return formatter ? formatter() : PERIOD_TITLE_FORMATTERS.mensal()
   }
 
   // Calcular totais das transações filtradas
