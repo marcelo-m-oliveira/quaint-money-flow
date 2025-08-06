@@ -4,6 +4,7 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   CalendarIcon,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleMinus,
@@ -11,6 +12,7 @@ import {
   CreditCard,
   Edit,
   Filter,
+  Plus,
   Search,
   Trash2,
 } from 'lucide-react'
@@ -21,6 +23,12 @@ import { TransactionFormModal } from '@/components/transaction-form-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -125,10 +133,6 @@ export default function TransacoesPage() {
     }
 
     setCurrentDate(newDate)
-  }
-
-  const goToToday = () => {
-    setCurrentDate(new Date())
   }
 
   // Função para obter o range de datas do período atual
@@ -331,28 +335,33 @@ export default function TransacoesPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" />
-                  <CardTitle className="text-lg">{getPeriodTitle()}</CardTitle>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Lançamentos
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => handleAddTransaction('income')}
+                        className="text-green-600"
+                      >
+                        <CirclePlus className="mr-2 h-4 w-4" />
+                        Nova Receita
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleAddTransaction('expense')}
+                        className="text-red-600"
+                      >
+                        <CircleMinus className="mr-2 h-4 w-4" />
+                        Nova Despesa
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={currentPeriod}
-                    onValueChange={(value: 'diario' | 'semanal' | 'mensal') =>
-                      setCurrentPeriod(value)
-                    }
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="diario">Diário</SelectItem>
-                      <SelectItem value="semanal">Semanal</SelectItem>
-                      <SelectItem value="mensal">Mensal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
+
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -361,33 +370,42 @@ export default function TransacoesPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={goToToday}>
-                    Hoje
-                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        {getPeriodTitle()}
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onClick={() => setCurrentPeriod('diario')}
+                      >
+                        Diário
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setCurrentPeriod('semanal')}
+                      >
+                        Semanal
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setCurrentPeriod('mensal')}
+                      >
+                        Mensal
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigatePeriod('next')}
                   >
                     <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleAddTransaction('income')}
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <CirclePlus className="h-4 w-4" />
-                    Receita
-                  </Button>
-                  <Button
-                    onClick={() => handleAddTransaction('expense')}
-                    size="sm"
-                    variant="destructive"
-                  >
-                    <CircleMinus className="h-4 w-4" />
-                    Despesa
                   </Button>
                 </div>
               </div>
