@@ -14,6 +14,8 @@ export interface Transaction {
   type: 'income' | 'expense'
   categoryId: string
   category?: Category
+  accountId?: string // ID da conta relacionada
+  creditCardId?: string // ID do cartão de crédito relacionado
   date: Date
   paid: boolean // Indica se o lançamento foi pago ou não
   createdAt: Date
@@ -25,6 +27,8 @@ export interface TransactionFormData {
   amount: string
   type: 'income' | 'expense'
   categoryId: string
+  accountId?: string // ID da conta relacionada
+  creditCardId?: string // ID do cartão de crédito relacionado
   date: string
   paid: boolean // Indica se o lançamento foi pago ou não
 }

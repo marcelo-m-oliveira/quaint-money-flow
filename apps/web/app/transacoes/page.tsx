@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { AccountCardIcon } from '@/components/account-card-icon'
 import { Topbar } from '@/components/topbar'
 import { TransactionFormModal } from '@/components/transaction-form-modal'
 import { Button } from '@/components/ui/button'
@@ -57,6 +58,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { formatCurrency, formatDate } from '@/lib/format'
+import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { usePreferences } from '@/lib/hooks/use-preferences'
 import { TransactionFormSchema } from '@/lib/schemas'
@@ -114,6 +117,9 @@ export default function TransacoesPage() {
     deleteTransaction,
     getTransactionsWithCategories,
   } = useFinancialData()
+
+  const { accounts } = useAccounts()
+  const { creditCards } = useCreditCards()
 
   const { preferences, updatePreference } = usePreferences()
 
@@ -912,6 +918,15 @@ export default function TransacoesPage() {
                                         />
                                         {transaction.category.name}
                                       </div>
+                                      {/* Ícone da conta/cartão */}
+                                      {(transaction.accountId ||
+                                        transaction.creditCardId) && (
+                                        <AccountCardIcon
+                                          transaction={transaction}
+                                          accounts={accounts}
+                                          creditCards={creditCards}
+                                        />
+                                      )}
                                     </div>
                                   </div>
                                 </div>

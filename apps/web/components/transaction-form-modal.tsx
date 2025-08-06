@@ -6,6 +6,8 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { formatDateForInput } from '@/lib/format'
+import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
 import { Category, Transaction } from '@/lib/types'
 
@@ -43,6 +45,9 @@ export function TransactionFormModal({
   type,
   title,
 }: TransactionFormModalProps) {
+  const { accounts } = useAccounts()
+  const { creditCards } = useCreditCards()
+
   const {
     register,
     handleSubmit,
@@ -58,6 +63,8 @@ export function TransactionFormModal({
       amount: '',
       type,
       categoryId: '',
+      accountId: '',
+      creditCardId: '',
       date: formatDateForInput(new Date()),
       paid: false,
     },
@@ -71,6 +78,8 @@ export function TransactionFormModal({
         amount: transaction.amount.toString(),
         type: transaction.type,
         categoryId: transaction.categoryId,
+        accountId: transaction.accountId || '',
+        creditCardId: transaction.creditCardId || '',
         date: formatDateForInput(transaction.date),
         paid: transaction.paid || false,
       })
@@ -80,6 +89,8 @@ export function TransactionFormModal({
         amount: '',
         type,
         categoryId: '',
+        accountId: '',
+        creditCardId: '',
         date: formatDateForInput(new Date()),
         paid: false,
       })
@@ -102,6 +113,8 @@ export function TransactionFormModal({
         amount: '',
         type,
         categoryId: '',
+        accountId: '',
+        creditCardId: '',
         date: formatDateForInput(new Date()),
         paid: false,
       })
@@ -198,53 +211,148 @@ export function TransactionFormModal({
             </div>
           </div>
 
-          {/* Categoria */}
-          <div className="space-y-2">
-            <Label htmlFor="category" className="text-sm font-medium">
-              Categoria
-            </Label>
-            <Select
-              value={watch('categoryId')}
-              onValueChange={(value) => setValue('categoryId', value)}
-            >
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder="Buscar a categoria..." />
-              </SelectTrigger>
-              <SelectContent>
-                {categories
-                  .filter((category) => {
-                    // Filtrar categorias baseado no tipo de transação
-                    return category.type === type
-                  })
-                  // Ordenar categorias principais primeiro, depois subcategorias
-                  .sort((a, b) => {
-                    if (!a.parentId && b.parentId) return -1
-                    if (a.parentId && !b.parentId) return 1
-                    return a.name.localeCompare(b.name)
-                  })
-                  .map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div
-                        className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}
-                      >
+          {/* Categoria e Conta/Cartão */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Categoria */}
+            <div className="space-y-2">
+              <Label htmlFor="category" className="text-sm font-medium">
+                Categoria
+              </Label>
+              <Select
+                value={watch('categoryId')}
+                onValueChange={(value) => setValue('categoryId', value)}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Buscar a categoria..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories
+                    .filter((category) => {
+                      // Filtrar categorias baseado no tipo de transação
+                      return category.type === type
+                    })
+                    // Ordenar categorias principais primeiro, depois subcategorias
+                    .sort((a, b) => {
+                      if (!a.parentId && b.parentId) return -1
+                      if (a.parentId && !b.parentId) return 1
+                      return a.name.localeCompare(b.name)
+                    })
+                    .map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
                         <div
-                          className="h-3 w-3 flex-shrink-0 rounded-full"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <span className={category.parentId ? 'text-sm' : ''}>
-                          {category.parentId && '└ '}
-                          {category.name}
+                          className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}
+                        >
+                          <div
+                            className="h-3 w-3 flex-shrink-0 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className={category.parentId ? 'text-sm' : ''}>
+                            {category.parentId && '└ '}
+                            {category.name}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              {errors.categoryId && (
+                <p className="text-sm text-red-500">
+                  {errors.categoryId.message}
+                </p>
+              )}
+            </div>
+
+            {/* Conta/Cartão */}
+            <div className="space-y-2">
+              <Label htmlFor="account" className="text-sm font-medium">
+                Conta/Cartão
+              </Label>
+              <Select
+                value={watch('accountId') || watch('creditCardId') || undefined}
+                onValueChange={(value) => {
+                  // Se o valor for 'none', limpar ambos os campos
+                  if (value === 'none') {
+                    setValue('accountId', '')
+                    setValue('creditCardId', '')
+                    return
+                  }
+
+                  // Verificar se é uma conta ou cartão e definir o campo apropriado
+                  const isAccount = accounts.some(
+                    (account) => account.id === value,
+                  )
+                  if (isAccount) {
+                    setValue('accountId', value)
+                    setValue('creditCardId', '')
+                  } else {
+                    setValue('creditCardId', value)
+                    setValue('accountId', '')
+                  }
+                }}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Selecionar conta/cartão..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Contas */}
+                  {accounts.length > 0 && (
+                    <>
+                      <SelectItem value="accounts-header" disabled>
+                        <span className="font-medium text-muted-foreground">
+                          Contas
                         </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            {errors.categoryId && (
-              <p className="text-sm text-red-500">
-                {errors.categoryId.message}
-              </p>
-            )}
+                      </SelectItem>
+                      {accounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          <div className="flex items-center gap-3">
+                            <div className="h-3 w-3 flex-shrink-0 rounded-full bg-blue-500" />
+                            <span>{account.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Cartões de Crédito */}
+                  {creditCards.length > 0 && (
+                    <>
+                      {accounts.length > 0 && (
+                        <SelectItem value="separator" disabled>
+                          <span>—</span>
+                        </SelectItem>
+                      )}
+                      <SelectItem value="cards-header" disabled>
+                        <span className="font-medium text-muted-foreground">
+                          Cartões
+                        </span>
+                      </SelectItem>
+                      {creditCards.map((card) => (
+                        <SelectItem key={card.id} value={card.id}>
+                          <div className="flex items-center gap-3">
+                            <div className="h-3 w-3 flex-shrink-0 rounded-full bg-purple-500" />
+                            <span>{card.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Opção para não selecionar */}
+                  {(accounts.length > 0 || creditCards.length > 0) && (
+                    <>
+                      <SelectItem value="separator2" disabled>
+                        <span>—</span>
+                      </SelectItem>
+                      <SelectItem value="none">
+                        <span className="text-muted-foreground">
+                          Nenhuma conta/cartão
+                        </span>
+                      </SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Status de Pagamento */}

@@ -21,6 +21,8 @@ export const transactionSchema = z.object({
     message: 'Tipo deve ser receita ou despesa',
   }),
   categoryId: z.string().min(1, 'Categoria é obrigatória'),
+  accountId: z.string().optional(), // ID da conta relacionada (opcional)
+  creditCardId: z.string().optional(), // ID do cartão de crédito relacionado (opcional)
   date: z.string().min(1, 'Data é obrigatória'),
   paid: z.boolean(), // Indica se o lançamento foi pago ou não
 })
