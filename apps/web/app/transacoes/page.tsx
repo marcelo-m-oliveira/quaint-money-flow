@@ -57,7 +57,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { formatCurrency, formatDate, formatDateForInput } from '@/lib/format'
+import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
@@ -238,7 +238,7 @@ export default function TransacoesPage() {
     const { start, end } = getCurrentPeriodRange()
 
     const filtered = transactionsWithCategories.filter((transaction) => {
-      const transactionDate = new Date(transaction.date)
+      const transactionTimestamp = transaction.date
       const matchesSearch = transaction.description
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
@@ -266,7 +266,9 @@ export default function TransacoesPage() {
             return true
         }
       })()
-      const matchesPeriod = transactionDate >= start && transactionDate <= end
+      const matchesPeriod =
+        transactionTimestamp >= start.getTime() &&
+        transactionTimestamp <= end.getTime()
 
       return matchesSearch && matchesCategory && matchesType && matchesPeriod
     })
@@ -284,9 +286,7 @@ export default function TransacoesPage() {
 
   // Ordenar transações por data (mais recentes primeiro)
   const sortedTransactions = useMemo(() => {
-    return filteredTransactions.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    )
+    return filteredTransactions.sort((a, b) => b.date - a.date)
   }, [filteredTransactions])
 
   // Agrupar transações por data
@@ -453,7 +453,7 @@ export default function TransacoesPage() {
       categoryId: transaction.categoryId,
       accountId: transaction.accountId || undefined,
       creditCardId: transaction.creditCardId || undefined,
-      date: formatDateForInput(transaction.date), // Usar formatDateForInput para evitar problemas de fuso horário
+      date: timestampToDateString(transaction.date), // Converter timestamp para string de data
       paid: !transaction.paid,
     }
 

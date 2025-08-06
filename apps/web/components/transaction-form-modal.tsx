@@ -5,7 +5,7 @@ import { Check, Save } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
-import { formatDateForInput } from '@/lib/format'
+import { formatDateForInput, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
@@ -80,7 +80,7 @@ export function TransactionFormModal({
         categoryId: transaction.categoryId,
         accountId: transaction.accountId || '',
         creditCardId: transaction.creditCardId || '',
-        date: formatDateForInput(transaction.date),
+        date: timestampToDateString(transaction.date),
         paid: transaction.paid || false,
       })
     } else {
@@ -138,7 +138,9 @@ export function TransactionFormModal({
   }
 
   const watchedDate = watch('date')
-  const selectedDate = watchedDate ? new Date(watchedDate) : new Date()
+  const selectedDate = watchedDate
+    ? new Date(watchedDate + 'T12:00:00')
+    : new Date()
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

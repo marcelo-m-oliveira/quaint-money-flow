@@ -14,10 +14,47 @@ export function formatDate(date: Date): string {
 }
 
 export function formatDateForInput(date: Date): string {
-  // Criar uma nova data para evitar mutação da original
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-  // Usar toISOString e pegar apenas a parte da data
-  return localDate.toISOString().split('T')[0]
+  // Usar métodos locais para evitar problemas de timezone
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Converte uma data para timestamp (início do dia em UTC)
+ * Ideal para armazenamento e comparações
+ */
+export function dateToTimestamp(date: Date): number {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const day = date.getDate()
+  return new Date(year, month, day).getTime()
+}
+
+/**
+ * Converte um timestamp para Date (início do dia local)
+ * Ideal para exibição e manipulação
+ */
+export function timestampToDate(timestamp: number): Date {
+  return new Date(timestamp)
+}
+
+/**
+ * Converte uma string de data (YYYY-MM-DD) para timestamp
+ * Garante que a data seja interpretada como local, não UTC
+ */
+export function dateStringToTimestamp(dateString: string): number {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day).getTime()
+}
+
+/**
+ * Converte um timestamp para string de data (YYYY-MM-DD)
+ */
+export function timestampToDateString(timestamp: number): string {
+  const date = new Date(timestamp)
+  return formatDateForInput(date)
 }
 
 export function parseCurrencyInput(value: string): number {

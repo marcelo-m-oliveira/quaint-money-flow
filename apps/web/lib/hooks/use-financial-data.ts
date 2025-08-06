@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import { dateStringToTimestamp } from '../format'
 import {
   Category,
   CategoryFormData,
@@ -96,13 +97,10 @@ export function useFinancialData() {
       categoryId: data.categoryId,
       accountId: data.accountId || undefined,
       creditCardId: data.creditCardId || undefined,
-      date:
-        typeof data.date === 'string'
-          ? new Date(data.date + 'T00:00:00')
-          : data.date,
+      date: dateStringToTimestamp(data.date),
       paid: data.paid,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     }
 
     const updatedTransactions = [...transactions, newTransaction]
@@ -121,12 +119,9 @@ export function useFinancialData() {
           categoryId: data.categoryId,
           accountId: data.accountId || undefined,
           creditCardId: data.creditCardId || undefined,
-          date:
-            typeof data.date === 'string'
-              ? new Date(data.date + 'T00:00:00')
-              : data.date,
+          date: dateStringToTimestamp(data.date),
           paid: data.paid,
-          updatedAt: new Date(),
+          updatedAt: Date.now(),
         }
         return updatedTransaction
       }

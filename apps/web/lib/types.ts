@@ -16,10 +16,10 @@ export interface Transaction {
   category?: Category
   accountId?: string // ID da conta relacionada
   creditCardId?: string // ID do cartão de crédito relacionado
-  date: Date
+  date: number // Timestamp em milissegundos
   paid: boolean // Indica se o lançamento foi pago ou não
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number // Timestamp em milissegundos
+  updatedAt: number // Timestamp em milissegundos
 }
 
 export interface TransactionFormData {
