@@ -49,6 +49,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Tooltip,
   TooltipContent,
@@ -197,8 +198,26 @@ export default function TransacoesPage() {
         selectedCategory === 'all'
           ? true
           : transaction.categoryId === selectedCategory
-      const matchesType =
-        selectedType === 'all' ? true : transaction.type === selectedType
+      const matchesType = (() => {
+        switch (selectedType) {
+          case 'all':
+            return true
+          case 'income':
+            return transaction.type === 'income'
+          case 'expense':
+            return transaction.type === 'expense'
+          case 'income-paid':
+            return transaction.type === 'income' && transaction.paid
+          case 'income-unpaid':
+            return transaction.type === 'income' && !transaction.paid
+          case 'expense-paid':
+            return transaction.type === 'expense' && transaction.paid
+          case 'expense-unpaid':
+            return transaction.type === 'expense' && !transaction.paid
+          default:
+            return true
+        }
+      })()
       const matchesPeriod = transactionDate >= start && transactionDate <= end
 
       return matchesSearch && matchesCategory && matchesType && matchesPeriod
@@ -456,7 +475,7 @@ export default function TransacoesPage() {
                         Modo
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-lg">
                       <DialogHeader>
                         <DialogTitle>Modo de visualização</DialogTitle>
                         <DialogDescription>
@@ -464,77 +483,95 @@ export default function TransacoesPage() {
                         </DialogDescription>
                       </DialogHeader>
 
-                      <div className="space-y-4 py-4">
-                        <div className="grid grid-cols-1 gap-3">
-                          <Button
-                            variant={
-                              viewMode === 'cashflow' ? 'default' : 'outline'
-                            }
-                            className="h-auto p-4 text-left"
-                            onClick={() => setViewMode('cashflow')}
-                          >
-                            <div>
-                              <div className="font-medium">Fluxo de caixa</div>
-                              <div className="mt-1 text-sm text-muted-foreground">
-                                Apenas lançamentos que afetam seu saldo
-                                diretamente
+                      <div className="py-4">
+                        <Tabs
+                          value={viewMode}
+                          onValueChange={(value) =>
+                            setViewMode(value as 'cashflow' | 'all')
+                          }
+                        >
+                          <TabsList className="mb-6 grid w-full grid-cols-2">
+                            <TabsTrigger value="cashflow">
+                              Fluxo de caixa
+                            </TabsTrigger>
+                            <TabsTrigger value="all">
+                              Todos os lançamentos
+                            </TabsTrigger>
+                          </TabsList>
+
+                          <TabsContent value="cashflow" className="mt-0">
+                            <div className="space-y-4">
+                              <div className="rounded-lg border p-4">
+                                <h4 className="mb-2 font-medium">
+                                  Fluxo de caixa
+                                </h4>
+                                <p className="mb-3 text-sm text-muted-foreground">
+                                  Apenas lançamentos que afetam seu saldo
+                                  diretamente
+                                </p>
+                                <div className="text-sm text-muted-foreground">
+                                  <p className="mb-2 font-medium">
+                                    O que você verá:
+                                  </p>
+                                  <ul className="list-inside list-disc space-y-1">
+                                    <li>
+                                      Apenas lançamentos que afetam seu saldo
+                                      diretamente
+                                    </li>
+                                    <li>
+                                      Não vai aparecer gastos de cartão de
+                                      crédito
+                                    </li>
+                                    <li>
+                                      Vai aparecer Faturas e Pagamentos de
+                                      Fatura
+                                    </li>
+                                    <li>
+                                      Barra de Resultados com somatório simples
+                                      do período
+                                    </li>
+                                  </ul>
+                                </div>
                               </div>
                             </div>
-                          </Button>
+                          </TabsContent>
 
-                          <Button
-                            variant={viewMode === 'all' ? 'default' : 'outline'}
-                            className="h-auto p-4 text-left"
-                            onClick={() => setViewMode('all')}
-                          >
-                            <div>
-                              <div className="font-medium">
-                                Todos os lançamentos
-                              </div>
-                              <div className="mt-1 text-sm text-muted-foreground">
-                                Todos os gastos feitos por você, incluindo
-                                cartão de crédito
+                          <TabsContent value="all" className="mt-0">
+                            <div className="space-y-4">
+                              <div className="rounded-lg border p-4">
+                                <h4 className="mb-2 font-medium">
+                                  Todos os lançamentos
+                                </h4>
+                                <p className="mb-3 text-sm text-muted-foreground">
+                                  Todos os gastos feitos por você, incluindo
+                                  cartão de crédito
+                                </p>
+                                <div className="text-sm text-muted-foreground">
+                                  <p className="mb-2 font-medium">
+                                    O que você verá:
+                                  </p>
+                                  <ul className="list-inside list-disc space-y-1">
+                                    <li>
+                                      Todos os lançamentos feitos por você
+                                    </li>
+                                    <li>
+                                      Todos os gastos feitos por cartão de
+                                      crédito
+                                    </li>
+                                    <li>
+                                      Não vamos mostrar Faturas e Pagamentos de
+                                      Fatura
+                                    </li>
+                                    <li>
+                                      Barra de Resultados com Saldo e Previsão
+                                      de Saldo
+                                    </li>
+                                  </ul>
+                                </div>
                               </div>
                             </div>
-                          </Button>
-                        </div>
-
-                        <div className="text-sm text-muted-foreground">
-                          <p className="mb-2">O que você verá com este modo:</p>
-                          {viewMode === 'cashflow' ? (
-                            <ul className="list-inside list-disc space-y-1">
-                              <li>
-                                Apenas lançamentos que afetam seu saldo
-                                diretamente;
-                              </li>
-                              <li>
-                                Não vai aparecer gastos de cartão de crédito;
-                              </li>
-                              <li>
-                                Vai aparecer Faturas e Pagamentos de Fatura;
-                              </li>
-                              <li>
-                                Barra de Resultados ao final da listagem para
-                                mostrar apenas um somatório simples do período.
-                              </li>
-                            </ul>
-                          ) : (
-                            <ul className="list-inside list-disc space-y-1">
-                              <li>Todos os lançamentos feitos por você;</li>
-                              <li>
-                                Todos os gastos feitos por cartão de crédito;
-                              </li>
-                              <li>
-                                Não vamos mostrar Faturas e Pagamentos de
-                                Fatura;
-                              </li>
-                              <li>
-                                Barra de Resultados ao final da listagem para
-                                mostrar seu Saldo e Previsão de Saldo.
-                              </li>
-                            </ul>
-                          )}
-                        </div>
+                          </TabsContent>
+                        </Tabs>
                       </div>
 
                       <DialogFooter>
@@ -573,7 +610,19 @@ export default function TransacoesPage() {
                     <SelectContent>
                       <SelectItem value="all">Todos os tipos</SelectItem>
                       <SelectItem value="income">Receitas</SelectItem>
+                      <SelectItem value="income-paid">
+                        Receitas Pagas
+                      </SelectItem>
+                      <SelectItem value="income-unpaid">
+                        Receitas Não Pagas
+                      </SelectItem>
                       <SelectItem value="expense">Despesas</SelectItem>
+                      <SelectItem value="expense-paid">
+                        Despesas Pagas
+                      </SelectItem>
+                      <SelectItem value="expense-unpaid">
+                        Despesas Não Pagas
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
