@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Transaction } from '@/lib/types'
@@ -46,12 +47,18 @@ export function BillsToPayCard({
   onEditTransaction,
 }: BillsToPayCardProps) {
   const { getCategoryIcon } = useFinancialData()
+  const { success, error } = useCrudToast()
   const [visibleOverdueBills, setVisibleOverdueBills] = useState(5)
   const [visibleUpcomingBills, setVisibleUpcomingBills] = useState(5)
 
   const handleTogglePaidStatus = (transactionId: string) => {
-    if (onUpdateTransaction) {
-      onUpdateTransaction(transactionId, { paid: true })
+    try {
+      if (onUpdateTransaction) {
+        onUpdateTransaction(transactionId, { paid: true })
+        success.update('Pagamento')
+      }
+    } catch (err) {
+      error.update('Pagamento', 'Não foi possível marcar como pago.')
     }
   }
 

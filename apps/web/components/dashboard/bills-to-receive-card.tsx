@@ -1,7 +1,7 @@
 'use client'
 
 import { formatCurrency, formatDate } from '@saas/utils'
-import { AlertTriangle, Calendar, Clock, ThumbsUp } from 'lucide-react'
+import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Transaction } from '@/lib/types'
@@ -46,13 +47,19 @@ export function BillsToReceiveCard({
   onEditTransaction,
 }: BillsToReceiveCardProps) {
   const { getCategoryIcon } = useFinancialData()
+  const { success, error } = useCrudToast()
   const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(5)
   const [visibleUpcomingReceivables, setVisibleUpcomingReceivables] =
     useState(5)
 
   const handleToggleReceivedStatus = (transactionId: string) => {
-    if (onUpdateTransaction) {
-      onUpdateTransaction(transactionId, { paid: true })
+    try {
+      if (onUpdateTransaction) {
+        onUpdateTransaction(transactionId, { paid: true })
+        success.update('Receita marcada como recebida')
+      }
+    } catch (err) {
+      error.update('Receita', 'Não foi possível marcar como recebida.')
     }
   }
 
@@ -217,7 +224,7 @@ export function BillsToReceiveCard({
                                   }
                                   className="h-8 w-8 text-gray-400 hover:text-green-600"
                                 >
-                                  <ThumbsUp className="h-4 w-4" />
+                                  <ThumbsDown className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -354,7 +361,7 @@ export function BillsToReceiveCard({
                                   }
                                   className="h-8 w-8 text-gray-400 hover:text-green-600"
                                 >
-                                  <ThumbsUp className="h-4 w-4" />
+                                  <ThumbsDown className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>

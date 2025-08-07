@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 
 import { preferencesSchema } from '@/lib/schemas'
 
+import { useCrudToast } from './use-crud-toast'
+
 // Definir tipo específico para as preferências do usuário
 export type UserPreferences = {
   transactionOrder: 'crescente' | 'decrescente'
@@ -35,6 +37,7 @@ export function usePreferences() {
   const [preferences, setPreferences] =
     useState<UserPreferences>(DEFAULT_PREFERENCES)
   const [isLoading, setIsLoading] = useState(true)
+  const { success, error } = useCrudToast()
 
   // Carregar preferências do localStorage
   useEffect(() => {
@@ -116,7 +119,12 @@ export function usePreferences() {
 
   // Resetar preferências para o padrão
   const resetPreferences = () => {
-    savePreferences(DEFAULT_PREFERENCES)
+    try {
+      savePreferences(DEFAULT_PREFERENCES)
+      success.update('Preferências resetadas para o padrão')
+    } catch (err) {
+      error.update('Preferências', 'Não foi possível resetar as preferências.')
+    }
   }
 
   // Excluir todas as transações (função especial)
@@ -124,10 +132,12 @@ export function usePreferences() {
     try {
       localStorage.removeItem('quaint-money-transactions')
       console.log('🗑️ Todas as transações foram excluídas')
+      success.delete('Todas as transações')
       // Recarregar a página para atualizar os dados
-      window.location.reload()
-    } catch (error) {
-      console.error('Erro ao excluir transações:', error)
+      setTimeout(() => window.location.reload(), 1000)
+    } catch (err) {
+      console.error('Erro ao excluir transações:', err)
+      error.delete('transações')
     }
   }
 
@@ -141,10 +151,12 @@ export function usePreferences() {
       localStorage.removeItem(PREFERENCES_STORAGE_KEY)
       localStorage.removeItem('quaint-money-theme')
       console.log('🗑️ Conta excluída completamente')
+      success.delete('Conta completa')
       // Recarregar a página para atualizar os dados
-      window.location.reload()
-    } catch (error) {
-      console.error('Erro ao excluir conta:', error)
+      setTimeout(() => window.location.reload(), 1000)
+    } catch (err) {
+      console.error('Erro ao excluir conta:', err)
+      error.delete('conta')
     }
   }
 

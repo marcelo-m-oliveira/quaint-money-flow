@@ -9,6 +9,7 @@ import {
   Transaction,
   TransactionFormData,
 } from '../types'
+import { useCrudToast } from './use-crud-toast'
 
 const STORAGE_KEYS = {
   TRANSACTIONS: 'quaint-money-transactions',
@@ -21,6 +22,7 @@ export function useFinancialData() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const { success, error, warning } = useCrudToast()
 
   // Carregar dados do localStorage
   useEffect(() => {
@@ -89,46 +91,62 @@ export function useFinancialData() {
 
   // Adicionar transação
   const addTransaction = (data: TransactionFormData) => {
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      description: data.description,
-      amount: parseFloat(data.amount),
-      type: data.type,
-      categoryId: data.categoryId,
-      accountId: data.accountId || undefined,
-      creditCardId: data.creditCardId || undefined,
-      date: dateStringToTimestamp(data.date),
-      paid: data.paid,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }
+    try {
+      const newTransaction: Transaction = {
+        id: Date.now().toString(),
+        description: data.description,
+        amount: parseFloat(data.amount),
+        type: data.type,
+        categoryId: data.categoryId,
+        accountId: data.accountId || undefined,
+        creditCardId: data.creditCardId || undefined,
+        date: dateStringToTimestamp(data.date),
+        paid: data.paid,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
 
-    const updatedTransactions = [...transactions, newTransaction]
-    saveTransactions(updatedTransactions)
+      const updatedTransactions = [...transactions, newTransaction]
+      saveTransactions(updatedTransactions)
+
+      const transactionType = data.type === 'income' ? 'Receita' : 'Despesa'
+      success.create(transactionType)
+    } catch (err) {
+      const transactionType = data.type === 'income' ? 'receita' : 'despesa'
+      error.create(transactionType)
+    }
   }
 
   // Editar transação
   const updateTransaction = (id: string, data: TransactionFormData) => {
-    const updatedTransactions = transactions.map((transaction) => {
-      if (transaction.id === id) {
-        const updatedTransaction = {
-          ...transaction,
-          description: data.description,
-          amount: parseFloat(data.amount),
-          type: data.type,
-          categoryId: data.categoryId,
-          accountId: data.accountId || undefined,
-          creditCardId: data.creditCardId || undefined,
-          date: dateStringToTimestamp(data.date),
-          paid: data.paid,
-          updatedAt: Date.now(),
+    try {
+      const updatedTransactions = transactions.map((transaction) => {
+        if (transaction.id === id) {
+          const updatedTransaction = {
+            ...transaction,
+            description: data.description,
+            amount: parseFloat(data.amount),
+            type: data.type,
+            categoryId: data.categoryId,
+            accountId: data.accountId || undefined,
+            creditCardId: data.creditCardId || undefined,
+            date: dateStringToTimestamp(data.date),
+            paid: data.paid,
+            updatedAt: Date.now(),
+          }
+          return updatedTransaction
         }
-        return updatedTransaction
-      }
-      return transaction
-    })
+        return transaction
+      })
 
-    saveTransactions(updatedTransactions)
+      saveTransactions(updatedTransactions)
+
+      const transactionType = data.type === 'income' ? 'Receita' : 'Despesa'
+      success.update(transactionType)
+    } catch (err) {
+      const transactionType = data.type === 'income' ? 'receita' : 'despesa'
+      error.update(transactionType)
+    }
   }
 
   // Atualizar campos específicos da transação
@@ -152,10 +170,19 @@ export function useFinancialData() {
 
   // Deletar transação
   const deleteTransaction = (id: string) => {
-    const updatedTransactions = transactions.filter(
-      (transaction) => transaction.id !== id,
-    )
-    saveTransactions(updatedTransactions)
+    try {
+      const transactionToDelete = transactions.find((t) => t.id === id)
+      const updatedTransactions = transactions.filter(
+        (transaction) => transaction.id !== id,
+      )
+      saveTransactions(updatedTransactions)
+
+      const transactionType =
+        transactionToDelete?.type === 'income' ? 'Receita' : 'Despesa'
+      success.delete(transactionType)
+    } catch (err) {
+      error.delete('transação')
+    }
   }
 
   // Função para obter o ícone correto da categoria (herda da categoria pai se for subcategoria)
@@ -178,103 +205,121 @@ export function useFinancialData() {
 
   // Adicionar categoria
   const addCategory = (data: CategoryFormData) => {
-    // Para subcategorias, se não foi fornecido ícone, herdar da categoria pai
-    let icon = data.icon
-    if (data.parentId && !icon) {
-      const parentCategory = categories.find((cat) => cat.id === data.parentId)
-      icon = parentCategory?.icon || 'FileText'
-    }
+    try {
+      // Para subcategorias, se não foi fornecido ícone, herdar da categoria pai
+      let icon = data.icon
+      if (data.parentId && !icon) {
+        const parentCategory = categories.find(
+          (cat) => cat.id === data.parentId,
+        )
+        icon = parentCategory?.icon || 'FileText'
+      }
 
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name: data.name,
-      color: data.color,
-      type: data.type,
-      icon: icon || 'FileText',
-      parentId: data.parentId,
-      createdAt: new Date(),
-    }
+      const newCategory: Category = {
+        id: Date.now().toString(),
+        name: data.name,
+        color: data.color,
+        type: data.type,
+        icon: icon || 'FileText',
+        parentId: data.parentId,
+        createdAt: new Date(),
+      }
 
-    const updatedCategories = [...categories, newCategory]
-    saveCategories(updatedCategories)
+      const updatedCategories = [...categories, newCategory]
+      saveCategories(updatedCategories)
+      success.create('Categoria')
+    } catch (err) {
+      error.create('categoria')
+    }
   }
 
   // Editar categoria
   const updateCategory = (id: string, data: CategoryFormData) => {
-    // Encontrar a categoria que está sendo editada
-    const categoryBeingUpdated = categories.find((cat) => cat.id === id)
+    try {
+      // Encontrar a categoria que está sendo editada
+      const categoryBeingUpdated = categories.find((cat) => cat.id === id)
 
-    const updatedCategories = categories.map((category) => {
-      if (category.id === id) {
-        let icon = data.icon
+      const updatedCategories = categories.map((category) => {
+        if (category.id === id) {
+          let icon = data.icon
 
-        // Se é uma subcategoria
-        if (data.parentId) {
-          const newParentCategory = categories.find(
-            (cat) => cat.id === data.parentId,
-          )
-
-          // Se não foi fornecido ícone específico ou ícone está vazio (movida para nova categoria pai)
-          if (!icon || icon === '') {
-            icon = newParentCategory?.icon || 'FileText'
-          }
-          // Se a subcategoria foi movida para uma nova categoria pai e ainda tem o ícone da categoria pai anterior
-          else if (category.parentId !== data.parentId) {
-            const oldParentCategory = categories.find(
-              (cat) => cat.id === category.parentId,
+          // Se é uma subcategoria
+          if (data.parentId) {
+            const newParentCategory = categories.find(
+              (cat) => cat.id === data.parentId,
             )
-            // Se o ícone atual é igual ao da categoria pai anterior, herdar da nova categoria pai
-            if (icon === oldParentCategory?.icon) {
+
+            // Se não foi fornecido ícone específico ou ícone está vazio (movida para nova categoria pai)
+            if (!icon || icon === '') {
               icon = newParentCategory?.icon || 'FileText'
+            }
+            // Se a subcategoria foi movida para uma nova categoria pai e ainda tem o ícone da categoria pai anterior
+            else if (category.parentId !== data.parentId) {
+              const oldParentCategory = categories.find(
+                (cat) => cat.id === category.parentId,
+              )
+              // Se o ícone atual é igual ao da categoria pai anterior, herdar da nova categoria pai
+              if (icon === oldParentCategory?.icon) {
+                icon = newParentCategory?.icon || 'FileText'
+              }
+            }
+          }
+
+          return {
+            ...category,
+            name: data.name,
+            color: data.color,
+            type: data.type,
+            icon: icon || category.icon || 'FileText',
+            parentId: data.parentId,
+          }
+        }
+
+        // Se esta categoria é uma subcategoria da categoria que está sendo editada
+        // e ela herdou o ícone da categoria pai, atualizar o ícone
+        if (category.parentId === id && categoryBeingUpdated) {
+          // Verificar se a subcategoria está usando o ícone da categoria pai
+          if (category.icon === categoryBeingUpdated.icon || !category.icon) {
+            return {
+              ...category,
+              icon: data.icon || 'FileText',
             }
           }
         }
 
-        return {
-          ...category,
-          name: data.name,
-          color: data.color,
-          type: data.type,
-          icon: icon || category.icon || 'FileText',
-          parentId: data.parentId,
-        }
-      }
+        return category
+      })
 
-      // Se esta categoria é uma subcategoria da categoria que está sendo editada
-      // e ela herdou o ícone da categoria pai, atualizar o ícone
-      if (category.parentId === id && categoryBeingUpdated) {
-        // Verificar se a subcategoria está usando o ícone da categoria pai
-        if (category.icon === categoryBeingUpdated.icon || !category.icon) {
-          return {
-            ...category,
-            icon: data.icon || 'FileText',
-          }
-        }
-      }
-
-      return category
-    })
-
-    saveCategories(updatedCategories)
+      saveCategories(updatedCategories)
+      success.update('Categoria')
+    } catch (err) {
+      error.update('categoria')
+    }
   }
 
   // Deletar categoria
   const deleteCategory = (id: string) => {
-    // Verificar se há transações usando esta categoria
-    const hasTransactions = transactions.some(
-      (transaction) => transaction.categoryId === id,
-    )
-
-    if (hasTransactions) {
-      throw new Error(
-        'Não é possível deletar uma categoria que possui transações associadas.',
+    try {
+      // Verificar se há transações usando esta categoria
+      const hasTransactions = transactions.some(
+        (transaction) => transaction.categoryId === id,
       )
-    }
 
-    const updatedCategories = categories.filter(
-      (category) => category.id !== id,
-    )
-    saveCategories(updatedCategories)
+      if (hasTransactions) {
+        warning(
+          'Não é possível deletar uma categoria que possui transações associadas.',
+        )
+        return
+      }
+
+      const updatedCategories = categories.filter(
+        (category) => category.id !== id,
+      )
+      saveCategories(updatedCategories)
+      success.delete('Categoria')
+    } catch (err) {
+      error.delete('categoria')
+    }
   }
 
   // Obter transações com categorias

@@ -60,6 +60,7 @@ import {
 import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCreditCards } from '@/lib/hooks/use-credit-cards'
+import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { usePreferences } from '@/lib/hooks/use-preferences'
 import { TransactionFormSchema } from '@/lib/schemas'
@@ -120,6 +121,7 @@ export default function TransacoesPage() {
 
   const { accounts } = useAccounts()
   const { creditCards } = useCreditCards()
+  const { success, error } = useCrudToast()
 
   const { preferences, updatePreference } = usePreferences()
 
@@ -440,19 +442,30 @@ export default function TransacoesPage() {
   }
 
   const handleTogglePaidStatus = (transaction: Transaction) => {
-    // Apenas alterar o status de pagamento, preservando todos os outros dados
-    const updatedData = {
-      description: transaction.description,
-      amount: transaction.amount.toString(),
-      type: transaction.type,
-      categoryId: transaction.categoryId,
-      accountId: transaction.accountId || undefined,
-      creditCardId: transaction.creditCardId || undefined,
-      date: timestampToDateString(transaction.date), // Converter timestamp para string de data
-      paid: !transaction.paid,
-    }
+    try {
+      // Apenas alterar o status de pagamento, preservando todos os outros dados
+      const updatedData = {
+        description: transaction.description,
+        amount: transaction.amount.toString(),
+        type: transaction.type,
+        categoryId: transaction.categoryId,
+        accountId: transaction.accountId || undefined,
+        creditCardId: transaction.creditCardId || undefined,
+        date: timestampToDateString(transaction.date), // Converter timestamp para string de data
+        paid: !transaction.paid,
+      }
 
-    updateTransaction(transaction.id, updatedData)
+      updateTransaction(transaction.id, updatedData)
+
+      const statusText = !transaction.paid ? 'pago' : 'não pago'
+      const entityType = transaction.type === 'income' ? 'Receita' : 'Despesa'
+      success.update(`${entityType} marcada como ${statusText}`)
+    } catch (err) {
+      error.update(
+        'Status de pagamento',
+        'Não foi possível alterar o status de pagamento.',
+      )
+    }
   }
 
   const incomeCategories = categories.filter((cat) => cat.type === 'income')

@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 
 import { CreditCard, CreditCardFormData } from '../types'
+import { useCrudToast } from './use-crud-toast'
 
 const STORAGE_KEY = 'quaint-money-credit-cards'
 
 export function useCreditCards() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const { success, error } = useCrudToast()
 
   // Carregar cartões do localStorage
   useEffect(() => {
@@ -50,23 +52,28 @@ export function useCreditCards() {
 
   // Adicionar novo cartão
   const addCreditCard = (cardData: CreditCardFormData) => {
-    const newCard: CreditCard = {
-      id: crypto.randomUUID(),
-      name: cardData.name,
-      icon: cardData.icon,
-      iconType: cardData.iconType,
-      limit: parseFloat(
-        cardData.limit.replace(/[^\d,.-]/g, '').replace(',', '.'),
-      ),
-      currentBalance: 0, // Saldo inicial sempre 0
-      closingDay: cardData.closingDay,
-      dueDay: cardData.dueDay,
-      defaultPaymentAccountId: cardData.defaultPaymentAccountId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    try {
+      const newCard: CreditCard = {
+        id: crypto.randomUUID(),
+        name: cardData.name,
+        icon: cardData.icon,
+        iconType: cardData.iconType,
+        limit: parseFloat(
+          cardData.limit.replace(/[^\d,.-]/g, '').replace(',', '.'),
+        ),
+        currentBalance: 0, // Saldo inicial sempre 0
+        closingDay: cardData.closingDay,
+        dueDay: cardData.dueDay,
+        defaultPaymentAccountId: cardData.defaultPaymentAccountId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      const updatedCards = [...creditCards, newCard]
+      saveCreditCards(updatedCards)
+      success.create('Cartão de Crédito')
+    } catch (err) {
+      error.create('cartão de crédito')
     }
-    const updatedCards = [...creditCards, newCard]
-    saveCreditCards(updatedCards)
   }
 
   // Atualizar cartão existente
@@ -74,27 +81,37 @@ export function useCreditCards() {
     id: string,
     cardData: Partial<CreditCardFormData>,
   ) => {
-    const updatedCards = creditCards.map((card) =>
-      card.id === id
-        ? {
-            ...card,
-            ...cardData,
-            limit: cardData.limit
-              ? parseFloat(
-                  cardData.limit.replace(/[^\d,.-]/g, '').replace(',', '.'),
-                )
-              : card.limit,
-            updatedAt: new Date(),
-          }
-        : card,
-    )
-    saveCreditCards(updatedCards)
+    try {
+      const updatedCards = creditCards.map((card) =>
+        card.id === id
+          ? {
+              ...card,
+              ...cardData,
+              limit: cardData.limit
+                ? parseFloat(
+                    cardData.limit.replace(/[^\d,.-]/g, '').replace(',', '.'),
+                  )
+                : card.limit,
+              updatedAt: new Date(),
+            }
+          : card,
+      )
+      saveCreditCards(updatedCards)
+      success.update('Cartão de Crédito')
+    } catch (err) {
+      error.update('cartão de crédito')
+    }
   }
 
   // Remover cartão
   const deleteCreditCard = (id: string) => {
-    const updatedCards = creditCards.filter((card) => card.id !== id)
-    saveCreditCards(updatedCards)
+    try {
+      const updatedCards = creditCards.filter((card) => card.id !== id)
+      saveCreditCards(updatedCards)
+      success.delete('Cartão de Crédito')
+    } catch (err) {
+      error.delete('cartão de crédito')
+    }
   }
 
   // Obter cartão por ID

@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 
 import { Account, AccountFormData } from '../types'
+import { useCrudToast } from './use-crud-toast'
 
 const STORAGE_KEY = 'quaint-money-accounts'
 
 export function useAccounts() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const { success, error } = useCrudToast()
 
   // Carregar contas do localStorage
   useEffect(() => {
@@ -50,37 +52,53 @@ export function useAccounts() {
 
   // Adicionar nova conta
   const addAccount = (accountData: AccountFormData) => {
-    const newAccount: Account = {
-      id: crypto.randomUUID(),
-      ...accountData,
-      balance: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
+    try {
+      const newAccount: Account = {
+        id: crypto.randomUUID(),
+        ...accountData,
+        balance: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
 
-    const updatedAccounts = [...accounts, newAccount]
-    saveAccounts(updatedAccounts)
-    return newAccount
+      const updatedAccounts = [...accounts, newAccount]
+      saveAccounts(updatedAccounts)
+      success.create('Conta')
+      return newAccount
+    } catch (err) {
+      error.create('conta')
+      throw err
+    }
   }
 
   // Atualizar conta existente
   const updateAccount = (id: string, accountData: Partial<AccountFormData>) => {
-    const updatedAccounts = accounts.map((account) =>
-      account.id === id
-        ? {
-            ...account,
-            ...accountData,
-            updatedAt: new Date(),
-          }
-        : account,
-    )
-    saveAccounts(updatedAccounts)
+    try {
+      const updatedAccounts = accounts.map((account) =>
+        account.id === id
+          ? {
+              ...account,
+              ...accountData,
+              updatedAt: new Date(),
+            }
+          : account,
+      )
+      saveAccounts(updatedAccounts)
+      success.update('Conta')
+    } catch (err) {
+      error.update('conta')
+    }
   }
 
   // Remover conta
   const deleteAccount = (id: string) => {
-    const updatedAccounts = accounts.filter((account) => account.id !== id)
-    saveAccounts(updatedAccounts)
+    try {
+      const updatedAccounts = accounts.filter((account) => account.id !== id)
+      saveAccounts(updatedAccounts)
+      success.delete('Conta')
+    } catch (err) {
+      error.delete('conta')
+    }
   }
 
   // Obter conta por ID
