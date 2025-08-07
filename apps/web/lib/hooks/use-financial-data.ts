@@ -131,6 +131,25 @@ export function useFinancialData() {
     saveTransactions(updatedTransactions)
   }
 
+  // Atualizar campos específicos da transação
+  const updateTransactionStatus = (
+    id: string,
+    updates: Partial<Transaction>,
+  ) => {
+    const updatedTransactions = transactions.map((transaction) => {
+      if (transaction.id === id) {
+        return {
+          ...transaction,
+          ...updates,
+          updatedAt: Date.now(),
+        }
+      }
+      return transaction
+    })
+
+    saveTransactions(updatedTransactions)
+  }
+
   // Deletar transação
   const deleteTransaction = (id: string) => {
     const updatedTransactions = transactions.filter(
@@ -303,6 +322,7 @@ export function useFinancialData() {
     isLoading,
     addTransaction,
     updateTransaction,
+    updateTransactionStatus,
     deleteTransaction,
     addCategory,
     updateCategory,

@@ -19,6 +19,7 @@ export function FinancialDashboard() {
     categories,
     addTransaction,
     updateTransaction,
+    updateTransactionStatus,
     deleteTransaction,
     deleteCategory,
     getTotals,
@@ -253,6 +254,7 @@ export function FinancialDashboard() {
           <BillsToPayCard
             transactions={transactionsWithCategories}
             categories={categories}
+            onUpdateTransaction={updateTransactionStatus}
           />
         </div>
       </div>

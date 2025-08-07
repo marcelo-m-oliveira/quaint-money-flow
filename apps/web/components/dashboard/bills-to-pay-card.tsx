@@ -1,12 +1,18 @@
 'use client'
 
 import { formatCurrency, formatDate } from '@saas/utils'
-import { AlertTriangle, Calendar, Clock } from 'lucide-react'
-import { useMemo } from 'react'
+import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Transaction } from '@/lib/types'
@@ -14,6 +20,10 @@ import { Category, Transaction } from '@/lib/types'
 interface BillsToPayCardProps {
   transactions: Transaction[]
   categories: Category[]
+  onUpdateTransaction?: (
+    transactionId: string,
+    updatedData: Partial<Transaction>,
+  ) => void
 }
 
 interface BillData {
@@ -31,8 +41,17 @@ interface BillData {
 export function BillsToPayCard({
   transactions,
   categories,
+  onUpdateTransaction,
 }: BillsToPayCardProps) {
   const { getCategoryIcon } = useFinancialData()
+  const [visibleOverdueBills, setVisibleOverdueBills] = useState(5)
+  const [visibleUpcomingBills, setVisibleUpcomingBills] = useState(5)
+
+  const handleTogglePaidStatus = (transactionId: string) => {
+    if (onUpdateTransaction) {
+      onUpdateTransaction(transactionId, { paid: true })
+    }
+  }
 
   const { overdueBills, upcomingBills } = useMemo(() => {
     const currentDate = new Date()
@@ -74,7 +93,6 @@ export function BillsToPayCard({
     const upcoming = billsData
       .filter((bill) => !bill.isOverdue)
       .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
-      .slice(0, 10) // Limitar a 10 próximas contas
 
     return {
       overdueBills: overdue,
@@ -125,7 +143,7 @@ export function BillsToPayCard({
             </div>
 
             <div className="space-y-3">
-              {overdueBills.map((bill) => (
+              {overdueBills.slice(0, visibleOverdueBills).map((bill) => (
                 <div
                   key={bill.id}
                   className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 dark:border-red-800 dark:bg-red-950/10"
@@ -150,13 +168,58 @@ export function BillsToPayCard({
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center gap-2">
                     <p className="font-semibold text-red-600 dark:text-red-400">
                       {formatCurrency(bill.amount)}
                     </p>
+                    {onUpdateTransaction && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleTogglePaidStatus(bill.id)}
+                              className="h-8 w-8 text-gray-400 hover:text-green-600"
+                            >
+                              <ThumbsDown className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Marcar como pago</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Botões de controle para contas atrasadas */}
+            <div className="space-y-2 pt-3">
+              {overdueBills.length > visibleOverdueBills && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                  onClick={() => setVisibleOverdueBills((prev) => prev + 5)}
+                >
+                  ver mais
+                </Button>
+              )}
+              {visibleOverdueBills > 5 && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                  onClick={() =>
+                    setVisibleOverdueBills((prev) => Math.max(5, prev - 5))
+                  }
+                >
+                  recolher
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -170,7 +233,7 @@ export function BillsToPayCard({
             </div>
 
             <div className="space-y-3">
-              {upcomingBills.map((bill) => {
+              {upcomingBills.slice(0, visibleUpcomingBills).map((bill) => {
                 const isNearDue = bill.daysUntilDue <= 7
 
                 return (
@@ -211,24 +274,62 @@ export function BillsToPayCard({
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="flex items-center gap-2">
                       <p className="font-semibold">
                         {formatCurrency(bill.amount)}
                       </p>
+                      {onUpdateTransaction && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleTogglePaidStatus(bill.id)}
+                                className="h-8 w-8 text-gray-400 hover:text-green-600"
+                              >
+                                <ThumbsDown className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Marcar como pago</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                   </div>
                 )
               })}
             </div>
+
+            {/* Botões de controle para próximas contas */}
+            <div className="space-y-2 pt-3">
+              {upcomingBills.length > visibleUpcomingBills && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                  onClick={() => setVisibleUpcomingBills((prev) => prev + 5)}
+                >
+                  ver mais
+                </Button>
+              )}
+              {visibleUpcomingBills > 5 && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                  onClick={() =>
+                    setVisibleUpcomingBills((prev) => Math.max(5, prev - 5))
+                  }
+                >
+                  recolher
+                </Button>
+              )}
+            </div>
           </div>
         )}
-
-        {/* Botão ver mais */}
-        <div className="pt-2">
-          <Button variant="outline" className="w-full" size="sm">
-            ver mais
-          </Button>
-        </div>
       </CardContent>
     </Card>
   )
