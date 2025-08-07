@@ -475,7 +475,7 @@ export default function TransacoesPage() {
 
   return (
     <PageLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto mb-16 max-w-4xl space-y-6">
         <Card className="overflow-hidden">
           <CardHeader className="px-4 sm:px-6">
             {/* Controle de Período e Lançamentos */}
