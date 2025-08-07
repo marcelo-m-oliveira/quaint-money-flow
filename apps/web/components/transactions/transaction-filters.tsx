@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PERIOD_TITLE_FORMATTERS, PeriodType } from '@/lib/date-utils'
+import { CategoryIcon } from '@/lib/icon-map'
 
 import {
   Select,
@@ -27,7 +28,7 @@ interface TransactionFiltersProps {
   onDateChange: (date: Date) => void
   startDate: Date
   endDate: Date
-  categories: Array<{ id: string; name: string; color: string }>
+  categories: Array<{ id: string; name: string; color: string; icon?: string }>
   onClearFilters: () => void
 }
 
@@ -151,9 +152,17 @@ export function TransactionFilters({
               <SelectItem key={category.id} value={category.id}>
                 <div className="flex items-center gap-2">
                   <div
-                    className="h-3 w-3 rounded-full"
+                    className="flex h-3 w-3 items-center justify-center rounded-full"
                     style={{ backgroundColor: category.color }}
-                  />
+                  >
+                    {category.icon && (
+                      <CategoryIcon
+                        iconName={category.icon}
+                        size={10}
+                        className="text-white"
+                      />
+                    )}
+                  </div>
                   {category.name}
                 </div>
               </SelectItem>

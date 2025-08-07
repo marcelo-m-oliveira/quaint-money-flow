@@ -18,20 +18,20 @@ const CATEGORY_COLORS = [
   '#84cc16', // lime-500
 ]
 
-// Categorias de despesas predefinidas
+// Categorias de despesas predefinidas com ícones
 const EXPENSE_CATEGORIES = [
-  'Alimentação',
-  'Transporte',
-  'Moradia',
-  'Saúde',
-  'Educação',
-  'Lazer',
-  'Roupas',
-  'Tecnologia',
-  'Viagem',
-  'Pets',
-  'Presentes',
-  'Serviços',
+  { name: 'Alimentação', icon: 'Utensils' },
+  { name: 'Transporte', icon: 'Car' },
+  { name: 'Moradia', icon: 'Home' },
+  { name: 'Saúde', icon: 'Heart' },
+  { name: 'Educação', icon: 'GraduationCap' },
+  { name: 'Lazer', icon: 'Gamepad2' },
+  { name: 'Roupas', icon: 'Shirt' },
+  { name: 'Tecnologia', icon: 'Monitor' },
+  { name: 'Viagem', icon: 'Plane' },
+  { name: 'Pets', icon: 'Heart' },
+  { name: 'Presentes', icon: 'Gift' },
+  { name: 'Serviços', icon: 'Wrench' },
 ]
 
 // Subcategorias de despesas
@@ -44,14 +44,14 @@ const EXPENSE_SUBCATEGORIES: Record<string, string[]> = {
   Lazer: ['Cinema', 'Streaming', 'Jogos', 'Eventos'],
 }
 
-// Categorias de receitas predefinidas
+// Categorias de receitas predefinidas com ícones
 const INCOME_CATEGORIES = [
-  'Salário',
-  'Freelance',
-  'Investimentos',
-  'Vendas',
-  'Prêmios',
-  'Outros',
+  { name: 'Salário', icon: 'Briefcase' },
+  { name: 'Freelance', icon: 'User' },
+  { name: 'Investimentos', icon: 'TrendingUp' },
+  { name: 'Vendas', icon: 'ShoppingCart' },
+  { name: 'Prêmios', icon: 'Star' },
+  { name: 'Outros', icon: 'DollarSign' },
 ]
 
 // Tipos de conta
@@ -99,19 +99,35 @@ export function generateMockCategory(
   parentId?: string,
 ): Category {
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
-  const name = parentId
-    ? faker.helpers.arrayElement(
-        EXPENSE_SUBCATEGORIES[
-          faker.helpers.arrayElement(EXPENSE_CATEGORIES)
-        ] || ['Subcategoria'],
-      )
-    : faker.helpers.arrayElement(categories)
+
+  let name: string
+  let icon: string
+
+  if (parentId) {
+    // Para subcategorias, usar nomes das subcategorias e herdar ícone da categoria pai
+    const parentCategoryNames = Object.keys(EXPENSE_SUBCATEGORIES)
+    const parentName = faker.helpers.arrayElement(parentCategoryNames)
+    name = faker.helpers.arrayElement(
+      EXPENSE_SUBCATEGORIES[parentName] || ['Subcategoria'],
+    )
+    // Encontrar o ícone da categoria pai
+    const parentCategory = EXPENSE_CATEGORIES.find(
+      (cat) => cat.name === parentName,
+    )
+    icon = parentCategory?.icon || 'Star'
+  } else {
+    // Para categorias principais
+    const selectedCategory = faker.helpers.arrayElement(categories)
+    name = selectedCategory.name
+    icon = selectedCategory.icon
+  }
 
   return {
     id: faker.string.uuid(),
     name,
     color: faker.helpers.arrayElement(CATEGORY_COLORS),
     type,
+    icon,
     parentId,
     createdAt: faker.date.past({ years: 1 }),
   }

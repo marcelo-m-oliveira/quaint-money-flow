@@ -177,6 +177,7 @@ export function CategoryFormModal({
       name: '',
       color: PRESET_COLORS[0],
       type: categoryType,
+      icon: PRESET_ICONS[0].name,
       parentId: parentCategory?.id,
     },
   })
@@ -189,34 +190,44 @@ export function CategoryFormModal({
 
   // Resetar form quando as props mudarem
   useEffect(() => {
+    const iconName = category?.icon || PRESET_ICONS[0].name
+    const selectedIconObj =
+      PRESET_ICONS.find((icon) => icon.name === iconName) || PRESET_ICONS[0]
+
     reset({
       name: category?.name || '',
       color: category?.color || PRESET_COLORS[0],
       type: category?.type || categoryType,
+      icon: iconName,
       parentId: category?.parentId || parentCategory?.id,
     })
     setCategoryMode(category?.parentId || parentCategory ? 'sub' : 'main')
-    setSelectedIcon(PRESET_ICONS[0])
+    setSelectedIcon(selectedIconObj)
   }, [category, categoryType, parentCategory, reset])
 
   const onSubmitForm = (data: CategoryFormSchema) => {
     // Verificar se já existe uma categoria com o mesmo nome (exceto a atual)
+    // Considerar também o tipo e parentId para evitar conflitos desnecessários
+    const finalParentId = categoryMode === 'sub' ? data.parentId : undefined
     const existingCategory = categories.find(
       (cat) =>
         cat.name.toLowerCase() === data.name.toLowerCase() &&
+        cat.type === data.type &&
+        cat.parentId === finalParentId &&
         cat.id !== category?.id,
     )
 
     if (existingCategory) {
       // TODO: Implementar toast para mostrar erro
-      console.error('Já existe uma categoria com este nome.')
+      console.error('Já existe uma categoria com este nome no mesmo contexto.')
       return
     }
 
     // Garantir que o parentId seja mantido corretamente baseado no categoryMode
     const finalFormData = {
       ...data,
-      parentId: categoryMode === 'sub' ? data.parentId : undefined,
+      icon: selectedIcon.name,
+      parentId: finalParentId,
     }
 
     onSubmit(finalFormData)
@@ -228,6 +239,7 @@ export function CategoryFormModal({
       name: '',
       color: PRESET_COLORS[0],
       type: categoryType,
+      icon: PRESET_ICONS[0].name,
       parentId: parentCategory?.id,
     })
     setCategoryMode('main')

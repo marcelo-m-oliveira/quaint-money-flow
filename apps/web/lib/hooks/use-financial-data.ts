@@ -146,6 +146,7 @@ export function useFinancialData() {
       name: data.name,
       color: data.color,
       type: data.type,
+      icon: data.icon,
       parentId: data.parentId,
       createdAt: new Date(),
     }
@@ -163,6 +164,7 @@ export function useFinancialData() {
           name: data.name,
           color: data.color,
           type: data.type,
+          icon: data.icon,
           parentId: data.parentId,
         }
       }

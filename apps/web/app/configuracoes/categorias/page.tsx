@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { CategoryIcon } from '@/lib/icon-map'
 import { Category, CategoryFormData } from '@/lib/types'
 
 export default function CategoriasPage() {
@@ -143,9 +144,14 @@ export default function CategoriasPage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <div
-                      className="h-4 w-4 flex-shrink-0 rounded-full"
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
                       style={{ backgroundColor: category.color }}
-                    />
+                    >
+                      <CategoryIcon
+                        iconName={category.icon}
+                        className="h-4 w-4 text-white"
+                      />
+                    </div>
                     <span className="truncate font-medium">
                       {category.name}
                     </span>
@@ -222,9 +228,14 @@ export default function CategoriasPage() {
                         >
                           <div className="flex min-w-0 flex-1 items-center gap-3">
                             <div
-                              className="h-3 w-3 flex-shrink-0 rounded-full"
+                              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
                               style={{ backgroundColor: subcategory.color }}
-                            />
+                            >
+                              <CategoryIcon
+                                iconName={category.icon}
+                                className="h-3 w-3 text-white"
+                              />
+                            </div>
                             <span className="truncate text-sm">
                               {subcategory.name}
                             </span>

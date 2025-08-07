@@ -8,6 +8,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { formatDateForInput, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCreditCards } from '@/lib/hooks/use-credit-cards'
+import { CategoryIcon } from '@/lib/icon-map'
 import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
 import { Category, Transaction } from '@/lib/types'
 
@@ -243,9 +244,17 @@ export function TransactionFormModal({
                           className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}
                         >
                           <div
-                            className="h-3 w-3 flex-shrink-0 rounded-full"
+                            className="flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full"
                             style={{ backgroundColor: category.color }}
-                          />
+                          >
+                            {category.icon && (
+                              <CategoryIcon
+                                iconName={category.icon}
+                                size={10}
+                                className="text-white"
+                              />
+                            )}
+                          </div>
                           <span className={category.parentId ? 'text-sm' : ''}>
                             {category.parentId && '└ '}
                             {category.name}

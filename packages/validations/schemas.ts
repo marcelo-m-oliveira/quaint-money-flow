@@ -44,6 +44,7 @@ export const categorySchema = z.object({
   type: z.enum(['income', 'expense'], {
     message: 'Tipo deve ser receita ou despesa',
   }),
+  icon: z.string().min(1, 'Ícone é obrigatório'),
   parentId: z.string().optional(),
 })
 
