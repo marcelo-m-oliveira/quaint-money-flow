@@ -2,10 +2,17 @@
 
 import { formatCurrency } from '@saas/utils'
 import ReactECharts from 'echarts-for-react'
-import { BarChart3, Calendar, TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import {
+  ArrowUp,
+  BarChart3,
+  Calendar,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ReportPeriod } from '@/app/relatorios/page'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -14,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
 
@@ -35,6 +43,13 @@ export function CashflowReport({ period }: CashflowReportProps) {
   const { transactions } = useFinancialData()
   const { isDark } = useTheme()
   const [viewMode, setViewMode] = useState<ViewMode>('monthly')
+
+  // Estados para scroll infinito
+  const [visibleItems, setVisibleItems] = useState(30)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const lastScrollTop = useRef(0)
 
   // Filtrar transações por período
   const filteredTransactions = useMemo(() => {
@@ -143,6 +158,70 @@ export function CashflowReport({ period }: CashflowReportProps) {
       a.date.localeCompare(b.date),
     )
   }, [filteredTransactions, viewMode])
+
+  // Função para voltar ao topo
+  const scrollToTop = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    container.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+    setShowBackToTop(false)
+  }, [])
+
+  // Hook para detectar scroll
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    const scrollDirection = scrollTop > lastScrollTop.current ? 'down' : 'up'
+    lastScrollTop.current = scrollTop
+
+    // Calcular quantos itens restam para o final
+    const itemsFromEnd = cashflowData.length - visibleItems
+
+    // Mostrar botão "Voltar ao Topo" quando estiver próximo do final
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200
+    const hasReachedEnd = visibleItems >= cashflowData.length
+    setShowBackToTop(isNearBottom && hasReachedEnd && cashflowData.length > 30)
+
+    // Scroll para baixo - carregar mais itens quando restarem cerca de 3 itens (27 de 30)
+    if (
+      scrollDirection === 'down' &&
+      (scrollTop + clientHeight >= scrollHeight - 150 || itemsFromEnd <= 3)
+    ) {
+      if (!isLoadingMore && visibleItems < cashflowData.length) {
+        setIsLoadingMore(true)
+        setTimeout(() => {
+          setVisibleItems((prev) => Math.min(prev + 30, cashflowData.length))
+          setIsLoadingMore(false)
+        }, 500)
+      }
+    }
+
+    // Scroll para cima - remover itens se necessário
+    if (scrollDirection === 'up' && scrollTop < 200 && visibleItems > 30) {
+      setVisibleItems((prev) => Math.max(prev - 30, 30))
+      setShowBackToTop(false)
+    }
+  }, [visibleItems, isLoadingMore, cashflowData])
+
+  // Adicionar listener de scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [handleScroll])
+
+  // Reset visible items quando dados mudarem
+  useEffect(() => {
+    setVisibleItems(30)
+  }, [period, viewMode])
 
   // Configuração do gráfico de barras
   const chartOptions = useMemo(() => {
@@ -471,11 +550,20 @@ export function CashflowReport({ period }: CashflowReportProps) {
       {cashflowData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Detalhamento por Período</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Detalhamento por Período</span>
+              <span className="text-sm font-normal text-muted-foreground">
+                Exibindo {Math.min(visibleItems, cashflowData.length)} de{' '}
+                {cashflowData.length} períodos
+              </span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {cashflowData.map((item, index) => (
+            <div
+              ref={scrollContainerRef}
+              className="max-h-[600px] space-y-2 overflow-y-auto"
+            >
+              {cashflowData.slice(0, visibleItems).map((item, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between rounded-lg border p-4"
@@ -510,6 +598,61 @@ export function CashflowReport({ period }: CashflowReportProps) {
                   </div>
                 </div>
               ))}
+
+              {/* Skeleton durante carregamento */}
+              {isLoadingMore && (
+                <div className="space-y-2">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                      key={`skeleton-${index}`}
+                      className="rounded-lg border p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Skeleton className="h-5 w-24" />
+                        </div>
+                        <div className="flex items-center gap-6">
+                          <div className="space-y-1 text-right">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-3 w-12" />
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-3 w-12" />
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-3 w-10" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Indicador de fim da lista */}
+              {visibleItems >= cashflowData.length &&
+                cashflowData.length > 30 && (
+                  <div className="py-4 text-center text-sm text-muted-foreground">
+                    Todos os períodos foram carregados
+                  </div>
+                )}
+
+              {/* Botão Voltar ao Topo */}
+              {showBackToTop && (
+                <div className="flex justify-center py-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={scrollToTop}
+                    className="flex items-center gap-2 transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                    Voltar ao Início
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
