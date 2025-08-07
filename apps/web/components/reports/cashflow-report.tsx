@@ -89,16 +89,21 @@ export function CashflowReport({ period }: CashflowReportProps) {
           key = date.toISOString().split('T')[0]
           periodLabel = date.toLocaleDateString('pt-BR', {
             day: '2-digit',
-            month: '2-digit',
+            month: 'short',
           })
           break
         case 'weekly': {
           const weekStart = new Date(date)
           weekStart.setDate(date.getDate() - date.getDay())
+          const weekEnd = new Date(weekStart)
+          weekEnd.setDate(weekStart.getDate() + 6)
           key = weekStart.toISOString().split('T')[0]
           periodLabel = `${weekStart.toLocaleDateString('pt-BR', {
             day: '2-digit',
-            month: '2-digit',
+            month: 'short',
+          })} à ${weekEnd.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'short',
           })}`
           break
         }
