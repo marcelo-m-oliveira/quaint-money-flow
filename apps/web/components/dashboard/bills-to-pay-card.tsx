@@ -1,0 +1,254 @@
+'use client'
+
+import { formatCurrency, formatDate } from '@saas/utils'
+import { AlertTriangle, Calendar, Clock } from 'lucide-react'
+import { useMemo } from 'react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Category, Transaction } from '@/lib/types'
+
+interface BillsToPayCardProps {
+  transactions: Transaction[]
+  categories: Category[]
+}
+
+interface BillData {
+  id: string
+  description: string
+  amount: number
+  dueDate: Date
+  categoryName: string
+  categoryColor: string
+  icon: string
+  isOverdue: boolean
+  daysUntilDue: number
+}
+
+// Ícones por categoria
+const getCategoryIcon = (categoryName: string): string => {
+  const name = categoryName.toLowerCase()
+  if (
+    name.includes('cartão') ||
+    name.includes('credito') ||
+    name.includes('fatura')
+  )
+    return '💳'
+  if (name.includes('internet') || name.includes('wifi')) return '🌐'
+  if (
+    name.includes('governo') ||
+    name.includes('imposto') ||
+    name.includes('acordo')
+  )
+    return '🏛️'
+  if (
+    name.includes('roupa') ||
+    name.includes('vestuário') ||
+    name.includes('eliete')
+  )
+    return '👕'
+  if (name.includes('clube') || name.includes('sam')) return '🏪'
+  if (
+    name.includes('casa') ||
+    name.includes('moradia') ||
+    name.includes('aluguel')
+  )
+    return '🏠'
+  if (name.includes('energia') || name.includes('luz')) return '⚡'
+  if (name.includes('água')) return '💧'
+  if (name.includes('telefone') || name.includes('celular')) return '📱'
+  return '📄'
+}
+
+export function BillsToPayCard({
+  transactions,
+  categories,
+}: BillsToPayCardProps) {
+  const { overdueBills, upcomingBills } = useMemo(() => {
+    const currentDate = new Date()
+    currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
+
+    // Filtrar apenas despesas não pagas
+    const unpaidExpenses = transactions.filter(
+      (transaction) => transaction.type === 'expense' && !transaction.paid,
+    )
+
+    const billsData: BillData[] = unpaidExpenses.map((transaction) => {
+      const category = categories.find(
+        (cat) => cat.id === transaction.categoryId,
+      )
+      const dueDate = new Date(transaction.date)
+      dueDate.setHours(0, 0, 0, 0)
+
+      const timeDiff = dueDate.getTime() - currentDate.getTime()
+      const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
+
+      return {
+        id: transaction.id,
+        description: transaction.description,
+        amount: transaction.amount,
+        dueDate,
+        categoryName: category?.name || 'Categoria não encontrada',
+        categoryColor: category?.color || '#6B7280',
+        icon: getCategoryIcon(category?.name || ''),
+        isOverdue: daysUntilDue < 0,
+        daysUntilDue,
+      }
+    })
+
+    // Separar em atrasadas e próximas
+    const overdue = billsData
+      .filter((bill) => bill.isOverdue)
+      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+
+    const upcoming = billsData
+      .filter((bill) => !bill.isOverdue)
+      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+      .slice(0, 10) // Limitar a 10 próximas contas
+
+    return {
+      overdueBills: overdue,
+      upcomingBills: upcoming,
+    }
+  }, [transactions, categories])
+
+  const totalBills = overdueBills.length + upcomingBills.length
+
+  if (totalBills === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Contas a pagar
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="py-8 text-center text-muted-foreground">
+            <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
+            <p className="text-sm">Nenhuma conta pendente encontrada</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Contas a pagar
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Contas em atraso */}
+        {overdueBills.length > 0 && (
+          <div>
+            <div className="mb-4 rounded-lg bg-red-50 p-3 dark:bg-red-950/20">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Contas a pagar atrasadas
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {overdueBills.map((bill) => (
+                <div
+                  key={bill.id}
+                  className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 dark:border-red-800 dark:bg-red-950/10"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-full text-white"
+                      style={{ backgroundColor: bill.categoryColor }}
+                    >
+                      <span className="text-lg">{bill.icon}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{bill.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(bill.dueDate)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-red-600 dark:text-red-400">
+                      {formatCurrency(bill.amount)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Próximas contas */}
+        {upcomingBills.length > 0 && (
+          <div>
+            <div className="mb-4 flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">Próximas</span>
+            </div>
+
+            <div className="space-y-3">
+              {upcomingBills.map((bill) => {
+                const isNearDue = bill.daysUntilDue <= 7
+
+                return (
+                  <div
+                    key={bill.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-full text-white"
+                        style={{ backgroundColor: bill.categoryColor }}
+                      >
+                        <span className="text-lg">{bill.icon}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {bill.description}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(bill.dueDate)}
+                          </p>
+                          {isNearDue && (
+                            <Badge variant="secondary" className="text-xs">
+                              {bill.daysUntilDue === 0
+                                ? 'Hoje'
+                                : bill.daysUntilDue === 1
+                                  ? 'Amanhã'
+                                  : `${bill.daysUntilDue} dias`}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        {formatCurrency(bill.amount)}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Botão ver mais */}
+        <div className="pt-2">
+          <Button variant="outline" className="w-full" size="sm">
+            ver mais
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

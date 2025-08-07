@@ -7,6 +7,7 @@ import { formatCurrency, getDayPeriod } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { Transaction, TransactionFormData } from '@/lib/types'
 
+import { BillsToPayCard, ExpenseSummaryCard } from './dashboard'
 import { PageLayout } from './layouts/page-layout'
 import { TransactionFormModal } from './transaction-form-modal'
 import { Button } from './ui/button'
@@ -21,6 +22,7 @@ export function FinancialDashboard() {
     deleteTransaction,
     deleteCategory,
     getTotals,
+    getTransactionsWithCategories,
     isLoading,
   } = useFinancialData()
 
@@ -141,10 +143,12 @@ export function FinancialDashboard() {
     )
   }
 
+  const transactionsWithCategories = getTransactionsWithCategories()
+
   return (
     <PageLayout>
       {/* Saudação e Resumo */}
-      <div className="w-full">
+      <div className="w-full space-y-6">
         {/* Card Principal - Saudação, Totais e Acesso Rápido */}
         <Card>
           <CardContent className="flex flex-col gap-6 p-4 sm:p-6 lg:flex-row lg:gap-8">
@@ -236,6 +240,21 @@ export function FinancialDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Cards de Informações Adicionais */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          {/* Card de Maiores Despesas */}
+          <ExpenseSummaryCard
+            transactions={transactionsWithCategories}
+            categories={categories}
+          />
+
+          {/* Card de Contas a Pagar */}
+          <BillsToPayCard
+            transactions={transactionsWithCategories}
+            categories={categories}
+          />
+        </div>
       </div>
 
       {/* Dialog de Confirmação */}
