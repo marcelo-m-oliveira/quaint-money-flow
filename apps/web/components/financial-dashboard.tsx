@@ -247,26 +247,33 @@ export function FinancialDashboard() {
         </Card>
 
         {/* Cards de Informações Adicionais */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          {/* Card de Maiores Despesas */}
+        <div className="space-y-6">
+          {/* Card de Maiores Despesas - Largura total */}
           <ExpenseSummaryCard
             transactions={transactionsWithCategories}
             categories={categories}
           />
 
-          {/* Card de Contas a Pagar */}
-          <BillsToPayCard
-            transactions={transactionsWithCategories}
-            categories={categories}
-            onUpdateTransaction={updateTransactionStatus}
-          />
+          {/* Cards de Contas - Flexbox com 50% cada */}
+          <div className="flex flex-col gap-6 lg:flex-row">
+            {/* Card de Contas a Pagar */}
+            <div className="flex-1">
+              <BillsToPayCard
+                transactions={transactionsWithCategories}
+                categories={categories}
+                onUpdateTransaction={updateTransactionStatus}
+              />
+            </div>
 
-          {/* Card de Contas a Receber */}
-          <BillsToReceiveCard
-            transactions={transactionsWithCategories}
-            categories={categories}
-            onUpdateTransaction={updateTransactionStatus}
-          />
+            {/* Card de Contas a Receber */}
+            <div className="flex-1">
+              <BillsToReceiveCard
+                transactions={transactionsWithCategories}
+                categories={categories}
+                onUpdateTransaction={updateTransactionStatus}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
