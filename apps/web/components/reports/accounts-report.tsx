@@ -431,28 +431,6 @@ export function AccountsReport({ period }: AccountsReportProps) {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Gráfico:</span>
-              <div className="flex rounded-lg border">
-                <Button
-                  variant={chartType === 'doughnut' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setChartType('doughnut')}
-                  className="rounded-r-none"
-                >
-                  <PieChart className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={chartType === 'bar' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setChartType('bar')}
-                  className="rounded-l-none"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -583,7 +561,27 @@ export function AccountsReport({ period }: AccountsReportProps) {
       {/* Gráfico */}
       <Card>
         <CardHeader>
-          <CardTitle>Análise por Conta</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Análise por Conta</CardTitle>
+            <div className="flex rounded-lg border">
+              <Button
+                variant={chartType === 'doughnut' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setChartType('doughnut')}
+                className="rounded-r-none"
+              >
+                <PieChart className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={chartType === 'bar' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setChartType('bar')}
+                className="rounded-l-none"
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {accountData.length > 0 ? (

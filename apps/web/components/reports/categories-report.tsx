@@ -398,28 +398,6 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Gráfico:</span>
-              <div className="flex rounded-lg border">
-                <Button
-                  variant={chartType === 'doughnut' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setChartType('doughnut')}
-                  className="rounded-r-none"
-                >
-                  <PieChart className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={chartType === 'line' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setChartType('line')}
-                  className="rounded-l-none"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -498,10 +476,30 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
       {/* Gráfico */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {transactionType === 'expense' ? 'Despesas' : 'Receitas'} por
-            Categoria
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>
+              {transactionType === 'expense' ? 'Despesas' : 'Receitas'} por
+              Categoria
+            </CardTitle>
+            <div className="flex rounded-lg border">
+              <Button
+                variant={chartType === 'doughnut' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setChartType('doughnut')}
+                className="rounded-r-none"
+              >
+                <PieChart className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={chartType === 'line' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setChartType('line')}
+                className="rounded-l-none"
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {categoryData.length > 0 ? (
