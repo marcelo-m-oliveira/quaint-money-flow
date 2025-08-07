@@ -7,6 +7,8 @@ import { useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Transaction } from '@/lib/types'
 
 interface BillsToPayCardProps {
@@ -26,45 +28,12 @@ interface BillData {
   daysUntilDue: number
 }
 
-// Ícones por categoria
-const getCategoryIcon = (categoryName: string): string => {
-  const name = categoryName.toLowerCase()
-  if (
-    name.includes('cartão') ||
-    name.includes('credito') ||
-    name.includes('fatura')
-  )
-    return '💳'
-  if (name.includes('internet') || name.includes('wifi')) return '🌐'
-  if (
-    name.includes('governo') ||
-    name.includes('imposto') ||
-    name.includes('acordo')
-  )
-    return '🏛️'
-  if (
-    name.includes('roupa') ||
-    name.includes('vestuário') ||
-    name.includes('eliete')
-  )
-    return '👕'
-  if (name.includes('clube') || name.includes('sam')) return '🏪'
-  if (
-    name.includes('casa') ||
-    name.includes('moradia') ||
-    name.includes('aluguel')
-  )
-    return '🏠'
-  if (name.includes('energia') || name.includes('luz')) return '⚡'
-  if (name.includes('água')) return '💧'
-  if (name.includes('telefone') || name.includes('celular')) return '📱'
-  return '📄'
-}
-
 export function BillsToPayCard({
   transactions,
   categories,
 }: BillsToPayCardProps) {
+  const { getCategoryIcon } = useFinancialData()
+
   const { overdueBills, upcomingBills } = useMemo(() => {
     const currentDate = new Date()
     currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
@@ -91,7 +60,7 @@ export function BillsToPayCard({
         dueDate,
         categoryName: category?.name || 'Categoria não encontrada',
         categoryColor: category?.color || '#6B7280',
-        icon: getCategoryIcon(category?.name || ''),
+        icon: getCategoryIcon(category),
         isOverdue: daysUntilDue < 0,
         daysUntilDue,
       }
@@ -162,11 +131,17 @@ export function BillsToPayCard({
                   className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 dark:border-red-800 dark:bg-red-950/10"
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-white"
-                      style={{ backgroundColor: bill.categoryColor }}
-                    >
-                      <span className="text-lg">{bill.icon}</span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
+                      <div
+                        className="flex h-full w-full items-center justify-center rounded-full text-white"
+                        style={{ backgroundColor: bill.categoryColor }}
+                      >
+                        <CategoryIcon
+                          iconName={bill.icon}
+                          size={16}
+                          className="text-white"
+                        />
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium">{bill.description}</p>
@@ -204,11 +179,17 @@ export function BillsToPayCard({
                     className="flex items-center justify-between rounded-lg border p-3"
                   >
                     <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-10 w-10 items-center justify-center rounded-full text-white"
-                        style={{ backgroundColor: bill.categoryColor }}
-                      >
-                        <span className="text-lg">{bill.icon}</span>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
+                        <div
+                          className="flex h-full w-full items-center justify-center rounded-full text-white"
+                          style={{ backgroundColor: bill.categoryColor }}
+                        >
+                          <CategoryIcon
+                            iconName={bill.icon}
+                            size={16}
+                            className="text-white"
+                          />
+                        </div>
                       </div>
                       <div>
                         <p className="text-sm font-medium">

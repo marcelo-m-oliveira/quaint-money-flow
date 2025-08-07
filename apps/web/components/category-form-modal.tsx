@@ -209,18 +209,30 @@ export function CategoryFormModal({
     // Verificar se já existe uma categoria com o mesmo nome (exceto a atual)
     // Considerar também o tipo e parentId para evitar conflitos desnecessários
     const finalParentId = categoryMode === 'sub' ? data.parentId : undefined
-    const existingCategory = categories.find(
-      (cat) =>
-        cat.name.toLowerCase() === data.name.toLowerCase() &&
-        cat.type === data.type &&
-        cat.parentId === finalParentId &&
-        cat.id !== category?.id,
-    )
 
-    if (existingCategory) {
-      // TODO: Implementar toast para mostrar erro
-      console.error('Já existe uma categoria com este nome no mesmo contexto.')
-      return
+    // Para edição de categoria, verificar se o nome mudou antes de validar duplicatas
+    const nameChanged = category
+      ? category.name.toLowerCase() !== data.name.toLowerCase()
+      : true
+    const parentChanged = category ? category.parentId !== finalParentId : true
+
+    // Só validar duplicatas se o nome ou contexto (parentId) mudou
+    if (nameChanged || parentChanged) {
+      const existingCategory = categories.find(
+        (cat) =>
+          cat.name.toLowerCase() === data.name.toLowerCase() &&
+          cat.type === data.type &&
+          cat.parentId === finalParentId &&
+          cat.id !== category?.id,
+      )
+
+      if (existingCategory) {
+        // TODO: Implementar toast para mostrar erro
+        console.error(
+          'Já existe uma categoria com este nome no mesmo contexto.',
+        )
+        return
+      }
     }
 
     // Garantir que o parentId seja mantido corretamente baseado no categoryMode

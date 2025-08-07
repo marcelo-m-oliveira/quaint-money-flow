@@ -97,24 +97,39 @@ const BANK_NAME_TO_ID: Record<string, string> = {
 export function generateMockCategory(
   type: 'income' | 'expense' = 'expense',
   parentId?: string,
+  parentCategory?: Category,
 ): Category {
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
 
   let name: string
   let icon: string
 
-  if (parentId) {
-    // Para subcategorias, usar nomes das subcategorias e herdar ícone da categoria pai
+  if (parentId && parentCategory) {
+    // Para subcategorias, usar nomes das subcategorias e herdar ícone da categoria pai real
     const parentCategoryNames = Object.keys(EXPENSE_SUBCATEGORIES)
-    const parentName = faker.helpers.arrayElement(parentCategoryNames)
-    name = faker.helpers.arrayElement(
-      EXPENSE_SUBCATEGORIES[parentName] || ['Subcategoria'],
+    const matchingParentName = parentCategoryNames.find(
+      (parentName) =>
+        parentCategory.name.toLowerCase().includes(parentName.toLowerCase()) ||
+        parentName.toLowerCase().includes(parentCategory.name.toLowerCase()),
     )
-    // Encontrar o ícone da categoria pai
-    const parentCategory = EXPENSE_CATEGORIES.find(
-      (cat) => cat.name === parentName,
-    )
-    icon = parentCategory?.icon || 'Star'
+
+    if (matchingParentName && EXPENSE_SUBCATEGORIES[matchingParentName]) {
+      name = faker.helpers.arrayElement(
+        EXPENSE_SUBCATEGORIES[matchingParentName],
+      )
+    } else {
+      // Fallback: gerar nome genérico de subcategoria
+      const subcategoryPrefixes = ['Categoria', 'Sub', 'Item']
+      const subcategorySuffixes = ['A', 'B', 'C', '1', '2', '3']
+      name = `${faker.helpers.arrayElement(subcategoryPrefixes)} ${faker.helpers.arrayElement(subcategorySuffixes)}`
+    }
+
+    // Herdar ícone da categoria pai real
+    icon = parentCategory.icon
+  } else if (parentId) {
+    // Fallback para quando não temos a categoria pai disponível
+    name = `Subcategoria ${faker.number.int({ min: 1, max: 100 })}`
+    icon = 'FileText'
   } else {
     // Para categorias principais
     const selectedCategory = faker.helpers.arrayElement(categories)
@@ -160,7 +175,9 @@ export function generateMockCategories(
     expenseCategories.forEach((parentCategory) => {
       const subcategoryCount = faker.number.int({ min: 1, max: 3 })
       for (let i = 0; i < subcategoryCount; i++) {
-        categories.push(generateMockCategory('expense', parentCategory.id))
+        categories.push(
+          generateMockCategory('expense', parentCategory.id, parentCategory),
+        )
       }
     })
   }
@@ -246,6 +263,28 @@ export function generateMockTransaction(
     }
   }
 
+  // Gerar data da transação
+  const transactionDate = faker.date.past({ years: 1 }).getTime()
+
+  // Determinar se a transação está paga
+  // Transações não pagas só podem ser do mês atual
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+  const transactionDateObj = new Date(transactionDate)
+  const isCurrentMonth =
+    transactionDateObj.getMonth() === currentMonth &&
+    transactionDateObj.getFullYear() === currentYear
+
+  let paid: boolean
+  if (isCurrentMonth) {
+    // No mês atual, pode estar pago ou não pago
+    paid = faker.helpers.arrayElement([true, false])
+  } else {
+    // Em meses anteriores, sempre está pago
+    paid = true
+  }
+
   return {
     id: faker.string.uuid(),
     description,
@@ -255,9 +294,9 @@ export function generateMockTransaction(
     category,
     accountId,
     creditCardId,
-    date: faker.date.past({ years: 1 }).getTime(),
+    date: transactionDate,
     createdAt,
-    paid: faker.helpers.arrayElement([true, false]),
+    paid,
     updatedAt: createdAt,
   }
 }

@@ -40,18 +40,50 @@ export function CategoryFormModalSimple({
   category,
   onSubmit,
   categoryType = 'expense',
+  parentCategory,
 }: CategoryFormModalProps) {
+  // Para subcategorias, herdar ícone da categoria pai se não tiver ícone próprio
+  const getInitialIcon = () => {
+    if (category?.icon) return category.icon
+    if (parentCategory?.icon) return parentCategory.icon
+    return SIMPLE_ICONS[0].name
+  }
+
   const [formData, setFormData] = useState<CategoryFormData>({
     name: category?.name || '',
     color: category?.color || SIMPLE_COLORS[0],
     type: category?.type || categoryType,
-    parentId: category?.parentId,
+    icon: getInitialIcon(),
+    parentId: category?.parentId || parentCategory?.id,
   })
   const [selectedIcon, setSelectedIcon] = useState(SIMPLE_ICONS[0])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+
+    // Lógica para herança de ícones
+    let finalIcon = selectedIcon.name
+
+    // Se é uma subcategoria (nova ou editando) e tem categoria pai
+    if (formData.parentId) {
+      // Se não foi selecionado um ícone específico (ainda é o padrão), herdar da categoria pai
+      if (selectedIcon.name === SIMPLE_ICONS[0].name) {
+        // Para nova subcategoria, usar ícone da categoria pai atual
+        if (parentCategory) {
+          finalIcon = parentCategory.icon
+        }
+        // Para edição de subcategoria, encontrar a nova categoria pai
+        else if (category && category.parentId !== formData.parentId) {
+          // Subcategoria foi movida para outra categoria pai - herdar novo ícone
+          finalIcon = '' // Será resolvido no updateCategory
+        }
+      }
+    }
+
+    onSubmit({
+      ...formData,
+      icon: finalIcon,
+    })
     onClose()
   }
 

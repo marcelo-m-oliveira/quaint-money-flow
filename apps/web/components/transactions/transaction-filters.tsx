@@ -151,17 +151,19 @@ export function TransactionFilters({
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 <div className="flex items-center gap-2">
-                  <div
-                    className="flex h-3 w-3 items-center justify-center rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  >
-                    {category.icon && (
-                      <CategoryIcon
-                        iconName={category.icon}
-                        size={10}
-                        className="text-white"
-                      />
-                    )}
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-border">
+                    <div
+                      className="flex h-full w-full items-center justify-center rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    >
+                      {category.icon && (
+                        <CategoryIcon
+                          iconName={category.icon}
+                          size={10}
+                          className="text-white"
+                        />
+                      )}
+                    </div>
                   </div>
                   {category.name}
                 </div>

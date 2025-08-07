@@ -21,8 +21,13 @@ import { CategoryIcon } from '@/lib/icon-map'
 import { Category, CategoryFormData } from '@/lib/types'
 
 export default function CategoriasPage() {
-  const { categories, addCategory, updateCategory, deleteCategory } =
-    useFinancialData()
+  const {
+    categories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    getCategoryIcon,
+  } = useFinancialData()
 
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense')
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false)
@@ -143,14 +148,16 @@ export default function CategoriasPage() {
                 {/* Categoria Principal */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <div
-                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    >
-                      <CategoryIcon
-                        iconName={category.icon}
-                        className="h-4 w-4 text-white"
-                      />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
+                      <div
+                        className="flex h-full w-full flex-shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      >
+                        <CategoryIcon
+                          iconName={category.icon}
+                          className="h-4 w-4 text-white"
+                        />
+                      </div>
                     </div>
                     <span className="truncate font-medium">
                       {category.name}
@@ -232,7 +239,7 @@ export default function CategoriasPage() {
                               style={{ backgroundColor: subcategory.color }}
                             >
                               <CategoryIcon
-                                iconName={category.icon}
+                                iconName={getCategoryIcon(subcategory)}
                                 className="h-3 w-3 text-white"
                               />
                             </div>

@@ -6,7 +6,9 @@ import { useMemo, useState } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
+import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Transaction } from '@/lib/types'
 
 interface ExpenseSummaryCardProps {
@@ -45,17 +47,6 @@ const DEFAULT_COLORS = [
   '#F7DC6F', // Dourado
 ]
 
-// Ícones padrão por categoria
-const getCategoryIcon = (categoryName: string): string => {
-  const name = categoryName.toLowerCase()
-  if (name.includes('cartão') || name.includes('credito')) return '💳'
-  if (name.includes('compra') || name.includes('shopping')) return '🛍️'
-  if (name.includes('casa') || name.includes('moradia')) return '🏠'
-  if (name.includes('viagem') || name.includes('transporte')) return '✈️'
-  if (name.includes('alimentação') || name.includes('comida')) return '🍽️'
-  return '💰'
-}
-
 export function ExpenseSummaryCard({
   transactions,
   categories,
@@ -63,6 +54,7 @@ export function ExpenseSummaryCard({
   const [selectedPeriod, setSelectedPeriod] =
     useState<PeriodType>('current_month')
   const { isDark } = useTheme()
+  const { getCategoryIcon } = useFinancialData()
 
   const getDateFilter = (period: PeriodType) => {
     const now = new Date()
@@ -143,7 +135,7 @@ export function ExpenseSummaryCard({
           percentage,
           color:
             category?.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length],
-          icon: getCategoryIcon(categoryName),
+          icon: getCategoryIcon(category),
         }
       })
       .sort((a, b) => b.amount - a.amount) // Ordenar por valor decrescente
@@ -295,13 +287,20 @@ export function ExpenseSummaryCard({
                 key={item.categoryId}
                 className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50"
               >
-                <div
-                  className="h-4 w-4 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
+                  <div
+                    className="flex h-full w-full items-center justify-center rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  >
+                    <CategoryIcon
+                      iconName={item.icon}
+                      size={16}
+                      className="text-white"
+                    />
+                  </div>
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{item.icon}</span>
                     <span className="truncate text-sm font-medium">
                       {item.categoryName}
                     </span>
