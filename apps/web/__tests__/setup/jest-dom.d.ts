@@ -1,9 +1,8 @@
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference types="@testing-library/jest-dom" />
 
 import '@testing-library/jest-dom'
 
-// Extend Jest matchers with Testing Library DOM matchers
+// Extend Jest expect with Testing Library DOM matchers
 declare global {
   namespace jest {
     interface Matchers<R> {
@@ -26,8 +25,8 @@ declare global {
   }
 }
 
-// Also extend expect for better TypeScript support
-declare module '@jest/expect' {
+// Also extend the expect function directly
+declare module 'expect' {
   interface Matchers<R> {
     toBeInTheDocument(): R
     toHaveClass(className: string): R

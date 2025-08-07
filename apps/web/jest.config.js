@@ -9,18 +9,41 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
-  collectCoverageFrom: [
-    'components/**/*.{js,jsx,ts,tsx}',
-    'app/**/*.{js,jsx,ts,tsx}',
-    'hooks/**/*.{js,jsx,ts,tsx}',
-    'lib/**/*.{js,jsx,ts,tsx}',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/__tests__/setup/',
+    '<rootDir>/e2e/',
   ],
+  // Configuração de cobertura
+  collectCoverageFrom: [
+    'components/**/*.{ts,tsx}',
+    'hooks/**/*.{ts,tsx}',
+    'lib/**/*.{ts,tsx}',
+    '!**/*.stories.{ts,tsx}',
+    '!**/layout.tsx',
+    '!**/loading.tsx',
+    '!**/error.tsx',
+    '!**/not-found.tsx',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 4,
+      functions: 5,
+      lines: 18,
+      statements: 18,
+    },
+    './components/financial-dashboard.tsx': {
+      branches: 25,
+      functions: 33,
+      lines: 53,
+      statements: 55,
+    },
+  },
+  coverageReporters: ['text', 'lcov', 'html'],
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },

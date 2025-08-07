@@ -1,105 +1,111 @@
-import '@testing-library/jest-dom'
-
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, it } from '@jest/globals'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 
 import { FinancialDashboard } from '@/components/financial-dashboard'
 
-// Mock do localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-}
-
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-})
-
-// Mock do window.confirm
-Object.defineProperty(window, 'confirm', {
-  value: jest.fn(() => true),
-})
+import {
+  clearAllMocks,
+  expectToBeInTheDocument,
+  render,
+} from './setup/test-utils'
 
 describe('FinancialDashboard', () => {
   beforeEach(() => {
-    localStorageMock.getItem.mockClear()
-    localStorageMock.setItem.mockClear()
-    localStorageMock.removeItem.mockClear()
-    localStorageMock.clear.mockClear()
+    clearAllMocks()
   })
 
   it('deve renderizar o dashboard corretamente', () => {
     render(<FinancialDashboard />)
 
-    expect(screen.getByText('Quaint Money')).toBeInTheDocument()
-    expect(screen.getByText('Receitas')).toBeInTheDocument()
-    expect(screen.getByText('Despesas')).toBeInTheDocument()
-    expect(screen.getByText('Saldo')).toBeInTheDocument()
+    expectToBeInTheDocument(screen.getByText('Marcelo Oliveira!'))
+    expectToBeInTheDocument(screen.getByText('Receitas no mês atual'))
+    expectToBeInTheDocument(screen.getByText('Despesas no mês atual'))
+    expectToBeInTheDocument(screen.getByText('Acesso rápido'))
   })
 
   it('deve exibir botões de ação', () => {
     render(<FinancialDashboard />)
 
-    expect(screen.getByText('Nova Transação')).toBeInTheDocument()
-    expect(screen.getByText('Nova Categoria')).toBeInTheDocument()
+    expectToBeInTheDocument(screen.getByText('NOVA DESPESA'))
+    expectToBeInTheDocument(screen.getByText('NOVA RECEITA'))
   })
 
-  it('deve exibir seções de transações e categorias', () => {
+  it('deve abrir modal ao clicar em Nova Despesa', async () => {
     render(<FinancialDashboard />)
 
-    expect(screen.getByText('Transações Recentes')).toBeInTheDocument()
-    expect(screen.getByText('Categorias')).toBeInTheDocument()
-  })
-
-  it('deve ter switch para alternar tema', () => {
-    render(<FinancialDashboard />)
-
-    const themeSwitch = screen.getByRole('switch')
-    expect(themeSwitch).toBeInTheDocument()
-  })
-
-  it('deve abrir modal ao clicar em Nova Transação', async () => {
-    render(<FinancialDashboard />)
-
-    const newTransactionButton = screen.getByText('Nova Transação')
-    fireEvent.click(newTransactionButton)
+    const newExpenseButton = screen.getByText('NOVA DESPESA')
+    fireEvent.click(newExpenseButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Nova Transação')).toBeInTheDocument()
+      expectToBeInTheDocument(screen.getByText('Nova despesa'))
     })
   })
 
-  it('deve abrir modal ao clicar em Nova Categoria', async () => {
+  it('deve abrir modal ao clicar em Nova Receita', async () => {
     render(<FinancialDashboard />)
 
-    const newCategoryButton = screen.getByText('Nova Categoria')
-    fireEvent.click(newCategoryButton)
+    const newIncomeButton = screen.getByText('NOVA RECEITA')
+    fireEvent.click(newIncomeButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Nova Categoria')).toBeInTheDocument()
+      expectToBeInTheDocument(screen.getByText('Nova receita'))
     })
   })
 })
 
 // Testes dos hooks personalizados
+// Nota: Para implementar testes de hooks, seria necessário instalar @testing-library/react-hooks
+// ou usar renderHook do @testing-library/react (versão 13+)
+
+// Exemplo de como seria a estrutura dos testes de hooks:
+/*
+import { renderHook } from '@testing-library/react'
+import { useFinancialData } from '@/hooks/useFinancialData'
+import { useTheme } from '@/hooks/useTheme'
+
 describe('useFinancialData', () => {
   it('deve carregar categorias padrão quando não há dados salvos', () => {
-    localStorageMock.getItem.mockReturnValue(null)
-
-    // Este teste seria implementado com renderHook do @testing-library/react-hooks
-    // Para simplificar, deixamos como exemplo da estrutura
-    expect(true).toBe(true)
+    window.localStorage.getItem = jest.fn(() => null)
+    
+    const { result } = renderHook(() => useFinancialData())
+    
+    expect(result.current.categories).toBeDefined()
+    expect(result.current.categories.length).toBeGreaterThan(0)
+  })
+  
+  it('deve adicionar nova transação', () => {
+    const { result } = renderHook(() => useFinancialData())
+    
+    act(() => {
+      result.current.addTransaction({
+        id: '1',
+        type: 'expense',
+        amount: 100,
+        description: 'Teste',
+        category: 'food',
+        date: new Date()
+      })
+    })
+    
+    expect(result.current.transactions).toHaveLength(1)
   })
 })
 
 describe('useTheme', () => {
   it('deve inicializar com tema dark por padrão', () => {
-    localStorageMock.getItem.mockReturnValue(null)
-
-    // Este teste seria implementado com renderHook do @testing-library/react-hooks
-    // Para simplificar, deixamos como exemplo da estrutura
-    expect(true).toBe(true)
+    const { result } = renderHook(() => useTheme())
+    
+    expect(result.current.theme).toBe('dark')
+  })
+  
+  it('deve alternar tema corretamente', () => {
+    const { result } = renderHook(() => useTheme())
+    
+    act(() => {
+      result.current.toggleTheme()
+    })
+    
+    expect(result.current.theme).toBe('light')
   })
 })
+*/

@@ -1,34 +1,10 @@
+// Importar tipos e matchers do jest-dom
 import '@testing-library/jest-dom'
 
-// Mock do localStorage
-Object.defineProperty(window, 'localStorage', {
-  value: {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn(),
-  },
-  writable: true,
-})
+// Importar tipos personalizados
+import './types/jest.d.ts'
 
-// Mock do matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-})
+import { setupGlobalMocks } from './__tests__/setup/global-mocks'
 
-// Mock do ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+// Configurar todos os mocks globais
+setupGlobalMocks()
