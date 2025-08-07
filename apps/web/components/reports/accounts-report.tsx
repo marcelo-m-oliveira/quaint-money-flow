@@ -2,7 +2,13 @@
 
 import { formatCurrency } from '@saas/utils'
 import ReactECharts from 'echarts-for-react'
-import { BarChart3, CreditCard, Filter, PieChart, Wallet } from 'lucide-react'
+import {
+  BarChart3,
+  CreditCard as CreditCardIcon,
+  Filter,
+  PieChart,
+  Wallet,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { ReportPeriod } from '@/app/relatorios/page'
@@ -19,19 +25,14 @@ import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
+import { Account, CreditCard } from '@/lib/types'
 
 interface AccountsReportProps {
   period: ReportPeriod
 }
 
 type ChartType = 'doughnut' | 'bar'
-type AccountFilter =
-  | 'all'
-  | 'bank'
-  | 'credit_card'
-  | 'investment'
-  | 'cash'
-  | 'other'
+type AccountFilter = 'all' | 'bank_accounts' | 'credit_cards'
 
 interface AccountData {
   accountId: string
@@ -116,24 +117,49 @@ export function AccountsReport({ period }: AccountsReportProps) {
   const accountData = useMemo(() => {
     const accountMap = new Map<string, AccountData>()
 
-    // Combinar contas e cartões de crédito
-    const allAccounts = [
-      ...accounts,
-      ...creditCards.map((card) => ({
+    // Combinar contas e cartões de crédito baseado no filtro
+    let allAccounts: Array<Account | (CreditCard & { type: 'credit_card' })> =
+      []
+
+    if (accountFilter === 'all') {
+      allAccounts = [
+        ...accounts,
+        ...creditCards.map((card) => ({
+          ...card,
+          type: 'credit_card' as const,
+        })),
+      ]
+    } else if (accountFilter === 'bank_accounts') {
+      allAccounts = accounts
+    } else if (accountFilter === 'credit_cards') {
+      allAccounts = creditCards.map((card) => ({
         ...card,
         type: 'credit_card' as const,
-      })),
-    ]
+      }))
+    }
 
+    // Primeiro, inicializar todas as contas com valores zerados
+    allAccounts.forEach((account) => {
+      accountMap.set(account.id, {
+        accountId: account.id,
+        accountName: account.name,
+        accountType: account.type,
+        totalIncome: 0,
+        totalExpense: 0,
+        balance: 0,
+        transactionCount: 0,
+        icon: account.icon,
+        iconType: account.iconType,
+      })
+    })
+
+    // Depois, processar as transações para atualizar os valores
     filteredTransactions.forEach((transaction) => {
       const accountId = transaction.accountId || transaction.creditCardId
       if (!accountId) return
 
       const account = allAccounts.find((a) => a.id === accountId)
       if (!account) return
-
-      // Filtrar por tipo de conta se necessário
-      if (accountFilter !== 'all' && account.type !== accountFilter) return
 
       const existing = accountMap.get(account.id)
       if (existing) {
@@ -144,21 +170,6 @@ export function AccountsReport({ period }: AccountsReportProps) {
         }
         existing.balance = existing.totalIncome - existing.totalExpense
         existing.transactionCount += 1
-      } else {
-        accountMap.set(account.id, {
-          accountId: account.id,
-          accountName: account.name,
-          accountType: account.type,
-          totalIncome: transaction.type === 'income' ? transaction.amount : 0,
-          totalExpense: transaction.type === 'expense' ? transaction.amount : 0,
-          balance:
-            transaction.type === 'income'
-              ? transaction.amount
-              : -transaction.amount,
-          transactionCount: 1,
-          icon: account.icon,
-          iconType: account.iconType,
-        })
       }
     })
 
@@ -420,14 +431,13 @@ export function AccountsReport({ period }: AccountsReportProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as contas</SelectItem>
-                  <SelectItem value="bank">Contas Bancárias</SelectItem>
-                  <SelectItem value="credit_card">
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="bank_accounts">
+                    Contas Bancárias
+                  </SelectItem>
+                  <SelectItem value="credit_cards">
                     Cartões de Crédito
                   </SelectItem>
-                  <SelectItem value="investment">Investimentos</SelectItem>
-                  <SelectItem value="cash">Dinheiro</SelectItem>
-                  <SelectItem value="other">Outros</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -467,7 +477,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
                 </p>
               </div>
               <div className="rounded-full bg-red-100 p-3 dark:bg-red-900">
-                <CreditCard className="h-6 w-6 text-red-600" />
+                <CreditCardIcon className="h-6 w-6 text-red-600" />
               </div>
             </div>
           </CardContent>
@@ -597,7 +607,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
             </div>
           ) : (
             <div className="py-12 text-center text-muted-foreground">
-              <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
+              <CreditCardIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p className="mb-2 text-lg font-medium">Nenhum dado encontrado</p>
               <p className="text-sm">
                 Não há transações com contas associadas para o período
@@ -638,9 +648,9 @@ export function AccountsReport({ period }: AccountsReportProps) {
                             }}
                           />
                         ) : (
-                          <CreditCard className="h-5 w-5 text-muted-foreground" />
+                          <CreditCardIcon className="h-5 w-5 text-muted-foreground" />
                         )}
-                        <CreditCard className="hidden h-5 w-5 text-muted-foreground" />
+                        <CreditCardIcon className="hidden h-5 w-5 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="font-medium">{item.accountName}</p>
