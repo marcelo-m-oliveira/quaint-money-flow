@@ -29,6 +29,14 @@ import { formatCurrency } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { Account, AccountFormData } from '@/lib/types'
 
+const ACCOUNT_TYPE_LABELS = {
+  bank: 'Conta Bancária',
+  credit_card: 'Cartão de Crédito',
+  investment: 'Investimento',
+  cash: 'Dinheiro',
+  other: 'Outros',
+} as const
+
 export default function ContasPage() {
   const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts()
   const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
@@ -195,6 +203,12 @@ export default function ContasPage() {
                           <div>
                             <div className="font-medium">{account.name}</div>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>
+                                {ACCOUNT_TYPE_LABELS[
+                                  account.type as keyof typeof ACCOUNT_TYPE_LABELS
+                                ] || account.type}
+                              </span>
+                              <span>•</span>
                               <span>{formatCurrency(account.balance)}</span>
                               {!account.includeInGeneralBalance && (
                                 <span className="rounded bg-muted px-2 py-0.5 text-xs">

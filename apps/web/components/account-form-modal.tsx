@@ -24,6 +24,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select'
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -47,6 +54,20 @@ const GENERIC_ICON_MAP = {
   'trending-up': TrendingUp,
   'dollar-sign': DollarSign,
 }
+
+const ACCOUNT_TYPE_LABELS = {
+  bank: 'Conta Bancária',
+  investment: 'Investimento',
+  cash: 'Dinheiro',
+  other: 'Outros',
+} as const
+
+const ACCOUNT_TYPES = [
+  { value: 'bank', label: ACCOUNT_TYPE_LABELS.bank },
+  { value: 'investment', label: ACCOUNT_TYPE_LABELS.investment },
+  { value: 'cash', label: ACCOUNT_TYPE_LABELS.cash },
+  { value: 'other', label: ACCOUNT_TYPE_LABELS.other },
+] as const
 
 export function AccountFormModal({
   isOpen,
@@ -205,6 +226,39 @@ export function AccountFormModal({
               />
               {errors.name && (
                 <p className="text-sm text-red-500">{errors.name.message}</p>
+              )}
+            </div>
+
+            {/* Tipo de Conta */}
+            <div className="space-y-2">
+              <Label htmlFor="type">Tipo de conta</Label>
+              <Select
+                value={watch('type')}
+                onValueChange={(value) =>
+                  setValue(
+                    'type',
+                    value as
+                      | 'bank'
+                      | 'credit_card'
+                      | 'investment'
+                      | 'cash'
+                      | 'other',
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo de conta" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCOUNT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.type && (
+                <p className="text-sm text-red-500">{errors.type.message}</p>
               )}
             </div>
 

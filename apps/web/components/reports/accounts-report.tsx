@@ -52,7 +52,7 @@ const ACCOUNT_TYPE_LABELS = {
   investment: 'Investimento',
   cash: 'Dinheiro',
   other: 'Outros',
-}
+} as const
 
 const DEFAULT_COLORS = [
   '#3b82f6',
@@ -211,7 +211,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
             <div style="padding: 8px;">
               <div style="font-weight: 600; margin-bottom: 4px;">${params.name}</div>
               <div style="color: ${isDark ? '#9ca3af' : '#6b7280'}; font-size: 12px; margin-bottom: 2px;">
-                Tipo: ${ACCOUNT_TYPE_LABELS[accountInfo.accountType as keyof typeof ACCOUNT_TYPE_LABELS]}
+                Tipo: ${ACCOUNT_TYPE_LABELS[accountInfo.accountType as keyof typeof ACCOUNT_TYPE_LABELS] || accountInfo.accountType}
               </div>
               <div style="color: ${isDark ? '#9ca3af' : '#6b7280'}; font-size: 12px; margin-bottom: 2px;">
                 Receitas: ${formatCurrency(accountInfo.totalIncome)}
@@ -382,25 +382,22 @@ export function AccountsReport({ period }: AccountsReportProps) {
   }, [accountData])
 
   // Agrupar por tipo de conta
+  // Agrupar dados por tipo de conta
   const accountsByType = useMemo(() => {
     const typeMap = new Map<string, { count: number; balance: number }>()
 
     accountData.forEach((account) => {
-      const existing = typeMap.get(account.accountType)
-      if (existing) {
-        existing.count += 1
-        existing.balance += account.balance
-      } else {
-        typeMap.set(account.accountType, {
-          count: 1,
-          balance: account.balance,
-        })
-      }
+      const type = account.accountType
+      const existing = typeMap.get(type) || { count: 0, balance: 0 }
+      typeMap.set(type, {
+        count: existing.count + 1,
+        balance: existing.balance + account.balance,
+      })
     })
 
     return Array.from(typeMap.entries()).map(([type, data]) => ({
       type,
-      label:
+      name:
         ACCOUNT_TYPE_LABELS[type as keyof typeof ACCOUNT_TYPE_LABELS] || type,
       count: data.count,
       balance: data.balance,
@@ -532,41 +529,42 @@ export function AccountsReport({ period }: AccountsReportProps) {
         </Card>
       </div>
 
-      {/* Resumo por tipo de conta */}
-      {accountsByType.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumo por Tipo de Conta</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Resumo por Tipo de Conta */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCardIcon className="h-5 w-5" />
+            Resumo por Tipo de Conta
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {accountsByType.length > 0 ? (
+            <div className="flex flex-wrap gap-4">
               {accountsByType.map((typeData) => (
-                <div key={typeData.type} className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{typeData.label}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {typeData.count} conta{typeData.count !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`font-bold ${
-                          typeData.balance >= 0
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
-                      >
-                        {formatCurrency(Math.abs(typeData.balance))}
-                      </p>
-                    </div>
-                  </div>
+                <div
+                  key={typeData.type}
+                  className="flex-auto rounded-lg border p-4 text-center md:w-1/6"
+                >
+                  <h3 className="font-medium text-muted-foreground">
+                    {typeData.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {typeData.count} conta{typeData.count !== 1 ? 's' : ''}
+                  </p>
+                  <p className="text-lg font-bold">
+                    {formatCurrency(typeData.balance)}
+                  </p>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              <CreditCardIcon className="mx-auto mb-4 h-8 w-8 opacity-50" />
+              <p>Nenhum tipo de conta encontrado</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Gráfico */}
       <Card>
@@ -655,12 +653,10 @@ export function AccountsReport({ period }: AccountsReportProps) {
                       <div>
                         <p className="font-medium">{item.accountName}</p>
                         <p className="text-sm text-muted-foreground">
-                          {
-                            ACCOUNT_TYPE_LABELS[
-                              item.accountType as keyof typeof ACCOUNT_TYPE_LABELS
-                            ]
-                          }{' '}
-                          •{item.transactionCount} transaç
+                          {ACCOUNT_TYPE_LABELS[
+                            item.accountType as keyof typeof ACCOUNT_TYPE_LABELS
+                          ] || item.accountType}{' '}
+                          • {item.transactionCount} transaç
                           {item.transactionCount === 1 ? 'ão' : 'ões'}
                         </p>
                       </div>
