@@ -9,11 +9,12 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { ReportPeriod } from '@/app/relatorios/page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DetailItem } from '@/components/ui/detail-item'
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { useInfiniteScroll } from '@/lib/hooks/use-infinite-scroll'
 import { useTheme } from '@/lib/hooks/use-theme'
 
 interface CashflowReportProps {
@@ -40,16 +42,9 @@ interface CashflowData {
 }
 
 export function CashflowReport({ period }: CashflowReportProps) {
-  const { transactions } = useFinancialData()
   const { isDark } = useTheme()
+  const { transactions } = useFinancialData()
   const [viewMode, setViewMode] = useState<ViewMode>('monthly')
-
-  // Estados para scroll infinito
-  const [visibleItems, setVisibleItems] = useState(30)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [showBackToTop, setShowBackToTop] = useState(false)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const lastScrollTop = useRef(0)
 
   // Filtrar transações por período
   const filteredTransactions = useMemo(() => {
@@ -159,69 +154,20 @@ export function CashflowReport({ period }: CashflowReportProps) {
     )
   }, [filteredTransactions, viewMode])
 
-  // Função para voltar ao topo
-  const scrollToTop = useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    container.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
-    setShowBackToTop(false)
-  }, [])
-
-  // Hook para detectar scroll
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const { scrollTop, scrollHeight, clientHeight } = container
-    const scrollDirection = scrollTop > lastScrollTop.current ? 'down' : 'up'
-    lastScrollTop.current = scrollTop
-
-    // Calcular quantos itens restam para o final
-    const itemsFromEnd = cashflowData.length - visibleItems
-
-    // Mostrar botão "Voltar ao Topo" quando estiver próximo do final
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200
-    const hasReachedEnd = visibleItems >= cashflowData.length
-    setShowBackToTop(isNearBottom && hasReachedEnd && cashflowData.length > 30)
-
-    // Scroll para baixo - carregar mais itens quando restarem cerca de 3 itens (27 de 30)
-    if (
-      scrollDirection === 'down' &&
-      (scrollTop + clientHeight >= scrollHeight - 150 || itemsFromEnd <= 3)
-    ) {
-      if (!isLoadingMore && visibleItems < cashflowData.length) {
-        setIsLoadingMore(true)
-        setTimeout(() => {
-          setVisibleItems((prev) => Math.min(prev + 30, cashflowData.length))
-          setIsLoadingMore(false)
-        }, 500)
-      }
-    }
-
-    // Scroll para cima - remover itens se necessário
-    if (scrollDirection === 'up' && scrollTop < 200 && visibleItems > 30) {
-      setVisibleItems((prev) => Math.max(prev - 30, 30))
-      setShowBackToTop(false)
-    }
-  }, [visibleItems, isLoadingMore, cashflowData])
-
-  // Adicionar listener de scroll
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    container.addEventListener('scroll', handleScroll, { passive: true })
-    return () => container.removeEventListener('scroll', handleScroll)
-  }, [handleScroll])
+  // Hook de scroll infinito
+  const {
+    visibleItems,
+    isLoadingMore,
+    showBackToTop,
+    scrollContainerRef,
+    scrollToTop,
+    resetItems,
+  } = useInfiniteScroll(cashflowData.length)
 
   // Reset visible items quando dados mudarem
   useEffect(() => {
-    setVisibleItems(30)
-  }, [period, viewMode])
+    resetItems()
+  }, [period, viewMode, resetItems])
 
   // Configuração do gráfico de barras
   const chartOptions = useMemo(() => {
@@ -564,39 +510,32 @@ export function CashflowReport({ period }: CashflowReportProps) {
               className="max-h-[600px] space-y-2 overflow-y-auto"
             >
               {cashflowData.slice(0, visibleItems).map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between rounded-lg border p-4"
-                >
-                  <div>
-                    <p className="font-medium">{item.period}</p>
-                  </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="text-right">
-                      <p className="text-green-600">
-                        +{formatCurrency(item.income)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Receitas</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-red-600">
-                        -{formatCurrency(item.expense)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Despesas</p>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`font-bold ${
-                          item.balance >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}
-                      >
-                        {item.balance >= 0 ? '+' : ''}
-                        {formatCurrency(item.balance)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Saldo</p>
-                    </div>
-                  </div>
-                </div>
+                <DetailItem key={index}>
+                  <DetailItem.Content>
+                    <DetailItem.Info>
+                      <p className="font-medium">{item.period}</p>
+                    </DetailItem.Info>
+                  </DetailItem.Content>
+                  <DetailItem.Values>
+                    <DetailItem.Value
+                      label="Receitas"
+                      value={`+${formatCurrency(item.income)}`}
+                      valueClassName="text-green-600"
+                    />
+                    <DetailItem.Value
+                      label="Despesas"
+                      value={`-${formatCurrency(item.expense)}`}
+                      valueClassName="text-red-600"
+                    />
+                    <DetailItem.Value
+                      label="Saldo"
+                      value={`${item.balance >= 0 ? '+' : ''}${formatCurrency(item.balance)}`}
+                      valueClassName={`font-bold ${
+                        item.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}
+                    />
+                  </DetailItem.Values>
+                </DetailItem>
               ))}
 
               {/* Skeleton durante carregamento */}

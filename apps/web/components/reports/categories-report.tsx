@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react'
 import { ReportPeriod } from '@/app/relatorios/page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DetailItem } from '@/components/ui/detail-item'
 import {
   Select,
   SelectContent,
@@ -586,8 +587,8 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                 return (
                   <div key={item.categoryId} className="space-y-2">
                     {/* Categoria Principal */}
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="flex items-center gap-3">
+                    <DetailItem>
+                      <DetailItem.Content>
                         <div
                           className="flex h-10 w-10 items-center justify-center rounded-full"
                           style={{ backgroundColor: item.color }}
@@ -599,7 +600,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                             />
                           )}
                         </div>
-                        <div>
+                        <DetailItem.Info>
                           <p className="font-medium">{item.categoryName}</p>
                           <p className="text-sm text-muted-foreground">
                             {item.transactionCount} transaç
@@ -611,37 +612,36 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                               </span>
                             )}
                           </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-bold ${
+                        </DetailItem.Info>
+                      </DetailItem.Content>
+                      <DetailItem.Values>
+                        <DetailItem.Value
+                          label={`${item.percentage.toFixed(1)}%`}
+                          value={formatCurrency(item.amount)}
+                          valueClassName={`font-bold ${
                             transactionType === 'expense'
                               ? 'text-red-600'
-                              : 'text-green-600'
+                              : transactionType === 'income'
+                                ? 'text-green-600'
+                                : 'text-blue-600'
                           }`}
-                        >
-                          {formatCurrency(item.amount)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.percentage.toFixed(1)}%
-                        </p>
-                      </div>
-                    </div>
+                        />
+                      </DetailItem.Values>
+                    </DetailItem>
 
                     {/* Subcategorias */}
                     {subcategoriesData.length > 0 && (
-                      <div className="ml-6 space-y-2">
+                      <div className="space-y-2">
                         {subcategoriesData.map((subItem) => {
                           const subCategory = categories.find(
                             (c) => c.id === subItem.categoryId,
                           )
                           return (
-                            <div
+                            <DetailItem
                               key={subItem.categoryId}
-                              className="flex items-center justify-between rounded-lg border border-dashed bg-muted/30 p-3"
+                              className="ml-6 border-dashed bg-muted/30"
                             >
-                              <div className="flex items-center gap-3">
+                              <DetailItem.Content>
                                 <div
                                   className="flex h-8 w-8 items-center justify-center rounded-full"
                                   style={{ backgroundColor: subItem.color }}
@@ -653,7 +653,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                                     />
                                   )}
                                 </div>
-                                <div>
+                                <DetailItem.Info>
                                   <p className="text-sm font-medium">
                                     {subItem.categoryName}
                                   </p>
@@ -663,23 +663,22 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                                       ? 'ão'
                                       : 'ões'}
                                   </p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p
-                                  className={`text-sm font-medium ${
+                                </DetailItem.Info>
+                              </DetailItem.Content>
+                              <DetailItem.Values>
+                                <DetailItem.Value
+                                  label={`${subItem.percentage.toFixed(1)}% da categoria`}
+                                  value={formatCurrency(subItem.amount)}
+                                  valueClassName={`text-sm font-medium ${
                                     transactionType === 'expense'
                                       ? 'text-red-600'
-                                      : 'text-green-600'
+                                      : transactionType === 'income'
+                                        ? 'text-green-600'
+                                        : 'text-blue-600'
                                   }`}
-                                >
-                                  {formatCurrency(subItem.amount)}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {subItem.percentage.toFixed(1)}% da categoria
-                                </p>
-                              </div>
-                            </div>
+                                />
+                              </DetailItem.Values>
+                            </DetailItem>
                           )
                         })}
                       </div>

@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react'
 import { ReportPeriod } from '@/app/relatorios/page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DetailItem } from '@/components/ui/detail-item'
 import {
   Select,
   SelectContent,
@@ -626,11 +627,8 @@ export function AccountsReport({ period }: AccountsReportProps) {
             <div className="space-y-4">
               {accountData.map((item) => {
                 return (
-                  <div
-                    key={item.accountId}
-                    className="flex items-center justify-between rounded-lg border p-4"
-                  >
-                    <div className="flex items-center gap-3">
+                  <DetailItem key={item.accountId}>
+                    <DetailItem.Content>
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                         {item.iconType === 'bank' ? (
                           <img
@@ -650,7 +648,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
                         )}
                         <CreditCardIcon className="hidden h-5 w-5 text-muted-foreground" />
                       </div>
-                      <div>
+                      <DetailItem.Info>
                         <p className="font-medium">{item.accountName}</p>
                         <p className="text-sm text-muted-foreground">
                           {ACCOUNT_TYPE_LABELS[
@@ -659,40 +657,28 @@ export function AccountsReport({ period }: AccountsReportProps) {
                           • {item.transactionCount} transaç
                           {item.transactionCount === 1 ? 'ão' : 'ões'}
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6 text-sm">
-                      <div className="text-right">
-                        <p className="text-green-600">
-                          +{formatCurrency(item.totalIncome)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Receitas
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-red-600">
-                          -{formatCurrency(item.totalExpense)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Despesas
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-bold ${
-                            item.balance >= 0
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                          }`}
-                        >
-                          {item.balance >= 0 ? '+' : ''}
-                          {formatCurrency(item.balance)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Saldo</p>
-                      </div>
-                    </div>
-                  </div>
+                      </DetailItem.Info>
+                    </DetailItem.Content>
+                    <DetailItem.Values>
+                      <DetailItem.Value
+                        label="Receitas"
+                        value={`+${formatCurrency(item.totalIncome)}`}
+                        valueClassName="text-green-600"
+                      />
+                      <DetailItem.Value
+                        label="Despesas"
+                        value={`-${formatCurrency(item.totalExpense)}`}
+                        valueClassName="text-red-600"
+                      />
+                      <DetailItem.Value
+                        label="Saldo"
+                        value={`${item.balance >= 0 ? '+' : ''}${formatCurrency(item.balance)}`}
+                        valueClassName={`font-bold ${
+                          item.balance >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}
+                      />
+                    </DetailItem.Values>
+                  </DetailItem>
                 )
               })}
             </div>
