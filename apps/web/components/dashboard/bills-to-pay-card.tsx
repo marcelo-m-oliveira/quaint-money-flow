@@ -157,14 +157,16 @@ export function BillsToPayCard({
                 return (
                   <div
                     key={bill.id}
-                    className="flex cursor-pointer items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
-                    onClick={() => {
-                      if (onEditTransaction && transaction) {
-                        onEditTransaction(transaction)
-                      }
-                    }}
+                    className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
                   >
-                    <div className="flex items-center gap-3">
+                    <div
+                      className="flex cursor-pointer items-center gap-3"
+                      onClick={() => {
+                        if (onEditTransaction && transaction) {
+                          onEditTransaction(transaction)
+                        }
+                      }}
+                    >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                         <div
                           className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -266,14 +268,16 @@ export function BillsToPayCard({
                 return (
                   <div
                     key={bill.id}
-                    className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                    onClick={() => {
-                      if (onEditTransaction && transaction) {
-                        onEditTransaction(transaction)
-                      }
-                    }}
+                    className="flex  items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
-                    <div className="flex items-center gap-3">
+                    <div
+                      className="flex cursor-pointer items-center gap-3"
+                      onClick={() => {
+                        if (onEditTransaction && transaction) {
+                          onEditTransaction(transaction)
+                        }
+                      }}
+                    >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                         <div
                           className="flex h-full w-full items-center justify-center rounded-full text-white"
