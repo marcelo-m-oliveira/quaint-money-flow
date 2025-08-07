@@ -7,7 +7,11 @@ import { formatCurrency, getDayPeriod } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { Transaction, TransactionFormData } from '@/lib/types'
 
-import { BillsToPayCard, ExpenseSummaryCard } from './dashboard'
+import {
+  BillsToPayCard,
+  BillsToReceiveCard,
+  ExpenseSummaryCard,
+} from './dashboard'
 import { PageLayout } from './layouts/page-layout'
 import { TransactionFormModal } from './transaction-form-modal'
 import { Button } from './ui/button'
@@ -243,7 +247,7 @@ export function FinancialDashboard() {
         </Card>
 
         {/* Cards de Informações Adicionais */}
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
           {/* Card de Maiores Despesas */}
           <ExpenseSummaryCard
             transactions={transactionsWithCategories}
@@ -252,6 +256,13 @@ export function FinancialDashboard() {
 
           {/* Card de Contas a Pagar */}
           <BillsToPayCard
+            transactions={transactionsWithCategories}
+            categories={categories}
+            onUpdateTransaction={updateTransactionStatus}
+          />
+
+          {/* Card de Contas a Receber */}
+          <BillsToReceiveCard
             transactions={transactionsWithCategories}
             categories={categories}
             onUpdateTransaction={updateTransactionStatus}

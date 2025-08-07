@@ -134,10 +134,17 @@ export function BillsToPayCard({
         {overdueBills.length > 0 && (
           <div>
             <div className="mb-4 rounded-lg bg-red-50 p-3 dark:bg-red-950/20">
-              <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
-                <AlertTriangle className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Contas a pagar atrasadas
+              <div className="flex items-center justify-between text-red-700 dark:text-red-400">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Contas a pagar atrasadas
+                  </span>
+                </div>
+                <span className="text-sm font-semibold">
+                  {formatCurrency(
+                    overdueBills.reduce((sum, bill) => sum + bill.amount, 0),
+                  )}
                 </span>
               </div>
             </div>
@@ -227,9 +234,16 @@ export function BillsToPayCard({
         {/* Próximas contas */}
         {upcomingBills.length > 0 && (
           <div>
-            <div className="mb-4 flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">Próximas</span>
+            <div className="mb-4 flex items-center justify-between text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm font-medium">Próximas</span>
+              </div>
+              <span className="text-sm font-semibold">
+                {formatCurrency(
+                  upcomingBills.reduce((sum, bill) => sum + bill.amount, 0),
+                )}
+              </span>
             </div>
 
             <div className="space-y-3">
