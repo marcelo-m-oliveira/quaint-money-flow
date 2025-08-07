@@ -106,12 +106,19 @@ export function ExpenseSummaryCard({
       return transaction.type === 'expense' && dateFilter(transactionDate)
     })
 
-    // Agrupar por categoria
+    // Agrupar por categoria principal (somar subcategorias na categoria pai)
     const categoryTotals = new Map<string, number>()
 
     filteredExpenses.forEach((transaction) => {
-      const current = categoryTotals.get(transaction.categoryId) || 0
-      categoryTotals.set(transaction.categoryId, current + transaction.amount)
+      const category = categories.find(
+        (cat) => cat.id === transaction.categoryId,
+      )
+
+      // Se a categoria tem parentId, somar na categoria pai
+      const targetCategoryId = category?.parentId || transaction.categoryId
+
+      const current = categoryTotals.get(targetCategoryId) || 0
+      categoryTotals.set(targetCategoryId, current + transaction.amount)
     })
 
     // Calcular total geral
@@ -127,7 +134,10 @@ export function ExpenseSummaryCard({
     // Converter para array e calcular percentuais
     const expenseArray: ExpenseData[] = Array.from(categoryTotals.entries())
       .map(([categoryId, amount], index) => {
-        const category = categories.find((cat) => cat.id === categoryId)
+        // Buscar sempre pela categoria principal (não subcategoria)
+        const category = categories.find(
+          (cat) => cat.id === categoryId && !cat.parentId,
+        )
         const categoryName = category?.name || 'Categoria não encontrada'
         const percentage = (amount / totalExpenses) * 100
 
@@ -196,9 +206,8 @@ export function ExpenseSummaryCard({
         {
           name: 'Gastos',
           type: 'pie',
-          radius: ['15%', '80%'],
+          radius: ['40%', '80%'],
           center: ['50%', '50%'],
-          roseType: 'radius',
           label: false,
           avoidLabelOverlap: false,
           itemStyle: {
