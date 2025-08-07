@@ -24,6 +24,7 @@ interface BillsToReceiveCardProps {
     transactionId: string,
     updatedData: Partial<Transaction>,
   ) => void
+  onEditTransaction?: (transaction: Transaction) => void
 }
 
 interface ReceivableData {
@@ -42,6 +43,7 @@ export function BillsToReceiveCard({
   transactions,
   categories,
   onUpdateTransaction,
+  onEditTransaction,
 }: BillsToReceiveCardProps) {
   const { getCategoryIcon } = useFinancialData()
   const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(5)
@@ -159,61 +161,73 @@ export function BillsToReceiveCard({
             <div className="space-y-3">
               {overdueReceivables
                 .slice(0, visibleOverdueReceivables)
-                .map((receivable) => (
-                  <div
-                    key={receivable.id}
-                    className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 dark:border-red-800 dark:bg-red-950/10"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
-                        <div
-                          className="flex h-full w-full items-center justify-center rounded-full text-white"
-                          style={{ backgroundColor: receivable.categoryColor }}
-                        >
-                          <CategoryIcon
-                            iconName={receivable.icon}
-                            size={16}
-                            className="text-white"
-                          />
+                .map((receivable) => {
+                  const transaction = transactions.find(
+                    (t) => t.id === receivable.id,
+                  )
+                  return (
+                    <div
+                      key={receivable.id}
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
+                      onClick={() => {
+                        if (onEditTransaction && transaction) {
+                          onEditTransaction(transaction)
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
+                          <div
+                            className="flex h-full w-full items-center justify-center rounded-full text-white"
+                            style={{
+                              backgroundColor: receivable.categoryColor,
+                            }}
+                          >
+                            <CategoryIcon
+                              iconName={receivable.icon}
+                              size={16}
+                              className="text-white"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {receivable.description}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(receivable.dueDate)}
+                          </p>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {receivable.description}
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-green-600 dark:text-green-400">
+                          {formatCurrency(receivable.amount)}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(receivable.dueDate)}
-                        </p>
+                        {onUpdateTransaction && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    handleToggleReceivedStatus(receivable.id)
+                                  }
+                                  className="h-8 w-8 text-gray-400 hover:text-green-600"
+                                >
+                                  <ThumbsUp className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Marcar como recebido</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-green-600 dark:text-green-400">
-                        {formatCurrency(receivable.amount)}
-                      </p>
-                      {onUpdateTransaction && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  handleToggleReceivedStatus(receivable.id)
-                                }
-                                className="h-8 w-8 text-gray-400 hover:text-green-600"
-                              >
-                                <ThumbsUp className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Marcar como recebido</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
             </div>
 
             {/* Botões de controle para contas atrasadas */}
@@ -271,11 +285,19 @@ export function BillsToReceiveCard({
                 .slice(0, visibleUpcomingReceivables)
                 .map((receivable) => {
                   const isNearDue = receivable.daysUntilDue <= 7
+                  const transaction = transactions.find(
+                    (t) => t.id === receivable.id,
+                  )
 
                   return (
                     <div
                       key={receivable.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
+                      className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                      onClick={() => {
+                        if (onEditTransaction && transaction) {
+                          onEditTransaction(transaction)
+                        }
+                      }}
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">

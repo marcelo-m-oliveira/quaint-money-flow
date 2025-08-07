@@ -53,6 +53,9 @@ export function ExpenseSummaryCard({
 }: ExpenseSummaryCardProps) {
   const [selectedPeriod, setSelectedPeriod] =
     useState<PeriodType>('current_month')
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  )
   const { isDark } = useTheme()
   const { getCategoryIcon } = useFinancialData()
 
@@ -174,6 +177,18 @@ export function ExpenseSummaryCard({
            `
         },
       },
+      onClick: (params: { name: string; value: number }) => {
+        const categoryData = expenseData.find(
+          (item) => item.categoryName === params.name,
+        )
+        if (categoryData) {
+          setSelectedCategoryId(
+            selectedCategoryId === categoryData.categoryId
+              ? null
+              : categoryData.categoryId,
+          )
+        }
+      },
       legend: {
         show: false,
       },
@@ -181,21 +196,19 @@ export function ExpenseSummaryCard({
         {
           name: 'Gastos',
           type: 'pie',
-          radius: ['40%', '70%'],
+          radius: ['15%', '80%'],
           center: ['50%', '50%'],
+          roseType: 'radius',
+          label: false,
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: 10,
             borderColor: isDark ? '#1f2937' : '#ffffff',
             borderWidth: 2,
           },
-          label: {
-            show: false,
-            position: 'center',
-          },
           emphasis: {
             label: {
-              show: true,
+              show: false,
               fontSize: 20,
               fontWeight: 'bold',
               color: isDark ? '#f9fafb' : '#111827',
@@ -215,12 +228,26 @@ export function ExpenseSummaryCard({
             itemStyle: {
               color: item.color,
               borderRadius: 10,
+              opacity:
+                selectedCategoryId === null ||
+                selectedCategoryId === item.categoryId
+                  ? 1
+                  : 0.3,
+              borderWidth: selectedCategoryId === item.categoryId ? 4 : 2,
+              borderColor:
+                selectedCategoryId === item.categoryId
+                  ? isDark
+                    ? '#ffffff'
+                    : '#000000'
+                  : isDark
+                    ? '#1f2937'
+                    : '#ffffff',
             },
           })),
         },
       ],
     }
-  }, [expenseData, isDark])
+  }, [expenseData, isDark, selectedCategoryId])
 
   if (expenseData.length === 0) {
     return (
@@ -285,7 +312,20 @@ export function ExpenseSummaryCard({
             {expenseData.map((item) => (
               <div
                 key={item.categoryId}
-                className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50"
+                className={`flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-all duration-200 hover:bg-muted/50 ${
+                  selectedCategoryId === item.categoryId
+                    ? 'border-2 border-primary bg-muted shadow-sm'
+                    : selectedCategoryId !== null
+                      ? 'opacity-50'
+                      : ''
+                }`}
+                onClick={() => {
+                  setSelectedCategoryId(
+                    selectedCategoryId === item.categoryId
+                      ? null
+                      : item.categoryId,
+                  )
+                }}
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                   <div

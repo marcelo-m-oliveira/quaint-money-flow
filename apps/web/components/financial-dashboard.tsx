@@ -229,7 +229,8 @@ export function FinancialDashboard() {
                   onSubmit={handleExpenseSubmit}
                   categories={categories}
                   type="expense"
-                  title="Nova despesa"
+                  title={editingTransaction ? 'Editar despesa' : 'Nova despesa'}
+                  showCreateAnotherButton={!editingTransaction}
                 />
 
                 <TransactionFormModal
@@ -239,7 +240,8 @@ export function FinancialDashboard() {
                   onSubmit={handleIncomeSubmit}
                   categories={categories}
                   type="income"
-                  title="Nova receita"
+                  title={editingTransaction ? 'Editar receita' : 'Nova receita'}
+                  showCreateAnotherButton={!editingTransaction}
                 />
               </div>
             </div>
@@ -262,6 +264,10 @@ export function FinancialDashboard() {
                 transactions={transactionsWithCategories}
                 categories={categories}
                 onUpdateTransaction={updateTransactionStatus}
+                onEditTransaction={(transaction) => {
+                  setEditingTransaction(transaction)
+                  setIsExpenseDialogOpen(true)
+                }}
               />
             </div>
 
@@ -271,6 +277,10 @@ export function FinancialDashboard() {
                 transactions={transactionsWithCategories}
                 categories={categories}
                 onUpdateTransaction={updateTransactionStatus}
+                onEditTransaction={(transaction) => {
+                  setEditingTransaction(transaction)
+                  setIsIncomeDialogOpen(true)
+                }}
               />
             </div>
           </div>
