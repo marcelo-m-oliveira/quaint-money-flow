@@ -3,6 +3,7 @@ export interface Category {
   name: string
   color: string
   type: 'income' | 'expense'
+  icon: string
   parentId?: string // Para subcategorias
   createdAt: Date
 }
@@ -14,10 +15,12 @@ export interface Transaction {
   type: 'income' | 'expense'
   categoryId: string
   category?: Category
-  date: Date
+  accountId?: string // ID da conta relacionada
+  creditCardId?: string // ID do cartão de crédito relacionado
+  date: number // Timestamp em milissegundos
   paid: boolean // Indica se o lançamento foi pago ou não
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number // Timestamp em milissegundos
+  updatedAt: number // Timestamp em milissegundos
 }
 
 export interface TransactionFormData {
@@ -25,6 +28,8 @@ export interface TransactionFormData {
   amount: string
   type: 'income' | 'expense'
   categoryId: string
+  accountId?: string // ID da conta relacionada
+  creditCardId?: string // ID do cartão de crédito relacionado
   date: string
   paid: boolean // Indica se o lançamento foi pago ou não
 }
@@ -33,6 +38,7 @@ export interface CategoryFormData {
   name: string
   color: string
   type: 'income' | 'expense'
+  icon: string
   parentId?: string // Para subcategorias
 }
 

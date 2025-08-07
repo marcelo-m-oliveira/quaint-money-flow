@@ -1,0 +1,108 @@
+import {
+  Book,
+  Briefcase,
+  Building,
+  Camera,
+  Car,
+  Clock,
+  Coffee,
+  CreditCard,
+  DollarSign,
+  Dumbbell,
+  FileText,
+  Fuel,
+  Gamepad2,
+  Gift,
+  GraduationCap,
+  Heart,
+  Home,
+  LucideIcon,
+  MapPin,
+  Monitor,
+  Moon,
+  Music,
+  PiggyBank,
+  Plane,
+  Plus,
+  Scissors,
+  Settings,
+  Shirt,
+  ShoppingCart,
+  Smartphone,
+  Star,
+  Stethoscope,
+  Sun,
+  TrendingUp,
+  Truck,
+  User,
+  Utensils,
+  Wallet,
+  Wifi,
+  Wrench,
+  Zap,
+} from 'lucide-react'
+
+// Mapeamento de nomes de ícones para componentes Lucide
+export const ICON_MAP: Record<string, LucideIcon> = {
+  Casa: Home,
+  Saúde: Heart,
+  Carro: Car,
+  Compras: ShoppingCart,
+  Café: Coffee,
+  Alimentação: Utensils,
+  Pessoa: User,
+  Dinheiro: DollarSign,
+  Favorito: Star,
+  Adicionar: Plus,
+  Trabalho: Briefcase,
+  Tecnologia: Monitor,
+  Documentos: FileText,
+  Cartão: CreditCard,
+  Celular: Smartphone,
+  Internet: Wifi,
+  Configurações: Settings,
+  Tempo: Clock,
+  Local: MapPin,
+  Ferramentas: Wrench,
+  Jogos: Gamepad2,
+  Livros: Book,
+  Música: Music,
+  Fotografia: Camera,
+  Viagem: Plane,
+  Presentes: Gift,
+  Dia: Sun,
+  Noite: Moon,
+  Transporte: Truck,
+  Combustível: Fuel,
+  Médico: Stethoscope,
+  Academia: Dumbbell,
+  Educação: GraduationCap,
+  Roupas: Shirt,
+  Beleza: Scissors,
+  Poupança: PiggyBank,
+  Investimentos: TrendingUp,
+  Carteira: Wallet,
+  Imóveis: Building,
+  Energia: Zap,
+}
+
+// Função para obter o componente do ícone pelo nome
+export function getIconComponent(iconName: string): LucideIcon {
+  return ICON_MAP[iconName] || Star // Fallback para Star se o ícone não for encontrado
+}
+
+// Componente para renderizar ícone de categoria
+interface CategoryIconProps {
+  iconName: string
+  className?: string
+  size?: number
+}
+
+export function CategoryIcon({
+  iconName,
+  className = '',
+  size = 16,
+}: CategoryIconProps) {
+  const IconComponent = getIconComponent(iconName)
+  return <IconComponent className={className} size={size} />
+}

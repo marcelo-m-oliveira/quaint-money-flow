@@ -15,10 +15,7 @@ import { Controller, useForm } from 'react-hook-form'
 
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
 import { useAccounts } from '@/lib/hooks/use-accounts'
-import {
-  CreditCardFormSchema,
-  creditCardSchema,
-} from '@/lib/schemas/credit-card'
+import { CreditCardFormSchema, creditCardSchema } from '@/lib/schemas'
 import { CreditCard as CreditCardType } from '@/lib/types'
 
 import { IconSelector } from './icon-selector'

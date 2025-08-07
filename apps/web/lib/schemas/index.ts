@@ -1,4 +1,14 @@
 // Exportações centralizadas dos schemas
-export * from './transaction'
-export * from './category'
-export * from './account'
+export {
+  transactionSchema,
+  categorySchema,
+  accountSchema,
+  creditCardSchema,
+  preferencesSchema,
+  type TransactionFormSchema,
+  type CategoryFormSchema,
+  type AccountFormSchema,
+  type CreditCardFormSchema,
+  type UserPreferencesSchema,
+  type PreferencesFormSchema,
+} from '@saas/validations'

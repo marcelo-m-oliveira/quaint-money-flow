@@ -18,20 +18,20 @@ const CATEGORY_COLORS = [
   '#84cc16', // lime-500
 ]
 
-// Categorias de despesas predefinidas
+// Categorias de despesas predefinidas com ícones
 const EXPENSE_CATEGORIES = [
-  'Alimentação',
-  'Transporte',
-  'Moradia',
-  'Saúde',
-  'Educação',
-  'Lazer',
-  'Roupas',
-  'Tecnologia',
-  'Viagem',
-  'Pets',
-  'Presentes',
-  'Serviços',
+  { name: 'Alimentação', icon: 'Utensils' },
+  { name: 'Transporte', icon: 'Car' },
+  { name: 'Moradia', icon: 'Home' },
+  { name: 'Saúde', icon: 'Heart' },
+  { name: 'Educação', icon: 'GraduationCap' },
+  { name: 'Lazer', icon: 'Gamepad2' },
+  { name: 'Roupas', icon: 'Shirt' },
+  { name: 'Tecnologia', icon: 'Monitor' },
+  { name: 'Viagem', icon: 'Plane' },
+  { name: 'Pets', icon: 'Heart' },
+  { name: 'Presentes', icon: 'Gift' },
+  { name: 'Serviços', icon: 'Wrench' },
 ]
 
 // Subcategorias de despesas
@@ -44,14 +44,14 @@ const EXPENSE_SUBCATEGORIES: Record<string, string[]> = {
   Lazer: ['Cinema', 'Streaming', 'Jogos', 'Eventos'],
 }
 
-// Categorias de receitas predefinidas
+// Categorias de receitas predefinidas com ícones
 const INCOME_CATEGORIES = [
-  'Salário',
-  'Freelance',
-  'Investimentos',
-  'Vendas',
-  'Prêmios',
-  'Outros',
+  { name: 'Salário', icon: 'Briefcase' },
+  { name: 'Freelance', icon: 'User' },
+  { name: 'Investimentos', icon: 'TrendingUp' },
+  { name: 'Vendas', icon: 'ShoppingCart' },
+  { name: 'Prêmios', icon: 'Star' },
+  { name: 'Outros', icon: 'DollarSign' },
 ]
 
 // Tipos de conta
@@ -97,21 +97,52 @@ const BANK_NAME_TO_ID: Record<string, string> = {
 export function generateMockCategory(
   type: 'income' | 'expense' = 'expense',
   parentId?: string,
+  parentCategory?: Category,
 ): Category {
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
-  const name = parentId
-    ? faker.helpers.arrayElement(
-        EXPENSE_SUBCATEGORIES[
-          faker.helpers.arrayElement(EXPENSE_CATEGORIES)
-        ] || ['Subcategoria'],
+
+  let name: string
+  let icon: string
+
+  if (parentId && parentCategory) {
+    // Para subcategorias, usar nomes das subcategorias e herdar ícone da categoria pai real
+    const parentCategoryNames = Object.keys(EXPENSE_SUBCATEGORIES)
+    const matchingParentName = parentCategoryNames.find(
+      (parentName) =>
+        parentCategory.name.toLowerCase().includes(parentName.toLowerCase()) ||
+        parentName.toLowerCase().includes(parentCategory.name.toLowerCase()),
+    )
+
+    if (matchingParentName && EXPENSE_SUBCATEGORIES[matchingParentName]) {
+      name = faker.helpers.arrayElement(
+        EXPENSE_SUBCATEGORIES[matchingParentName],
       )
-    : faker.helpers.arrayElement(categories)
+    } else {
+      // Fallback: gerar nome genérico de subcategoria
+      const subcategoryPrefixes = ['Categoria', 'Sub', 'Item']
+      const subcategorySuffixes = ['A', 'B', 'C', '1', '2', '3']
+      name = `${faker.helpers.arrayElement(subcategoryPrefixes)} ${faker.helpers.arrayElement(subcategorySuffixes)}`
+    }
+
+    // Herdar ícone da categoria pai real
+    icon = parentCategory.icon
+  } else if (parentId) {
+    // Fallback para quando não temos a categoria pai disponível
+    name = `Subcategoria ${faker.number.int({ min: 1, max: 100 })}`
+    icon = 'FileText'
+  } else {
+    // Para categorias principais
+    const selectedCategory = faker.helpers.arrayElement(categories)
+    name = selectedCategory.name
+    icon = selectedCategory.icon
+  }
 
   return {
     id: faker.string.uuid(),
     name,
     color: faker.helpers.arrayElement(CATEGORY_COLORS),
     type,
+    icon,
     parentId,
     createdAt: faker.date.past({ years: 1 }),
   }
@@ -144,7 +175,9 @@ export function generateMockCategories(
     expenseCategories.forEach((parentCategory) => {
       const subcategoryCount = faker.number.int({ min: 1, max: 3 })
       for (let i = 0; i < subcategoryCount; i++) {
-        categories.push(generateMockCategory('expense', parentCategory.id))
+        categories.push(
+          generateMockCategory('expense', parentCategory.id, parentCategory),
+        )
       }
     })
   }
@@ -158,6 +191,8 @@ export function generateMockCategories(
 export function generateMockTransaction(
   categories: Category[],
   type?: 'income' | 'expense',
+  accounts?: Account[],
+  creditCards?: CreditCard[],
 ): Transaction {
   const transactionType =
     type || faker.helpers.arrayElement(['income', 'expense'])
@@ -200,7 +235,55 @@ export function generateMockTransaction(
       ? faker.number.float({ min: 10, max: 500, fractionDigits: 2 })
       : faker.number.float({ min: 100, max: 5000, fractionDigits: 2 })
 
-  const createdAt = faker.date.past({ years: 1 })
+  const createdAt = faker.date.past({ years: 1 }).getTime()
+
+  // Vincular com conta ou cartão (70% das transações terão vínculo)
+  let accountId: string | undefined
+  let creditCardId: string | undefined
+
+  if (faker.number.float() < 0.7) {
+    // 70% chance de ter vínculo
+    const hasAccounts = accounts && accounts.length > 0
+    const hasCreditCards = creditCards && creditCards.length > 0
+
+    if (hasAccounts && hasCreditCards) {
+      // Se tem ambos, escolher aleatoriamente
+      const useAccount = faker.datatype.boolean()
+      if (useAccount) {
+        accountId = faker.helpers.arrayElement(accounts).id
+      } else {
+        creditCardId = faker.helpers.arrayElement(creditCards).id
+      }
+    } else if (hasAccounts) {
+      // Só tem contas
+      accountId = faker.helpers.arrayElement(accounts).id
+    } else if (hasCreditCards) {
+      // Só tem cartões
+      creditCardId = faker.helpers.arrayElement(creditCards).id
+    }
+  }
+
+  // Gerar data da transação
+  const transactionDate = faker.date.past({ years: 1 }).getTime()
+
+  // Determinar se a transação está paga
+  // Transações não pagas só podem ser do mês atual
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+  const transactionDateObj = new Date(transactionDate)
+  const isCurrentMonth =
+    transactionDateObj.getMonth() === currentMonth &&
+    transactionDateObj.getFullYear() === currentYear
+
+  let paid: boolean
+  if (isCurrentMonth) {
+    // No mês atual, pode estar pago ou não pago
+    paid = faker.helpers.arrayElement([true, false])
+  } else {
+    // Em meses anteriores, sempre está pago
+    paid = true
+  }
 
   return {
     id: faker.string.uuid(),
@@ -209,9 +292,11 @@ export function generateMockTransaction(
     type: transactionType,
     categoryId: category.id,
     category,
-    date: faker.date.past({ years: 1 }),
+    accountId,
+    creditCardId,
+    date: transactionDate,
     createdAt,
-    paid: faker.helpers.arrayElement([true, false]),
+    paid,
     updatedAt: createdAt,
   }
 }
@@ -222,52 +307,63 @@ export function generateMockTransaction(
 export function generateMockTransactions(
   categories: Category[],
   count: number = 50,
+  accounts?: Account[],
+  creditCards?: CreditCard[],
 ): Transaction[] {
   const transactions: Transaction[] = []
 
   for (let i = 0; i < count; i++) {
     // 70% despesas, 30% receitas para simular comportamento real
     const type = faker.number.float() < 0.7 ? 'expense' : 'income'
-    transactions.push(generateMockTransaction(categories, type))
+    transactions.push(
+      generateMockTransaction(categories, type, accounts, creditCards),
+    )
   }
 
   // Ordenar por data (mais recentes primeiro)
-  return transactions.sort((a, b) => b.date.getTime() - a.date.getTime())
+  return transactions.sort((a, b) => b.date - a.date)
 }
 
 /**
  * Gera uma conta mock
  */
+// Key mapping para configuração de contas por tipo
+const ACCOUNT_TYPE_CONFIG = {
+  bank: {
+    getName: () =>
+      `${faker.helpers.arrayElement(BRAZILIAN_BANKS)} - Conta Corrente`,
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'bank' as const,
+  },
+  credit_card: {
+    getName: () => `Cartão ${faker.helpers.arrayElement(BRAZILIAN_BANKS)}`,
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+  investment: {
+    getName: () => 'Conta Investimento',
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+  cash: {
+    getName: () => 'Dinheiro',
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+  other: {
+    getName: () => 'Conta Outros',
+    icon: '/icons/banks/c6bank.png',
+    iconType: 'generic' as const,
+  },
+} as const
+
 export function generateMockAccount(): Account {
   const type = faker.helpers.arrayElement(ACCOUNT_TYPES)
-  let name: string
-  let icon: string
-  let iconType: 'bank' | 'generic' = 'generic'
+  const config = ACCOUNT_TYPE_CONFIG[type] || ACCOUNT_TYPE_CONFIG.other
 
-  switch (type) {
-    case 'bank': {
-      const bankName = faker.helpers.arrayElement(BRAZILIAN_BANKS)
-      name = `${bankName} - Conta Corrente`
-      icon = '/icons/banks/c6bank.png'
-      iconType = 'bank'
-      break
-    }
-    case 'credit_card':
-      name = `Cartão ${faker.helpers.arrayElement(BRAZILIAN_BANKS)}`
-      icon = '/icons/banks/c6bank.png'
-      break
-    case 'investment':
-      name = 'Conta Investimento'
-      icon = '/icons/banks/c6bank.png'
-      break
-    case 'cash':
-      name = 'Dinheiro'
-      icon = '/icons/banks/c6bank.png'
-      break
-    default:
-      name = 'Conta Outros'
-      icon = '/icons/banks/c6bank.png'
-  }
+  const name = config.getName()
+  const icon = config.icon
+  const iconType = config.iconType
 
   const createdAt = faker.date.past({ years: 2 })
   const balance =
@@ -313,22 +409,18 @@ export function generateMockCreditCard(): CreditCard {
   const icon = BANK_NAME_TO_ID[bank]
   const iconType: 'bank' | 'generic' = 'bank'
 
+  // Key mapping para limites de cartão por tipo
+  const CARD_TYPE_LIMITS = {
+    Infinite: { min: 10000, max: 50000 },
+    Black: { min: 10000, max: 50000 },
+    Platinum: { min: 5000, max: 20000 },
+    Gold: { min: 2000, max: 10000 },
+  } as const
+
   // Limites realistas baseados no tipo do cartão
-  let limitRange: { min: number; max: number }
-  switch (cardType) {
-    case 'Infinite':
-    case 'Black':
-      limitRange = { min: 10000, max: 50000 }
-      break
-    case 'Platinum':
-      limitRange = { min: 5000, max: 20000 }
-      break
-    case 'Gold':
-      limitRange = { min: 2000, max: 10000 }
-      break
-    default:
-      limitRange = { min: 500, max: 5000 }
-  }
+  const limitRange = CARD_TYPE_LIMITS[
+    cardType as keyof typeof CARD_TYPE_LIMITS
+  ] || { min: 500, max: 5000 }
 
   const limit = faker.number.int(limitRange)
   // Saldo atual usado (0 a 80% do limite)
@@ -381,9 +473,14 @@ export function generateMockCreditCards(count: number = 3): CreditCard[] {
  */
 export function generateMockDataset() {
   const categories = generateMockCategories(12, true)
-  const transactions = generateMockTransactions(categories, 100)
   const accounts = generateMockAccounts(6)
   const creditCards = generateMockCreditCards(4)
+  const transactions = generateMockTransactions(
+    categories,
+    100,
+    accounts,
+    creditCards,
+  )
 
   return {
     categories,

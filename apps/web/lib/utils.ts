@@ -1,6 +1,2 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+// Re-exportação da função movida para o package @saas/utils
+export { cn } from '@saas/utils'
