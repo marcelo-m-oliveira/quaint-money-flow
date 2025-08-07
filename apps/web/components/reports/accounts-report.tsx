@@ -589,9 +589,12 @@ export function AccountsReport({ period }: AccountsReportProps) {
           {accountData.length > 0 ? (
             <div className="h-[400px] w-full">
               <ReactECharts
+                key={`${chartType}-${accountFilter}`}
                 option={chartType === 'doughnut' ? doughnutOptions : barOptions}
                 style={{ height: '100%', width: '100%' }}
                 opts={{ renderer: 'canvas' }}
+                notMerge={true}
+                lazyUpdate={true}
               />
             </div>
           ) : (
@@ -627,7 +630,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
                           <img
                             src={`/icons/banks/${item.icon}.png`}
                             alt={item.accountName}
-                            className="h-6 w-6 rounded"
+                            className="h-8 w-8 rounded-full object-cover"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
                               target.style.display = 'none'

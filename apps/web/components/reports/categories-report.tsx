@@ -508,11 +508,14 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
             <div className="flex min-h-[400px] items-center justify-center">
               <div className="h-[400px] w-full">
                 <ReactECharts
+                  key={`${chartType}-${transactionType}`}
                   option={
                     chartType === 'doughnut' ? doughnutOptions : lineOptions
                   }
                   style={{ height: '100%', width: '100%' }}
                   opts={{ renderer: 'canvas' }}
+                  notMerge={true}
+                  lazyUpdate={true}
                 />
               </div>
             </div>
