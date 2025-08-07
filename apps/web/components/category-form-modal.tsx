@@ -47,6 +47,7 @@ import {
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
+import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { CategoryFormSchema, categorySchema } from '@/lib/schemas'
 import { Category } from '@/lib/types'
 
@@ -164,6 +165,7 @@ export function CategoryFormModal({
   categoryType = 'expense',
   parentCategory,
 }: CategoryFormModalProps) {
+  const { warning } = useCrudToast()
   const {
     register,
     handleSubmit,
@@ -227,8 +229,7 @@ export function CategoryFormModal({
       )
 
       if (existingCategory) {
-        // TODO: Implementar toast para mostrar erro
-        console.error(
+        warning.constraint(
           'Já existe uma categoria com este nome no mesmo contexto.',
         )
         return

@@ -1,7 +1,7 @@
 'use client'
 
 import { formatCurrency, formatDate } from '@saas/utils'
-import { AlertTriangle, Calendar, Clock, ThumbsUp } from 'lucide-react'
+import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Transaction } from '@/lib/types'
@@ -46,13 +47,19 @@ export function BillsToReceiveCard({
   onEditTransaction,
 }: BillsToReceiveCardProps) {
   const { getCategoryIcon } = useFinancialData()
+  const { success, error } = useCrudToast()
   const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(5)
   const [visibleUpcomingReceivables, setVisibleUpcomingReceivables] =
     useState(5)
 
   const handleToggleReceivedStatus = (transactionId: string) => {
-    if (onUpdateTransaction) {
-      onUpdateTransaction(transactionId, { paid: true })
+    try {
+      if (onUpdateTransaction) {
+        onUpdateTransaction(transactionId, { paid: true })
+        success.update('Receita marcada como recebida')
+      }
+    } catch (err) {
+      error.update('Receita', 'Não foi possível marcar como recebida.')
     }
   }
 
@@ -168,14 +175,16 @@ export function BillsToReceiveCard({
                   return (
                     <div
                       key={receivable.id}
-                      className="flex cursor-pointer items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
-                      onClick={() => {
-                        if (onEditTransaction && transaction) {
-                          onEditTransaction(transaction)
-                        }
-                      }}
+                      className="flex  items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
                     >
-                      <div className="flex items-center gap-3">
+                      <div
+                        className="flex cursor-pointer items-center gap-3"
+                        onClick={() => {
+                          if (onEditTransaction && transaction) {
+                            onEditTransaction(transaction)
+                          }
+                        }}
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                           <div
                             className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -215,7 +224,7 @@ export function BillsToReceiveCard({
                                   }
                                   className="h-8 w-8 text-gray-400 hover:text-green-600"
                                 >
-                                  <ThumbsUp className="h-4 w-4" />
+                                  <ThumbsDown className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -292,14 +301,16 @@ export function BillsToReceiveCard({
                   return (
                     <div
                       key={receivable.id}
-                      className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                      onClick={() => {
-                        if (onEditTransaction && transaction) {
-                          onEditTransaction(transaction)
-                        }
-                      }}
+                      className="flex  items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                     >
-                      <div className="flex items-center gap-3">
+                      <div
+                        className="flex cursor-pointer items-center gap-3"
+                        onClick={() => {
+                          if (onEditTransaction && transaction) {
+                            onEditTransaction(transaction)
+                          }
+                        }}
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                           <div
                             className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -350,7 +361,7 @@ export function BillsToReceiveCard({
                                   }
                                   className="h-8 w-8 text-gray-400 hover:text-green-600"
                                 >
-                                  <ThumbsUp className="h-4 w-4" />
+                                  <ThumbsDown className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>

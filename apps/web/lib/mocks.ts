@@ -57,7 +57,6 @@ const INCOME_CATEGORIES = [
 // Tipos de conta
 const ACCOUNT_TYPES: Array<Account['type']> = [
   'bank',
-  'credit_card',
   'investment',
   'cash',
   'other',
