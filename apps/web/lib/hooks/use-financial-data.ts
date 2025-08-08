@@ -102,6 +102,17 @@ export function useFinancialData() {
         creditCardId: data.creditCardId || undefined,
         date: dateStringToTimestamp(data.date),
         paid: data.paid,
+        isRecurring: data.isRecurring,
+        recurringType: data.recurringType,
+        fixedFrequency: data.fixedFrequency,
+        installmentCount: data.installmentCount,
+        installmentPeriod: data.installmentPeriod,
+        // Para transações parceladas, definir currentInstallment como 1 se não foi especificado
+        currentInstallment:
+          data.recurringType === 'installment'
+            ? data.currentInstallment || 1
+            : data.currentInstallment,
+        parentTransactionId: data.parentTransactionId,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       }
@@ -132,6 +143,17 @@ export function useFinancialData() {
             creditCardId: data.creditCardId || undefined,
             date: dateStringToTimestamp(data.date),
             paid: data.paid,
+            isRecurring: data.isRecurring,
+            recurringType: data.recurringType,
+            fixedFrequency: data.fixedFrequency,
+            installmentCount: data.installmentCount,
+            installmentPeriod: data.installmentPeriod,
+            // Para transações parceladas, definir currentInstallment como 1 se não foi especificado
+            currentInstallment:
+              data.recurringType === 'installment'
+                ? data.currentInstallment || 1
+                : data.currentInstallment,
+            parentTransactionId: data.parentTransactionId,
             updatedAt: Date.now(),
           }
         }

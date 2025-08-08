@@ -64,6 +64,7 @@ import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { usePreferences } from '@/lib/hooks/use-preferences'
+import { useRecurringTransactions } from '@/lib/hooks/use-recurring-transactions'
 import { TransactionFormSchema } from '@/lib/schemas'
 import { Transaction } from '@/lib/types'
 
@@ -154,6 +155,9 @@ export default function TransacoesPage() {
 
   const { preferences, updatePreference } = usePreferences()
 
+  // Hook para processamento automático de transações recorrentes
+  const { updateRecurringTransactionStatus } = useRecurringTransactions()
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<
     Transaction | undefined
@@ -188,6 +192,8 @@ export default function TransacoesPage() {
   const [isFinancialSummaryExpanded, setIsFinancialSummaryExpanded] = useState(
     preferences.isFinancialSummaryExpanded,
   )
+
+  // Nota: O processamento de transações recorrentes é feito automaticamente pelo hook useRecurringTransactions
 
   // Função para alterar modo de visualização e salvar preferência
   const handleViewModeChange = (newViewMode: 'cashflow' | 'all') => {
@@ -470,7 +476,7 @@ export default function TransacoesPage() {
     setDeleteConfirmation({ isOpen: false, transactionId: null })
   }
 
-  const handleTogglePaidStatus = (transaction: Transaction) => {
+  const handleTogglePaidStatus = async (transaction: Transaction) => {
     try {
       // Apenas alterar o status de pagamento, preservando todos os outros dados
       const updatedData = {
@@ -482,9 +488,22 @@ export default function TransacoesPage() {
         creditCardId: transaction.creditCardId || undefined,
         date: timestampToDateString(transaction.date), // Converter timestamp para string de data
         paid: !transaction.paid,
+        // Preservar campos de recorrência
+        isRecurring: transaction.isRecurring,
+        recurringType: transaction.recurringType,
+        fixedFrequency: transaction.fixedFrequency,
+        installmentCount: transaction.installmentCount,
+        installmentPeriod: transaction.installmentPeriod,
+        currentInstallment: transaction.currentInstallment,
+        parentTransactionId: transaction.parentTransactionId,
       }
 
-      updateTransaction(transaction.id, updatedData)
+      await updateTransaction(transaction.id, updatedData)
+
+      // Se a transação foi marcada como paga e é recorrente, processar próximas ocorrências
+      if (!transaction.paid && transaction.isRecurring) {
+        await updateRecurringTransactionStatus(transaction.id, { paid: true })
+      }
     } catch (err) {
       error.update(
         'Status de pagamento',

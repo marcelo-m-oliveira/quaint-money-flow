@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Check, Save } from 'lucide-react'
+import { Check, Repeat, Save, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
@@ -13,7 +13,6 @@ import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
 import { Category, Transaction } from '@/lib/types'
 
 import { Button } from './ui/button'
-import { Checkbox } from './ui/checkbox'
 import { CurrencyInput } from './ui/currency-input'
 import { DatePicker } from './ui/date-picker'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
@@ -27,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select'
-import { Switch } from './ui/switch'
 
 interface TransactionFormModalProps {
   isOpen: boolean
@@ -122,6 +120,22 @@ export function TransactionFormModal({
       })
     }
   }, [transaction, type, reset])
+
+  // Observar mudanças no status de recorrência para limpar campos relacionados
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === 'isRecurring' && !value.isRecurring) {
+        // Limpar todos os campos de recorrência quando desmarcar
+        setValue('recurringType', undefined)
+        setValue('fixedFrequency', undefined)
+        setValue('installmentCount', undefined)
+        setValue('installmentPeriod', undefined)
+        setValue('currentInstallment', undefined)
+        setValue('parentTransactionId', undefined)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [watch, setValue])
 
   const handleFormSubmit = (
     data: TransactionFormSchema,
@@ -397,56 +411,64 @@ export function TransactionFormModal({
             </div>
           </div>
 
-          {/* Status de Pagamento */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Controller
-                name="paid"
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <Checkbox
-                    id="paid"
-                    checked={value}
-                    onCheckedChange={onChange}
-                  />
-                )}
-              />
-              <Label
-                htmlFor="paid"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                {type === 'income' ? 'Receita recebida' : 'Despesa paga'}
-              </Label>
+          {/* Controles de Status */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-6">
+              {/* Status de Pagamento */}
+              <div className="flex items-center space-x-2">
+                <Controller
+                  name="paid"
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <Button
+                      type="button"
+                      variant={value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => onChange(!value)}
+                      className={`h-8 px-3 ${value ? 'bg-green-600 text-white hover:bg-green-700' : 'hover:border-green-300 hover:bg-green-100 hover:text-green-700'}`}
+                    >
+                      {value ? (
+                        <ThumbsUp className="mr-1 h-4 w-4" />
+                      ) : (
+                        <ThumbsDown className="mr-1 h-4 w-4" />
+                      )}
+                      {value ? 'Pago' : 'Não pago'}
+                    </Button>
+                  )}
+                />
+              </div>
+
+              {/* Status de Recorrência */}
+              <div className="flex items-center space-x-2">
+                <Controller
+                  name="isRecurring"
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <Button
+                      type="button"
+                      variant={value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => onChange(!value)}
+                      className={`h-8 px-3 ${value ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:border-blue-300 hover:bg-blue-100 hover:text-blue-700'}`}
+                    >
+                      <Repeat className="mr-1 h-4 w-4" />
+                      {value ? 'Recorrente' : 'Única'}
+                    </Button>
+                  )}
+                />
+              </div>
             </div>
           </div>
 
           {/* Configurações de Recorrência */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Controller
-                name="isRecurring"
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <Switch
-                    id="isRecurring"
-                    checked={value}
-                    onCheckedChange={onChange}
-                  />
-                )}
-              />
-              <Label
-                htmlFor="isRecurring"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Transação recorrente
-              </Label>
-            </div>
-
             {/* Opções de recorrência - só aparecem se isRecurring for true */}
             {watch('isRecurring') && (
               <div className="space-y-4 rounded-lg border p-4">
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Tipo de recorrência</Label>
+                  <Label className="text-sm font-medium">
+                    Tipo de recorrência
+                  </Label>
                   <Controller
                     name="recurringType"
                     control={control}
@@ -458,13 +480,22 @@ export function TransactionFormModal({
                       >
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="fixed" id="fixed" />
-                          <Label htmlFor="fixed" className="text-sm font-normal">
+                          <Label
+                            htmlFor="fixed"
+                            className="text-sm font-normal"
+                          >
                             É uma despesa fixa
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="installment" id="installment" />
-                          <Label htmlFor="installment" className="text-sm font-normal">
+                          <RadioGroupItem
+                            value="installment"
+                            id="installment"
+                          />
+                          <Label
+                            htmlFor="installment"
+                            className="text-sm font-normal"
+                          >
                             É um lançamento parcelado
                           </Label>
                         </div>
@@ -476,12 +507,27 @@ export function TransactionFormModal({
                 {/* Configurações para despesa fixa */}
                 {watch('recurringType') === 'fixed' && (
                   <div className="space-y-2">
-                    <Label htmlFor="fixedFrequency" className="text-sm font-medium">
+                    <Label
+                      htmlFor="fixedFrequency"
+                      className="text-sm font-medium"
+                    >
                       Frequência
                     </Label>
                     <Select
                       value={watch('fixedFrequency') || ''}
-                      onValueChange={(value) => setValue('fixedFrequency', value as any)}
+                      onValueChange={(value) =>
+                        setValue(
+                          'fixedFrequency',
+                          value as
+                            | 'daily'
+                            | 'weekly'
+                            | 'biweekly'
+                            | 'monthly'
+                            | 'quarterly'
+                            | 'semiannual'
+                            | 'annual',
+                        )
+                      }
                     >
                       <SelectTrigger className="h-12">
                         <SelectValue placeholder="Selecione a frequência..." />
@@ -503,23 +549,33 @@ export function TransactionFormModal({
                 {watch('recurringType') === 'installment' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="installmentCount" className="text-sm font-medium">
+                      <Label
+                        htmlFor="installmentCount"
+                        className="text-sm font-medium"
+                      >
                         Número de parcelas
                       </Label>
                       <Select
                         value={watch('installmentCount')?.toString() || ''}
-                        onValueChange={(value) => setValue('installmentCount', parseInt(value))}
+                        onValueChange={(value) =>
+                          setValue('installmentCount', parseInt(value))
+                        }
                       >
                         <SelectTrigger className="h-12">
                           <SelectValue placeholder="Selecione o número de parcelas..." />
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
-                          {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num} {num === 1 ? 'parcela' : 'parcelas'}
-                            </SelectItem>
-                          ))}
-                          {[30, 36, 48, 60, 72, 84, 96, 120, 180, 240, 360, 480, 500].map((num) => (
+                          {Array.from({ length: 24 }, (_, i) => i + 1).map(
+                            (num) => (
+                              <SelectItem key={num} value={num.toString()}>
+                                {num} {num === 1 ? 'parcela' : 'parcelas'}
+                              </SelectItem>
+                            ),
+                          )}
+                          {[
+                            30, 36, 48, 60, 72, 84, 96, 120, 180, 240, 360, 480,
+                            500,
+                          ].map((num) => (
                             <SelectItem key={num} value={num.toString()}>
                               {num} parcelas
                             </SelectItem>
@@ -528,12 +584,28 @@ export function TransactionFormModal({
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="installmentPeriod" className="text-sm font-medium">
+                      <Label
+                        htmlFor="installmentPeriod"
+                        className="text-sm font-medium"
+                      >
                         Período entre parcelas
                       </Label>
                       <Select
                         value={watch('installmentPeriod') || ''}
-                        onValueChange={(value) => setValue('installmentPeriod', value as any)}
+                        onValueChange={(value) =>
+                          setValue(
+                            'installmentPeriod',
+                            value as
+                              | 'days'
+                              | 'weeks'
+                              | 'biweeks'
+                              | 'months'
+                              | 'bimonths'
+                              | 'quarters'
+                              | 'semesters'
+                              | 'years',
+                          )
+                        }
                       >
                         <SelectTrigger className="h-12">
                           <SelectValue placeholder="Selecione o período..." />
@@ -554,15 +626,24 @@ export function TransactionFormModal({
                 )}
 
                 {/* Informação sobre divisão do valor para parcelado */}
-                {watch('recurringType') === 'installment' && watch('installmentCount') && watch('amount') && (
-                  <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-950 dark:text-blue-200">
-                    <p className="font-medium">Valor por parcela:</p>
-                    <p>
-                      R$ {(parseFloat(watch('amount').replace(',', '.')) / (watch('installmentCount') || 1)).toFixed(2).replace('.', ',')}
-                      {' × '}{watch('installmentCount')} parcelas
-                    </p>
-                  </div>
-                )}
+                {watch('recurringType') === 'installment' &&
+                  watch('installmentCount') &&
+                  watch('amount') && (
+                    <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                      <p className="font-medium">Valor por parcela:</p>
+                      <p>
+                        R${' '}
+                        {(
+                          parseFloat(watch('amount').replace(',', '.')) /
+                          (watch('installmentCount') || 1)
+                        )
+                          .toFixed(2)
+                          .replace('.', ',')}
+                        {' × '}
+                        {watch('installmentCount')} parcelas
+                      </p>
+                    </div>
+                  )}
               </div>
             )}
           </div>

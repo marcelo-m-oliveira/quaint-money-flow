@@ -54,8 +54,21 @@ export function BillsToPayCard({
   const handleTogglePaidStatus = (transactionId: string) => {
     try {
       if (onUpdateTransaction) {
-        onUpdateTransaction(transactionId, { paid: true })
-        success.update('Pagamento')
+        const transaction = transactions.find((t) => t.id === transactionId)
+        if (transaction) {
+          // Preservar todos os dados de recorrência ao alterar o status
+          onUpdateTransaction(transactionId, {
+            paid: true,
+            isRecurring: transaction.isRecurring,
+            recurringType: transaction.recurringType,
+            fixedFrequency: transaction.fixedFrequency,
+            installmentCount: transaction.installmentCount,
+            installmentPeriod: transaction.installmentPeriod,
+            currentInstallment: transaction.currentInstallment,
+            parentTransactionId: transaction.parentTransactionId,
+          })
+          success.update('Pagamento')
+        }
       }
     } catch (err) {
       error.update('Pagamento', 'Não foi possível marcar como pago.')

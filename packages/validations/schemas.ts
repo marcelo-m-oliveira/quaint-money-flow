@@ -27,7 +27,7 @@ export const transactionSchema = z
     date: z.string().min(1, 'Data é obrigatória'),
     paid: z.boolean(), // Indica se o lançamento foi pago ou não
     // Campos de recorrência
-    isRecurring: z.boolean().default(false), // Indica se a transação é recorrente
+    isRecurring: z.boolean().optional(), // Indica se a transação é recorrente
     recurringType: z.enum(['fixed', 'installment']).optional(), // Tipo de recorrência: fixo ou parcelado
     // Para transações fixas
     fixedFrequency: z

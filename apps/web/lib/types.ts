@@ -25,10 +25,25 @@ export interface Transaction {
   isRecurring?: boolean // Indica se a transação é recorrente
   recurringType?: 'fixed' | 'installment' // Tipo de recorrência: fixo ou parcelado
   // Para transações fixas
-  fixedFrequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  fixedFrequency?:
+    | 'daily'
+    | 'weekly'
+    | 'biweekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'semiannual'
+    | 'annual'
   // Para transações parceladas
   installmentCount?: number // Número de parcelas (1-500)
-  installmentPeriod?: 'days' | 'weeks' | 'biweeks' | 'months' | 'bimonths' | 'quarters' | 'semesters' | 'years' // Período entre parcelas
+  installmentPeriod?:
+    | 'days'
+    | 'weeks'
+    | 'biweeks'
+    | 'months'
+    | 'bimonths'
+    | 'quarters'
+    | 'semesters'
+    | 'years' // Período entre parcelas
   currentInstallment?: number // Parcela atual (para controle)
   parentTransactionId?: string // ID da transação pai (para parcelas filhas)
 }
@@ -46,10 +61,25 @@ export interface TransactionFormData {
   isRecurring?: boolean // Indica se a transação é recorrente
   recurringType?: 'fixed' | 'installment' // Tipo de recorrência: fixo ou parcelado
   // Para transações fixas
-  fixedFrequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  fixedFrequency?:
+    | 'daily'
+    | 'weekly'
+    | 'biweekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'semiannual'
+    | 'annual'
   // Para transações parceladas
   installmentCount?: number // Número de parcelas (1-500)
-  installmentPeriod?: 'days' | 'weeks' | 'biweeks' | 'months' | 'bimonths' | 'quarters' | 'semesters' | 'years' // Período entre parcelas
+  installmentPeriod?:
+    | 'days'
+    | 'weeks'
+    | 'biweeks'
+    | 'months'
+    | 'bimonths'
+    | 'quarters'
+    | 'semesters'
+    | 'years' // Período entre parcelas
   currentInstallment?: number // Parcela atual (para controle)
   parentTransactionId?: string // ID da transação pai (para parcelas filhas)
 }
