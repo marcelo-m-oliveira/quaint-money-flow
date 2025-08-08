@@ -85,7 +85,7 @@ importers:
         specifier: ^9.0.6
         version: 9.0.10
       '@types/node':
-        specifier: ^22.5.4
+        specifier: ^22.17.1
         version: 22.17.1
       dotenv-cli:
         specifier: ^7.4.1

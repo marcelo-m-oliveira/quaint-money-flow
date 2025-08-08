@@ -19,9 +19,7 @@ export const env = createEnv({
     // DB
     DATABASE_URL: z
       .url()
-      .default(
-        'postgresql://postgres:postgres@localhost:5432/saas-quaint-money',
-      ),
+      .default('postgresql://docker:docker@localhost:5432/saas-quaint-money'),
 
     // JWT
     JWT_SECRET: z

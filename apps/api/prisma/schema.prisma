@@ -2,81 +2,87 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["auth", "finance"]
 }
 
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String
+  password  String // Campo para autenticação
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  accounts    Account[]
-  creditCards CreditCard[]
-  categories  Category[]
+  accounts     Account[]
+  creditCards  CreditCard[]
+  categories   Category[]
   transactions Transaction[]
-  preferences UserPreferences?
+  preferences  UserPreferences?
 
   @@map("users")
+  @@schema("auth")
 }
 
 model Account {
-  id                      String  @id @default(cuid())
+  id                      String      @id @default(cuid())
   name                    String
   type                    AccountType
   icon                    String
-  iconType                IconType
-  includeInGeneralBalance Boolean @default(true)
+  iconType                IconType    @default(generic)
+  includeInGeneralBalance Boolean     @default(true)
+  userId                  String
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  // Relacionamentos
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions       Transaction[]
+  creditCardPayments CreditCard[]  @relation("DefaultPaymentAccount")
+
+  @@map("accounts")
+  @@schema("finance")
+}
+
+model CreditCard {
+  id                      String   @id @default(cuid())
+  name                    String
+  icon                    String
+  iconType                IconType @default(generic)
+  limit                   Decimal  @db.Decimal(10, 2)
+  closingDay              Int
+  dueDay                  Int
+  defaultPaymentAccountId String?
   userId                  String
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
   // Relacionamentos
-  user                    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions            Transaction[]
-  creditCardPayments      CreditCard[]  @relation("DefaultPaymentAccount")
-
-  @@map("accounts")
-}
-
-model CreditCard {
-  id                       String   @id @default(cuid())
-  name                     String
-  icon                     String
-  iconType                 IconType
-  limit                    Decimal  @db.Decimal(10, 2)
-  closingDay               Int
-  dueDay                   Int
-  defaultPaymentAccountId  String?
-  userId                   String
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
-
-  // Relacionamentos
-  user                     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  defaultPaymentAccount    Account?      @relation("DefaultPaymentAccount", fields: [defaultPaymentAccountId], references: [id])
-  transactions             Transaction[]
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultPaymentAccount Account?      @relation("DefaultPaymentAccount", fields: [defaultPaymentAccountId], references: [id])
+  transactions          Transaction[]
 
   @@map("credit_cards")
+  @@schema("finance")
 }
 
 model Category {
-  id        String      @id @default(cuid())
+  id        String          @id @default(cuid())
   name      String
   color     String
   type      TransactionType
   icon      String
   parentId  String?
   userId    String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   // Relacionamentos
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -85,6 +91,7 @@ model Category {
   transactions Transaction[]
 
   @@map("categories")
+  @@schema("finance")
 }
 
 model Transaction {
@@ -108,70 +115,78 @@ model Transaction {
   creditCard CreditCard? @relation(fields: [creditCardId], references: [id])
 
   @@map("transactions")
+  @@schema("finance")
 }
 
 model UserPreferences {
-  id                          String                    @id @default(cuid())
-  transactionOrder            TransactionOrder          @default(DESCENDING)
-  defaultNavigationPeriod     NavigationPeriod          @default(MONTHLY)
-  showDailyBalance            Boolean                   @default(false)
-  viewMode                    ViewMode                  @default(ALL)
-  isFinancialSummaryExpanded  Boolean                   @default(false)
-  userId                      String                    @unique
-  createdAt                   DateTime                  @default(now())
-  updatedAt                   DateTime                  @updatedAt
+  id                         String           @id @default(cuid())
+  transactionOrder           TransactionOrder @default(decrescente)
+  defaultNavigationPeriod    NavigationPeriod @default(mensal)
+  showDailyBalance           Boolean          @default(false)
+  viewMode                   ViewMode         @default(all)
+  isFinancialSummaryExpanded Boolean          @default(false)
+  userId                     String           @unique
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
 
   // Relacionamentos
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
+  @@schema("finance")
 }
 
 // Enums
 enum AccountType {
-  BANK
-  CREDIT_CARD
-  INVESTMENT
-  CASH
-  OTHER
+  bank
+  credit_card
+  investment
+  cash
+  other
 
   @@map("account_type")
+  @@schema("finance")
 }
 
 enum IconType {
-  BANK
-  GENERIC
+  bank
+  generic
 
   @@map("icon_type")
+  @@schema("finance")
 }
 
 enum TransactionType {
-  INCOME
-  EXPENSE
+  income
+  expense
 
   @@map("transaction_type")
+  @@schema("finance")
 }
 
 enum TransactionOrder {
-  ASCENDING
-  DESCENDING
+  crescente
+  decrescente
 
   @@map("transaction_order")
+  @@schema("finance")
 }
 
 enum NavigationPeriod {
-  DAILY
-  WEEKLY
-  MONTHLY
-  QUARTERLY
-  YEARLY
+  diario
+  semanal
+  mensal
+  trimestral
+  anual
 
   @@map("navigation_period")
+  @@schema("finance")
 }
 
 enum ViewMode {
-  ALL
-  CASHFLOW
+  all
+  cashflow
 
   @@map("view_mode")
+  @@schema("finance")
 }

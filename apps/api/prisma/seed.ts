@@ -12,6 +12,7 @@ async function main() {
     create: {
       email: 'user@example.com',
       name: 'Usuário Exemplo',
+      password: '$2b$10$example.hash.for.development', // Hash de exemplo para desenvolvimento
     },
   })
 
@@ -28,14 +29,14 @@ async function main() {
   for (const category of incomeCategories) {
     await prisma.category.upsert({
       where: {
-        id: `income-${category.name.toLowerCase()}-${user.id}`,
+        id: user.id,
       },
       update: {},
       create: {
-        id: `income-${category.name.toLowerCase()}-${user.id}`,
+        id: user.id,
         name: category.name,
         color: category.color,
-        type: 'INCOME',
+        type: 'income',
         icon: category.icon,
         userId: user.id,
       },
@@ -56,14 +57,14 @@ async function main() {
   for (const category of expenseCategories) {
     await prisma.category.upsert({
       where: {
-        id: `expense-${category.name.toLowerCase()}-${user.id}`,
+        id: user.id,
       },
       update: {},
       create: {
-        id: `expense-${category.name.toLowerCase()}-${user.id}`,
+        id: user.id,
         name: category.name,
         color: category.color,
-        type: 'EXPENSE',
+        type: 'expense',
         icon: category.icon,
         userId: user.id,
       },
@@ -74,14 +75,14 @@ async function main() {
 
   // Criar conta padrão
   const account = await prisma.account.upsert({
-    where: { id: `default-account-${user.id}` },
+    where: { id: user.id },
     update: {},
     create: {
-      id: `default-account-${user.id}`,
+      id: user.id,
       name: 'Conta Corrente',
-      type: 'BANK',
+      type: 'bank',
       icon: 'bank',
-      iconType: 'BANK',
+      iconType: 'bank',
       includeInGeneralBalance: true,
       userId: user.id,
     },
@@ -95,10 +96,10 @@ async function main() {
     update: {},
     create: {
       userId: user.id,
-      transactionOrder: 'DESCENDING',
-      defaultNavigationPeriod: 'MONTHLY',
+      transactionOrder: 'decrescente',
+      defaultNavigationPeriod: 'mensal',
       showDailyBalance: false,
-      viewMode: 'ALL',
+      viewMode: 'all',
       isFinancialSummaryExpanded: false,
     },
   })
@@ -111,7 +112,6 @@ async function main() {
 main()
   .catch((e) => {
     console.error('❌ Error during seed:', e)
-    process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
