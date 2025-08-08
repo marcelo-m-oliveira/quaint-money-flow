@@ -122,7 +122,7 @@ export function useFinancialData() {
     try {
       const updatedTransactions = transactions.map((transaction) => {
         if (transaction.id === id) {
-          const updatedTransaction = {
+          return {
             ...transaction,
             description: data.description,
             amount: parseFloat(data.amount),
@@ -134,7 +134,6 @@ export function useFinancialData() {
             paid: data.paid,
             updatedAt: Date.now(),
           }
-          return updatedTransaction
         }
         return transaction
       })
@@ -306,7 +305,7 @@ export function useFinancialData() {
       )
 
       if (hasTransactions) {
-        warning(
+        warning.validation(
           'Não é possível deletar uma categoria que possui transações associadas.',
         )
         return

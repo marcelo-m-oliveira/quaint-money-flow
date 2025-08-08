@@ -21,6 +21,16 @@ export interface Transaction {
   paid: boolean // Indica se o lançamento foi pago ou não
   createdAt: number // Timestamp em milissegundos
   updatedAt: number // Timestamp em milissegundos
+  // Campos de recorrência
+  isRecurring?: boolean // Indica se a transação é recorrente
+  recurringType?: 'fixed' | 'installment' // Tipo de recorrência: fixo ou parcelado
+  // Para transações fixas
+  fixedFrequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  // Para transações parceladas
+  installmentCount?: number // Número de parcelas (1-500)
+  installmentPeriod?: 'days' | 'weeks' | 'biweeks' | 'months' | 'bimonths' | 'quarters' | 'semesters' | 'years' // Período entre parcelas
+  currentInstallment?: number // Parcela atual (para controle)
+  parentTransactionId?: string // ID da transação pai (para parcelas filhas)
 }
 
 export interface TransactionFormData {
@@ -32,6 +42,16 @@ export interface TransactionFormData {
   creditCardId?: string // ID do cartão de crédito relacionado
   date: string
   paid: boolean // Indica se o lançamento foi pago ou não
+  // Campos de recorrência
+  isRecurring?: boolean // Indica se a transação é recorrente
+  recurringType?: 'fixed' | 'installment' // Tipo de recorrência: fixo ou parcelado
+  // Para transações fixas
+  fixedFrequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  // Para transações parceladas
+  installmentCount?: number // Número de parcelas (1-500)
+  installmentPeriod?: 'days' | 'weeks' | 'biweeks' | 'months' | 'bimonths' | 'quarters' | 'semesters' | 'years' // Período entre parcelas
+  currentInstallment?: number // Parcela atual (para controle)
+  parentTransactionId?: string // ID da transação pai (para parcelas filhas)
 }
 
 export interface CategoryFormData {

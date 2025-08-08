@@ -13,6 +13,7 @@ import {
   Edit,
   Eye,
   Plus,
+  Repeat,
   Search,
   ThumbsDown,
   ThumbsUp,
@@ -109,6 +110,34 @@ function getEndOfDay(date: Date): Date {
   return end
 }
 
+// Função para formatar informações de recorrência
+function formatRecurringInfo(transaction: Transaction): string | null {
+  if (!transaction.isRecurring) return null
+
+  if (transaction.recurringType === 'fixed' && transaction.fixedFrequency) {
+    const frequencyMap = {
+      daily: 'Diário',
+      weekly: 'Semanal',
+      biweekly: 'Quinzenal',
+      monthly: 'Mensal',
+      quarterly: 'Trimestral',
+      semiannual: 'Semestral',
+      annual: 'Anual',
+    }
+    return `Fixo ${frequencyMap[transaction.fixedFrequency]}`
+  }
+
+  if (
+    transaction.recurringType === 'installment' &&
+    transaction.installmentCount &&
+    transaction.currentInstallment
+  ) {
+    return `${transaction.currentInstallment}/${transaction.installmentCount} parcelas`
+  }
+
+  return 'Recorrente'
+}
+
 export default function TransacoesPage() {
   const {
     categories,
@@ -121,7 +150,7 @@ export default function TransacoesPage() {
 
   const { accounts } = useAccounts()
   const { creditCards } = useCreditCards()
-  const { success, error } = useCrudToast()
+  const { error } = useCrudToast()
 
   const { preferences, updatePreference } = usePreferences()
 
@@ -456,10 +485,6 @@ export default function TransacoesPage() {
       }
 
       updateTransaction(transaction.id, updatedData)
-
-      const statusText = !transaction.paid ? 'pago' : 'não pago'
-      const entityType = transaction.type === 'income' ? 'Receita' : 'Despesa'
-      success.update(`${entityType} marcada como ${statusText}`)
     } catch (err) {
       error.update(
         'Status de pagamento',
@@ -913,6 +938,18 @@ export default function TransacoesPage() {
                                         {transaction.category.name}
                                       </span>
                                     </div>
+                                    {/* Informação de recorrência */}
+                                    {transaction.isRecurring && (
+                                      <>
+                                        <span className="text-xs">•</span>
+                                        <div className="flex items-center gap-1">
+                                          <Repeat className="h-3 w-3" />
+                                          <span className="text-xs">
+                                            {formatRecurringInfo(transaction)}
+                                          </span>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               </div>

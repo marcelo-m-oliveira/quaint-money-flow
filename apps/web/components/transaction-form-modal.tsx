@@ -19,6 +19,7 @@ import { DatePicker } from './ui/date-picker'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
+import { RadioGroup, RadioGroupItem } from './ui/radio-group'
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select'
+import { Switch } from './ui/switch'
 
 interface TransactionFormModalProps {
   isOpen: boolean
@@ -70,6 +72,13 @@ export function TransactionFormModal({
       creditCardId: '',
       date: formatDateForInput(new Date()),
       paid: false,
+      isRecurring: false,
+      recurringType: undefined,
+      fixedFrequency: undefined,
+      installmentCount: undefined,
+      installmentPeriod: undefined,
+      currentInstallment: undefined,
+      parentTransactionId: undefined,
     },
   })
 
@@ -85,6 +94,13 @@ export function TransactionFormModal({
         creditCardId: transaction.creditCardId || '',
         date: timestampToDateString(transaction.date),
         paid: transaction.paid || false,
+        isRecurring: transaction.isRecurring || false,
+        recurringType: transaction.recurringType,
+        fixedFrequency: transaction.fixedFrequency,
+        installmentCount: transaction.installmentCount,
+        installmentPeriod: transaction.installmentPeriod,
+        currentInstallment: transaction.currentInstallment,
+        parentTransactionId: transaction.parentTransactionId,
       })
     } else {
       reset({
@@ -96,6 +112,13 @@ export function TransactionFormModal({
         creditCardId: '',
         date: formatDateForInput(new Date()),
         paid: false,
+        isRecurring: false,
+        recurringType: undefined,
+        fixedFrequency: undefined,
+        installmentCount: undefined,
+        installmentPeriod: undefined,
+        currentInstallment: undefined,
+        parentTransactionId: undefined,
       })
     }
   }, [transaction, type, reset])
@@ -120,6 +143,13 @@ export function TransactionFormModal({
         creditCardId: '',
         date: formatDateForInput(new Date()),
         paid: false,
+        isRecurring: false,
+        recurringType: undefined,
+        fixedFrequency: undefined,
+        installmentCount: undefined,
+        installmentPeriod: undefined,
+        currentInstallment: undefined,
+        parentTransactionId: undefined,
       })
     }
   }
@@ -388,6 +418,153 @@ export function TransactionFormModal({
                 {type === 'income' ? 'Receita recebida' : 'Despesa paga'}
               </Label>
             </div>
+          </div>
+
+          {/* Configurações de Recorrência */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Controller
+                name="isRecurring"
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <Switch
+                    id="isRecurring"
+                    checked={value}
+                    onCheckedChange={onChange}
+                  />
+                )}
+              />
+              <Label
+                htmlFor="isRecurring"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Transação recorrente
+              </Label>
+            </div>
+
+            {/* Opções de recorrência - só aparecem se isRecurring for true */}
+            {watch('isRecurring') && (
+              <div className="space-y-4 rounded-lg border p-4">
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Tipo de recorrência</Label>
+                  <Controller
+                    name="recurringType"
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <RadioGroup
+                        value={value || ''}
+                        onValueChange={onChange}
+                        className="flex flex-col space-y-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="fixed" id="fixed" />
+                          <Label htmlFor="fixed" className="text-sm font-normal">
+                            É uma despesa fixa
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="installment" id="installment" />
+                          <Label htmlFor="installment" className="text-sm font-normal">
+                            É um lançamento parcelado
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    )}
+                  />
+                </div>
+
+                {/* Configurações para despesa fixa */}
+                {watch('recurringType') === 'fixed' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="fixedFrequency" className="text-sm font-medium">
+                      Frequência
+                    </Label>
+                    <Select
+                      value={watch('fixedFrequency') || ''}
+                      onValueChange={(value) => setValue('fixedFrequency', value as any)}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Selecione a frequência..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Diário</SelectItem>
+                        <SelectItem value="weekly">Semanal</SelectItem>
+                        <SelectItem value="biweekly">Quinzenal</SelectItem>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                        <SelectItem value="quarterly">Trimestral</SelectItem>
+                        <SelectItem value="semiannual">Semestral</SelectItem>
+                        <SelectItem value="annual">Anual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Configurações para lançamento parcelado */}
+                {watch('recurringType') === 'installment' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="installmentCount" className="text-sm font-medium">
+                        Número de parcelas
+                      </Label>
+                      <Select
+                        value={watch('installmentCount')?.toString() || ''}
+                        onValueChange={(value) => setValue('installmentCount', parseInt(value))}
+                      >
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Selecione o número de parcelas..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num} {num === 1 ? 'parcela' : 'parcelas'}
+                            </SelectItem>
+                          ))}
+                          {[30, 36, 48, 60, 72, 84, 96, 120, 180, 240, 360, 480, 500].map((num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num} parcelas
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="installmentPeriod" className="text-sm font-medium">
+                        Período entre parcelas
+                      </Label>
+                      <Select
+                        value={watch('installmentPeriod') || ''}
+                        onValueChange={(value) => setValue('installmentPeriod', value as any)}
+                      >
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Selecione o período..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="days">Dias</SelectItem>
+                          <SelectItem value="weeks">Semanas</SelectItem>
+                          <SelectItem value="biweeks">Quinzenas</SelectItem>
+                          <SelectItem value="months">Meses</SelectItem>
+                          <SelectItem value="bimonths">Bimestres</SelectItem>
+                          <SelectItem value="quarters">Trimestres</SelectItem>
+                          <SelectItem value="semesters">Semestres</SelectItem>
+                          <SelectItem value="years">Anos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Informação sobre divisão do valor para parcelado */}
+                {watch('recurringType') === 'installment' && watch('installmentCount') && watch('amount') && (
+                  <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                    <p className="font-medium">Valor por parcela:</p>
+                    <p>
+                      R$ {(parseFloat(watch('amount').replace(',', '.')) / (watch('installmentCount') || 1)).toFixed(2).replace('.', ',')}
+                      {' × '}{watch('installmentCount')} parcelas
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Footer com botões */}

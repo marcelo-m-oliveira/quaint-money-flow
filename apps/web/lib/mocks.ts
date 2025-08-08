@@ -284,6 +284,72 @@ export function generateMockTransaction(
     paid = true
   }
 
+  // Gerar campos de recorrência (30% das transações serão recorrentes)
+  const isRecurring = faker.number.float() < 0.3
+  let recurringType: 'fixed' | 'installment' | undefined
+  let fixedFrequency:
+    | 'daily'
+    | 'weekly'
+    | 'biweekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'semiannual'
+    | 'annual'
+    | undefined
+  let installmentCount: number | undefined
+  let installmentPeriod:
+    | 'days'
+    | 'weeks'
+    | 'biweeks'
+    | 'months'
+    | 'bimonths'
+    | 'quarters'
+    | 'semesters'
+    | 'years'
+    | undefined
+  let currentInstallment: number | undefined
+  let parentTransactionId: string | undefined
+
+  if (isRecurring) {
+    // 60% fixo, 40% parcelado
+    recurringType = faker.helpers.weightedArrayElement([
+      { weight: 6, value: 'fixed' as const },
+      { weight: 4, value: 'installment' as const },
+    ])
+
+    if (recurringType === 'fixed') {
+      // Para transações fixas, definir frequência
+      fixedFrequency = faker.helpers.arrayElement([
+        'monthly',
+        'quarterly',
+        'semiannual',
+        'annual',
+        'weekly',
+        'biweekly',
+        'daily',
+      ])
+    } else {
+      // Para transações parceladas
+      installmentCount = faker.number.int({ min: 2, max: 24 })
+      installmentPeriod = faker.helpers.arrayElement([
+        'months',
+        'weeks',
+        'biweeks',
+        'quarters',
+        'semesters',
+        'years',
+        'days',
+        'bimonths',
+      ])
+      currentInstallment = faker.number.int({ min: 1, max: installmentCount })
+
+      // Para parcelas, pode ter um parentTransactionId (simulando que é uma parcela de uma transação maior)
+      if (faker.datatype.boolean()) {
+        parentTransactionId = faker.string.uuid()
+      }
+    }
+  }
+
   return {
     id: faker.string.uuid(),
     description,
@@ -297,6 +363,13 @@ export function generateMockTransaction(
     createdAt,
     paid,
     updatedAt: createdAt,
+    isRecurring,
+    recurringType,
+    fixedFrequency,
+    installmentCount,
+    installmentPeriod,
+    currentInstallment,
+    parentTransactionId,
   }
 }
 
