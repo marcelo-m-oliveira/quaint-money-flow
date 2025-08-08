@@ -7,6 +7,7 @@ import { useFinancialData } from './use-financial-data'
 /**
  * Hook para gerenciar transações recorrentes
  * Integra o serviço de transações recorrentes com o sistema de dados financeiros
+ * Inclui processamento automático de renovações de receitas fixas por 3 anos
  */
 export function useRecurringTransactions() {
   const {
@@ -18,6 +19,7 @@ export function useRecurringTransactions() {
 
   /**
    * Processa todas as transações recorrentes e cria as próximas ocorrências
+   * Inclui renovação automática de receitas fixas por 3 anos
    */
   const processRecurringTransactions = useCallback(() => {
     try {
@@ -108,19 +110,74 @@ export function useRecurringTransactions() {
 
         // Salvar diretamente no localStorage sem toast
         const currentTransactions = JSON.parse(
-          localStorage.getItem('financial-data-transactions') || '[]',
+          localStorage.getItem('quaint-money-transactions') || '[]',
         )
         const updatedTransactions = [...currentTransactions, newTransaction]
         localStorage.setItem(
-          'financial-data-transactions',
+          'quaint-money-transactions',
           JSON.stringify(updatedTransactions),
         )
       } catch (error) {
         console.error('Erro ao adicionar transação silenciosamente:', error)
       }
     },
-    [],
+    [transactions],
   )
+
+  /**
+   * Processa renovações automáticas para receitas fixas
+   * Este método é chamado automaticamente quando necessário
+   */
+  const processAutomaticRenewals = useCallback(() => {
+    try {
+      const renewedTransactions =
+        RecurringTransactionsService.processAutomaticRenewals(transactions)
+
+      if (renewedTransactions.length > 0) {
+        // Adicionar as transações renovadas silenciosamente
+        renewedTransactions.forEach((transaction) => {
+          const newTransaction = {
+            ...transaction,
+            id: `${transaction.parentTransactionId || transaction.id}_${transaction.date}`,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          }
+
+          // Salvar diretamente no localStorage sem toast
+          try {
+            const currentTransactions = JSON.parse(
+              localStorage.getItem('quaint-money-transactions') || '[]',
+            )
+            const updatedTransactions = [...currentTransactions, newTransaction]
+            localStorage.setItem(
+              'quaint-money-transactions',
+              JSON.stringify(updatedTransactions),
+            )
+          } catch (error) {
+            console.error('Erro ao adicionar transação renovada:', error)
+          }
+        })
+
+        console.log(
+          `${renewedTransactions.length} receitas fixas foram renovadas automaticamente por mais 3 anos`,
+        )
+      }
+    } catch (error) {
+      console.error('Erro ao processar renovações automáticas:', error)
+    }
+  }, [transactions])
+
+  /**
+   * Processar transações recorrentes na inicialização
+   * TEMPORARIAMENTE DESABILITADO para evitar loops infinitos durante interações com a tabela
+   */
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     processRecurringTransactions()
+  //   }, 2000) // Aguarda 2 segundos após a inicialização
+
+  //   return () => clearTimeout(timer)
+  // }, [processRecurringTransactions])
 
   /**
    * Atualiza o status de uma transação recorrente e cria próximas ocorrências se necessário
@@ -194,17 +251,17 @@ export function useRecurringTransactions() {
   )
 
   /**
-   * Processa transações recorrentes na inicialização da aplicação
-   * Executa apenas uma vez quando o hook é inicializado
+   * Processar transações recorrentes na inicialização da aplicação
+   * TEMPORARIAMENTE DESABILITADO para debug de loop infinito
    */
-  useEffect(() => {
-    // Executar uma vez quando o hook é inicializado
-    const timeoutId = setTimeout(() => {
-      processRecurringTransactions()
-    }, 2000) // Aguardar 2 segundos para garantir que os dados foram carregados
+  // useEffect(() => {
+  //   // Executar uma vez quando o hook é inicializado
+  //   const timeoutId = setTimeout(() => {
+  //     processRecurringTransactions()
+  //   }, 2000) // Aguardar 2 segundos para garantir que os dados foram carregados
 
-    return () => clearTimeout(timeoutId)
-  }, []) // Executar apenas uma vez, sem dependências
+  //   return () => clearTimeout(timeoutId)
+  // }, []) // Executar apenas uma vez, sem dependências
 
   return {
     processRecurringTransactions,

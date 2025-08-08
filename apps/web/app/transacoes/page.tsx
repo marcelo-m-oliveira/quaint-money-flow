@@ -19,7 +19,7 @@ import {
   ThumbsUp,
   Trash2,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AccountCardIcon } from '@/components/account-card-icon'
 import { PageLayout } from '@/components/layouts/page-layout'
@@ -60,6 +60,7 @@ import {
 } from '@/components/ui/tooltip'
 import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useAutoRenewal } from '@/lib/hooks/use-auto-renewal'
 import { useCreditCards } from '@/lib/hooks/use-credit-cards'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
@@ -139,6 +140,45 @@ function formatRecurringInfo(transaction: Transaction): string | null {
   return 'Recorrente'
 }
 
+// Funções de período movidas para fora do componente para evitar recriação
+const createPeriodRangeFunctions = (currentDate: Date) => ({
+  diario: () => ({
+    start: getStartOfDay(currentDate),
+    end: getEndOfDay(currentDate),
+  }),
+  semanal: () => ({
+    start: getStartOfWeek(currentDate),
+    end: getEndOfWeek(currentDate),
+  }),
+  mensal: () => ({
+    start: getStartOfMonth(currentDate),
+    end: getEndOfMonth(currentDate),
+  }),
+})
+
+// Função para criar os formatadores de título de período
+const createPeriodTitleFormatters = (currentDate: Date) => ({
+  diario: () => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }
+    return currentDate.toLocaleDateString('pt-BR', options)
+  },
+  semanal: () => {
+    const start = getStartOfWeek(currentDate)
+    const end = getEndOfWeek(currentDate)
+    return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
+  },
+  mensal: () => {
+    return currentDate.toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+    })
+  },
+})
+
 export default function TransacoesPage() {
   const {
     categories,
@@ -157,6 +197,9 @@ export default function TransacoesPage() {
 
   // Hook para processamento automático de transações recorrentes
   const { updateRecurringTransactionStatus } = useRecurringTransactions()
+
+  // Hook para renovação automática de receitas fixas (3 anos)
+  useAutoRenewal()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<
@@ -242,32 +285,21 @@ export default function TransacoesPage() {
     setCurrentDate(newDate)
   }
 
-  // Key mapping para funções de período
-  const PERIOD_RANGE_FUNCTIONS = {
-    diario: () => ({
-      start: getStartOfDay(currentDate),
-      end: getEndOfDay(currentDate),
-    }),
-    semanal: () => ({
-      start: getStartOfWeek(currentDate),
-      end: getEndOfWeek(currentDate),
-    }),
-    mensal: () => ({
-      start: getStartOfMonth(currentDate),
-      end: getEndOfMonth(currentDate),
-    }),
-  } as const
+  // Memoizar as funções de período para evitar recriações
+  const periodFunctions = useMemo(() => {
+    return createPeriodRangeFunctions(currentDate)
+  }, [currentDate])
 
   // Função para obter o range de datas do período atual
-  const getCurrentPeriodRange = () => {
-    const periodFunction =
-      PERIOD_RANGE_FUNCTIONS[
-        currentPeriod as keyof typeof PERIOD_RANGE_FUNCTIONS
-      ]
-    return periodFunction ? periodFunction() : PERIOD_RANGE_FUNCTIONS.mensal()
-  }
+  const getCurrentPeriodRange = useCallback(() => {
+    const periodFunction = periodFunctions[currentPeriod as keyof typeof periodFunctions]
+    return periodFunction ? periodFunction() : periodFunctions.mensal()
+  }, [currentPeriod, periodFunctions])
 
-  const transactionsWithCategories = getTransactionsWithCategories()
+  // Memoizar transações com categorias para evitar recriações desnecessárias
+  const transactionsWithCategories = useMemo(() => {
+    return getTransactionsWithCategories()
+  }, [getTransactionsWithCategories])
 
   // Filtrar transações
   const filteredTransactions = useMemo(() => {
@@ -304,14 +336,7 @@ export default function TransacoesPage() {
 
     console.log('📊 Total de transações após filtro:', filtered.length)
     return filtered
-  }, [
-    transactionsWithCategories,
-    searchTerm,
-    selectedCategory,
-    selectedType,
-    currentDate,
-    currentPeriod,
-  ])
+  }, [transactionsWithCategories, getCurrentPeriodRange, searchTerm, selectedCategory, selectedType])
 
   // Ordenar transações por data (mais recentes primeiro)
   const sortedTransactions = useMemo(() => {
@@ -339,37 +364,16 @@ export default function TransacoesPage() {
     )
   }, [sortedTransactions])
 
-  // Key mapping para formatação de títulos de período
-  const PERIOD_TITLE_FORMATTERS = {
-    diario: () => {
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }
-      return currentDate.toLocaleDateString('pt-BR', options)
-    },
-    semanal: () => {
-      const start = getStartOfWeek(currentDate)
-      const end = getEndOfWeek(currentDate)
-      return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
-    },
-    mensal: () => {
-      return currentDate.toLocaleDateString('pt-BR', {
-        year: 'numeric',
-        month: 'long',
-      })
-    },
-  } as const
+  // Memoizar os formatadores de título para evitar recriações
+  const titleFormatters = useMemo(() => {
+    return createPeriodTitleFormatters(currentDate)
+  }, [currentDate])
 
   // Função para formatar o título do período
-  const getPeriodTitle = () => {
-    const formatter =
-      PERIOD_TITLE_FORMATTERS[
-        currentPeriod as keyof typeof PERIOD_TITLE_FORMATTERS
-      ]
-    return formatter ? formatter() : PERIOD_TITLE_FORMATTERS.mensal()
-  }
+  const getPeriodTitle = useCallback(() => {
+    const formatter = titleFormatters[currentPeriod as keyof typeof titleFormatters]
+    return formatter ? formatter() : titleFormatters.mensal()
+  }, [currentPeriod, titleFormatters])
 
   // Calcular totais das transações filtradas
   const filteredTotals = useMemo(() => {
@@ -391,7 +395,7 @@ export default function TransacoesPage() {
   // Calcular dados do fluxo de caixa
   const cashflowData = useMemo(() => {
     const { start } = getCurrentPeriodRange()
-    const allTransactions = getTransactionsWithCategories()
+    const allTransactions = transactionsWithCategories
 
     // Saldo anterior (antes do período atual)
     const previousBalance = allTransactions
@@ -431,11 +435,7 @@ export default function TransacoesPage() {
       currentBalance,
       projectedBalance,
     }
-  }, [
-    filteredTransactions,
-    getCurrentPeriodRange,
-    getTransactionsWithCategories,
-  ])
+  }, [filteredTransactions, transactionsWithCategories, getCurrentPeriodRange])
 
   const handleAddTransaction = (type: 'income' | 'expense') => {
     setTransactionType(type)

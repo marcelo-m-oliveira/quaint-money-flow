@@ -284,10 +284,11 @@ export function generateMockTransaction(
     paid = true
   }
 
-  // Gerar campos de recorrência (30% das transações serão recorrentes)
-  const isRecurring = faker.number.float() < 0.3
-  let recurringType: 'fixed' | 'installment' | undefined
-  let fixedFrequency:
+  // Campos de recorrência removidos - lógica será movida para o backend
+  // Todas as transações mock serão não-recorrentes para evitar loops infinitos
+  const isRecurring = false
+  const recurringType: 'fixed' | 'installment' | undefined = undefined
+  const fixedFrequency:
     | 'daily'
     | 'weekly'
     | 'biweekly'
@@ -295,9 +296,9 @@ export function generateMockTransaction(
     | 'quarterly'
     | 'semiannual'
     | 'annual'
-    | undefined
-  let installmentCount: number | undefined
-  let installmentPeriod:
+    | undefined = undefined
+  const installmentCount: number | undefined = undefined
+  const installmentPeriod:
     | 'days'
     | 'weeks'
     | 'biweeks'
@@ -306,49 +307,9 @@ export function generateMockTransaction(
     | 'quarters'
     | 'semesters'
     | 'years'
-    | undefined
-  let currentInstallment: number | undefined
-  let parentTransactionId: string | undefined
-
-  if (isRecurring) {
-    // 60% fixo, 40% parcelado
-    recurringType = faker.helpers.weightedArrayElement([
-      { weight: 6, value: 'fixed' as const },
-      { weight: 4, value: 'installment' as const },
-    ])
-
-    if (recurringType === 'fixed') {
-      // Para transações fixas, definir frequência
-      fixedFrequency = faker.helpers.arrayElement([
-        'monthly',
-        'quarterly',
-        'semiannual',
-        'annual',
-        'weekly',
-        'biweekly',
-        'daily',
-      ])
-    } else {
-      // Para transações parceladas
-      installmentCount = faker.number.int({ min: 2, max: 24 })
-      installmentPeriod = faker.helpers.arrayElement([
-        'months',
-        'weeks',
-        'biweeks',
-        'quarters',
-        'semesters',
-        'years',
-        'days',
-        'bimonths',
-      ])
-      currentInstallment = faker.number.int({ min: 1, max: installmentCount })
-
-      // Para parcelas, pode ter um parentTransactionId (simulando que é uma parcela de uma transação maior)
-      if (faker.datatype.boolean()) {
-        parentTransactionId = faker.string.uuid()
-      }
-    }
-  }
+    | undefined = undefined
+  const currentInstallment: number | undefined = undefined
+  const parentTransactionId: string | undefined = undefined
 
   return {
     id: faker.string.uuid(),

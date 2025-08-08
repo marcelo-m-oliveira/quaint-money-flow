@@ -1,8 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { dateStringToTimestamp } from '../format'
+import {
+  createInstallmentTransactions,
+  RecurringTransactionsService,
+} from '../services/recurring-transactions.service'
 import {
   Category,
   CategoryFormData,
@@ -24,7 +28,7 @@ export function useFinancialData() {
   const [isLoading, setIsLoading] = useState(true)
   const { success, error, warning } = useCrudToast()
 
-  // Carregar dados do localStorage
+  // Carregar dados do localStorage na inicialização
   useEffect(() => {
     const loadData = () => {
       try {
@@ -72,14 +76,75 @@ export function useFinancialData() {
     }
 
     loadData()
+
+    // Listener para mudanças no localStorage (para detectar mudanças externas)
+    // NOTA: Removido para evitar loop infinito com eventos transactionsUpdated
+    const handleStorageChange = (e: StorageEvent) => {
+      // Ignorar mudanças no localStorage se elas vêm de eventos customizados
+      // O evento transactionsUpdated já cuida dessas atualizações
+      if (e.key === STORAGE_KEYS.TRANSACTIONS && e.newValue) {
+        console.log('🔄 Mudança no localStorage detectada, mas ignorada para evitar loop')
+        // Não atualizar o estado aqui para evitar loop infinito
+      }
+    }
+
+    // Listener para evento customizado de atualização de transações
+    const handleTransactionsUpdate = (e: CustomEvent) => {
+      if (e.detail?.transactions) {
+        try {
+          const parsedTransactions = e.detail.transactions.map(
+            (
+              t: Omit<Transaction, 'date' | 'createdAt' | 'updatedAt'> & {
+                date: string | Date
+                createdAt: string | Date
+                updatedAt: string | Date
+                paid?: boolean
+              },
+            ) => ({
+              ...t,
+              date: t.date instanceof Date ? t.date : new Date(t.date),
+              createdAt:
+                t.createdAt instanceof Date
+                  ? t.createdAt
+                  : new Date(t.createdAt),
+              updatedAt:
+                t.updatedAt instanceof Date
+                  ? t.updatedAt
+                  : new Date(t.updatedAt),
+              paid: t.paid ?? false,
+            }),
+          )
+          setTransactions(parsedTransactions)
+        } catch (error) {
+          console.error('Erro ao processar evento de atualização:', error)
+        }
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener(
+      'transactionsUpdated',
+      handleTransactionsUpdate as EventListener,
+    )
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener(
+        'transactionsUpdated',
+        handleTransactionsUpdate as EventListener,
+      )
+    }
   }, [])
 
   // Salvar transações no localStorage
   const saveTransactions = (newTransactions: Transaction[]) => {
-    localStorage.setItem(
-      STORAGE_KEYS.TRANSACTIONS,
-      JSON.stringify(newTransactions),
-    )
+    // Evitar loop infinito: não disparar evento storage se a mudança vem do próprio hook
+    const currentTransactionsStr = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)
+    const newTransactionsStr = JSON.stringify(newTransactions)
+    
+    if (currentTransactionsStr !== newTransactionsStr) {
+      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, newTransactionsStr)
+    }
     setTransactions(newTransactions)
   }
 
@@ -117,11 +182,43 @@ export function useFinancialData() {
         updatedAt: Date.now(),
       }
 
-      const updatedTransactions = [...transactions, newTransaction]
+      let allTransactions = [newTransaction]
+
+      // Se é uma transação parcelada, criar automaticamente todas as parcelas
+      if (
+        data.isRecurring &&
+        data.recurringType === 'installment' &&
+        data.installmentCount &&
+        data.installmentCount > 1
+      ) {
+        const installmentTransactions =
+          createInstallmentTransactions(newTransaction)
+        allTransactions = [newTransaction, ...installmentTransactions]
+      }
+
+      // Se é uma receita fixa, criar automaticamente as ocorrências para os próximos 3 anos
+      else if (
+        data.isRecurring &&
+        data.recurringType === 'fixed' &&
+        data.fixedFrequency
+      ) {
+        const currentTransactions = [...transactions, newTransaction]
+        const fixedTransactions =
+          RecurringTransactionsService.processRecurringTransactions(
+            currentTransactions,
+          )
+        allTransactions = [newTransaction, ...fixedTransactions]
+      }
+
+      const updatedTransactions = [...transactions, ...allTransactions]
       saveTransactions(updatedTransactions)
 
       const transactionType = data.type === 'income' ? 'Receita' : 'Despesa'
-      success.create(transactionType)
+      const message =
+        allTransactions.length > 1
+          ? `${transactionType} criada com ${allTransactions.length} parcelas`
+          : transactionType
+      success.create(message)
     } catch (err) {
       const transactionType = data.type === 'income' ? 'receita' : 'despesa'
       error.create(transactionType)
@@ -344,7 +441,7 @@ export function useFinancialData() {
   }
 
   // Obter transações com categorias
-  const getTransactionsWithCategories = (): (Transaction & {
+  const getTransactionsWithCategories = useCallback((): (Transaction & {
     category: Category
   })[] => {
     return transactions.map((transaction) => {
@@ -363,7 +460,7 @@ export function useFinancialData() {
         },
       }
     })
-  }
+  }, [transactions, categories])
 
   // Calcular totais
   const getTotals = () => {
