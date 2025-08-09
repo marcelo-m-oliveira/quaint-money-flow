@@ -128,9 +128,25 @@ export function usePreferences() {
   }
 
   // Excluir todas as transações (função especial)
-  const clearAllTransactions = () => {
+  const clearAllTransactions = async () => {
     try {
-      localStorage.removeItem('quaint-money-transactions')
+      const token = localStorage.getItem('quaint-money-token')
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado')
+      }
+
+      const response = await fetch('/api/v1/transactions', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir transações')
+      }
+
       console.log('🗑️ Todas as transações foram excluídas')
       success.delete('Todas as transações')
       // Recarregar a página para atualizar os dados
@@ -142,14 +158,34 @@ export function usePreferences() {
   }
 
   // Excluir conta completamente (função especial)
-  const deleteAccount = () => {
+  const deleteAccount = async () => {
     try {
+      const token = localStorage.getItem('quaint-money-token')
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado')
+      }
+
+      const response = await fetch('/api/v1/transactions/user-data', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir conta')
+      }
+
+      // Limpar dados locais após sucesso da API
+      localStorage.removeItem('quaint-money-token')
       localStorage.removeItem('quaint-money-transactions')
       localStorage.removeItem('quaint-money-categories')
       localStorage.removeItem('quaint-money-accounts')
       localStorage.removeItem('quaint-money-credit-cards')
       localStorage.removeItem(PREFERENCES_STORAGE_KEY)
       localStorage.removeItem('quaint-money-theme')
+
       console.log('🗑️ Conta excluída completamente')
       success.delete('Conta completa')
       // Recarregar a página para atualizar os dados
