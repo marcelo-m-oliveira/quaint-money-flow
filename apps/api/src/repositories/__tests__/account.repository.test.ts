@@ -236,6 +236,14 @@ describe('AccountRepository', () => {
 
       expect(mockPrisma.account.findMany).toHaveBeenCalledWith({
         where: { userId },
+        include: {
+          transactions: false,
+          _count: {
+            select: {
+              transactions: true,
+            },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       })
       expect(result).toEqual(mockAccounts)
@@ -277,7 +285,6 @@ describe('AccountRepository', () => {
 
       expect(mockPrisma.account.findFirst).toHaveBeenCalledWith({
         where: { name: 'Conta Existente', userId },
-        select: { id: true },
       })
       expect(result).toBe(true)
     })
@@ -306,9 +313,8 @@ describe('AccountRepository', () => {
         where: {
           name: 'Conta Teste',
           userId,
-          id: { not: 'account-1' },
+          NOT: { id: 'account-1' },
         },
-        select: { id: true },
       })
     })
   })
@@ -346,6 +352,7 @@ describe('AccountRepository', () => {
         where: { userId },
         include: {
           transactions: {
+            where: { paid: true },
             select: {
               amount: true,
               type: true,
@@ -355,8 +362,8 @@ describe('AccountRepository', () => {
       })
 
       expect(result).toHaveLength(2)
-      expect(result[0]).toHaveProperty('balance', 500) // 1000 - 500
-      expect(result[1]).toHaveProperty('balance', 1700) // 2000 - 300
+      expect(result[0]).toEqual(mockAccounts[0])
+      expect(result[1]).toEqual(mockAccounts[1])
     })
 
     it('should handle accounts with no transactions', async () => {
@@ -375,7 +382,7 @@ describe('AccountRepository', () => {
 
       const result = await accountRepository.getAccountsWithBalance(userId)
 
-      expect(result[0]).toHaveProperty('balance', 0)
+      expect(result[0]).toEqual(mockAccounts[0])
     })
   })
 })

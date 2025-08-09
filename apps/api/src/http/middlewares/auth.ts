@@ -1,9 +1,11 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
-import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 
-export async function authMiddleware(request: FastifyRequest, reply: any) {
+export async function authMiddleware(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   try {
     const authHeader = request.headers.authorization
 
@@ -44,5 +46,10 @@ export async function authMiddleware(request: FastifyRequest, reply: any) {
 
 // Plugin para registrar o middleware de autenticação
 export async function authPlugin(fastify: FastifyInstance) {
-  fastify.decorate('authenticate', authMiddleware)
+  fastify.decorate(
+    'authenticate',
+    async function (request: FastifyRequest, reply: FastifyReply) {
+      return authMiddleware(request, reply)
+    },
+  )
 }

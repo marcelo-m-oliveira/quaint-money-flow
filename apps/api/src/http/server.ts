@@ -28,7 +28,10 @@ export async function createApp() {
 
   app.register(fastifyCors)
 
-  app.register(accountRoutes)
+  // Registrar rotas com prefixo
+  app.register(accountRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
 
   return app
 }

@@ -134,6 +134,8 @@ describe('AccountService', () => {
         id: 'account-1',
       })
 
+      await accountService.delete('account-1', userId)
+
       expect(mockAccountRepository.delete).toHaveBeenCalledWith({
         where: { id: 'account-1', userId },
       })

@@ -1,24 +1,29 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useState } from 'react'
 
+import { useCrudToast } from '../hooks/use-crud-toast'
 import { accountsService } from '../services/accounts'
 import { Account, AccountFormData } from '../types'
-import { useCrudToast } from '../hooks/use-crud-toast'
 
 interface AccountsContextType {
   accounts: Account[]
   isLoading: boolean
   isInitialized: boolean
   addAccount: (accountData: AccountFormData) => Promise<Account>
-  updateAccount: (id: string, accountData: Partial<AccountFormData>) => Promise<void>
+  updateAccount: (
+    id: string,
+    accountData: Partial<AccountFormData>,
+  ) => Promise<void>
   deleteAccount: (id: string) => Promise<void>
   getAccountById: (id: string) => Account | undefined
   refetch: () => Promise<void>
   initialize: () => Promise<void>
 }
 
-const AccountsContext = createContext<AccountsContextType | undefined>(undefined)
+const AccountsContext = createContext<AccountsContextType | undefined>(
+  undefined,
+)
 
 export function AccountsProvider({ children }: { children: React.ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>([])

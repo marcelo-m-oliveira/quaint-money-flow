@@ -2,6 +2,8 @@
 // Este arquivo demonstra a integração com o package @quaint-money/validations
 
 import {
+  type AccountCreateSchema,
+  accountCreateSchema,
   type AccountFormSchema,
   accountSchema,
   type CategoryFormSchema,
@@ -20,6 +22,7 @@ import { z } from 'zod'
 export {
   transactionSchema,
   categorySchema,
+  accountCreateSchema,
   accountSchema,
   creditCardSchema,
   preferencesSchema,
@@ -29,6 +32,7 @@ export {
 export type {
   TransactionFormSchema,
   CategoryFormSchema,
+  AccountCreateSchema,
   AccountFormSchema,
   CreditCardFormSchema,
   UserPreferencesSchema,
@@ -36,7 +40,7 @@ export type {
 
 // Schema para parâmetros de ID
 export const idParamSchema = z.object({
-  id: z.string().cuid('ID deve ser um CUID válido'),
+  id: z.string().min(1, 'ID é obrigatório'),
 })
 
 // Schema para paginação

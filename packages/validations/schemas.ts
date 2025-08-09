@@ -48,8 +48,8 @@ export const categorySchema = z.object({
   parentId: z.string().optional(),
 })
 
-// Schema para validação de contas
-export const accountSchema = z.object({
+// Schema para criação de contas (sem ID)
+export const accountCreateSchema = z.object({
   name: z
     .string()
     .min(1, 'Nome é obrigatório')
@@ -63,6 +63,11 @@ export const accountSchema = z.object({
     message: 'Tipo de ícone inválido',
   }),
   includeInGeneralBalance: z.boolean(),
+})
+
+// Schema para validação de contas (com ID)
+export const accountSchema = accountCreateSchema.extend({
+  id: z.string(),
 })
 
 // Schema para validação de cartões de crédito
@@ -115,6 +120,7 @@ export const preferencesSchema = z.object({
 // Tipos inferidos dos schemas
 export type TransactionFormSchema = z.infer<typeof transactionSchema>
 export type CategoryFormSchema = z.infer<typeof categorySchema>
+export type AccountCreateSchema = z.infer<typeof accountCreateSchema>
 export type AccountFormSchema = z.infer<typeof accountSchema>
 export type CreditCardFormSchema = z.infer<typeof creditCardSchema>
 export type UserPreferencesSchema = z.infer<typeof preferencesSchema>

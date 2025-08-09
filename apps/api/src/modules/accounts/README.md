@@ -214,7 +214,7 @@ REDIS_URL="redis://localhost:6379"
 {
   "dependencies": {
     "@prisma/client": "^5.0.0",
-    "zod": "^3.22.0",
+    "zod": "^4.0.15",
     "express": "^4.18.0"
   },
   "devDependencies": {

@@ -5,7 +5,15 @@
 /**
  * Formata um valor numérico como moeda brasileira
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | undefined | null): string {
+  // Verificar se o valor é válido
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(0)
+  }
+
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',

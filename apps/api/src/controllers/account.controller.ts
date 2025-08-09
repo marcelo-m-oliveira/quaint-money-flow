@@ -4,7 +4,7 @@ import { AccountService } from '@/services/account.service'
 import { handleError } from '@/utils/errors'
 
 import type {
-  AccountFormSchema,
+  AccountCreateSchema,
   IdParamSchema,
   PaginationSchema,
 } from '../utils/schemas'
@@ -51,7 +51,7 @@ export class AccountController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub
-      const data = request.body as AccountFormSchema
+      const data = request.body as AccountCreateSchema
 
       const account = await this.accountService.create(data, userId)
 
@@ -65,7 +65,7 @@ export class AccountController {
     try {
       const userId = request.user.sub
       const { id } = request.params as IdParamSchema
-      const data = request.body as AccountFormSchema
+      const data = request.body as AccountCreateSchema
 
       const account = await this.accountService.update(id, data, userId)
 
