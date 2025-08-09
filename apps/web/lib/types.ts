@@ -69,7 +69,7 @@ export interface CreditCard {
   icon: string
   iconType: 'bank' | 'generic'
   limit: number
-  currentBalance: number
+  usage: number // Valor usado no cartão (calculado pelas transações)
   closingDay: number // Dia do fechamento da fatura (1-31)
   dueDay: number // Dia do vencimento da fatura (1-31)
   defaultPaymentAccountId?: string // ID da conta padrão para pagamento

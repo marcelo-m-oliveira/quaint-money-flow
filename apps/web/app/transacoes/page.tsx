@@ -59,7 +59,7 @@ import {
 } from '@/components/ui/tooltip'
 import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
-import { useCreditCards } from '@/lib/hooks/use-credit-cards'
+import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { usePreferences } from '@/lib/hooks/use-preferences'
@@ -120,7 +120,7 @@ export default function TransacoesPage() {
   } = useFinancialData()
 
   const { accounts } = useAccounts()
-  const { creditCards } = useCreditCards()
+  const { creditCards } = useCreditCardsWithAutoInit()
   const { success, error } = useCrudToast()
 
   const { preferences, updatePreference } = usePreferences()

@@ -76,7 +76,7 @@ export class CreditCardService {
     })
 
     if (!creditCard) {
-      throw new BadRequestError('Cartão de crédito não encontrado')
+      throw new BadRequestError('Cartao de credito nao encontrado')
     }
 
     return creditCard
@@ -92,7 +92,7 @@ export class CreditCardService {
     })
 
     if (existingCreditCard) {
-      throw new BadRequestError('Já existe um cartão de crédito com este nome')
+      throw new BadRequestError('Ja existe um cartao de credito com este nome')
     }
 
     // Verificar se a conta de pagamento padrão existe (se fornecida)
@@ -105,17 +105,24 @@ export class CreditCardService {
       })
 
       if (!account) {
-        throw new BadRequestError('Conta de pagamento padrão não encontrada')
+        throw new BadRequestError('Conta de pagamento padrao nao encontrada')
       }
     }
 
+    // Converter limit de string para number
+    const limitAsNumber = parseFloat(data.limit.replace(',', '.'))
+
+    // Preparar dados para criação, removendo defaultPaymentAccountId do spread
+    const { defaultPaymentAccountId, ...restData } = data
+
     return this.creditCardRepository.create({
       data: {
-        ...data,
+        ...restData,
+        limit: limitAsNumber,
         user: { connect: { id: userId } },
-        ...(data.defaultPaymentAccountId && {
+        ...(defaultPaymentAccountId && {
           defaultPaymentAccount: {
-            connect: { id: data.defaultPaymentAccountId },
+            connect: { id: defaultPaymentAccountId },
           },
         }),
       },
@@ -167,6 +174,11 @@ export class CreditCardService {
     // Preparar dados para atualização
     const { defaultPaymentAccountId, ...restData } = data
     const updateData: Prisma.CreditCardUpdateInput = { ...restData }
+
+    // Converter limit de string para number se fornecido
+    if (data.limit) {
+      updateData.limit = parseFloat(data.limit.replace(',', '.'))
+    }
 
     // Conectar conta de pagamento padrão se fornecida
     if (defaultPaymentAccountId) {

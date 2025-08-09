@@ -5,30 +5,7 @@ export function convertToDate(date: string): Date {
   return new Date(date)
 }
 
-/**
- * Converte uma string de tempo (HH:MM) para minutos
- * Exemplo: "14:30" -> 870 minutos
- */
-export function convertTimeStringToMinutes(timeString: string): number {
-  const [hours, minutes] = timeString.split(':').map(Number)
-  return hours * 60 + minutes
-}
-
-/**
- * Converte uma data para segundos desde epoch
- * Padrão para envio de datas entre frontend e backend
- */
-export function dateToSeconds(date: Date): number {
-  return Math.floor(date.getTime() / 1000)
-}
-
-/**
- * Converte segundos desde epoch para Date
- * Padrão para recebimento de datas do backend
- */
-export function secondsToDate(seconds: number): Date {
-  return new Date(seconds * 1000)
-}
+// Funções de tempo e data foram movidas para date.utils.ts
 
 // formatDate foi movida para date.utils.ts
 

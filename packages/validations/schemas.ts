@@ -70,7 +70,7 @@ export const accountSchema = accountCreateSchema.extend({
   id: z.string(),
 })
 
-// Schema para validação de cartões de crédito
+// Schema para validação de cartões de crédito (entrada/formulário)
 export const creditCardSchema = z.object({
   name: z
     .string()
@@ -99,7 +99,29 @@ export const creditCardSchema = z.object({
     .number()
     .min(1, 'Dia de vencimento deve ser entre 1 e 31')
     .max(31, 'Dia de vencimento deve ser entre 1 e 31'),
-  defaultPaymentAccountId: z.string().optional(),
+  defaultPaymentAccountId: z.string().nullish(),
+})
+
+// Schema para resposta de cartões de crédito (com limit como number)
+export const creditCardResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  icon: z.string(),
+  iconType: z.enum(['bank', 'generic']),
+  limit: z.number(), // Como number para resposta da API
+  closingDay: z.number(),
+  dueDay: z.number(),
+  defaultPaymentAccountId: z.string().nullish(),
+  userId: z.string(),
+  createdAt: z.number(), // Como number (timestamp em segundos) para resposta da API
+  updatedAt: z.number(), // Como number (timestamp em segundos) para resposta da API
+  defaultPaymentAccount: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .optional()
+    .nullable(),
 })
 
 // Schema para validação de preferências do usuário

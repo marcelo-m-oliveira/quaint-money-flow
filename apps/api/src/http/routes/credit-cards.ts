@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { CreditCardFactory } from '@/factories/credit-card.factory'
 import {
   creditCardCreateSchema,
-  creditCardSchema,
+  creditCardResponseSchema,
   idParamSchema,
   paginationSchema,
 } from '@/utils/schemas'
@@ -23,7 +23,7 @@ export async function creditCardRoutes(app: FastifyInstance) {
         querystring: paginationSchema,
         response: {
           200: z.object({
-            creditCards: z.array(creditCardSchema as any),
+            creditCards: z.array(creditCardResponseSchema),
             pagination: z.object({
               page: z.number(),
               limit: z.number(),
@@ -47,7 +47,7 @@ export async function creditCardRoutes(app: FastifyInstance) {
       schema: {
         params: idParamSchema,
         response: {
-          200: creditCardSchema,
+          200: creditCardResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -62,7 +62,7 @@ export async function creditCardRoutes(app: FastifyInstance) {
       schema: {
         body: creditCardCreateSchema,
         response: {
-          201: creditCardSchema,
+          201: creditCardResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -78,7 +78,7 @@ export async function creditCardRoutes(app: FastifyInstance) {
         params: idParamSchema,
         body: creditCardCreateSchema.partial(),
         response: {
-          200: creditCardSchema,
+          200: creditCardResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },

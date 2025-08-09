@@ -9,6 +9,7 @@ import {
   type CategoryFormSchema,
   categorySchema,
   type CreditCardFormSchema,
+  creditCardResponseSchema,
   creditCardSchema,
   preferencesSchema,
   type TransactionFormSchema,
@@ -25,6 +26,7 @@ export {
   accountCreateSchema,
   accountSchema,
   creditCardSchema,
+  creditCardResponseSchema,
   preferencesSchema,
 }
 

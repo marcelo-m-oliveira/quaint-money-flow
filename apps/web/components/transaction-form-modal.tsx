@@ -7,7 +7,7 @@ import { Controller, useForm } from 'react-hook-form'
 
 import { formatDateForInput, timestampToDateString } from '@/lib/format'
 import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
-import { useCreditCards } from '@/lib/hooks/use-credit-cards'
+import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { CategoryIcon } from '@/lib/icon-map'
 import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
 import { Category, Transaction } from '@/lib/types'
@@ -49,7 +49,7 @@ export function TransactionFormModal({
   showCreateAnotherButton = true,
 }: TransactionFormModalProps) {
   const { accounts } = useAccountsWithAutoInit()
-  const { creditCards } = useCreditCards()
+  const { creditCards } = useCreditCardsWithAutoInit()
 
   const {
     register,

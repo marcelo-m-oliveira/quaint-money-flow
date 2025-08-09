@@ -324,7 +324,7 @@ export function generateMockCreditCard(): CreditCard {
 
   const limit = faker.number.int(limitRange)
   // Saldo atual usado (0 a 80% do limite)
-  const currentBalance = faker.number.float({
+  const usage = faker.number.float({
     min: 0,
     max: limit * 0.8,
     fractionDigits: 2,
@@ -346,7 +346,7 @@ export function generateMockCreditCard(): CreditCard {
     icon,
     iconType,
     limit,
-    currentBalance,
+    usage,
     closingDay,
     dueDay,
     defaultPaymentAccountId: undefined, // Será definido posteriormente se necessário

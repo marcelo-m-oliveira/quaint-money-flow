@@ -24,7 +24,7 @@ export class CreditCardController {
 
       request.log.info(
         { userId, filters },
-        'Listando cartões de crédito do usuário',
+        'Listando cartoes de credito do usuario',
       )
       const result = await this.creditCardService.findMany(userId, {
         page: filters.page || 1,
@@ -36,14 +36,15 @@ export class CreditCardController {
           totalCreditCards: result.creditCards.length,
           totalPages: result.pagination.totalPages,
         },
-        'Cartões de crédito listados com sucesso',
+        'Cartoes de credito listados com sucesso',
       )
 
-      // Convert dates to seconds for frontend
+      // Convert dates to seconds and limit to number for frontend
       const convertedResult = {
         ...result,
         creditCards: result.creditCards.map((creditCard) => ({
           ...creditCard,
+          limit: Number(creditCard.limit),
           createdAt: dateToSeconds(creditCard.createdAt),
           updatedAt: dateToSeconds(creditCard.updatedAt),
         })),
@@ -66,13 +67,14 @@ export class CreditCardController {
 
       request.log.info(
         { userId, creditCardId: id },
-        'Buscando cartão de crédito por ID',
+        'Buscando cartao de credito por ID',
       )
       const creditCard = await this.creditCardService.findById(id, userId)
 
-      // Convert dates to seconds for frontend
+      // Convert dates to seconds and limit to number for frontend
       const convertedCreditCard = {
         ...creditCard,
+        limit: Number(creditCard.limit),
         createdAt: dateToSeconds(creditCard.createdAt),
         updatedAt: dateToSeconds(creditCard.updatedAt),
       }
@@ -94,17 +96,18 @@ export class CreditCardController {
 
       request.log.info(
         { userId, creditCardData: data },
-        'Criando novo cartão de crédito',
+        'Criando novo cartao de credito',
       )
       const creditCard = await this.creditCardService.create(data, userId)
       request.log.info(
         { creditCardId: creditCard.id, name: creditCard.name },
-        'Cartão de crédito criado com sucesso',
+        'Cartao de credito criado com sucesso',
       )
 
-      // Convert dates to seconds for frontend
+      // Convert dates to seconds and limit to number for frontend
       const convertedCreditCard = {
         ...creditCard,
+        limit: Number(creditCard.limit),
         createdAt: dateToSeconds(creditCard.createdAt),
         updatedAt: dateToSeconds(creditCard.updatedAt),
       }
@@ -127,17 +130,18 @@ export class CreditCardController {
 
       request.log.info(
         { userId, creditCardId: id, updateData: data },
-        'Atualizando cartão de crédito',
+        'Atualizando cartao de credito',
       )
       const creditCard = await this.creditCardService.update(id, data, userId)
       request.log.info(
         { creditCardId: creditCard.id, name: creditCard.name },
-        'Cartão de crédito atualizado com sucesso',
+        'Cartao de credito atualizado com sucesso',
       )
 
-      // Convert dates to seconds for frontend
+      // Convert dates to seconds and limit to number for frontend
       const convertedCreditCard = {
         ...creditCard,
+        limit: Number(creditCard.limit),
         createdAt: dateToSeconds(creditCard.createdAt),
         updatedAt: dateToSeconds(creditCard.updatedAt),
       }
@@ -159,12 +163,12 @@ export class CreditCardController {
 
       request.log.info(
         { userId, creditCardId: id },
-        'Deletando cartão de crédito',
+        'Deletando cartao de credito',
       )
       await this.creditCardService.delete(id, userId)
       request.log.info(
         { creditCardId: id },
-        'Cartão de crédito deletado com sucesso',
+        'Cartao de credito deletado com sucesso',
       )
 
       return reply.status(204).send()

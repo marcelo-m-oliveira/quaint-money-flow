@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
-import { useCreditCards } from '@/lib/hooks/use-credit-cards'
+import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
 import { Account, CreditCard } from '@/lib/types'
@@ -71,7 +71,7 @@ const DEFAULT_COLORS = [
 export function AccountsReport({ period }: AccountsReportProps) {
   const { transactions } = useFinancialData()
   const { accounts } = useAccountsWithAutoInit()
-  const { creditCards } = useCreditCards()
+  const { creditCards } = useCreditCardsWithAutoInit()
   const { isDark } = useTheme()
   const [chartType, setChartType] = useState<ChartType>('doughnut')
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('all')
