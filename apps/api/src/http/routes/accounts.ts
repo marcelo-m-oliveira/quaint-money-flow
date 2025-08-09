@@ -1,43 +1,7 @@
-import { Account } from '@prisma/client'
+import { Account, AccountType } from '@prisma/client'
 import { FastifyInstance } from 'fastify'
-import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
-
-// Schema para criação de conta
-const createAccountSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Nome é obrigatório')
-    .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(50, 'Nome deve ter no máximo 50 caracteres'),
-  type: z.enum(['bank', 'credit_card', 'investment', 'cash', 'other'], {
-    message: 'Tipo de conta inválido',
-  }),
-  icon: z.string().min(1, 'Ícone é obrigatório'),
-  iconType: z.enum(['bank', 'generic'], {
-    message: 'Tipo de ícone inválido',
-  }),
-  includeInGeneralBalance: z.boolean().default(true),
-})
-
-// Schema para atualização de conta
-const updateAccountSchema = createAccountSchema.partial()
-
-// Schema para parâmetros de rota
-const accountParamsSchema = z.object({
-  id: z.string().uuid('ID deve ser um UUID válido'),
-})
-
-// Schema para query de listagem
-const listAccountsQuerySchema = z.object({
-  type: z
-    .enum(['bank', 'credit_card', 'investment', 'cash', 'other'])
-    .optional(),
-  includeInGeneralBalance: z.boolean().optional(),
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
-})
 
 export async function accountRoutes(app: FastifyInstance) {
   // Middleware de autenticação para todas as rotas
@@ -58,8 +22,18 @@ export async function accountRoutes(app: FastifyInstance) {
         summary: 'Listar contas do usuário',
         description:
           'Retorna uma lista paginada das contas do usuário autenticado',
-        security: [{ bearerAuth: [] }],
-        querystring: listAccountsQuerySchema,
+        querystring: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              enum: ['bank', 'credit_card', 'investment', 'cash', 'other'],
+            },
+            includeInGeneralBalance: { type: 'boolean' },
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          },
+        },
         response: {
           200: {
             type: 'object',
@@ -74,7 +48,6 @@ export async function accountRoutes(app: FastifyInstance) {
                     type: { type: 'string' },
                     icon: { type: 'string' },
                     iconType: { type: 'string' },
-
                     includeInGeneralBalance: { type: 'boolean' },
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' },
@@ -103,40 +76,38 @@ export async function accountRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const { type, includeInGeneralBalance, page, limit } =
-          request.query as {
-            type?: 'bank' | 'credit_card' | 'investment' | 'cash' | 'other'
-            includeInGeneralBalance?: boolean
-            page: number
-            limit: number
-          }
+        const query = request.query as {
+          type?: string
+          includeInGeneralBalance?: boolean
+          page?: number
+          limit?: number
+        }
         const userId = (request.user as { sub: string }).sub
 
+        const { page = 1, limit = 20, type, includeInGeneralBalance } = query
+
         // Construir filtros
-        const where: Partial<Account> = {
-          userId,
-        }
-
+        const whereClause: Partial<Account> = { userId }
         if (type) {
-          where.type = type
+          whereClause.type = type as AccountType
         }
-
         if (includeInGeneralBalance !== undefined) {
-          where.includeInGeneralBalance = includeInGeneralBalance
+          whereClause.includeInGeneralBalance = includeInGeneralBalance
         }
 
-        // Contar total de registros
-        const total = await prisma.account.count({ where })
+        // Calcular offset
+        const offset = (page - 1) * limit
 
         // Buscar contas com paginação
-        const accounts = await prisma.account.findMany({
-          where,
-          orderBy: {
-            createdAt: 'desc',
-          },
-          skip: (page - 1) * limit,
-          take: limit,
-        })
+        const [accounts, total] = await Promise.all([
+          prisma.account.findMany({
+            where: whereClause,
+            orderBy: { createdAt: 'desc' },
+            skip: offset,
+            take: limit,
+          }),
+          prisma.account.count({ where: whereClause }),
+        ])
 
         const totalPages = Math.ceil(total / limit)
 
@@ -164,8 +135,13 @@ export async function accountRoutes(app: FastifyInstance) {
         tags: ['Accounts'],
         summary: 'Buscar conta por ID',
         description: 'Retorna os detalhes de uma conta específica',
-        security: [{ bearerAuth: [] }],
-        params: accountParamsSchema,
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+          },
+          required: ['id'],
+        },
         response: {
           200: {
             type: 'object',
@@ -175,7 +151,6 @@ export async function accountRoutes(app: FastifyInstance) {
               type: { type: 'string' },
               icon: { type: 'string' },
               iconType: { type: 'string' },
-
               includeInGeneralBalance: { type: 'boolean' },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
@@ -228,8 +203,26 @@ export async function accountRoutes(app: FastifyInstance) {
         tags: ['Accounts'],
         summary: 'Criar nova conta',
         description: 'Cria uma nova conta para o usuário autenticado',
-        security: [{ bearerAuth: [] }],
-        body: createAccountSchema,
+        body: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            type: {
+              type: 'string',
+              enum: ['bank', 'credit_card', 'investment', 'cash', 'other'],
+            },
+            icon: { type: 'string' },
+            iconType: { type: 'string', enum: ['bank', 'generic'] },
+            includeInGeneralBalance: { type: 'boolean' },
+          },
+          required: [
+            'name',
+            'type',
+            'icon',
+            'iconType',
+            'includeInGeneralBalance',
+          ],
+        },
         response: {
           201: {
             type: 'object',
@@ -309,9 +302,26 @@ export async function accountRoutes(app: FastifyInstance) {
         tags: ['Accounts'],
         summary: 'Atualizar conta',
         description: 'Atualiza os dados de uma conta existente',
-        security: [{ bearerAuth: [] }],
-        params: accountParamsSchema,
-        body: updateAccountSchema,
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+          },
+          required: ['id'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            type: {
+              type: 'string',
+              enum: ['bank', 'credit_card', 'investment', 'cash', 'other'],
+            },
+            icon: { type: 'string' },
+            iconType: { type: 'string', enum: ['bank', 'generic'] },
+            includeInGeneralBalance: { type: 'boolean' },
+          },
+        },
         response: {
           200: {
             type: 'object',
@@ -412,8 +422,13 @@ export async function accountRoutes(app: FastifyInstance) {
         summary: 'Excluir conta',
         description:
           'Exclui uma conta existente (apenas se não tiver transações)',
-        security: [{ bearerAuth: [] }],
-        params: accountParamsSchema,
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+          },
+          required: ['id'],
+        },
         response: {
           204: {
             type: 'null',
@@ -491,8 +506,13 @@ export async function accountRoutes(app: FastifyInstance) {
         summary: 'Obter saldo da conta',
         description:
           'Retorna o saldo atual da conta calculado com base nas transações',
-        security: [{ bearerAuth: [] }],
-        params: accountParamsSchema,
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+          },
+          required: ['id'],
+        },
         response: {
           200: {
             type: 'object',

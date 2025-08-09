@@ -29,6 +29,7 @@
     "fastify": "^5.4.0",
     "fastify-type-provider-zod": "^5.0.3",
     "jsonwebtoken": "^9.0.2",
+    "swagger-themes": "^1.4.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

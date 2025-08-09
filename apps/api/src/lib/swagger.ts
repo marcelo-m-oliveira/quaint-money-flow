@@ -1,5 +1,6 @@
 import { env } from '@saas/env'
 import { FastifyInstance } from 'fastify'
+import { SwaggerTheme, SwaggerThemeNameEnum } from 'swagger-themes'
 
 export async function setupSwagger(app: FastifyInstance) {
   if (!env.SWAGGER_ENABLED) {
@@ -8,47 +9,24 @@ export async function setupSwagger(app: FastifyInstance) {
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   await app.register(require('@fastify/swagger'), {
-    swagger: {
+    openapi: {
+      openapi: '3.0.0',
       info: {
         title: 'Quaint Money Flow API',
         description: 'API para gerenciamento financeiro pessoal',
         version: '1.0.0',
-        contact: {
-          name: 'Quaint Money Team',
-          email: 'support@quaintmoney.com',
-        },
       },
-      host: `localhost:${env.PORT}`,
-      schemes: ['http', 'https'],
-      consumes: ['application/json'],
-      produces: ['application/json'],
-      tags: [
-        { name: 'Auth', description: 'Autenticação e autorização' },
-        { name: 'Users', description: 'Gerenciamento de usuários' },
-        { name: 'Accounts', description: 'Gerenciamento de contas' },
+      servers: [
         {
-          name: 'Credit Cards',
-          description: 'Gerenciamento de cartões de crédito',
-        },
-        { name: 'Categories', description: 'Gerenciamento de categorias' },
-        { name: 'Transactions', description: 'Gerenciamento de transações' },
-        { name: 'Preferences', description: 'Preferências do usuário' },
-      ],
-      securityDefinitions: {
-        Bearer: {
-          type: 'apiKey',
-          name: 'Authorization',
-          in: 'header',
-          description: 'JWT token. Formato: Bearer {token}',
-        },
-      },
-      security: [
-        {
-          Bearer: [],
+          url: `http://localhost:${env.PORT}`,
         },
       ],
     },
   })
+
+  // Configuração do tema escuro usando swagger-themes
+  const theme = new SwaggerTheme()
+  const darkThemeContent = theme.getBuffer(SwaggerThemeNameEnum.DARK)
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   await app.register(require('@fastify/swagger-ui'), {
@@ -56,9 +34,26 @@ export async function setupSwagger(app: FastifyInstance) {
     uiConfig: {
       docExpansion: 'list',
       deepLinking: false,
+      filter: true, // Habilita filtro de busca
+      tryItOutEnabled: true, // Habilita "Try it out" por padrão
+      requestSnippetsEnabled: true, // Habilita snippets de código
+      syntaxHighlight: {
+        activate: true,
+        theme: 'monokai', // Tema de syntax highlighting
+      },
+    },
+    // Tema escuro profissional usando swagger-themes
+    theme: {
+      css: [
+        {
+          filename: 'dark-theme.css',
+          content: darkThemeContent,
+        },
+      ],
     },
     staticCSP: true,
     transformStaticCSP: (header: string) => header,
+    exposeRoute: true,
   })
 
   console.log(
