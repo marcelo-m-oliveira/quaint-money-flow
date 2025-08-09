@@ -1,18 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createHash } from 'crypto'
-import { NextFunction, Request, Response } from 'express'
+import { FastifyReply, FastifyRequest } from 'fastify'
 
 // Interface para o cache em memória (pode ser substituído por Redis)
 interface CacheEntry {
-  data: any
+  data: never
   timestamp: number
   ttl: number
 }
 
 class MemoryCache {
-  private cache = new Map<string, CacheEntry>()
+  cache = new Map<string, CacheEntry>()
   private readonly defaultTTL = 5 * 60 * 1000 // 5 minutos
 
-  set(key: string, data: any, ttl?: number): void {
+  set(key: string, data: never, ttl?: number): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -20,7 +21,7 @@ class MemoryCache {
     })
   }
 
-  get(key: string): any | null {
+  get(key: string): never | null {
     const entry = this.cache.get(key)
 
     if (!entry) {
@@ -69,9 +70,9 @@ setInterval(
 /**
  * Gera uma chave de cache baseada na URL, query params e user ID
  */
-function generateCacheKey(req: Request): string {
-  const userId = req.user?.id || 'anonymous'
-  const url = req.originalUrl || req.url
+function generateCacheKey(req: FastifyRequest): string {
+  const userId = (req as any).user?.id || 'anonymous'
+  const url = req.url
   const method = req.method
 
   const keyData = `${method}:${url}:${userId}`
@@ -79,76 +80,59 @@ function generateCacheKey(req: Request): string {
 }
 
 /**
- * Middleware de cache para GET requests
+ * Middleware de cache para GET requests (Fastify)
+ * Para usar com Fastify, deve ser registrado como preHandler
  */
 export function cacheMiddleware(ttl?: number) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (request: FastifyRequest, reply: FastifyReply) => {
     // Só aplicar cache para GET requests
-    if (req.method !== 'GET') {
-      return next()
+    if (request.method !== 'GET') {
+      return
     }
 
-    const cacheKey = generateCacheKey(req)
+    const cacheKey = generateCacheKey(request)
     const cachedData = memoryCache.get(cacheKey)
 
     if (cachedData) {
       // Adicionar header indicando que veio do cache
-      res.set('X-Cache', 'HIT')
-      return res.json(cachedData)
+      reply.header('X-Cache', 'HIT')
+      return reply.send(cachedData)
     }
 
-    // Interceptar o método json para salvar no cache
-    const originalJson = res.json.bind(res)
-    res.json = function (data: any) {
-      // Salvar no cache apenas se a resposta for bem-sucedida
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        memoryCache.set(cacheKey, data, ttl)
-        res.set('X-Cache', 'MISS')
-      }
-      return originalJson(data)
-    }
+    // Adicionar header indicando que não veio do cache
+    reply.header('X-Cache', 'MISS')
 
-    next()
+    // Armazenar o TTL no contexto da requisição para uso posterior
+    ;(request as any).cacheTTL = ttl
   }
 }
 
 /**
- * Middleware para invalidar cache relacionado a contas
+ * Função utilitária para salvar dados no cache
  */
-export function invalidateAccountCache(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  const userId = req.user?.id
+export function setCacheData(request: FastifyRequest, data: never) {
+  const cacheKey = generateCacheKey(request)
+  const ttl = (request as any).cacheTTL
+  memoryCache.set(cacheKey, data, ttl)
+}
 
-  if (!userId) {
-    return next()
+/**
+ * Função para invalidar cache relacionado a contas
+ */
+export function invalidateAccountCache(userId: string, accountId?: string) {
+  // Invalidar cache de listagem de contas
+  const listCacheKey = createHash('md5')
+    .update(`GET:/api/v1/accounts:${userId}`)
+    .digest('hex')
+  memoryCache.delete(listCacheKey)
+
+  // Se for uma operação em conta específica, invalidar cache de saldo
+  if (accountId) {
+    const balanceCacheKey = createHash('md5')
+      .update(`GET:/api/v1/accounts/${accountId}/balance:${userId}`)
+      .digest('hex')
+    memoryCache.delete(balanceCacheKey)
   }
-
-  // Interceptar resposta para invalidar cache após operações de escrita
-  const originalJson = res.json.bind(res)
-  res.json = function (data: any) {
-    // Invalidar cache apenas se a operação foi bem-sucedida
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      // Invalidar cache de listagem de contas
-      const listCacheKey = createHash('md5')
-        .update(`GET:/accounts:${userId}`)
-        .digest('hex')
-      memoryCache.delete(listCacheKey)
-
-      // Se for uma operação em conta específica, invalidar cache de saldo
-      if (req.params.id) {
-        const balanceCacheKey = createHash('md5')
-          .update(`GET:/accounts/${req.params.id}/balance:${userId}`)
-          .digest('hex')
-        memoryCache.delete(balanceCacheKey)
-      }
-    }
-    return originalJson(data)
-  }
-
-  next()
 }
 
 /**
