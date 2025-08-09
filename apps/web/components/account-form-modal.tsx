@@ -12,10 +12,21 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
-import { AccountFormSchema, accountSchema } from '@/lib/schemas'
 import { Account } from '@/lib/types'
+
+// Schema local para teste
+const localAccountCreateSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  type: z.enum(['bank', 'investment', 'cash', 'other']),
+  icon: z.string().min(1, 'Ícone é obrigatório'),
+  iconType: z.enum(['bank', 'generic']),
+  includeInGeneralBalance: z.boolean(),
+})
+
+type AccountCreateSchema = z.infer<typeof localAccountCreateSchema>
 
 import { IconSelector } from './icon-selector'
 import { Button } from './ui/button'
@@ -40,7 +51,7 @@ import {
 interface AccountFormModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: AccountFormSchema) => void
+  onSubmit: (data: AccountCreateSchema) => void
   account?: Account
   title?: string
 }
@@ -83,8 +94,8 @@ export function AccountFormModal({
     setValue,
     watch,
     formState: { errors },
-  } = useForm<AccountFormSchema>({
-    resolver: zodResolver(accountSchema),
+  } = useForm<AccountCreateSchema>({
+    resolver: zodResolver(localAccountCreateSchema),
     defaultValues: {
       name: '',
       type: 'bank',
@@ -130,7 +141,8 @@ export function AccountFormModal({
     }
   }, [watchedName, account, setValue])
 
-  const onSubmitForm = (data: AccountFormSchema) => {
+  const onSubmitForm = (data: AccountCreateSchema) => {
+    console.log('AccountFormModal: onSubmitForm called with data:', data)
     onSubmit(data)
     handleClose()
   }

@@ -71,9 +71,13 @@ export default function AccountsPage() {
   }
 
   const handleSubmitAccount = (accountData: AccountFormData) => {
+    console.log('handleSubmitAccount called with data:', accountData)
+    console.log('editingAccount:', editingAccount)
     if (editingAccount) {
+      console.log('Calling updateAccount')
       updateAccount(editingAccount.id, accountData)
     } else {
+      console.log('Calling addAccount')
       addAccount(accountData)
     }
     setIsAccountFormOpen(false)

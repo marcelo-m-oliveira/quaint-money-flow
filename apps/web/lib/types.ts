@@ -56,7 +56,7 @@ export interface Account {
 
 export interface AccountFormData {
   name: string
-  type: 'bank' | 'credit_card' | 'investment' | 'cash' | 'other'
+  type: 'bank' | 'investment' | 'cash' | 'other'
   icon: string
   iconType: 'bank' | 'generic'
   includeInGeneralBalance: boolean

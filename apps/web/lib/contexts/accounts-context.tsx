@@ -65,8 +65,11 @@ export function AccountsProvider({ children }: { children: React.ReactNode }) {
 
   // Adicionar nova conta
   const addAccount = async (accountData: AccountFormData): Promise<Account> => {
+    console.log('AccountsContext: addAccount called with data:', accountData)
     try {
+      console.log('AccountsContext: calling accountsService.create')
       const newAccount = await accountsService.create(accountData)
+      console.log('AccountsContext: account created successfully:', newAccount)
       const accountWithDates = {
         ...newAccount,
         createdAt: new Date(newAccount.createdAt),
@@ -76,6 +79,7 @@ export function AccountsProvider({ children }: { children: React.ReactNode }) {
       success.create('Conta')
       return accountWithDates
     } catch (err) {
+      console.error('AccountsContext: error creating account:', err)
       error.create('conta')
       throw err
     }
