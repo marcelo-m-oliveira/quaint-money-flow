@@ -2,7 +2,6 @@ import { Account, AccountType, PrismaClient } from '@prisma/client'
 
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { AccountRepository } from '@/repositories/account.repository'
-
 import { type AccountCreateSchema } from '@/utils/schemas'
 
 export class AccountService {

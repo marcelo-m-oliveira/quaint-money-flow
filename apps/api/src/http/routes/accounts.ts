@@ -3,7 +3,12 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
-import { accountCreateSchema, accountSchema, idParamSchema, paginationSchema } from '@/utils/schemas'
+import {
+  accountCreateSchema,
+  accountSchema,
+  idParamSchema,
+  paginationSchema,
+} from '@/utils/schemas'
 
 import { authMiddleware } from '../middlewares/auth'
 

@@ -42,7 +42,7 @@ export class AccountController {
 
       const account = await this.accountService.findById(id, userId)
 
-      return reply.status(200).send({ account })
+      return reply.status(200).send(account)
     } catch (error) {
       return handleError(error as FastifyError, reply)
     }
@@ -55,7 +55,7 @@ export class AccountController {
 
       const account = await this.accountService.create(data, userId)
 
-      return reply.status(201).send({ account })
+      return reply.status(201).send(account)
     } catch (error) {
       return handleError(error as FastifyError, reply)
     }
@@ -69,7 +69,7 @@ export class AccountController {
 
       const account = await this.accountService.update(id, data, userId)
 
-      return reply.status(200).send({ account })
+      return reply.status(200).send(account)
     } catch (error) {
       return handleError(error as FastifyError, reply)
     }
