@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+
 import { useAccounts as useAccountsContext } from '../contexts/accounts-context'
 
 // Hook que retorna o contexto de contas sem inicialização automática
@@ -12,7 +14,11 @@ export function useAccountsWithAutoInit() {
   const context = useAccountsContext()
   
   // Inicializar contas automaticamente quando o hook é usado
-  context.initialize()
+  useEffect(() => {
+    if (!context.isInitialized) {
+      context.initialize()
+    }
+  }, [context])
   
   return context
 }

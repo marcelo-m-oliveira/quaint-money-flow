@@ -47,6 +47,9 @@ const customJestConfig = {
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@t3-oss/env-nextjs|@t3-oss/env-core)/)',
+  ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   globals: {
     'ts-jest': {
