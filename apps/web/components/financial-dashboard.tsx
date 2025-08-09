@@ -230,7 +230,9 @@ export function FinancialDashboard() {
                     onSubmit={handleExpenseSubmit}
                     categories={categories}
                     type="expense"
-                    title={editingTransaction ? 'Editar despesa' : 'Nova despesa'}
+                    title={
+                      editingTransaction ? 'Editar despesa' : 'Nova despesa'
+                    }
                     showCreateAnotherButton={!editingTransaction}
                   />
                 )}
@@ -243,7 +245,9 @@ export function FinancialDashboard() {
                     onSubmit={handleIncomeSubmit}
                     categories={categories}
                     type="income"
-                    title={editingTransaction ? 'Editar receita' : 'Nova receita'}
+                    title={
+                      editingTransaction ? 'Editar receita' : 'Nova receita'
+                    }
                     showCreateAnotherButton={!editingTransaction}
                   />
                 )}

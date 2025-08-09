@@ -55,7 +55,7 @@ export const accountCreateSchema = z.object({
     .min(1, 'Nome é obrigatório')
     .min(2, 'Nome deve ter pelo menos 2 caracteres')
     .max(50, 'Nome deve ter no máximo 50 caracteres'),
-  type: z.enum(['bank', 'credit_card', 'investment', 'cash', 'other'], {
+  type: z.enum(['bank', 'investment', 'cash', 'other'], {
     message: 'Tipo de conta inválido',
   }),
   icon: z.string().min(1, 'Ícone é obrigatório'),

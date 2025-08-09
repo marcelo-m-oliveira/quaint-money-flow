@@ -306,7 +306,7 @@ export function useFinancialData() {
       )
 
       if (hasTransactions) {
-        warning(
+        warning.constraint(
           'Não é possível deletar uma categoria que possui transações associadas.',
         )
         return

@@ -45,7 +45,7 @@ export interface CategoryFormData {
 export interface Account {
   id: string
   name: string
-  type: 'bank' | 'credit_card' | 'investment' | 'cash' | 'other'
+  type: 'bank' | 'investment' | 'cash' | 'other'
   icon: string
   iconType: 'bank' | 'generic'
   balance: number
@@ -93,4 +93,35 @@ export interface BankIcon {
   name: string
   logo: string
   searchTerms: string[]
+}
+
+// Tipos para preferências do usuário
+export interface UserPreferences {
+  id: string
+  userId: string
+  transactionOrder: 'crescente' | 'decrescente'
+  defaultNavigationPeriod:
+    | 'diario'
+    | 'semanal'
+    | 'mensal'
+    | 'trimestral'
+    | 'anual'
+  showDailyBalance: boolean
+  viewMode: 'all' | 'cashflow'
+  isFinancialSummaryExpanded: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface UserPreferencesFormData {
+  transactionOrder?: 'crescente' | 'decrescente'
+  defaultNavigationPeriod?:
+    | 'diario'
+    | 'semanal'
+    | 'mensal'
+    | 'trimestral'
+    | 'anual'
+  showDailyBalance?: boolean
+  viewMode?: 'all' | 'cashflow'
+  isFinancialSummaryExpanded?: boolean
 }

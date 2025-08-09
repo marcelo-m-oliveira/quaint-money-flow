@@ -17,17 +17,6 @@ import { z } from 'zod'
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
 import { Account } from '@/lib/types'
 
-// Schema local para teste
-const localAccountCreateSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  type: z.enum(['bank', 'investment', 'cash', 'other']),
-  icon: z.string().min(1, 'Ícone é obrigatório'),
-  iconType: z.enum(['bank', 'generic']),
-  includeInGeneralBalance: z.boolean(),
-})
-
-type AccountCreateSchema = z.infer<typeof localAccountCreateSchema>
-
 import { IconSelector } from './icon-selector'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
@@ -47,6 +36,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip'
+
+// Schema local para teste
+const localAccountCreateSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  type: z.enum(['bank', 'investment', 'cash', 'other']),
+  icon: z.string().min(1, 'Ícone é obrigatório'),
+  iconType: z.enum(['bank', 'generic']),
+  includeInGeneralBalance: z.boolean(),
+})
+
+type AccountCreateSchema = z.infer<typeof localAccountCreateSchema>
 
 interface AccountFormModalProps {
   isOpen: boolean
@@ -249,12 +249,7 @@ export function AccountFormModal({
                 onValueChange={(value) =>
                   setValue(
                     'type',
-                    value as
-                      | 'bank'
-                      | 'credit_card'
-                      | 'investment'
-                      | 'cash'
-                      | 'other',
+                    value as 'bank' | 'investment' | 'cash' | 'other',
                   )
                 }
               >

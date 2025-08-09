@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { AccountsProvider } from '@/lib/contexts/accounts-context'
 import { BankIconsProvider } from '@/lib/contexts/bank-icons-context'
+import { UserPreferencesProvider } from '@/lib/contexts/user-preferences-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,7 +31,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AccountsProvider>
-            <BankIconsProvider>{children}</BankIconsProvider>
+            <BankIconsProvider>
+              <UserPreferencesProvider>{children}</UserPreferencesProvider>
+            </BankIconsProvider>
           </AccountsProvider>
           <Toaster />
         </ThemeProvider>

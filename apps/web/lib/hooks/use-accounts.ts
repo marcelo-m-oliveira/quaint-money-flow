@@ -12,14 +12,14 @@ export function useAccounts() {
 // Hook que inicializa as contas automaticamente quando usado
 export function useAccountsWithAutoInit() {
   const context = useAccountsContext()
-  
+
   // Inicializar contas automaticamente quando o hook é usado
   useEffect(() => {
     if (!context.isInitialized) {
       context.initialize()
     }
   }, [context])
-  
+
   return context
 }
 

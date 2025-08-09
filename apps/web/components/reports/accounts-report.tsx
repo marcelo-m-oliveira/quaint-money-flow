@@ -49,7 +49,7 @@ interface AccountData {
 
 const ACCOUNT_TYPE_LABELS = {
   bank: 'Conta Bancária',
-  credit_card: 'Cartão de Crédito',
+
   investment: 'Investimento',
   cash: 'Dinheiro',
   other: 'Outros',

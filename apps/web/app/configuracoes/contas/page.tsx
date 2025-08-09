@@ -31,14 +31,15 @@ import { Account, AccountFormData } from '@/lib/types'
 
 const ACCOUNT_TYPE_LABELS = {
   bank: 'Conta Bancária',
-  credit_card: 'Cartão de Crédito',
+
   investment: 'Investimento',
   cash: 'Dinheiro',
   other: 'Outros',
 } as const
 
 export default function AccountsPage() {
-  const { accounts, addAccount, updateAccount, deleteAccount } = useAccountsWithAutoInit()
+  const { accounts, addAccount, updateAccount, deleteAccount } =
+    useAccountsWithAutoInit()
   const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | undefined>()
   const [confirmDialog, setConfirmDialog] = useState<{

@@ -2,6 +2,7 @@ import type { FastifyError, FastifyInstance, FastifyReply } from 'fastify'
 import { ZodError } from 'zod'
 
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
+import { NotFoundError } from '@/http/routes/_errors/not-found-error'
 import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 
 type FastifyErrorHandler = FastifyInstance['errorHandler']
@@ -22,6 +23,12 @@ export const errorHandler: FastifyErrorHandler = (error, request, reply) => {
 
   if (error instanceof UnauthorizedError) {
     reply.status(401).send({
+      message: error.message,
+    })
+  }
+
+  if (error instanceof NotFoundError) {
+    reply.status(404).send({
       message: error.message,
     })
   }
@@ -50,6 +57,12 @@ export const handleError = (error: FastifyError, reply: FastifyReply) => {
 
   if (error instanceof UnauthorizedError) {
     return reply.status(401).send({
+      message: error.message,
+    })
+  }
+
+  if (error instanceof NotFoundError) {
+    return reply.status(404).send({
       message: error.message,
     })
   }

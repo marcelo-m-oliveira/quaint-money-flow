@@ -182,7 +182,6 @@ export function generateMockCategories(
 export function generateMockTransaction(
   categories: Category[],
   type?: 'income' | 'expense',
-  accounts?: Account[],
   creditCards?: CreditCard[],
 ): Transaction {
   const transactionType =
@@ -228,27 +227,14 @@ export function generateMockTransaction(
 
   const createdAt = faker.date.past({ years: 1 }).getTime()
 
-  // Vincular com conta ou cartão (70% das transações terão vínculo)
-  let accountId: string | undefined
+  // Vincular com cartão (70% das transações terão vínculo)
   let creditCardId: string | undefined
 
   if (faker.number.float() < 0.7) {
     // 70% chance de ter vínculo
-    const hasAccounts = accounts && accounts.length > 0
     const hasCreditCards = creditCards && creditCards.length > 0
 
-    if (hasAccounts && hasCreditCards) {
-      // Se tem ambos, escolher aleatoriamente
-      const useAccount = faker.datatype.boolean()
-      if (useAccount) {
-        accountId = faker.helpers.arrayElement(accounts).id
-      } else {
-        creditCardId = faker.helpers.arrayElement(creditCards).id
-      }
-    } else if (hasAccounts) {
-      // Só tem contas
-      accountId = faker.helpers.arrayElement(accounts).id
-    } else if (hasCreditCards) {
+    if (hasCreditCards) {
       // Só tem cartões
       creditCardId = faker.helpers.arrayElement(creditCards).id
     }
@@ -283,7 +269,6 @@ export function generateMockTransaction(
     type: transactionType,
     categoryId: category.id,
     category,
-    accountId,
     creditCardId,
     date: transactionDate,
     createdAt,
@@ -298,7 +283,6 @@ export function generateMockTransaction(
 export function generateMockTransactions(
   categories: Category[],
   count: number = 50,
-  accounts?: Account[],
   creditCards?: CreditCard[],
 ): Transaction[] {
   const transactions: Transaction[] = []
@@ -306,9 +290,7 @@ export function generateMockTransactions(
   for (let i = 0; i < count; i++) {
     // 70% despesas, 30% receitas para simular comportamento real
     const type = faker.number.float() < 0.7 ? 'expense' : 'income'
-    transactions.push(
-      generateMockTransaction(categories, type, accounts, creditCards),
-    )
+    transactions.push(generateMockTransaction(categories, type, creditCards))
   }
 
   // Ordenar por data (mais recentes primeiro)
@@ -392,12 +374,7 @@ export function generateMockCreditCards(count: number = 3): CreditCard[] {
 export function generateMockDataset() {
   const categories = generateMockCategories(12, true)
   const creditCards = generateMockCreditCards(4)
-  const transactions = generateMockTransactions(
-    categories,
-    100,
-    [],
-    creditCards,
-  )
+  const transactions = generateMockTransactions(categories, 100, creditCards)
 
   return {
     categories,

@@ -139,7 +139,6 @@ model UserPreferences {
 // Enums
 enum AccountType {
   bank
-  credit_card
   investment
   cash
   other

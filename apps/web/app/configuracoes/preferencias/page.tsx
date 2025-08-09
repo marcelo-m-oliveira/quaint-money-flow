@@ -11,15 +11,13 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import {
-  PreferencesFormData,
-  usePreferences,
-} from '@/lib/hooks/use-preferences'
+import { useUserPreferences } from '@/lib/hooks/use-user-preferences'
 import { preferencesSchema } from '@/lib/schemas'
+import { UserPreferencesFormData } from '@/lib/types'
 
 export default function PreferenciasPage() {
-  const { preferences, clearAllTransactions, deleteAccount, savePreferences } =
-    usePreferences()
+  const { preferences, updatePreferences, resetPreferences } =
+    useUserPreferences()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -33,30 +31,29 @@ export default function PreferenciasPage() {
     handleSubmit,
     reset,
     formState: { errors, isDirty },
-  } = useForm<PreferencesFormData>({
+  } = useForm<UserPreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
-    defaultValues: preferences,
+    defaultValues: preferences || {
+      transactionOrder: 'decrescente',
+      defaultNavigationPeriod: 'mensal',
+      showDailyBalance: true,
+      viewMode: 'all',
+      isFinancialSummaryExpanded: true,
+    },
   })
 
   // Resetar formulário quando as preferências mudarem
   useEffect(() => {
-    reset(preferences)
+    if (preferences) {
+      reset(preferences)
+    }
   }, [preferences, reset])
 
-  const onSubmit = (data: PreferencesFormData) => {
+  const onSubmit = async (data: UserPreferencesFormData) => {
     try {
-      // Salvar todas as preferências de uma vez usando o hook
-      const updatedPreferences = {
-        ...preferences,
-        ...data,
-      }
-
-      savePreferences(updatedPreferences)
-
+      await updatePreferences(data)
       // Resetar o formulário para remover o estado isDirty
-      reset(updatedPreferences)
-
-      console.log('✅ Preferências salvas com sucesso!')
+      reset(data)
     } catch (error) {
       console.error('❌ Erro ao salvar preferências:', error)
     }
@@ -96,6 +93,29 @@ export default function PreferenciasPage() {
           description: '',
           onConfirm: () => {},
         })
+      },
+    })
+  }
+
+  const handleResetPreferences = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Redefinir preferências',
+      description:
+        'Tem certeza que deseja redefinir todas as suas preferências para os valores padrão?',
+      variant: 'destructive',
+      onConfirm: async () => {
+        try {
+          await resetPreferences()
+          setConfirmDialog({
+            isOpen: false,
+            title: '',
+            description: '',
+            onConfirm: () => {},
+          })
+        } catch (error) {
+          console.error('❌ Erro ao redefinir preferências:', error)
+        }
       },
     })
   }
