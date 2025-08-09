@@ -108,7 +108,8 @@ export const creditCardResponseSchema = z.object({
   name: z.string(),
   icon: z.string(),
   iconType: z.enum(['bank', 'generic']),
-  limit: z.number(), // Como number para resposta da API
+  limit: z.number(),
+  usage: z.number(),
   closingDay: z.number(),
   dueDay: z.number(),
   defaultPaymentAccountId: z.string().nullish(),

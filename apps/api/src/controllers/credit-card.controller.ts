@@ -39,12 +39,13 @@ export class CreditCardController {
         'Cartoes de credito listados com sucesso',
       )
 
-      // Convert dates to seconds and limit to number for frontend
+      // Convert dates to seconds and limit/usage to number for frontend
       const convertedResult = {
         ...result,
         creditCards: result.creditCards.map((creditCard) => ({
           ...creditCard,
           limit: Number(creditCard.limit),
+          usage: Number(creditCard.usage),
           createdAt: dateToSeconds(creditCard.createdAt),
           updatedAt: dateToSeconds(creditCard.updatedAt),
         })),

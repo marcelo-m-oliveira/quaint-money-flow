@@ -1,7 +1,7 @@
-import { TransactionController } from '../http/controllers/transaction.controller'
-import { prisma } from '../lib/prisma'
-import { TransactionRepository } from '../repositories/transaction.repository'
-import { TransactionService } from '../services/transaction.service'
+import { TransactionController } from '@/controllers/transaction.controller'
+import { prisma } from '@/lib/prisma'
+import { TransactionRepository } from '@/repositories/transaction.repository'
+import { TransactionService } from '@/services/transaction.service'
 
 // Factory para criar instâncias das dependências de Transaction
 export class TransactionFactory {
