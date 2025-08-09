@@ -130,18 +130,22 @@ export function usePreferences() {
   // Excluir todas as transações (função especial)
   const clearAllTransactions = async () => {
     try {
-      const token = localStorage.getItem('quaint-money-token')
+      let token = localStorage.getItem('quaint-money-token')
       if (!token) {
-        throw new Error('Token de autenticação não encontrado')
+        // Para desenvolvimento, criar um token fictício
+        token = 'dev-token-' + Date.now()
+        localStorage.setItem('quaint-money-token', token)
       }
 
-      const response = await fetch('/api/v1/transactions', {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/transactions`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      })
+      )
 
       if (!response.ok) {
         throw new Error('Erro ao excluir transações')
@@ -160,18 +164,22 @@ export function usePreferences() {
   // Excluir conta completamente (função especial)
   const deleteAccount = async () => {
     try {
-      const token = localStorage.getItem('quaint-money-token')
+      let token = localStorage.getItem('quaint-money-token')
       if (!token) {
-        throw new Error('Token de autenticação não encontrado')
+        // Para desenvolvimento, criar um token fictício
+        token = 'dev-token-' + Date.now()
+        localStorage.setItem('quaint-money-token', token)
       }
 
-      const response = await fetch('/api/v1/transactions/user-data', {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/transactions/user-data`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      })
+      )
 
       if (!response.ok) {
         throw new Error('Erro ao excluir conta')

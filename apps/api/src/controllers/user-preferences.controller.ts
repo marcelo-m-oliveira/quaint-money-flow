@@ -13,12 +13,12 @@ export class UserPreferencesController {
     try {
       const userId = request.user.sub
 
-      request.log.info({ userId }, 'Buscando preferências do usuário')
+      request.log.info({ userId }, 'Buscando preferencias do usuario')
       const preferences = await this.userPreferencesService.findByUserId(userId)
 
       request.log.info(
         { userId, preferences: preferences.id },
-        'Preferências encontradas com sucesso',
+        'Preferencias encontradas com sucesso',
       )
 
       return reply.status(200).send({
@@ -29,7 +29,7 @@ export class UserPreferencesController {
     } catch (error: any) {
       request.log.error(
         { error: error.message },
-        'Erro ao buscar preferências do usuário',
+        'Erro ao buscar preferencias do usuario',
       )
       return handleError(error as FastifyError, reply)
     }
@@ -40,13 +40,13 @@ export class UserPreferencesController {
       const userId = request.user.sub
       const data = request.body as Partial<UserPreferencesSchema>
 
-      request.log.info({ userId, data }, 'Atualizando preferências do usuário')
+      request.log.info({ userId, data }, 'Atualizando preferencias do usuario')
 
       const preferences = await this.userPreferencesService.update(userId, data)
 
       request.log.info(
         { userId, preferences: preferences.id },
-        'Preferências atualizadas com sucesso',
+        'Preferencias atualizadas com sucesso',
       )
 
       return reply.status(200).send({
@@ -57,7 +57,7 @@ export class UserPreferencesController {
     } catch (error: any) {
       request.log.error(
         { error: error.message },
-        'Erro ao atualizar preferências do usuário',
+        'Erro ao atualizar preferencias do usuario',
       )
       return handleError(error as FastifyError, reply)
     }
@@ -70,14 +70,14 @@ export class UserPreferencesController {
 
       request.log.info(
         { userId, data },
-        'Criando/atualizando preferências do usuário',
+        'Criando/atualizando preferencias do usuario',
       )
 
       const preferences = await this.userPreferencesService.upsert(userId, data)
 
       request.log.info(
         { userId, preferences: preferences.id },
-        'Preferências criadas/atualizadas com sucesso',
+        'Preferencias criadas/atualizadas com sucesso',
       )
 
       return reply.status(200).send({
@@ -88,7 +88,7 @@ export class UserPreferencesController {
     } catch (error: any) {
       request.log.error(
         { error: error.message },
-        'Erro ao criar/atualizar preferências do usuário',
+        'Erro ao criar/atualizar preferencias do usuario',
       )
       return handleError(error as FastifyError, reply)
     }
@@ -98,13 +98,13 @@ export class UserPreferencesController {
     try {
       const userId = request.user.sub
 
-      request.log.info({ userId }, 'Resetando preferências do usuário')
+      request.log.info({ userId }, 'Resetando preferencias do usuario')
 
       const preferences = await this.userPreferencesService.reset(userId)
 
       request.log.info(
         { userId, preferences: preferences.id },
-        'Preferências resetadas com sucesso',
+        'Preferencias resetadas com sucesso',
       )
 
       return reply.status(200).send({
@@ -115,7 +115,7 @@ export class UserPreferencesController {
     } catch (error: any) {
       request.log.error(
         { error: error.message },
-        'Erro ao resetar preferências do usuário',
+        'Erro ao resetar preferencias do usuario',
       )
       return handleError(error as FastifyError, reply)
     }

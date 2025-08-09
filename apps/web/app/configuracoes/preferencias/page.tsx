@@ -11,14 +11,14 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
 import { usePreferences } from '@/lib/hooks/use-preferences'
+import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
 import { preferencesSchema } from '@/lib/schemas'
 import { UserPreferencesFormData } from '@/lib/types'
 
 export default function PreferenciasPage() {
-  const { preferences, updatePreferences, resetPreferences } =
-    useUserPreferencesWithAutoInit()
+  const { preferences, updatePreferences } = useUserPreferencesWithAutoInit()
+  const { clearAllTransactions, deleteAccount } = usePreferences()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -401,6 +401,8 @@ export default function PreferenciasPage() {
         title={confirmDialog.title}
         description={confirmDialog.description}
         variant={confirmDialog.variant}
+        requiresTimer={confirmDialog.title === 'Excluir conta por completo'}
+        timerSeconds={10}
       />
     </>
   )
