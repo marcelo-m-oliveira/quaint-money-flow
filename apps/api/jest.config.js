@@ -9,6 +9,16 @@ module.exports = {
   ],
   transform: {
     '^.+\.ts$': 'ts-jest',
+    '^.+\.js$': 'babel-jest',
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@t3-oss|@saas)/)',
+  ],
+  extensionsToTreatAsEsm: ['.ts'],
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
   },
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -32,7 +42,7 @@ module.exports = {
     },
   },
   setupFilesAfterEnv: ['<rootDir>/src/lib/test-setup.ts'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   clearMocks: true,

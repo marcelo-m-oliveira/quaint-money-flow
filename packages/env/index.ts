@@ -27,7 +27,7 @@ export const env = createEnv({
       .default('your-super-secret-jwt-key-change-this-in-production'),
     JWT_EXPIRES_IN: z.string().default('7d'),
 
-    SWAGGER_ENABLED: z.coerce.boolean().default(true),
+    SWAGGER_ENABLED: z.boolean().default(true),
     SWAGGER_PATH: z.string().default('/docs'),
   },
   client: {},

@@ -8,7 +8,10 @@
     "db:studio": "pnpm env:load prisma studio",
     "env:load": "dotenv -e ../../.env --",
     "build": "tsup",
-    "start": "node dist/http/server.js"
+    "start": "node dist/http/server.js",
+    "test": "pnpm env:load jest",
+    "test:watch": "pnpm env:load jest --watch",
+    "test:coverage": "pnpm env:load jest --coverage"
   },
   "dependencies": {
     "@fastify/cors": "^10.1.0",
@@ -29,6 +32,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
     "@faker-js/faker": "^9.9.0",
     "@saas/eslint-config": "workspace:*",
     "@saas/prettier": "workspace:*",
@@ -37,6 +42,7 @@
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.17.1",
+    "babel-jest": "^30.0.5",
     "dotenv-cli": "^7.4.1",
     "jest": "^29.7.0",
     "prisma": "^5.19.1",
