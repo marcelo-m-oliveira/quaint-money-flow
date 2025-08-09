@@ -23,9 +23,10 @@ const loggerConfig = isDevelopment
           colorize: true,
           translateTime: 'HH:MM:ss Z',
           ignore: 'pid,hostname',
-          messageFormat: '🚀 {msg}',
+          messageFormat: '{msg}',
           levelFirst: true,
           singleLine: false,
+          sync: true,
         },
       },
     }
@@ -62,18 +63,23 @@ export async function createApp() {
 if (require.main === module) {
   createApp().then((app) => {
     app.listen({ port: env.PORT, host: '0.0.0.0' }).then(() => {
-      app.log.info({
-        port: env.PORT,
-        host: '0.0.0.0',
-        environment: process.env.NODE_ENV || 'development',
-        apiVersion: env.API_VERSION,
-        apiPrefix: env.API_PREFIX,
-        swaggerEnabled: env.SWAGGER_ENABLED,
-        swaggerPath: env.SWAGGER_PATH,
-      }, '🚀 Servidor HTTP iniciado com sucesso')
-      
+      app.log.info(
+        {
+          port: env.PORT,
+          host: '0.0.0.0',
+          environment: process.env.NODE_ENV || 'development',
+          apiVersion: env.API_VERSION,
+          apiPrefix: env.API_PREFIX,
+          swaggerEnabled: env.SWAGGER_ENABLED,
+          swaggerPath: env.SWAGGER_PATH,
+        },
+        'Servidor HTTP iniciado com sucesso',
+      )
+
       if (env.SWAGGER_ENABLED) {
-        app.log.info(`📚 Documentação da API disponível em: http://localhost:${env.PORT}${env.SWAGGER_PATH}`)
+        app.log.info(
+          `Documentacao da API disponivel em: http://localhost:${env.PORT}${env.SWAGGER_PATH}`,
+        )
       }
     })
   })

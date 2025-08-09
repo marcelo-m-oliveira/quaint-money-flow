@@ -24,7 +24,7 @@ export class AccountController {
       const userId = request.user.sub
       const filters = request.query as AccountFilters
 
-      request.log.info({ userId, filters }, 'Listando contas do usuário')
+      request.log.info({ userId, filters }, 'Listando contas do usuario')
       const result = await this.accountService.findMany(userId, {
         type: filters.type,
         includeInGeneralBalance: filters.includeInGeneralBalance,

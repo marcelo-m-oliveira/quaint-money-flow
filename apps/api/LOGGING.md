@@ -22,6 +22,13 @@ O sistema de logging foi implementado usando **Pino** (logger padrão do Fastify
 ## 🔧 Configuração
 
 ### Desenvolvimento
+- **Formatação colorida**: Logs com cores para melhor visualização
+- **Timestamps**: Formato `HH:MM:ss Z` para facilitar debug
+- **Campos ignorados**: `pid` e `hostname` são omitidos para logs mais limpos
+- **Codificação**: Configurado para exibir caracteres corretamente no terminal Windows
+- **Sincronização**: Logs síncronos para garantir ordem correta das mensagens
+- **Níveis primeiro**: Exibe o nível do log antes da mensagem
+
 ```typescript
 const loggerConfig = {
   transport: {
@@ -142,6 +149,34 @@ WARN: 🚀 Token de acesso não fornecido
 3. **Monitoramento**: Informações de performance (responseTime)
 4. **Segurança**: Logs de tentativas de autenticação
 5. **Operações**: Visibilidade completa do fluxo de dados
+
+## 🔧 Configuração de Codificação
+
+### Windows Terminal
+Para garantir a exibição correta de caracteres especiais no Windows:
+
+```typescript
+const loggerConfig = {
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'HH:MM:ss Z',
+      ignore: 'pid,hostname',
+      messageFormat: '{msg}',
+      levelFirst: true,
+      singleLine: false,
+      sync: true, // Importante para Windows
+    },
+  },
+}
+```
+
+### Mensagens ASCII
+Todas as mensagens de log utilizam apenas caracteres ASCII para compatibilidade:
+- ✅ `autenticacao` ao invés de `autenticação`
+- ✅ `usuario` ao invés de `usuário`
+- ✅ `nao` ao invés de `não`
 
 ## 📈 Métricas Incluídas
 
