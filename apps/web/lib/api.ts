@@ -31,9 +31,14 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
+    // Para desenvolvimento, usar um token fixo
+    // Em produção, isso deve vir do contexto de autenticação
+    const token = 'dev-token-123'
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
         ...options.headers,
       },
       ...options,

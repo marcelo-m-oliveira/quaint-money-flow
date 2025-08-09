@@ -3,23 +3,23 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 
-export async function authMiddleware(request: FastifyRequest) {
+export async function authMiddleware(request: FastifyRequest, reply: any) {
   try {
     const authHeader = request.headers.authorization
 
     if (!authHeader) {
-      throw new UnauthorizedError('Token de acesso requerido')
+      return reply.status(401).send({ message: 'Token de acesso requerido' })
     }
 
     const [, token] = authHeader.split(' ')
 
     if (!token) {
-      throw new UnauthorizedError('Token de acesso inválido')
+      return reply.status(401).send({ message: 'Token de acesso inválido' })
     }
 
-    // Verificar se o usuário ainda existe
-    const user = await prisma.user.findUnique({
-      where: { id: '' },
+    // Para desenvolvimento, vamos usar um usuário padrão
+    // Em produção, você deve decodificar o JWT token aqui
+    const user = await prisma.user.findFirst({
       select: {
         id: true,
         email: true,
@@ -28,7 +28,7 @@ export async function authMiddleware(request: FastifyRequest) {
     })
 
     if (!user) {
-      throw new UnauthorizedError('Usuário não encontrado')
+      return reply.status(401).send({ message: 'Usuário não encontrado' })
     }
 
     // Adicionar usuário ao request
@@ -37,10 +37,8 @@ export async function authMiddleware(request: FastifyRequest) {
       sub: user.id,
     }
   } catch (error) {
-    if (error instanceof UnauthorizedError) {
-      throw error
-    }
-    throw new UnauthorizedError('Token de acesso inválido')
+    console.error('Erro no middleware de autenticação:', error)
+    return reply.status(401).send({ message: 'Token de acesso inválido' })
   }
 }
 
