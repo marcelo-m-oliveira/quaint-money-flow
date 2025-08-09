@@ -8,14 +8,23 @@ export async function authMiddleware(
 ) {
   try {
     const authHeader = request.headers.authorization
+    const requestInfo = {
+      method: request.method,
+      url: request.url,
+      ip: request.ip,
+    }
+
+    request.log.info({ ...requestInfo }, 'Tentativa de autenticação')
 
     if (!authHeader) {
+      request.log.warn({ ...requestInfo }, 'Token de acesso não fornecido')
       return reply.status(401).send({ message: 'Token de acesso requerido' })
     }
 
     const [, token] = authHeader.split(' ')
 
     if (!token) {
+      request.log.warn({ ...requestInfo }, 'Token de acesso inválido ou malformado')
       return reply.status(401).send({ message: 'Token de acesso inválido' })
     }
 
@@ -30,6 +39,7 @@ export async function authMiddleware(
     })
 
     if (!user) {
+      request.log.warn({ ...requestInfo }, 'Usuário não encontrado na base de dados')
       return reply.status(401).send({ message: 'Usuário não encontrado' })
     }
 
@@ -38,8 +48,10 @@ export async function authMiddleware(
       ...user,
       sub: user.id,
     }
+
+    request.log.info({ ...requestInfo, userId: user.id, userEmail: user.email }, 'Autenticação realizada com sucesso')
   } catch (error) {
-    console.error('Erro no middleware de autenticação:', error)
+    request.log.error({ ...requestInfo, error: error.message }, 'Erro no middleware de autenticação')
     return reply.status(401).send({ message: 'Token de acesso inválido' })
   }
 }

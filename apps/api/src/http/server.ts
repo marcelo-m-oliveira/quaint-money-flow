@@ -12,8 +12,31 @@ import { accountRoutes } from '@/http/routes/accounts'
 import { setupSwagger } from '@/lib/swagger'
 import { errorHandler } from '@/utils/errors'
 
+// Configuração do logger
+const isDevelopment = process.env.NODE_ENV !== 'production'
+
+const loggerConfig = isDevelopment
+  ? {
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          translateTime: 'HH:MM:ss Z',
+          ignore: 'pid,hostname',
+          messageFormat: '🚀 {msg}',
+          levelFirst: true,
+          singleLine: false,
+        },
+      },
+    }
+  : {
+      level: 'info',
+    }
+
 export async function createApp() {
-  const app = fastify().withTypeProvider<ZodTypeProvider>()
+  const app = fastify({
+    logger: loggerConfig,
+  }).withTypeProvider<ZodTypeProvider>()
 
   app.setSerializerCompiler(serializerCompiler)
   app.setValidatorCompiler(validatorCompiler)
@@ -39,7 +62,19 @@ export async function createApp() {
 if (require.main === module) {
   createApp().then((app) => {
     app.listen({ port: env.PORT, host: '0.0.0.0' }).then(() => {
-      console.log(`🚀 HTTP server running on http://localhost:${env.PORT}`)
+      app.log.info({
+        port: env.PORT,
+        host: '0.0.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        apiVersion: env.API_VERSION,
+        apiPrefix: env.API_PREFIX,
+        swaggerEnabled: env.SWAGGER_ENABLED,
+        swaggerPath: env.SWAGGER_PATH,
+      }, '🚀 Servidor HTTP iniciado com sucesso')
+      
+      if (env.SWAGGER_ENABLED) {
+        app.log.info(`📚 Documentação da API disponível em: http://localhost:${env.PORT}${env.SWAGGER_PATH}`)
+      }
     })
   })
 }
