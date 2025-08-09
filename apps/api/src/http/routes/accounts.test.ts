@@ -1,11 +1,14 @@
+import { Account, AccountType } from '@prisma/client'
 import fastify, { FastifyInstance } from 'fastify'
 
 import { prisma } from '@/lib/prisma'
 
 // Mock do JWT para testes
 const mockUser = {
+  id: 'test-user-id',
   sub: 'test-user-id',
   email: 'test@example.com',
+  name: 'Test User',
 }
 
 // Criar instância do Fastify para testes
@@ -15,7 +18,7 @@ const createTestApp = (): FastifyInstance => {
   })
 
   // Mock do plugin JWT
-  app.addHook('preHandler', async (request, reply) => {
+  app.addHook('preHandler', async (request) => {
     request.user = mockUser
   })
 
@@ -53,9 +56,9 @@ const createTestApp = (): FastifyInstance => {
         const userId = (request.user as { sub: string }).sub
         const query = request.query as { type?: string }
 
-        const whereClause: any = { userId }
+        const whereClause: Partial<Account> = { userId }
         if (query.type) {
-          whereClause.type = query.type
+          whereClause.type = query.type as AccountType
         }
 
         const accounts = await prisma.account.findMany({

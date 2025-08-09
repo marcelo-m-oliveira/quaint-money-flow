@@ -1,12 +1,9 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyInstance, FastifyRequest } from 'fastify'
 
 import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
 import { prisma } from '@/lib/prisma'
 
-export async function authMiddleware(
-  request: FastifyRequest,
-  reply: FastifyReply,
-) {
+export async function authMiddleware(request: FastifyRequest) {
   try {
     const authHeader = request.headers.authorization
 
@@ -19,8 +16,6 @@ export async function authMiddleware(
     if (!token) {
       throw new UnauthorizedError('Token de acesso inválido')
     }
-
-    const payload = ''
 
     // Verificar se o usuário ainda existe
     const user = await prisma.user.findUnique({
@@ -37,7 +32,10 @@ export async function authMiddleware(
     }
 
     // Adicionar usuário ao request
-    request.user = user
+    request.user = {
+      ...user,
+      sub: user.id,
+    }
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       throw error
@@ -47,6 +45,6 @@ export async function authMiddleware(
 }
 
 // Plugin para registrar o middleware de autenticação
-export async function authPlugin(fastify: any) {
+export async function authPlugin(fastify: FastifyInstance) {
   fastify.decorate('authenticate', authMiddleware)
 }

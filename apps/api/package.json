@@ -8,6 +8,7 @@
     "db:studio": "pnpm env:load prisma studio",
     "env:load": "dotenv -e ../../.env --",
     "build": "tsup",
+    "lint": "eslint src --ext .ts --fix",
     "start": "node dist/http/server.js",
     "test": "pnpm env:load jest",
     "test:watch": "pnpm env:load jest --watch",
