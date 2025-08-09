@@ -1,70 +1,51 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
+import { accountsService } from '../services/accounts'
 import { Account, AccountFormData } from '../types'
 import { useCrudToast } from './use-crud-toast'
-
-const STORAGE_KEY = 'quaint-money-accounts'
 
 export function useAccounts() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { success, error } = useCrudToast()
 
-  // Carregar contas do localStorage
-  useEffect(() => {
+  // Carregar contas da API
+  const loadAccounts = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsedAccounts = JSON.parse(stored)
-        setAccounts(
-          parsedAccounts.map(
-            (
-              account: Omit<Account, 'createdAt' | 'updatedAt'> & {
-                createdAt: string
-                updatedAt: string
-              },
-            ) => ({
-              ...account,
-              createdAt: new Date(account.createdAt),
-              updatedAt: new Date(account.updatedAt),
-            }),
-          ),
-        )
-      }
-    } catch (error) {
-      console.error('Erro ao carregar contas:', error)
+      setIsLoading(true)
+      const response = await accountsService.getAll()
+      const accountsWithDates = response.accounts.map((account) => ({
+        ...account,
+        createdAt: new Date(account.createdAt),
+        updatedAt: new Date(account.updatedAt),
+      }))
+      setAccounts(accountsWithDates)
+    } catch (err) {
+      console.error('Erro ao carregar contas:', err)
+      error.read('contas')
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [error])
 
-  // Salvar contas no localStorage
-  const saveAccounts = (newAccounts: Account[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newAccounts))
-      setAccounts(newAccounts)
-    } catch (error) {
-      console.error('Erro ao salvar contas:', error)
-    }
-  }
+  useEffect(() => {
+    loadAccounts()
+  }, [loadAccounts])
 
   // Adicionar nova conta
-  const addAccount = (accountData: AccountFormData) => {
+  const addAccount = async (accountData: AccountFormData) => {
     try {
-      const newAccount: Account = {
-        id: crypto.randomUUID(),
-        ...accountData,
-        balance: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      const newAccount = await accountsService.create(accountData)
+      const accountWithDates = {
+        ...newAccount,
+        createdAt: new Date(newAccount.createdAt),
+        updatedAt: new Date(newAccount.updatedAt),
       }
-
-      const updatedAccounts = [...accounts, newAccount]
-      saveAccounts(updatedAccounts)
+      setAccounts((prev) => [...prev, accountWithDates])
       success.create('Conta')
-      return newAccount
+      return accountWithDates
     } catch (err) {
       error.create('conta')
       throw err
@@ -72,32 +53,36 @@ export function useAccounts() {
   }
 
   // Atualizar conta existente
-  const updateAccount = (id: string, accountData: Partial<AccountFormData>) => {
+  const updateAccount = async (
+    id: string,
+    accountData: Partial<AccountFormData>,
+  ) => {
     try {
-      const updatedAccounts = accounts.map((account) =>
-        account.id === id
-          ? {
-              ...account,
-              ...accountData,
-              updatedAt: new Date(),
-            }
-          : account,
+      const updatedAccount = await accountsService.update(id, accountData)
+      const accountWithDates = {
+        ...updatedAccount,
+        createdAt: new Date(updatedAccount.createdAt),
+        updatedAt: new Date(updatedAccount.updatedAt),
+      }
+      setAccounts((prev) =>
+        prev.map((account) => (account.id === id ? accountWithDates : account)),
       )
-      saveAccounts(updatedAccounts)
       success.update('Conta')
     } catch (err) {
       error.update('conta')
+      throw err
     }
   }
 
   // Remover conta
-  const deleteAccount = (id: string) => {
+  const deleteAccount = async (id: string) => {
     try {
-      const updatedAccounts = accounts.filter((account) => account.id !== id)
-      saveAccounts(updatedAccounts)
+      await accountsService.delete(id)
+      setAccounts((prev) => prev.filter((account) => account.id !== id))
       success.delete('Conta')
     } catch (err) {
       error.delete('conta')
+      throw err
     }
   }
 
@@ -113,5 +98,6 @@ export function useAccounts() {
     updateAccount,
     deleteAccount,
     getAccountById,
+    refetch: loadAccounts,
   }
 }

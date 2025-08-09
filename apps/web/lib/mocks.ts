@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 
-import { Account, Category, CreditCard, Transaction } from './types'
+import { Category, CreditCard, Transaction } from './types'
 
 // Cores predefinidas para categorias
 const CATEGORY_COLORS = [
@@ -52,14 +52,6 @@ const INCOME_CATEGORIES = [
   { name: 'Vendas', icon: 'ShoppingCart' },
   { name: 'Prêmios', icon: 'Star' },
   { name: 'Outros', icon: 'DollarSign' },
-]
-
-// Tipos de conta
-const ACCOUNT_TYPES: Array<Account['type']> = [
-  'bank',
-  'investment',
-  'cash',
-  'other',
 ]
 
 // Bancos brasileiros para contas - mapeamento para IDs existentes
@@ -324,79 +316,6 @@ export function generateMockTransactions(
 }
 
 /**
- * Gera uma conta mock
- */
-// Key mapping para configuração de contas por tipo
-const ACCOUNT_TYPE_CONFIG = {
-  bank: {
-    getName: () =>
-      `${faker.helpers.arrayElement(BRAZILIAN_BANKS)} - Conta Corrente`,
-    icon: '/icons/banks/c6bank.png',
-    iconType: 'bank' as const,
-  },
-  credit_card: {
-    getName: () => `Cartão ${faker.helpers.arrayElement(BRAZILIAN_BANKS)}`,
-    icon: '/icons/banks/c6bank.png',
-    iconType: 'generic' as const,
-  },
-  investment: {
-    getName: () => 'Conta Investimento',
-    icon: '/icons/banks/c6bank.png',
-    iconType: 'generic' as const,
-  },
-  cash: {
-    getName: () => 'Dinheiro',
-    icon: '/icons/banks/c6bank.png',
-    iconType: 'generic' as const,
-  },
-  other: {
-    getName: () => 'Conta Outros',
-    icon: '/icons/banks/c6bank.png',
-    iconType: 'generic' as const,
-  },
-} as const
-
-export function generateMockAccount(): Account {
-  const type = faker.helpers.arrayElement(ACCOUNT_TYPES)
-  const config = ACCOUNT_TYPE_CONFIG[type] || ACCOUNT_TYPE_CONFIG.other
-
-  const name = config.getName()
-  const icon = config.icon
-  const iconType = config.iconType
-
-  const createdAt = faker.date.past({ years: 2 })
-  const balance =
-    type === 'credit_card'
-      ? faker.number.float({ min: -2000, max: 0, fractionDigits: 2 })
-      : faker.number.float({ min: 0, max: 10000, fractionDigits: 2 })
-
-  return {
-    id: faker.string.uuid(),
-    name,
-    type,
-    icon,
-    iconType,
-    balance,
-    includeInGeneralBalance: faker.datatype.boolean(),
-    createdAt,
-    updatedAt: createdAt,
-  }
-}
-
-/**
- * Gera múltiplas contas mock
- */
-export function generateMockAccounts(count: number = 5): Account[] {
-  const accounts: Account[] = []
-
-  for (let i = 0; i < count; i++) {
-    accounts.push(generateMockAccount())
-  }
-
-  return accounts
-}
-
-/**
  * Gera um cartão de crédito mock
  */
 export function generateMockCreditCard(): CreditCard {
@@ -472,19 +391,17 @@ export function generateMockCreditCards(count: number = 3): CreditCard[] {
  */
 export function generateMockDataset() {
   const categories = generateMockCategories(12, true)
-  const accounts = generateMockAccounts(6)
   const creditCards = generateMockCreditCards(4)
   const transactions = generateMockTransactions(
     categories,
     100,
-    accounts,
+    [],
     creditCards,
   )
 
   return {
     categories,
     transactions,
-    accounts,
     creditCards,
   }
 }
@@ -510,8 +427,7 @@ export function generateMockPreferences() {
  * Popula o localStorage com dados mock
  */
 export function populateWithMockData() {
-  const { categories, transactions, accounts, creditCards } =
-    generateMockDataset()
+  const { categories, transactions, creditCards } = generateMockDataset()
   const preferences = generateMockPreferences()
 
   // Salvar no localStorage
@@ -520,16 +436,14 @@ export function populateWithMockData() {
     'quaint-money-transactions',
     JSON.stringify(transactions),
   )
-  localStorage.setItem('quaint-money-accounts', JSON.stringify(accounts))
   localStorage.setItem('quaint-money-credit-cards', JSON.stringify(creditCards))
   localStorage.setItem('quaint-money-preferences', JSON.stringify(preferences))
 
   console.log('✅ Dados mock carregados com sucesso!')
   console.log(`📊 ${categories.length} categorias criadas`)
   console.log(`💰 ${transactions.length} transações criadas`)
-  console.log(`🏦 ${accounts.length} contas criadas`)
   console.log(`💳 ${creditCards.length} cartões de crédito criados`)
   console.log(`⚙️ Preferências configuradas`)
 
-  return { categories, transactions, accounts, creditCards, preferences }
+  return { categories, transactions, creditCards, preferences }
 }

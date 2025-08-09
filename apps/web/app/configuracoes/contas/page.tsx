@@ -37,7 +37,7 @@ const ACCOUNT_TYPE_LABELS = {
   other: 'Outros',
 } as const
 
-export default function ContasPage() {
+export default function AccountsPage() {
   const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts()
   const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | undefined>()
@@ -85,7 +85,7 @@ export default function ContasPage() {
     setEditingAccount(undefined)
   }
 
-  // Calcular totais
+  // Calculate totals
   const totalBalance = accounts.reduce(
     (sum, account) => sum + account.balance,
     0,
@@ -131,7 +131,7 @@ export default function ContasPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Resumo */}
+              {/* Summary */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Card>
                   <CardContent className="p-4">
@@ -155,7 +155,7 @@ export default function ContasPage() {
                 </Card>
               </div>
 
-              {/* Lista de contas */}
+              {/* Accounts list */}
               <div className="space-y-3">
                 {accounts.map((account) => (
                   <Card key={account.id}>
@@ -263,7 +263,7 @@ export default function ContasPage() {
         </CardContent>
       </Card>
 
-      {/* Modal de formulário */}
+      {/* Form modal */}
       <AccountFormModal
         isOpen={isAccountFormOpen}
         onClose={handleCloseModal}
@@ -271,7 +271,7 @@ export default function ContasPage() {
         account={editingAccount}
       />
 
-      {/* Dialog de confirmação */}
+      {/* Confirmation dialog */}
       <ConfirmationDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}

@@ -1,0 +1,51 @@
+import { apiClient } from '../api'
+import { Account, AccountFormData } from '../types'
+
+export interface AccountsQueryParams {
+  page?: number
+  limit?: number
+  search?: string
+  type?: string
+}
+
+export interface AccountsResponse {
+  accounts: Account[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+export const accountsService = {
+  async getAll(params?: AccountsQueryParams): Promise<AccountsResponse> {
+    const searchParams = new URLSearchParams()
+
+    if (params?.page) searchParams.append('page', params.page.toString())
+    if (params?.limit) searchParams.append('limit', params.limit.toString())
+    if (params?.search) searchParams.append('search', params.search)
+    if (params?.type) searchParams.append('type', params.type)
+
+    const queryString = searchParams.toString()
+    const endpoint = `/accounts${queryString ? `?${queryString}` : ''}`
+
+    return apiClient.get<AccountsResponse>(endpoint)
+  },
+
+  async getById(id: string): Promise<Account> {
+    return apiClient.get<Account>(`/accounts/${id}`)
+  },
+
+  async create(data: AccountFormData): Promise<Account> {
+    return apiClient.post<Account>('/accounts', data)
+  },
+
+  async update(id: string, data: Partial<AccountFormData>): Promise<Account> {
+    return apiClient.put<Account>(`/accounts/${id}`, data)
+  },
+
+  async delete(id: string): Promise<void> {
+    return apiClient.delete<void>(`/accounts/${id}`)
+  },
+}
