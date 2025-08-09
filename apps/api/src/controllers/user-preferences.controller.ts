@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { dateToSeconds } from '@saas/utils'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
 import { UserPreferencesService } from '@/services/user-preferences.service'
@@ -23,8 +24,8 @@ export class UserPreferencesController {
 
       return reply.status(200).send({
         ...preferences,
-        createdAt: preferences.createdAt.toISOString(),
-        updatedAt: preferences.updatedAt.toISOString(),
+        createdAt: dateToSeconds(preferences.createdAt),
+        updatedAt: dateToSeconds(preferences.updatedAt),
       })
     } catch (error: any) {
       request.log.error(
@@ -51,8 +52,8 @@ export class UserPreferencesController {
 
       return reply.status(200).send({
         ...preferences,
-        createdAt: preferences.createdAt.toISOString(),
-        updatedAt: preferences.updatedAt.toISOString(),
+        createdAt: dateToSeconds(preferences.createdAt),
+        updatedAt: dateToSeconds(preferences.updatedAt),
       })
     } catch (error: any) {
       request.log.error(
@@ -82,8 +83,8 @@ export class UserPreferencesController {
 
       return reply.status(200).send({
         ...preferences,
-        createdAt: preferences.createdAt.toISOString(),
-        updatedAt: preferences.updatedAt.toISOString(),
+        createdAt: dateToSeconds(preferences.createdAt),
+        updatedAt: dateToSeconds(preferences.updatedAt),
       })
     } catch (error: any) {
       request.log.error(

@@ -28,6 +28,9 @@ export {
   preferencesSchema,
 }
 
+// Schema para criação de cartão de crédito (baseado no creditCardSchema)
+export const creditCardCreateSchema = creditCardSchema
+
 // Re-exportar tipos para uso nos handlers
 export type {
   TransactionFormSchema,
@@ -37,6 +40,8 @@ export type {
   CreditCardFormSchema,
   UserPreferencesSchema,
 }
+
+export type CreditCardCreateSchema = z.infer<typeof creditCardCreateSchema>
 
 // Schema para parâmetros de ID
 export const idParamSchema = z.object({

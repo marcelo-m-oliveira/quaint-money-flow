@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { dateToSeconds } from '@saas/utils'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { id } from 'zod/v4/locales'
 
@@ -40,7 +41,17 @@ export class AccountController {
         'Contas listadas com sucesso',
       )
 
-      return reply.status(200).send(result)
+      // Convert dates to seconds for frontend
+      const convertedResult = {
+        ...result,
+        accounts: result.accounts.map((account) => ({
+          ...account,
+          createdAt: dateToSeconds(account.createdAt),
+          updatedAt: dateToSeconds(account.updatedAt),
+        })),
+      }
+
+      return reply.status(200).send(convertedResult)
     } catch (error: any) {
       request.log.error({ error: error.message }, 'Erro ao listar contas')
       return handleError(error as FastifyError, reply)
@@ -55,7 +66,14 @@ export class AccountController {
       request.log.info({ userId, accountId: id }, 'Buscando conta por ID')
       const account = await this.accountService.findById(id, userId)
 
-      return reply.status(200).send(account)
+      // Convert dates to seconds for frontend
+      const convertedAccount = {
+        ...account,
+        createdAt: dateToSeconds(account.createdAt),
+        updatedAt: dateToSeconds(account.updatedAt),
+      }
+
+      return reply.status(200).send(convertedAccount)
     } catch (error: any) {
       request.log.error(
         { userId: request.user.sub, accountId: id, error: error.message },
@@ -77,7 +95,14 @@ export class AccountController {
         'Conta criada com sucesso',
       )
 
-      return reply.status(201).send(account)
+      // Convert dates to seconds for frontend
+      const convertedAccount = {
+        ...account,
+        createdAt: dateToSeconds(account.createdAt),
+        updatedAt: dateToSeconds(account.updatedAt),
+      }
+
+      return reply.status(201).send(convertedAccount)
     } catch (error: any) {
       request.log.error(
         { userId: request.user.sub, error: error.message },
@@ -103,7 +128,14 @@ export class AccountController {
         'Conta atualizada com sucesso',
       )
 
-      return reply.status(200).send(account)
+      // Convert dates to seconds for frontend
+      const convertedAccount = {
+        ...account,
+        createdAt: dateToSeconds(account.createdAt),
+        updatedAt: dateToSeconds(account.updatedAt),
+      }
+
+      return reply.status(200).send(convertedAccount)
     } catch (error: any) {
       request.log.error(
         { userId: request.user.sub, accountId: id, error: error.message },

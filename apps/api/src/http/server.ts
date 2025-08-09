@@ -9,6 +9,7 @@ import {
 } from 'fastify-type-provider-zod'
 
 import { accountRoutes } from '@/http/routes/accounts'
+import { creditCardRoutes } from '@/http/routes/credit-cards'
 import { transactionRoutes } from '@/http/routes/transactions'
 import { userPreferencesRoutes } from '@/http/routes/user-preferences'
 import { setupSwagger } from '@/lib/swagger'
@@ -56,6 +57,10 @@ export async function createApp() {
 
   // Registrar rotas com prefixo
   app.register(accountRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
+
+  app.register(creditCardRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 
