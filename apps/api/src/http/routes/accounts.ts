@@ -15,6 +15,28 @@ import { authMiddleware } from '../middlewares/auth'
 export async function accountRoutes(app: FastifyInstance) {
   const accountController = AccountFactory.getController()
 
+  // GET /accounts/select-options - Buscar contas formatadas para select
+  app.get(
+    '/accounts/select-options',
+    {
+      schema: {
+        response: {
+          200: z.array(
+            z.object({
+              value: z.string(),
+              label: z.string(),
+              icon: z.string(),
+              iconType: z.string(),
+            }),
+          ),
+          401: z.object({ error: z.string() }),
+        },
+      },
+      preHandler: [authMiddleware],
+    },
+    accountController.selectOptions.bind(accountController),
+  )
+
   // GET /accounts - Listar contas
   app.get(
     '/accounts',

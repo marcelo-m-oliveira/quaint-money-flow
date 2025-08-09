@@ -18,6 +18,13 @@ export interface AccountsResponse {
   }
 }
 
+export interface SelectOption {
+  value: string
+  label: string
+  icon: string
+  iconType: 'bank' | 'generic'
+}
+
 export const accountsService = {
   async getAll(params?: AccountsQueryParams): Promise<AccountsResponse> {
     const searchParams = new URLSearchParams()
@@ -31,6 +38,10 @@ export const accountsService = {
     const endpoint = `/accounts${queryString ? `?${queryString}` : ''}`
 
     return apiClient.get<AccountsResponse>(endpoint)
+  },
+
+  async getSelectOptions(): Promise<SelectOption[]> {
+    return apiClient.get<SelectOption[]>('/accounts/select-options')
   },
 
   async getById(id: string): Promise<Account> {

@@ -58,6 +58,39 @@ export class AccountController {
     }
   }
 
+  async selectOptions(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user.sub
+
+      request.log.info({ userId }, 'Buscando contas para select')
+      const result = await this.accountService.findMany(userId, {
+        page: 1,
+        limit: 1000, // Buscar todas as contas para o select
+      })
+
+      // Formatar dados para o select
+      const selectOptions = result.accounts.map((account) => ({
+        value: account.id,
+        label: account.name,
+        icon: account.icon,
+        iconType: account.iconType,
+      }))
+
+      request.log.info(
+        { userId, totalOptions: selectOptions.length },
+        'Opções de select retornadas com sucesso',
+      )
+
+      return reply.status(200).send(selectOptions)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message },
+        'Erro ao buscar opções de select',
+      )
+      return handleError(error as FastifyError, reply)
+    }
+  }
+
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub

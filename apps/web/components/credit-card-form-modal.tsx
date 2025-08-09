@@ -14,10 +14,11 @@ import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
-import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
+import { useAccountSelectOptions } from '@/lib/hooks/use-account-select-options'
 import { CreditCardFormSchema, creditCardSchema } from '@/lib/schemas'
 import { CreditCard as CreditCardType } from '@/lib/types'
 
+import { AccountSelectIcon } from './account-select-icon'
 import { IconSelector } from './icon-selector'
 import { Button } from './ui/button'
 import { CurrencyInput } from './ui/currency-input'
@@ -66,7 +67,7 @@ export function CreditCardFormModal({
   creditCard,
   title = 'Novo cartão manual',
 }: CreditCardFormModalProps) {
-  const { accounts } = useAccountsWithAutoInit()
+  const { options: accountOptions } = useAccountSelectOptions()
   const {
     register,
     handleSubmit,
@@ -188,7 +189,7 @@ export function CreditCardFormModal({
   }
 
   // Todas as contas disponíveis para pagamento
-  const availableAccounts = accounts || []
+  const availableAccounts = accountOptions || []
 
   return (
     <>
@@ -349,9 +350,17 @@ export function CreditCardFormModal({
                   <SelectValue placeholder="Selecione uma conta (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableAccounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account?.name || 'Conta sem nome'}
+                  {availableAccounts.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <AccountSelectIcon
+                          icon={option.icon}
+                          iconType={option.iconType}
+                          name={option.label}
+                          size="sm"
+                        />
+                        <span>{option.label}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
