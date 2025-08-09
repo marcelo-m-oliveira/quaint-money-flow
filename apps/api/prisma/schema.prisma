@@ -56,7 +56,7 @@ model CreditCard {
   name                    String
   icon                    String
   iconType                IconType @default(generic)
-  limit                   Decimal  @db.Decimal(10, 2)
+  limit                   Decimal  @db.Decimal(18, 2)
   closingDay              Int
   dueDay                  Int
   defaultPaymentAccountId String?
@@ -97,7 +97,7 @@ model Category {
 model Transaction {
   id           String          @id @default(cuid())
   description  String
-  amount       Decimal         @db.Decimal(10, 2)
+  amount       Decimal         @db.Decimal(18, 2)
   type         TransactionType
   date         DateTime
   paid         Boolean         @default(false)

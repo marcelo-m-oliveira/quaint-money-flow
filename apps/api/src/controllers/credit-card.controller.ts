@@ -45,7 +45,7 @@ export class CreditCardController {
         creditCards: result.creditCards.map((creditCard) => ({
           ...creditCard,
           limit: Number(creditCard.limit),
-          usage: Number(creditCard.usage),
+          usage: Number(creditCard.usage || 0),
           createdAt: dateToSeconds(creditCard.createdAt),
           updatedAt: dateToSeconds(creditCard.updatedAt),
         })),
@@ -72,10 +72,11 @@ export class CreditCardController {
       )
       const creditCard = await this.creditCardService.findById(id, userId)
 
-      // Convert dates to seconds and limit to number for frontend
+      // Convert dates to seconds and limit/usage to number for frontend
       const convertedCreditCard = {
         ...creditCard,
         limit: Number(creditCard.limit),
+        usage: 0,
         createdAt: dateToSeconds(creditCard.createdAt),
         updatedAt: dateToSeconds(creditCard.updatedAt),
       }
@@ -109,6 +110,7 @@ export class CreditCardController {
       const convertedCreditCard = {
         ...creditCard,
         limit: Number(creditCard.limit),
+        usage: 0,
         createdAt: dateToSeconds(creditCard.createdAt),
         updatedAt: dateToSeconds(creditCard.updatedAt),
       }
@@ -143,6 +145,7 @@ export class CreditCardController {
       const convertedCreditCard = {
         ...creditCard,
         limit: Number(creditCard.limit),
+        usage: 0,
         createdAt: dateToSeconds(creditCard.createdAt),
         updatedAt: dateToSeconds(creditCard.updatedAt),
       }
@@ -151,7 +154,7 @@ export class CreditCardController {
     } catch (error: any) {
       request.log.error(
         { userId: request.user.sub, creditCardId: id, error: error.message },
-        'Erro ao atualizar cartão de crédito',
+        'Erro ao atualizar cartao de credito',
       )
       return handleError(error as FastifyError, reply)
     }
