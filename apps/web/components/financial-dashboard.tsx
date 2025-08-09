@@ -221,28 +221,32 @@ export function FinancialDashboard() {
                   </Button>
                 </div>
 
-                {/* Modais reformulados */}
-                <TransactionFormModal
-                  isOpen={isExpenseDialogOpen}
-                  onClose={closeExpenseDialog}
-                  transaction={editingTransaction}
-                  onSubmit={handleExpenseSubmit}
-                  categories={categories}
-                  type="expense"
-                  title={editingTransaction ? 'Editar despesa' : 'Nova despesa'}
-                  showCreateAnotherButton={!editingTransaction}
-                />
+                {/* Modais reformulados - Renderização condicional para evitar carregamento desnecessário */}
+                {isExpenseDialogOpen && (
+                  <TransactionFormModal
+                    isOpen={isExpenseDialogOpen}
+                    onClose={closeExpenseDialog}
+                    transaction={editingTransaction}
+                    onSubmit={handleExpenseSubmit}
+                    categories={categories}
+                    type="expense"
+                    title={editingTransaction ? 'Editar despesa' : 'Nova despesa'}
+                    showCreateAnotherButton={!editingTransaction}
+                  />
+                )}
 
-                <TransactionFormModal
-                  isOpen={isIncomeDialogOpen}
-                  onClose={closeIncomeDialog}
-                  transaction={editingTransaction}
-                  onSubmit={handleIncomeSubmit}
-                  categories={categories}
-                  type="income"
-                  title={editingTransaction ? 'Editar receita' : 'Nova receita'}
-                  showCreateAnotherButton={!editingTransaction}
-                />
+                {isIncomeDialogOpen && (
+                  <TransactionFormModal
+                    isOpen={isIncomeDialogOpen}
+                    onClose={closeIncomeDialog}
+                    transaction={editingTransaction}
+                    onSubmit={handleIncomeSubmit}
+                    categories={categories}
+                    type="income"
+                    title={editingTransaction ? 'Editar receita' : 'Nova receita'}
+                    showCreateAnotherButton={!editingTransaction}
+                  />
+                )}
               </div>
             </div>
           </CardContent>

@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/tooltip'
 import { getBankIcon } from '@/lib/data/banks'
 import { formatCurrency } from '@/lib/format'
-import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
 import { Account, AccountFormData } from '@/lib/types'
 
 const ACCOUNT_TYPE_LABELS = {
@@ -38,7 +38,7 @@ const ACCOUNT_TYPE_LABELS = {
 } as const
 
 export default function AccountsPage() {
-  const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts()
+  const { accounts, addAccount, updateAccount, deleteAccount } = useAccountsWithAutoInit()
   const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | undefined>()
   const [confirmDialog, setConfirmDialog] = useState<{

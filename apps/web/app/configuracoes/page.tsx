@@ -4,7 +4,7 @@ import { ArrowRight, Bell, CreditCard, Settings, Tag, User } from 'lucide-react'
 import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 
 const quickActions = [
@@ -48,7 +48,7 @@ const quickActions = [
 
 export default function ConfiguracoesPage() {
   const { categories, isLoading: categoriesLoading } = useFinancialData()
-  const { accounts, isLoading: accountsLoading } = useAccounts()
+  const { accounts, isLoading: accountsLoading } = useAccountsWithAutoInit()
 
   // Calcular estatísticas
   const expenseCategories = categories.filter((cat) => cat.type === 'expense')
