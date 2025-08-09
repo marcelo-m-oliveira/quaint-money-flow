@@ -78,7 +78,7 @@ export class AccountController {
 
       request.log.info(
         { userId, totalOptions: selectOptions.length },
-        'Opções de select retornadas com sucesso',
+        'Opcoes de select retornadas com sucesso',
       )
 
       return reply.status(200).send(selectOptions)
