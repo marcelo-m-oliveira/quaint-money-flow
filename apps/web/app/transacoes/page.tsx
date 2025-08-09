@@ -196,11 +196,11 @@ export default function TransacoesPage() {
   const navigatePeriod = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate)
 
-    if (currentPeriod === 'diario') {
+    if (currentPeriod === 'daily') {
       newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1))
-    } else if (currentPeriod === 'semanal') {
+    } else if (currentPeriod === 'weekly') {
       newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7))
-    } else if (currentPeriod === 'mensal') {
+    } else if (currentPeriod === 'monthly') {
       newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1))
     }
 
@@ -209,15 +209,15 @@ export default function TransacoesPage() {
 
   // Key mapping para funções de período
   const PERIOD_RANGE_FUNCTIONS = {
-    diario: () => ({
+    daily: () => ({
       start: getStartOfDay(currentDate),
       end: getEndOfDay(currentDate),
     }),
-    semanal: () => ({
+    weekly: () => ({
       start: getStartOfWeek(currentDate),
       end: getEndOfWeek(currentDate),
     }),
-    mensal: () => ({
+    monthly: () => ({
       start: getStartOfMonth(currentDate),
       end: getEndOfMonth(currentDate),
     }),
@@ -229,7 +229,7 @@ export default function TransacoesPage() {
       PERIOD_RANGE_FUNCTIONS[
         currentPeriod as keyof typeof PERIOD_RANGE_FUNCTIONS
       ]
-    return periodFunction ? periodFunction() : PERIOD_RANGE_FUNCTIONS.mensal()
+    return periodFunction ? periodFunction() : PERIOD_RANGE_FUNCTIONS.monthly()
   }
 
   const transactionsWithCategories = getTransactionsWithCategories()
@@ -306,7 +306,7 @@ export default function TransacoesPage() {
 
   // Key mapping para formatação de títulos de período
   const PERIOD_TITLE_FORMATTERS = {
-    diario: () => {
+    daily: () => {
       const options: Intl.DateTimeFormatOptions = {
         year: 'numeric',
         month: 'long',
@@ -314,12 +314,12 @@ export default function TransacoesPage() {
       }
       return currentDate.toLocaleDateString('pt-BR', options)
     },
-    semanal: () => {
+    weekly: () => {
       const start = getStartOfWeek(currentDate)
       const end = getEndOfWeek(currentDate)
       return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
     },
-    mensal: () => {
+    monthly: () => {
       return currentDate.toLocaleDateString('pt-BR', {
         year: 'numeric',
         month: 'long',
@@ -333,7 +333,7 @@ export default function TransacoesPage() {
       PERIOD_TITLE_FORMATTERS[
         currentPeriod as keyof typeof PERIOD_TITLE_FORMATTERS
       ]
-    return formatter ? formatter() : PERIOD_TITLE_FORMATTERS.mensal()
+    return formatter ? formatter() : PERIOD_TITLE_FORMATTERS.monthly()
   }
 
   // Calcular totais das transações filtradas
@@ -550,18 +550,16 @@ export default function TransacoesPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={() => setCurrentPeriod('diario')}
-                    >
+                    <DropdownMenuItem onClick={() => setCurrentPeriod('daily')}>
                       Diário
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setCurrentPeriod('semanal')}
+                      onClick={() => setCurrentPeriod('weekly')}
                     >
                       Semanal
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setCurrentPeriod('mensal')}
+                      onClick={() => setCurrentPeriod('monthly')}
                     >
                       Mensal
                     </DropdownMenuItem>

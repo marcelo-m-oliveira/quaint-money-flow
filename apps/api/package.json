@@ -6,6 +6,7 @@
     "dev": "pnpm env:load tsx watch src/http/server.ts",
     "db:migrate": "pnpm env:load prisma migrate dev",
     "db:studio": "pnpm env:load prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
     "env:load": "dotenv -e ../../.env --",
     "build": "tsup",
     "lint": "eslint src --ext .ts --fix",
@@ -13,6 +14,9 @@
     "test": "pnpm env:load jest",
     "test:watch": "pnpm env:load jest --watch",
     "test:coverage": "pnpm env:load jest --coverage"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.1.0",
@@ -54,9 +58,6 @@
     "tsup": "^8.2.4",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   },
   "prettier": "@saas/prettier",
   "eslintConfig": {

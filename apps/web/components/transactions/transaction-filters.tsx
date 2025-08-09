@@ -50,15 +50,15 @@ export function TransactionFilters({
 }: TransactionFiltersProps) {
   const handlePreviousPeriod = () => {
     const newDate = new Date(currentDate)
-    if (currentPeriod === 'diario') {
+    if (currentPeriod === 'daily') {
       newDate.setDate(newDate.getDate() - 1)
-    } else if (currentPeriod === 'semanal') {
+    } else if (currentPeriod === 'weekly') {
       newDate.setDate(newDate.getDate() - 7)
-    } else if (currentPeriod === 'mensal') {
+    } else if (currentPeriod === 'monthly') {
       newDate.setMonth(newDate.getMonth() - 1)
-    } else if (currentPeriod === 'trimestral') {
+    } else if (currentPeriod === 'quarterly') {
       newDate.setMonth(newDate.getMonth() - 3)
-    } else if (currentPeriod === 'anual') {
+    } else if (currentPeriod === 'yearly') {
       newDate.setFullYear(newDate.getFullYear() - 1)
     }
     onDateChange(newDate)
@@ -66,15 +66,15 @@ export function TransactionFilters({
 
   const handleNextPeriod = () => {
     const newDate = new Date(currentDate)
-    if (currentPeriod === 'diario') {
+    if (currentPeriod === 'daily') {
       newDate.setDate(newDate.getDate() + 1)
-    } else if (currentPeriod === 'semanal') {
+    } else if (currentPeriod === 'weekly') {
       newDate.setDate(newDate.getDate() + 7)
-    } else if (currentPeriod === 'mensal') {
+    } else if (currentPeriod === 'monthly') {
       newDate.setMonth(newDate.getMonth() + 1)
-    } else if (currentPeriod === 'trimestral') {
+    } else if (currentPeriod === 'quarterly') {
       newDate.setMonth(newDate.getMonth() + 3)
-    } else if (currentPeriod === 'anual') {
+    } else if (currentPeriod === 'yearly') {
       newDate.setFullYear(newDate.getFullYear() + 1)
     }
     onDateChange(newDate)
@@ -82,7 +82,7 @@ export function TransactionFilters({
 
   const getPeriodTitle = () => {
     const formatter = PERIOD_TITLE_FORMATTERS[currentPeriod]
-    if (currentPeriod === 'semanal') {
+    if (currentPeriod === 'weekly') {
       return formatter(startDate, endDate)
     }
     return formatter(startDate, endDate)
@@ -98,11 +98,11 @@ export function TransactionFilters({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="diario">Diário</SelectItem>
-              <SelectItem value="semanal">Semanal</SelectItem>
-              <SelectItem value="mensal">Mensal</SelectItem>
-              <SelectItem value="trimestral">Trimestral</SelectItem>
-              <SelectItem value="anual">Anual</SelectItem>
+              <SelectItem value="daily">Diário</SelectItem>
+              <SelectItem value="weekly">Semanal</SelectItem>
+              <SelectItem value="monthly">Mensal</SelectItem>
+              <SelectItem value="quarterly">Trimestral</SelectItem>
+              <SelectItem value="yearly">Anual</SelectItem>
             </SelectContent>
           </Select>
 

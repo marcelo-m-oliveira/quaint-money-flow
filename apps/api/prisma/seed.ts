@@ -96,8 +96,8 @@ async function main() {
     update: {},
     create: {
       userId: user.id,
-      transactionOrder: 'decrescente',
-      defaultNavigationPeriod: 'mensal',
+      transactionOrder: 'descending',
+      defaultNavigationPeriod: 'monthly',
       showDailyBalance: false,
       viewMode: 'all',
       isFinancialSummaryExpanded: false,

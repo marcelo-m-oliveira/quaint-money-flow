@@ -11,13 +11,14 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { useUserPreferences } from '@/lib/hooks/use-user-preferences'
+import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
+import { usePreferences } from '@/lib/hooks/use-preferences'
 import { preferencesSchema } from '@/lib/schemas'
 import { UserPreferencesFormData } from '@/lib/types'
 
 export default function PreferenciasPage() {
   const { preferences, updatePreferences, resetPreferences } =
-    useUserPreferences()
+    useUserPreferencesWithAutoInit()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -33,12 +34,14 @@ export default function PreferenciasPage() {
     formState: { errors, isDirty },
   } = useForm<UserPreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
-    defaultValues: preferences || {
-      transactionOrder: 'decrescente',
-      defaultNavigationPeriod: 'mensal',
-      showDailyBalance: true,
-      viewMode: 'all',
-      isFinancialSummaryExpanded: true,
+    defaultValues: {
+      transactionOrder: preferences?.transactionOrder || 'descending',
+      defaultNavigationPeriod:
+        preferences?.defaultNavigationPeriod || 'monthly',
+      showDailyBalance: preferences?.showDailyBalance ?? true,
+      viewMode: preferences?.viewMode || 'all',
+      isFinancialSummaryExpanded:
+        preferences?.isFinancialSummaryExpanded ?? true,
     },
   })
 
@@ -97,29 +100,6 @@ export default function PreferenciasPage() {
     })
   }
 
-  const handleResetPreferences = () => {
-    setConfirmDialog({
-      isOpen: true,
-      title: 'Redefinir preferências',
-      description:
-        'Tem certeza que deseja redefinir todas as suas preferências para os valores padrão?',
-      variant: 'destructive',
-      onConfirm: async () => {
-        try {
-          await resetPreferences()
-          setConfirmDialog({
-            isOpen: false,
-            title: '',
-            description: '',
-            onConfirm: () => {},
-          })
-        } catch (error) {
-          console.error('❌ Erro ao redefinir preferências:', error)
-        }
-      },
-    })
-  }
-
   return (
     <>
       <Card>
@@ -153,18 +133,18 @@ export default function PreferenciasPage() {
                       className="flex flex-col space-y-3"
                     >
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="crescente" id="crescente" />
+                        <RadioGroupItem value="ascending" id="ascending" />
                         <Label
-                          htmlFor="crescente"
+                          htmlFor="ascending"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Crescente
                         </Label>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="decrescente" id="decrescente" />
+                        <RadioGroupItem value="descending" id="descending" />
                         <Label
-                          htmlFor="decrescente"
+                          htmlFor="descending"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Decrescente
@@ -207,27 +187,27 @@ export default function PreferenciasPage() {
                       className="flex flex-col space-y-3"
                     >
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="diario" id="diario" />
+                        <RadioGroupItem value="daily" id="daily" />
                         <Label
-                          htmlFor="diario"
+                          htmlFor="daily"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Diário
                         </Label>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="semanal" id="semanal" />
+                        <RadioGroupItem value="weekly" id="weekly" />
                         <Label
-                          htmlFor="semanal"
+                          htmlFor="weekly"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Semanal
                         </Label>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="mensal" id="mensal" />
+                        <RadioGroupItem value="monthly" id="monthly" />
                         <Label
-                          htmlFor="mensal"
+                          htmlFor="monthly"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Mensal

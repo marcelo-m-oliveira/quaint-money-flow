@@ -99,13 +99,13 @@ export interface BankIcon {
 export interface UserPreferences {
   id: string
   userId: string
-  transactionOrder: 'crescente' | 'decrescente'
+  transactionOrder: 'ascending' | 'descending'
   defaultNavigationPeriod:
-    | 'diario'
-    | 'semanal'
-    | 'mensal'
-    | 'trimestral'
-    | 'anual'
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'yearly'
   showDailyBalance: boolean
   viewMode: 'all' | 'cashflow'
   isFinancialSummaryExpanded: boolean
@@ -114,13 +114,13 @@ export interface UserPreferences {
 }
 
 export interface UserPreferencesFormData {
-  transactionOrder?: 'crescente' | 'decrescente'
+  transactionOrder?: 'ascending' | 'descending'
   defaultNavigationPeriod?:
-    | 'diario'
-    | 'semanal'
-    | 'mensal'
-    | 'trimestral'
-    | 'anual'
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'yearly'
   showDailyBalance?: boolean
   viewMode?: 'all' | 'cashflow'
   isFinancialSummaryExpanded?: boolean

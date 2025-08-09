@@ -105,13 +105,13 @@ export const creditCardSchema = z.object({
 // Schema para validação de preferências do usuário
 export const preferencesSchema = z.object({
   transactionOrder: z
-    .enum(['crescente', 'decrescente'])
+    .enum(['ascending', 'descending'])
     .optional()
-    .default('decrescente'),
+    .default('descending'),
   defaultNavigationPeriod: z
-    .enum(['diario', 'semanal', 'mensal', 'trimestral', 'anual'])
+    .enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly'])
     .optional()
-    .default('mensal'),
+    .default('monthly'),
   showDailyBalance: z.boolean().optional().default(false),
   viewMode: z.enum(['all', 'cashflow']).optional().default('all'),
   isFinancialSummaryExpanded: z.boolean().optional().default(false),

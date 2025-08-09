@@ -3,12 +3,7 @@
  */
 
 // Tipo para os períodos disponíveis
-export type PeriodType =
-  | 'diario'
-  | 'semanal'
-  | 'mensal'
-  | 'trimestral'
-  | 'anual'
+export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
 
 // Funções auxiliares para cálculo de períodos
 function getStartOfWeek(date: Date): Date {
@@ -51,7 +46,7 @@ function getEndOfDay(date: Date): Date {
 
 // Formatadores de título para cada período
 export const PERIOD_TITLE_FORMATTERS = {
-  diario: (currentDate: Date = new Date()) => {
+  daily: (currentDate: Date = new Date()) => {
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'long',
@@ -59,7 +54,7 @@ export const PERIOD_TITLE_FORMATTERS = {
     }
     return currentDate.toLocaleDateString('pt-BR', options)
   },
-  semanal: (
+  weekly: (
     startDate?: Date,
     endDate?: Date,
     currentDate: Date = new Date(),
@@ -68,60 +63,89 @@ export const PERIOD_TITLE_FORMATTERS = {
     const end = endDate || getEndOfWeek(currentDate)
     return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
   },
-  mensal: (currentDate: Date = new Date()) => {
+  monthly: (currentDate: Date = new Date()) => {
     return currentDate.toLocaleDateString('pt-BR', {
       year: 'numeric',
       month: 'long',
     })
   },
-  trimestral: (currentDate: Date = new Date()) => {
+  quarterly: (currentDate: Date = new Date()) => {
     const quarter = Math.floor(currentDate.getMonth() / 3) + 1
     return `${quarter}º Trimestre de ${currentDate.getFullYear()}`
   },
-  anual: (currentDate: Date = new Date()) => {
+  yearly: (currentDate: Date = new Date()) => {
     return currentDate.getFullYear().toString()
   },
 } as const
 
 // Funções para obter ranges de período
 export const PERIOD_RANGE_FUNCTIONS = {
-  diario: (currentDate: Date) => ({
-    start: getStartOfDay(currentDate),
-    end: getEndOfDay(currentDate),
-  }),
-  semanal: (currentDate: Date) => ({
-    start: getStartOfWeek(currentDate),
-    end: getEndOfWeek(currentDate),
-  }),
-  mensal: (currentDate: Date) => ({
-    start: getStartOfMonth(currentDate),
-    end: getEndOfMonth(currentDate),
-  }),
-  trimestral: (currentDate: Date) => {
-    const quarterStart = new Date(
+  daily: (currentDate: Date = new Date()) => {
+    const startOfDay = new Date(currentDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(currentDate)
+    endOfDay.setHours(23, 59, 59, 999)
+    return { startDate: startOfDay, endDate: endOfDay }
+  },
+  weekly: (
+    currentDate: Date = new Date(),
+    startOfWeek: number = 0, // 0 = domingo, 1 = segunda
+  ) => {
+    const startOfWeek_ = new Date(currentDate)
+    const day = startOfWeek_.getDay()
+    const diff = startOfWeek_.getDate() - day + startOfWeek
+    startOfWeek_.setDate(diff)
+    startOfWeek_.setHours(0, 0, 0, 0)
+    const endOfWeek = new Date(startOfWeek_)
+    endOfWeek.setDate(startOfWeek_.getDate() + 6)
+    endOfWeek.setHours(23, 59, 59, 999)
+    return { startDate: startOfWeek_, endDate: endOfWeek }
+  },
+  monthly: (currentDate: Date = new Date()) => {
+    const startOfMonth = new Date(
       currentDate.getFullYear(),
-      Math.floor(currentDate.getMonth() / 3) * 3,
+      currentDate.getMonth(),
       1,
     )
-    const quarterEnd = new Date(
+    const endOfMonth = new Date(
       currentDate.getFullYear(),
-      Math.floor(currentDate.getMonth() / 3) * 3 + 3,
+      currentDate.getMonth() + 1,
       0,
       23,
       59,
       59,
       999,
     )
-    return {
-      start: quarterStart,
-      end: quarterEnd,
-    }
+    return { startDate: startOfMonth, endDate: endOfMonth }
   },
-  anual: (currentDate: Date) => ({
-    start: new Date(currentDate.getFullYear(), 0, 1),
-    end: new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59, 999),
-  }),
-} as const
+  quarterly: (currentDate: Date = new Date()) => {
+    const quarter = Math.floor(currentDate.getMonth() / 3)
+    const startOfQuarter = new Date(currentDate.getFullYear(), quarter * 3, 1)
+    const endOfQuarter = new Date(
+      currentDate.getFullYear(),
+      quarter * 3 + 3,
+      0,
+      23,
+      59,
+      59,
+      999,
+    )
+    return { startDate: startOfQuarter, endDate: endOfQuarter }
+  },
+  yearly: (currentDate: Date = new Date()) => {
+    const startOfYear = new Date(currentDate.getFullYear(), 0, 1)
+    const endOfYear = new Date(
+      currentDate.getFullYear(),
+      11,
+      31,
+      23,
+      59,
+      59,
+      999,
+    )
+    return { startDate: startOfYear, endDate: endOfYear }
+  },
+}
 
 // Exportar funções auxiliares
 export {

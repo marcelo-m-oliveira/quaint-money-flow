@@ -21,7 +21,11 @@ export class UserPreferencesController {
         'Preferências encontradas com sucesso',
       )
 
-      return reply.status(200).send(preferences)
+      return reply.status(200).send({
+        ...preferences,
+        createdAt: preferences.createdAt.toISOString(),
+        updatedAt: preferences.updatedAt.toISOString(),
+      })
     } catch (error: any) {
       request.log.error(
         { error: error.message },
@@ -45,7 +49,11 @@ export class UserPreferencesController {
         'Preferências atualizadas com sucesso',
       )
 
-      return reply.status(200).send(preferences)
+      return reply.status(200).send({
+        ...preferences,
+        createdAt: preferences.createdAt.toISOString(),
+        updatedAt: preferences.updatedAt.toISOString(),
+      })
     } catch (error: any) {
       request.log.error(
         { error: error.message },
@@ -72,7 +80,11 @@ export class UserPreferencesController {
         'Preferências criadas/atualizadas com sucesso',
       )
 
-      return reply.status(200).send(preferences)
+      return reply.status(200).send({
+        ...preferences,
+        createdAt: preferences.createdAt.toISOString(),
+        updatedAt: preferences.updatedAt.toISOString(),
+      })
     } catch (error: any) {
       request.log.error(
         { error: error.message },
@@ -95,7 +107,11 @@ export class UserPreferencesController {
         'Preferências resetadas com sucesso',
       )
 
-      return reply.status(200).send(preferences)
+      return reply.status(200).send({
+        ...preferences,
+        createdAt: preferences.createdAt.toISOString(),
+        updatedAt: preferences.updatedAt.toISOString(),
+      })
     } catch (error: any) {
       request.log.error(
         { error: error.message },

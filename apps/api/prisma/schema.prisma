@@ -120,8 +120,8 @@ model Transaction {
 
 model UserPreferences {
   id                         String           @id @default(cuid())
-  transactionOrder           TransactionOrder @default(decrescente)
-  defaultNavigationPeriod    NavigationPeriod @default(mensal)
+  transactionOrder           TransactionOrder @default(descending)
+  defaultNavigationPeriod    NavigationPeriod @default(monthly)
   showDailyBalance           Boolean          @default(false)
   viewMode                   ViewMode         @default(all)
   isFinancialSummaryExpanded Boolean          @default(false)
@@ -133,7 +133,7 @@ model UserPreferences {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
-  @@schema("finance")
+  @@schema("auth")
 }
 
 // Enums
@@ -164,19 +164,19 @@ enum TransactionType {
 }
 
 enum TransactionOrder {
-  crescente
-  decrescente
+  ascending
+  descending
 
   @@map("transaction_order")
   @@schema("finance")
 }
 
 enum NavigationPeriod {
-  diario
-  semanal
-  mensal
-  trimestral
-  anual
+  daily
+  weekly
+  monthly
+  quarterly
+  yearly
 
   @@map("navigation_period")
   @@schema("finance")

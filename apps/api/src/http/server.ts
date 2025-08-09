@@ -25,7 +25,7 @@ const loggerConfig = isDevelopment
           colorize: true,
           translateTime: 'HH:MM:ss Z',
           ignore: 'pid,hostname',
-          messageFormat: '{msg}',
+          messageFormat: '[API] {msg}',
           levelFirst: true,
           singleLine: false,
           sync: true,
