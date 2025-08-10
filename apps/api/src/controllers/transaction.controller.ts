@@ -1,61 +1,66 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { dateToSeconds, secondsToDate } from '@saas/utils'
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
 import { TransactionService } from '@/services/transaction.service'
+import { handleError } from '@/utils/errors'
+import {
+  IdParamSchema,
+  idParamSchema,
+  PaginationSchema,
+  TransactionCreateSchema,
+  TransactionUpdateSchema,
+} from '@/utils/schemas'
+
+interface TransactionFilters extends PaginationSchema {
+  type?: 'income' | 'expense'
+  categoryId?: string
+  accountId?: string
+  creditCardId?: string
+  startDate?: string
+  endDate?: string
+  search?: string
+}
 
 export class TransactionController {
-  private transactionService: TransactionService
-
-  constructor(transactionService?: TransactionService) {
-    this.transactionService = transactionService || new TransactionService()
-  }
+  constructor(private transactionService: TransactionService) {}
 
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = (request.user as { sub: string }).sub
-      const {
-        page = 1,
-        limit = 10,
-        type,
-        categoryId,
-        accountId,
-        creditCardId,
-        startDate,
-        endDate,
-        search,
-      } = request.query as {
-        page?: number
-        limit?: number
-        type?: 'income' | 'expense'
-        categoryId?: string
-        accountId?: string
-        creditCardId?: string
-        startDate?: string
-        endDate?: string
-        search?: string
-      }
+      const userId = request.user.sub
+      const filters = request.query as TransactionFilters
 
-      const filters: any = {}
-      if (type) filters.type = type
-      if (categoryId) filters.categoryId = categoryId
-      if (accountId) filters.accountId = accountId
-      if (creditCardId) filters.creditCardId = creditCardId
-      if (startDate) filters.startDate = secondsToDate(Number(startDate))
-      if (endDate) filters.endDate = secondsToDate(Number(endDate))
-      if (search) filters.search = search
+      request.log.info({ userId, filters }, 'Listando transações do usuario')
 
-      const result = await this.transactionService.findByUserId(
-        userId,
-        Number(page),
-        Number(limit),
-        filters,
+      const result = await this.transactionService.findMany(userId, {
+        page: filters.page || 1,
+        limit: filters.limit || 20,
+        type: filters.type,
+        categoryId: filters.categoryId,
+        accountId: filters.accountId,
+        creditCardId: filters.creditCardId,
+        startDate: filters.startDate
+          ? secondsToDate(Number(filters.startDate))
+          : undefined,
+        endDate: filters.endDate
+          ? secondsToDate(Number(filters.endDate))
+          : undefined,
+        search: filters.search,
+      })
+
+      request.log.info(
+        {
+          userId,
+          totalTransactions: result.transactions.length,
+          totalPages: result.pagination.totalPages,
+        },
+        'Transações listadas com sucesso',
       )
 
-      // Converter datas para segundos antes de enviar para o frontend
+      // Convert dates to seconds for frontend
       const convertedResult = {
         ...result,
-        transactions: result.transactions.map((transaction: any) => ({
+        transactions: result.transactions.map((transaction) => ({
           ...transaction,
           date: dateToSeconds(transaction.date),
           createdAt: dateToSeconds(transaction.createdAt),
@@ -84,21 +89,34 @@ export class TransactionController {
         })),
       }
 
-      return reply.send(convertedResult)
-    } catch (error) {
-      request.log.error(error)
-      return reply.code(500).send({ error: 'Erro interno do servidor' })
+      return reply.status(200).send(convertedResult)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, stack: error.stack },
+        'Erro ao listar transações',
+      )
+      return handleError(error as FastifyError, reply)
     }
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { id } = request.params as { id: string }
-      const userId = (request.user as { sub: string }).sub
+      const userId = request.user.sub
+      const { id } = request.params as IdParamSchema
+
+      request.log.info(
+        { userId, transactionId: id },
+        'Buscando transação por ID',
+      )
 
       const transaction = await this.transactionService.findById(id, userId)
 
-      // Converter datas para segundos antes de enviar para o frontend
+      request.log.info(
+        { userId, transactionId: transaction.id },
+        'Transação encontrada com sucesso',
+      )
+
+      // Convert dates to seconds for frontend
       const convertedTransaction = {
         ...transaction,
         date: dateToSeconds(transaction.date),
@@ -106,22 +124,31 @@ export class TransactionController {
         updatedAt: dateToSeconds(transaction.updatedAt),
       }
 
-      return reply.send(convertedTransaction)
+      return reply.status(200).send(convertedTransaction)
     } catch (error: any) {
-      request.log.error(error)
-      if (error.message === 'Transação não encontrada') {
-        return reply.code(404).send({ error: error.message })
-      }
-      return reply.code(500).send({ error: 'Erro interno do servidor' })
+      request.log.error(
+        {
+          userId: request.user.sub,
+          transactionId: idParamSchema,
+          error: error.message,
+        },
+        'Erro ao buscar transação',
+      )
+      return handleError(error as FastifyError, reply)
     }
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = (request.user as { sub: string }).sub
-      const data = request.body as any
+      const userId = request.user.sub
+      const data = request.body as TransactionCreateSchema
 
-      // Converter data de segundos para Date antes de salvar no banco
+      request.log.info(
+        { userId, transactionData: data },
+        'Criando nova transação',
+      )
+
+      // Convert date from seconds to Date before saving to database
       const processedData = {
         ...data,
         date: data.date ? secondsToDate(Number(data.date)) : new Date(),
@@ -132,7 +159,12 @@ export class TransactionController {
         userId,
       )
 
-      // Converter datas para segundos antes de enviar para o frontend
+      request.log.info(
+        { transactionId: transaction.id, description: transaction.description },
+        'Transação criada com sucesso',
+      )
+
+      // Convert dates to seconds for frontend
       const convertedTransaction = {
         ...transaction,
         date: dateToSeconds(transaction.date),
@@ -140,20 +172,28 @@ export class TransactionController {
         updatedAt: dateToSeconds(transaction.updatedAt),
       }
 
-      return reply.code(201).send(convertedTransaction)
-    } catch (error) {
-      request.log.error(error)
-      return reply.code(500).send({ error: 'Erro interno do servidor' })
+      return reply.status(201).send(convertedTransaction)
+    } catch (error: any) {
+      request.log.error(
+        { userId: request.user.sub, error: error.message },
+        'Erro ao criar transação',
+      )
+      return handleError(error as FastifyError, reply)
     }
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { id } = request.params as { id: string }
-      const userId = (request.user as { sub: string }).sub
-      const data = request.body as any
+      const userId = request.user.sub
+      const { id } = request.params as IdParamSchema
+      const data = request.body as TransactionUpdateSchema
 
-      // Converter data de segundos para Date antes de salvar no banco
+      request.log.info(
+        { userId, transactionId: id, updateData: data },
+        'Atualizando transação',
+      )
+
+      // Convert date from seconds to Date before saving to database
       const processedData = {
         ...data,
         ...(data.date && { date: secondsToDate(Number(data.date)) }),
@@ -165,7 +205,12 @@ export class TransactionController {
         userId,
       )
 
-      // Converter datas para segundos antes de enviar para o frontend
+      request.log.info(
+        { transactionId: transaction.id, description: transaction.description },
+        'Transação atualizada com sucesso',
+      )
+
+      // Convert dates to seconds for frontend
       const convertedTransaction = {
         ...transaction,
         date: dateToSeconds(transaction.date),
@@ -173,53 +218,42 @@ export class TransactionController {
         updatedAt: dateToSeconds(transaction.updatedAt),
       }
 
-      return reply.send(convertedTransaction)
+      return reply.status(200).send(convertedTransaction)
     } catch (error: any) {
-      request.log.error(error)
-      if (error.message === 'Transação não encontrada') {
-        return reply.code(404).send({ error: error.message })
-      }
-      return reply.code(500).send({ error: 'Erro interno do servidor' })
+      request.log.error(
+        {
+          userId: request.user.sub,
+          transactionId: idParamSchema,
+          error: error.message,
+        },
+        'Erro ao atualizar transação',
+      )
+      return handleError(error as FastifyError, reply)
     }
   }
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { id } = request.params as { id: string }
-      const userId = (request.user as { sub: string }).sub
+      const userId = request.user.sub
+      const { id } = request.params as IdParamSchema
+
+      request.log.info({ userId, transactionId: id }, 'Deletando transação')
 
       await this.transactionService.delete(id, userId)
-      return reply.code(204).send()
+
+      request.log.info({ transactionId: id }, 'Transação deletada com sucesso')
+
+      return reply.status(204).send()
     } catch (error: any) {
-      request.log.error(error)
-      if (error.message === 'Transação não encontrada') {
-        return reply.code(404).send({ error: error.message })
-      }
-      return reply.code(500).send({ error: 'Erro interno do servidor' })
-    }
-  }
-
-  async destroyAll(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = (request.user as { sub: string }).sub
-
-      const result = await this.transactionService.deleteAllByUserId(userId)
-      return reply.send(result)
-    } catch (error) {
-      request.log.error(error)
-      return reply.code(500).send({ error: 'Erro interno do servidor' })
-    }
-  }
-
-  async destroyAllUserData(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = (request.user as { sub: string }).sub
-
-      const result = await this.transactionService.deleteAllUserData(userId)
-      return reply.send(result)
-    } catch (error) {
-      request.log.error(error)
-      return reply.code(500).send({ error: 'Erro interno do servidor' })
+      request.log.error(
+        {
+          userId: request.user.sub,
+          transactionId: idParamSchema,
+          error: error.message,
+        },
+        'Erro ao deletar transação',
+      )
+      return handleError(error as FastifyError, reply)
     }
   }
 }

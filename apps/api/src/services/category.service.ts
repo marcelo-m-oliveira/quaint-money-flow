@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Category, Prisma, PrismaClient } from '@prisma/client'
 
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
@@ -18,8 +19,12 @@ export class CategoryService {
   private inheritFromParent(data: any, parentCategory: Category) {
     return {
       ...data,
-      color: data.parentId ? parentCategory.color : data.color,
-      icon: data.parentId ? parentCategory.icon : data.icon,
+      color:
+        data.color && data.color.trim() !== ''
+          ? data.color
+          : parentCategory.color,
+      icon:
+        data.icon && data.icon.trim() !== '' ? data.icon : parentCategory.icon,
     }
   }
 
@@ -133,7 +138,7 @@ export class CategoryService {
 
     // Verificar se a categoria pai existe (se fornecida) e herdar propriedades
     let finalData = { ...data }
-    
+
     if (data.parentId) {
       const parentCategory = await this.prisma.category.findUnique({
         where: {
@@ -207,7 +212,7 @@ export class CategoryService {
 
     // Verificar se a categoria pai existe (se fornecida) e herdar propriedades
     let finalData = { ...data }
-    
+
     if (data.parentId) {
       const parentCategory = await this.prisma.category.findUnique({
         where: {

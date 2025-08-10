@@ -7,7 +7,6 @@ import { CategoryService } from '@/services/category.service'
 import { handleError } from '@/utils/errors'
 import {
   CategoryCreateSchema,
-  CategoryResponseSchema,
   CategoryUpdateSchema,
   IdParamSchema,
   idParamSchema,

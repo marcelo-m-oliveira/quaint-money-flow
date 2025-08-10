@@ -83,7 +83,7 @@ export async function createApp() {
   })
 
   app.register(transactionRoutes, {
-    prefix: `${env.API_PREFIX}/${env.API_VERSION}/transactions`,
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 
   app.register(userPreferencesRoutes, {

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
+import { TransactionFactory } from '@/factories/transaction.factory'
 import {
   idParamSchema,
   transactionCreateSchema,
@@ -10,7 +11,6 @@ import {
   transactionUpdateSchema,
 } from '@/utils/schemas'
 
-import { TransactionFactory } from '../../factories/transaction.factory'
 import { authMiddleware } from '../middlewares/auth'
 
 export async function transactionRoutes(app: FastifyInstance) {
@@ -96,33 +96,5 @@ export async function transactionRoutes(app: FastifyInstance) {
       },
     },
     transactionController.destroy.bind(transactionController),
-  )
-
-  // DELETE /transactions - Excluir todas as transações do usuário
-  app.delete(
-    '/',
-    {
-      schema: {
-        response: {
-          204: z.null(),
-          401: z.object({ error: z.string() }),
-        },
-      },
-    },
-    transactionController.destroyAll.bind(transactionController),
-  )
-
-  // DELETE /transactions/user-data - Excluir todos os dados do usuário
-  app.delete(
-    '/user-data',
-    {
-      schema: {
-        response: {
-          204: z.null(),
-          401: z.object({ error: z.string() }),
-        },
-      },
-    },
-    transactionController.destroyAllUserData.bind(transactionController),
   )
 }

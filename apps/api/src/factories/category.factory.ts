@@ -1,5 +1,6 @@
-import { CategoryController } from '../controllers/category.controller'
 import { prisma } from '@/lib/prisma'
+
+import { CategoryController } from '../controllers/category.controller'
 import { CategoryRepository } from '../repositories/category.repository'
 import { CategoryService } from '../services/category.service'
 
