@@ -1,5 +1,6 @@
 'use client'
 
+import { dateToSeconds } from '@saas/utils'
 import { useEffect, useState } from 'react'
 
 import { dateStringToTimestamp } from '../format'
@@ -216,13 +217,12 @@ export function useFinancialData() {
       }
 
       const newCategory: Category = {
-        id: Date.now().toString(),
         name: data.name,
         color: data.color,
         type: data.type,
         icon: icon || 'FileText',
         parentId: data.parentId,
-        createdAt: new Date(),
+        createdAt: dateToSeconds(new Date()),
       }
 
       const updatedCategories = [...categories, newCategory]
@@ -338,7 +338,7 @@ export function useFinancialData() {
           color: '#6B7280',
           type: 'expense' as const,
           icon: 'FileText',
-          createdAt: new Date(),
+          createdAt: dateToSeconds(new Date()),
         },
       }
     })

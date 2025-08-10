@@ -1,11 +1,25 @@
 export interface Category {
-  id: string
+  id?: string
   name: string
   color: string
   type: 'income' | 'expense'
   icon: string
   parentId?: string // Para subcategorias
-  createdAt: Date
+  createdAt: number // Timestamp em segundos
+  updatedAt?: number // Timestamp em segundos
+  parent?: {
+    id: string
+    name: string
+    color: string
+    icon: string
+  }
+  children?: Array<{
+    id: string
+    name: string
+    color: string
+    icon: string
+    type: 'income' | 'expense'
+  }>
 }
 
 export interface Transaction {
@@ -50,8 +64,8 @@ export interface Account {
   iconType: 'bank' | 'generic'
   balance: number
   includeInGeneralBalance: boolean
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number // Timestamp em segundos
+  updatedAt?: number // Timestamp em segundos
 }
 
 export interface AccountFormData {
@@ -73,8 +87,8 @@ export interface CreditCard {
   closingDay: number // Dia do fechamento da fatura (1-31)
   dueDay: number // Dia do vencimento da fatura (1-31)
   defaultPaymentAccountId?: string // ID da conta padrão para pagamento
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number // Timestamp em segundos
+  updatedAt?: number // Timestamp em segundos
 }
 
 export interface CreditCardFormData {
@@ -109,8 +123,8 @@ export interface UserPreferences {
   showDailyBalance: boolean
   viewMode: 'all' | 'cashflow'
   isFinancialSummaryExpanded: boolean
-  createdAt: Date
-  updatedAt: Date
+  createdAt: number // Timestamp em segundos
+  updatedAt?: number // Timestamp em segundos
 }
 
 export interface UserPreferencesFormData {

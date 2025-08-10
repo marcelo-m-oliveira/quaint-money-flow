@@ -16,7 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { useCategories } from '@/lib/hooks/use-categories'
 import { CategoryIcon } from '@/lib/icon-map'
 import { Category, CategoryFormData } from '@/lib/types'
 
@@ -26,8 +26,8 @@ export default function CategoriasPage() {
     addCategory,
     updateCategory,
     deleteCategory,
-    getCategoryIcon,
-  } = useFinancialData()
+    isLoading,
+  } = useCategories()
 
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense')
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false)
@@ -239,7 +239,7 @@ export default function CategoriasPage() {
                               style={{ backgroundColor: subcategory.color }}
                             >
                               <CategoryIcon
-                                iconName={getCategoryIcon(subcategory)}
+                                iconName={subcategory.icon}
                                 className="h-3 w-3 text-white"
                               />
                             </div>
@@ -336,6 +336,7 @@ export default function CategoriasPage() {
             onClick={() => handleAddCategory(activeTab)}
             className="flex shrink-0 items-center gap-2"
             size="sm"
+            disabled={isLoading}
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nova Categoria</span>

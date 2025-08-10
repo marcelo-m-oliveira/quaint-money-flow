@@ -25,7 +25,17 @@ export async function categoryRoutes(app: FastifyInstance) {
       schema: {
         querystring: categoryFiltersSchema,
         response: {
-          200: z.array(categoryResponseSchema),
+          200: z.object({
+            categories: z.array(categoryResponseSchema),
+            pagination: z.object({
+              page: z.number(),
+              limit: z.number(),
+              total: z.number(),
+              totalPages: z.number(),
+              hasNext: z.boolean(),
+              hasPrev: z.boolean(),
+            }),
+          }),
           401: z.object({ error: z.string() }),
         },
       },

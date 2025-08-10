@@ -190,6 +190,7 @@ export const categoryResponseSchema = categoryBaseSchema.extend({
   userId: z.string(),
   createdAt: z.number(),
   updatedAt: z.number(),
+  parentId: z.string().nullable(),
   parent: z
     .object({
       id: z.string(),
@@ -206,7 +207,6 @@ export const categoryResponseSchema = categoryBaseSchema.extend({
         name: z.string(),
         color: z.string(),
         icon: z.string(),
-        type: z.enum(['income', 'expense']),
       }),
     )
     .optional(),
