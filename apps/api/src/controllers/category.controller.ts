@@ -65,7 +65,7 @@ export class CategoryController {
   async select(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub
-      const type = request.query as EntryType
+      const { type } = request.query as { type?: 'income' | 'expense' }
 
       request.log.info(
         { userId, type },

@@ -15,10 +15,10 @@ export function useUserPreferencesWithAutoInit() {
 
   // Inicializar preferências automaticamente quando o hook é usado
   useEffect(() => {
-    if (!context.isInitialized) {
+    if (!context.isInitialized && !context.isLoading) {
       context.initialize()
     }
-  }, [context])
+  }, [context.isInitialized, context.isLoading, context.initialize])
 
   return context
 }

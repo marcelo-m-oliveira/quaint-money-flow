@@ -131,10 +131,11 @@ export class EntryController {
 
       request.log.info({ userId, entryData: data }, 'Criando nova transação')
 
-      // Convert date from seconds to Date before saving to database
+      // Convert date from string to Date and amount from string to number before saving to database
       const processedData = {
         ...data,
-        date: data.date ? secondsToDate(Number(data.date)) : new Date(),
+        amount: parseFloat(data.amount || '0'),
+        date: data.date ? new Date(data.date) : new Date(),
       }
 
       const entry = await this.entryService.create(processedData, userId)
@@ -173,10 +174,11 @@ export class EntryController {
         'Atualizando transação',
       )
 
-      // Convert date from seconds to Date before saving to database
+      // Convert date from string to Date and amount from string to number before saving to database
       const processedData = {
         ...data,
-        ...(data.date && { date: secondsToDate(Number(data.date)) }),
+        ...(data.amount !== undefined && { amount: parseFloat(data.amount || '0') }),
+        ...(data.date && { date: new Date(data.date) }),
       }
 
       const entry = await this.entryService.update(id, processedData, userId)

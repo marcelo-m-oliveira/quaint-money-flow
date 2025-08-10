@@ -59,12 +59,9 @@ import {
 } from '@/components/ui/tooltip'
 import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
-import { useCategorySelectOptions } from '@/lib/hooks/use-category-select-options'
-import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useEntries } from '@/lib/hooks/use-entries'
-import { usePreferences } from '@/lib/hooks/use-preferences'
-import { CategoryIcon } from '@/lib/icon-map'
+import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
 import { EntryFormSchema } from '@/lib/schemas'
 import { Entry } from '@/lib/services/entries'
 
@@ -116,17 +113,16 @@ export default function LancamentoPage() {
     useEntries()
 
   const { accounts } = useAccounts()
-  const { options: categoryOptions } = useCategorySelectOptions()
-  const { creditCards } = useCreditCardsWithAutoInit()
+
   const { success, error } = useCrudToast()
 
-  const { preferences, updatePreference } = usePreferences()
+  const { preferences, updatePreferences } = useUserPreferencesWithAutoInit()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<Entry | undefined>(undefined)
   const [entryType, setEntryType] = useState<'income' | 'expense'>('expense')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+
   const [selectedType, setSelectedType] = useState<string>('all')
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean
@@ -135,28 +131,20 @@ export default function LancamentoPage() {
 
   // Estados para controle de período
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [currentPeriod, setCurrentPeriod] = useState(
-    preferences.defaultNavigationPeriod,
-  )
+  const [currentPeriod, setCurrentPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'>('monthly')
 
   // Estados para modo de visualização
-  const [viewMode, setViewMode] = useState<'cashflow' | 'all'>(
-    preferences.viewMode,
-  )
+  const [viewMode, setViewMode] = useState<'cashflow' | 'all'>('all')
   const [isViewModeModalOpen, setIsViewModeModalOpen] = useState(false)
-  const [tempViewMode, setTempViewMode] = useState<'cashflow' | 'all'>(
-    preferences.viewMode,
-  )
+  const [tempViewMode, setTempViewMode] = useState<'cashflow' | 'all'>('all')
 
   // Estado para controlar expansão do resumo financeiro
-  const [isFinancialSummaryExpanded, setIsFinancialSummaryExpanded] = useState(
-    preferences.isFinancialSummaryExpanded,
-  )
+  const [isFinancialSummaryExpanded, setIsFinancialSummaryExpanded] = useState(false)
 
   // Função para alterar modo de visualização e salvar preferência
   const handleViewModeChange = (newViewMode: 'cashflow' | 'all') => {
     setViewMode(newViewMode)
-    updatePreference('viewMode', newViewMode)
+    updatePreferences({ viewMode: newViewMode })
   }
 
   // Função para confirmar mudança de modo de visualização
@@ -175,15 +163,18 @@ export default function LancamentoPage() {
   const handleToggleExpansion = () => {
     const newExpanded = !isFinancialSummaryExpanded
     setIsFinancialSummaryExpanded(newExpanded)
-    updatePreference('isFinancialSummaryExpanded', newExpanded)
+    updatePreferences({ isFinancialSummaryExpanded: newExpanded })
   }
 
   // Sincronizar estados locais com preferências quando mudarem
   useEffect(() => {
-    setViewMode(preferences.viewMode)
-    setTempViewMode(preferences.viewMode)
-    setIsFinancialSummaryExpanded(preferences.isFinancialSummaryExpanded)
-  }, [preferences.viewMode, preferences.isFinancialSummaryExpanded])
+    if (preferences && preferences.isInitialized) {
+      setCurrentPeriod(preferences.defaultNavigationPeriod)
+      setViewMode(preferences.viewMode)
+      setTempViewMode(preferences.viewMode)
+      setIsFinancialSummaryExpanded(preferences.isFinancialSummaryExpanded)
+    }
+  }, [preferences])
 
   // Funções para navegação de período
   const navigatePeriod = (direction: 'prev' | 'next') => {
@@ -234,10 +225,7 @@ export default function LancamentoPage() {
       const matchesSearch = entry.description
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
-      const matchesCategory =
-        selectedCategory === 'all'
-          ? true
-          : entry.categoryId === selectedCategory
+      const matchesCategory = true
       // Key mapping para filtros de tipo de lançamento
       const TYPE_FILTERS = {
         all: () => true,
@@ -259,14 +247,7 @@ export default function LancamentoPage() {
 
     console.log('📊 Total de lançamentos após filtro:', filtered.length)
     return filtered
-  }, [
-    entries,
-    searchTerm,
-    selectedCategory,
-    selectedType,
-    currentDate,
-    currentPeriod,
-  ])
+  }, [entries, searchTerm, selectedType, currentDate, currentPeriod])
 
   // Ordenar lançamentos por data (mais recentes primeiro)
   const sortedEntries = useMemo(() => {
@@ -720,46 +701,12 @@ export default function LancamentoPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="min-w-0 flex-1">
-                <Label htmlFor="category-filter">Categoria</Label>
-                <Select
-                  value={selectedCategory}
-                  onValueChange={setSelectedCategory}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as categorias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categoryOptions.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full border border-border">
-                            <div
-                              className="flex h-full w-full items-center justify-center rounded-full"
-                              style={{ backgroundColor: category.color }}
-                            >
-                              {category.icon && (
-                                <CategoryIcon
-                                  iconName={category.icon}
-                                  className="h-2 w-2 text-white"
-                                />
-                              )}
-                            </div>
-                          </div>
-                          {category.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="flex flex-shrink-0 items-end">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setSearchTerm('')
-                    setSelectedCategory('all')
                     setSelectedType('all')
                   }}
                   className="w-full whitespace-nowrap sm:w-auto"
@@ -776,39 +723,33 @@ export default function LancamentoPage() {
               <div className="py-12 text-center text-muted-foreground">
                 <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p className="mb-2 text-lg font-medium">
-                  {searchTerm ||
-                  selectedCategory !== 'all' ||
-                  selectedType !== 'all'
+                  {searchTerm || selectedType !== 'all'
                     ? 'Nenhum lançamento encontrado'
                     : 'Nenhum lançamento cadastrado'}
                 </p>
                 <p className="mb-4 text-sm">
-                  {searchTerm ||
-                  selectedCategory !== 'all' ||
-                  selectedType !== 'all'
+                  {searchTerm || selectedType !== 'all'
                     ? 'Tente ajustar os filtros para encontrar seus lançamentos'
                     : 'Comece adicionando seu primeiro lançamento'}
                 </p>
-                {!searchTerm &&
-                  selectedCategory === 'all' &&
-                  selectedType === 'all' && (
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        onClick={() => handleAddEntry('income')}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CirclePlus className="mr-2 h-4 w-4" />
-                        Nova Receita
-                      </Button>
-                      <Button
-                        onClick={() => handleAddEntry('expense')}
-                        variant="destructive"
-                      >
-                        <CircleMinus className="mr-2 h-4 w-4" />
-                        Nova Despesa
-                      </Button>
-                    </div>
-                  )}
+                {!searchTerm && selectedType === 'all' && (
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      onClick={() => handleAddEntry('income')}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CirclePlus className="mr-2 h-4 w-4" />
+                      Nova Receita
+                    </Button>
+                    <Button
+                      onClick={() => handleAddEntry('expense')}
+                      variant="destructive"
+                    >
+                      <CircleMinus className="mr-2 h-4 w-4" />
+                      Nova Despesa
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-6">
@@ -844,15 +785,19 @@ export default function LancamentoPage() {
                             {entries.length} lançamento
                             {entries.length === 1 ? '' : 's'}
                           </span>
-                          <span className="text-xs">•</span>
-                          <span
-                            className={`text-sm font-medium ${
-                              dayTotal >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
-                            {dayTotal >= 0 ? '+' : ''}
-                            {formatCurrency(Math.abs(dayTotal))}
-                          </span>
+                          {preferences?.showDailyBalance && (
+                            <>
+                              <span className="text-xs">•</span>
+                              <span
+                                className={`text-sm font-medium ${
+                                  dayTotal >= 0 ? 'text-green-600' : 'text-red-600'
+                                }`}
+                              >
+                                {dayTotal >= 0 ? '+' : ''}
+                                {formatCurrency(Math.abs(dayTotal))}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -909,7 +854,6 @@ export default function LancamentoPage() {
                                   <AccountCardIcon
                                     entry={entry}
                                     accounts={accounts}
-                                    creditCards={creditCards}
                                   />
                                 )}
                               </div>

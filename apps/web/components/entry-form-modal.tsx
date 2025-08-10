@@ -49,7 +49,7 @@ export function EntryFormModal({
   showCreateAnotherButton = true,
 }: EntryFormModalProps) {
   const { options: accountOptions } = useAccountSelectOptions()
-  const { options: categoryOptions } = useCategorySelectOptions()
+  const { options: categoryOptions, isLoading: categoryLoading } = useCategorySelectOptions(type, isOpen)
   const { options: creditCardOptions } = useCreditCardSelectOptions()
 
   const {
@@ -84,7 +84,7 @@ export function EntryFormModal({
         categoryId: entry.categoryId,
         accountId: entry.accountId || '',
         creditCardId: entry.creditCardId || '',
-        date: timestampToDateString(entry.date),
+        date: timestampToDateString(entry.date * 1000),
         paid: entry.paid || false,
       })
     } else {
@@ -214,31 +214,41 @@ export function EntryFormModal({
               <Select
                 value={watch('categoryId')}
                 onValueChange={(value) => setValue('categoryId', value)}
+                disabled={categoryLoading}
               >
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecione a categoria..." />
+                  <SelectValue placeholder={categoryLoading ? "Carregando..." : "Selecione a categoria..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                  {categoryLoading ? (
+                    <SelectItem value="loading" disabled>
                       <div className="flex items-center gap-2">
-                        <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border">
-                          <div
-                            className="flex h-full w-full items-center justify-center rounded-full"
-                            style={{ backgroundColor: option.color }}
-                          >
-                            {option.icon && (
-                              <CategoryIcon
-                                iconName={option.icon}
-                                className="h-3 w-3 text-white"
-                              />
-                            )}
-                          </div>
-                        </div>
-                        <span>{option.label}</span>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        <span>Carregando categorias...</span>
                       </div>
                     </SelectItem>
-                  ))}
+                  ) : (
+                    categoryOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border">
+                            <div
+                              className="flex h-full w-full items-center justify-center rounded-full"
+                              style={{ backgroundColor: option.color }}
+                            >
+                              {option.icon && (
+                                <CategoryIcon
+                                  iconName={option.icon}
+                                  className="h-3 w-3 text-white"
+                                />
+                              )}
+                            </div>
+                          </div>
+                          <span>{option.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               {errors.categoryId && (

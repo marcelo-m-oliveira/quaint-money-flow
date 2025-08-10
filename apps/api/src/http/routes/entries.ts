@@ -16,12 +16,9 @@ import { authMiddleware } from '../middlewares/auth'
 export async function entryRoutes(app: FastifyInstance) {
   const entryController = EntryFactory.getController()
 
-  // Aplicar middleware de autenticação em todas as rotas
-  app.addHook('onRequest', authMiddleware)
-
   // GET /entries - Listar transações do usuário com filtros
   app.get(
-    '/',
+    '/entries',
     {
       schema: {
         querystring: entryFiltersSchema,
@@ -30,13 +27,14 @@ export async function entryRoutes(app: FastifyInstance) {
           401: z.object({ error: z.string() }),
         },
       },
+      preHandler: [authMiddleware],
     },
     entryController.index.bind(entryController),
   )
 
   // GET /entries/:id - Buscar transação específica
   app.get(
-    '/:id',
+    '/entries/:id',
     {
       schema: {
         params: idParamSchema,
@@ -46,13 +44,14 @@ export async function entryRoutes(app: FastifyInstance) {
           404: z.object({ error: z.string() }),
         },
       },
+      preHandler: [authMiddleware],
     },
     entryController.show.bind(entryController),
   )
 
   // POST /entries - Criar nova transação
   app.post(
-    '/',
+    '/entries',
     {
       schema: {
         body: entryCreateSchema,
@@ -61,13 +60,14 @@ export async function entryRoutes(app: FastifyInstance) {
           401: z.object({ error: z.string() }),
         },
       },
+      preHandler: [authMiddleware],
     },
     entryController.store.bind(entryController),
   )
 
   // PUT /entries/:id - Atualizar transação
   app.put(
-    '/:id',
+    '/entries/:id',
     {
       schema: {
         params: idParamSchema,
@@ -78,13 +78,14 @@ export async function entryRoutes(app: FastifyInstance) {
           404: z.object({ error: z.string() }),
         },
       },
+      preHandler: [authMiddleware],
     },
     entryController.update.bind(entryController),
   )
 
   // DELETE /entries/:id - Excluir transação específica
   app.delete(
-    '/:id',
+    '/entries/:id',
     {
       schema: {
         params: idParamSchema,
@@ -94,6 +95,7 @@ export async function entryRoutes(app: FastifyInstance) {
           404: z.object({ error: z.string() }),
         },
       },
+      preHandler: [authMiddleware],
     },
     entryController.destroy.bind(entryController),
   )

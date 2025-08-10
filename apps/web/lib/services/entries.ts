@@ -24,15 +24,15 @@ export interface Entry {
   account?: {
     id: string
     name: string
-    color: string
     icon: string
-    type: string
+    iconType: string
   }
   creditCard?: {
     id: string
     name: string
     color: string
     icon: string
+    iconType: string
     limit: number
   }
 }

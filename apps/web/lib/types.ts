@@ -31,6 +31,19 @@ export interface Entry {
   category?: Category
   accountId?: string // ID da conta relacionada
   creditCardId?: string // ID do cartão de crédito relacionado
+  account?: {
+    id: string
+    name: string
+    icon: string
+    iconType: string
+  }
+  creditCard?: {
+    id: string
+    name: string
+    icon: string
+    iconType: string
+    limit: number
+  }
   date: number // Timestamp em milissegundos
   paid: boolean // Indica se o lançamento foi pago ou não
   createdAt: number // Timestamp em milissegundos

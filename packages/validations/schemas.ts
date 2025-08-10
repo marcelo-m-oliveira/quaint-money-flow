@@ -17,9 +17,9 @@ export const entryBaseSchema = z.object({
     .refine(
       (val) => {
         const numericValue = parseFloat(val.replace(',', '.'))
-        return !isNaN(numericValue) && numericValue > 0
+        return !isNaN(numericValue) && numericValue >= 0
       },
-      { message: 'Valor deve ser um número positivo' },
+      { message: 'Valor deve ser um número válido' },
     ),
   type: z.enum(['income', 'expense'], {
     message: 'Tipo deve ser receita ou despesa',
