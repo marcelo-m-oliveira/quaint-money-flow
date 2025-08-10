@@ -17,8 +17,8 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
           200: preferencesSchema.extend({
             id: z.string(),
             userId: z.string(),
-            createdAt: z.string(),
-            updatedAt: z.string(),
+            createdAt: z.number(),
+            updatedAt: z.number(),
           }),
           401: z.object({ error: z.string() }),
         },
@@ -38,8 +38,8 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
           200: preferencesSchema.extend({
             id: z.string(),
             userId: z.string(),
-            createdAt: z.string(),
-            updatedAt: z.string(),
+            createdAt: z.number(),
+            updatedAt: z.number(),
           }),
           401: z.object({ error: z.string() }),
         },
@@ -59,8 +59,8 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
           200: preferencesSchema.extend({
             id: z.string(),
             userId: z.string(),
-            createdAt: z.string(),
-            updatedAt: z.string(),
+            createdAt: z.number(),
+            updatedAt: z.number(),
           }),
           401: z.object({ error: z.string() }),
         },
@@ -79,8 +79,8 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
           200: preferencesSchema.extend({
             id: z.string(),
             userId: z.string(),
-            createdAt: z.string(),
-            updatedAt: z.string(),
+            createdAt: z.number(),
+            updatedAt: z.number(),
           }),
           401: z.object({ error: z.string() }),
         },

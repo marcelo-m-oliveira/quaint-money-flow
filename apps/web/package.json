@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "pnpm env:load next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint --fix",
+    "env:load": "dotenv -e ../../.env --",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

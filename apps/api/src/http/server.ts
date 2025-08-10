@@ -1,3 +1,5 @@
+import { execSync } from 'node:child_process'
+
 import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
 import { env } from '@saas/env'
@@ -15,8 +17,18 @@ import { userPreferencesRoutes } from '@/http/routes/user-preferences'
 import { setupSwagger } from '@/lib/swagger'
 import { errorHandler } from '@/utils/errors'
 
-// Configuração do logger
+// Configuração do logger e encoding UTF-8 no Windows
+const isWindows = process.platform === 'win32'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+
+// Força UTF-8 no console do Windows para exibir acentuação corretamente
+if (isWindows) {
+  try {
+    execSync('chcp 65001 > nul', { stdio: 'ignore' })
+  } catch {
+    // ignore
+  }
+}
 
 const loggerConfig = isDevelopment
   ? {
@@ -30,6 +42,7 @@ const loggerConfig = isDevelopment
           levelFirst: true,
           singleLine: false,
           sync: true,
+          crlf: isWindows,
         },
       },
     }

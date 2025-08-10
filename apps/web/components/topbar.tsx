@@ -18,7 +18,6 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
-import { MockDataStatus } from './mock-data-status'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import {
@@ -89,12 +88,6 @@ export function Topbar() {
 
           {/* Menu de Ações */}
           <div className="flex items-center gap-2 lg:gap-3">
-            {/* Mock Data Loader - apenas para desenvolvimento */}
-            <div className="hidden sm:block"></div>
-            <div className="hidden sm:block">
-              <MockDataStatus />
-            </div>
-
             {/* Menu de Configurações */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

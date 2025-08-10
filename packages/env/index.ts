@@ -35,7 +35,7 @@ export const env = createEnv({
     NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3333/api/v1'),
   },
   runtimeEnv: {
-    PORT: process.env.SERVER_PORT,
+    PORT: process.env.PORT,
     DATABASE_URL: process.env.DATABASE_URL,
     JWT_SECRET: process.env.JWT_SECRET,
     SWAGGER_ENABLED: process.env.SWAGGER_ENABLED,
