@@ -123,7 +123,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
         ? categories.find((c) => c.id === category.parentId)
         : category
 
-      if (!parentCategory) return
+      if (!parentCategory || !parentCategory.id) return
 
       const existing = parentCategoryMap.get(parentCategory.id)
       if (existing) {
@@ -386,7 +386,10 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                       (cat) => cat.type === transactionType && !cat.parentId,
                     )
                     .map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                      <SelectItem
+                        key={category.id || 'temp'}
+                        value={category.id || ''}
+                      >
                         <div className="flex items-center gap-2">
                           <div
                             className="h-3 w-3 rounded-full"
@@ -559,30 +562,34 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                     if (!subCategory) return acc
 
                     const existing = acc.find(
-                      (sub) => sub.categoryId === subCategory.id,
+                      (sub: CategoryData) => sub.categoryId === subCategory.id,
                     )
                     if (existing) {
                       existing.amount += transaction.amount
                       existing.transactionCount += 1
                     } else {
-                      acc.push({
-                        categoryId: subCategory.id,
-                        categoryName: subCategory.name,
-                        amount: transaction.amount,
-                        percentage: 0,
-                        color: subCategory.color,
-                        icon: subCategory.icon,
-                        transactionCount: 1,
-                      })
+                      if (subCategory.id) {
+                        acc.push({
+                          categoryId: subCategory.id,
+                          categoryName: subCategory.name,
+                          amount: transaction.amount,
+                          percentage: 0,
+                          color: subCategory.color,
+                          icon: subCategory.icon,
+                          transactionCount: 1,
+                        })
+                      }
                     }
                     return acc
                   }, [] as CategoryData[])
-                  .map((sub) => ({
+                  .map((sub: CategoryData) => ({
                     ...sub,
                     percentage:
                       item.amount > 0 ? (sub.amount / item.amount) * 100 : 0,
                   }))
-                  .sort((a, b) => b.amount - a.amount)
+                  .sort(
+                    (a: CategoryData, b: CategoryData) => b.amount - a.amount,
+                  )
 
                 return (
                   <div key={item.categoryId} className="space-y-2">
@@ -632,7 +639,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                     {/* Subcategorias */}
                     {subcategoriesData.length > 0 && (
                       <div className="space-y-2">
-                        {subcategoriesData.map((subItem) => {
+                        {subcategoriesData.map((subItem: CategoryData) => {
                           const subCategory = categories.find(
                             (c) => c.id === subItem.categoryId,
                           )

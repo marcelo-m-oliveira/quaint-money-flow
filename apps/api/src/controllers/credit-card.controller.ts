@@ -61,6 +61,39 @@ export class CreditCardController {
     }
   }
 
+  async selectOptions(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user.sub
+
+      request.log.info({ userId }, 'Buscando cartões para select')
+      const result = await this.creditCardService.findMany(userId, {
+        page: 1,
+        limit: 1000, // Buscar todos os cartões para o select
+      })
+
+      // Formatar dados para o select
+      const selectOptions = result.creditCards.map((creditCard) => ({
+        value: creditCard.id,
+        label: creditCard.name,
+        icon: creditCard.icon,
+        iconType: creditCard.iconType,
+      }))
+
+      request.log.info(
+        { userId, totalOptions: selectOptions.length },
+        'Opcoes de select retornadas com sucesso',
+      )
+
+      return reply.status(200).send(selectOptions)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message },
+        'Erro ao buscar opções de select',
+      )
+      return handleError(error as FastifyError, reply)
+    }
+  }
+
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub

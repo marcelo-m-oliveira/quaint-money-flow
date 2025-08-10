@@ -295,6 +295,7 @@ export const selectOptionSchema = z.object({
   label: z.string(),
   icon: z.string(),
   iconType: z.string(),
+  color: z.string().optional(),
   parentId: z.string().optional(),
 })
 

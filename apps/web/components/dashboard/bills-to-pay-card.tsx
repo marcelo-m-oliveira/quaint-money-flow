@@ -16,16 +16,16 @@ import {
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { CategoryIcon } from '@/lib/icon-map'
-import { Category, Transaction } from '@/lib/types'
+import { Category, Entry } from '@/lib/types'
 
 interface BillsToPayCardProps {
-  transactions: Transaction[]
+  transactions: Entry[]
   categories: Category[]
   onUpdateTransaction?: (
     transactionId: string,
-    updatedData: Partial<Transaction>,
+    updatedData: Partial<Entry>,
   ) => void
-  onEditTransaction?: (transaction: Transaction) => void
+  onEditTransaction?: (transaction: Entry) => void
 }
 
 interface BillData {

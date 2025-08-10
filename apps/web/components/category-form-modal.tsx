@@ -267,7 +267,7 @@ export function CategoryFormModal({
   }
 
   const confirmDelete = () => {
-    if (category && onDelete) {
+    if (category && category.id && onDelete) {
       onDelete(category.id)
       handleClose()
     }
@@ -388,7 +388,10 @@ export function CategoryFormModal({
                     </SelectTrigger>
                     <SelectContent>
                       {mainCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
+                        <SelectItem
+                          key={category.id || 'temp'}
+                          value={category.id || ''}
+                        >
                           <div className="flex items-center gap-2">
                             <div
                               className="h-4 w-4 rounded-full transition-all duration-200"
@@ -521,7 +524,10 @@ export function CategoryFormModal({
                   </SelectTrigger>
                   <SelectContent>
                     {mainCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                      <SelectItem
+                        key={category.id || 'temp'}
+                        value={category.id || ''}
+                      >
                         <div className="flex items-center gap-2">
                           <div
                             className="h-4 w-4 rounded-full transition-all duration-200"

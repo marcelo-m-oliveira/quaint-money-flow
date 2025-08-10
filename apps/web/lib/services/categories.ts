@@ -57,6 +57,7 @@ export interface SelectOption {
   label: string
   icon: string
   iconType: string
+  color?: string
 }
 
 export interface CategoryUsage {

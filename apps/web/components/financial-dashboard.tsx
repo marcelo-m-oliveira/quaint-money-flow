@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 
 import { formatCurrency, getDayPeriod } from '@/lib/format'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import { Transaction, TransactionFormData } from '@/lib/types'
+import { Entry, EntryFormData } from '@/lib/types'
 
 import {
   BillsToPayCard,
@@ -34,7 +34,7 @@ export function FinancialDashboard() {
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<
-    Transaction | undefined
+    Entry | undefined
   >()
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -105,10 +105,7 @@ export function FinancialDashboard() {
     setEditingTransaction(undefined)
   }
 
-  const handleExpenseSubmit = (
-    data: TransactionFormData,
-    shouldClose = true,
-  ) => {
+  const handleExpenseSubmit = (data: EntryFormData, shouldClose = true) => {
     const expenseData = { ...data, type: 'expense' as const }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, expenseData)
@@ -121,10 +118,7 @@ export function FinancialDashboard() {
     }
   }
 
-  const handleIncomeSubmit = (
-    data: TransactionFormData,
-    shouldClose = true,
-  ) => {
+  const handleIncomeSubmit = (data: EntryFormData, shouldClose = true) => {
     const incomeData = { ...data, type: 'income' as const }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, incomeData)
@@ -226,9 +220,8 @@ export function FinancialDashboard() {
                   <EntryFormModal
                     isOpen={isExpenseDialogOpen}
                     onClose={closeExpenseDialog}
-                    transaction={editingTransaction}
+                    entry={editingTransaction}
                     onSubmit={handleExpenseSubmit}
-                    categories={categories}
                     type="expense"
                     title={
                       editingTransaction ? 'Editar despesa' : 'Nova despesa'
@@ -241,9 +234,8 @@ export function FinancialDashboard() {
                   <EntryFormModal
                     isOpen={isIncomeDialogOpen}
                     onClose={closeIncomeDialog}
-                    transaction={editingTransaction}
+                    entry={editingTransaction}
                     onSubmit={handleIncomeSubmit}
-                    categories={categories}
                     type="income"
                     title={
                       editingTransaction ? 'Editar receita' : 'Nova receita'

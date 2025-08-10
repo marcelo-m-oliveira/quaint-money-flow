@@ -44,8 +44,8 @@ export function CreditCardsProvider({
       const response = await creditCardsService.getAll()
       const creditCardsWithDates = response.creditCards.map((card) => ({
         ...card,
-        createdAt: new Date(card.createdAt),
-        updatedAt: new Date(card.updatedAt),
+        createdAt: card.createdAt,
+        updatedAt: card.updatedAt,
       }))
       setCreditCards(creditCardsWithDates)
       setIsInitialized(true)
@@ -71,8 +71,8 @@ export function CreditCardsProvider({
       const newCard = await creditCardsService.create(cardData)
       const cardWithDates = {
         ...newCard,
-        createdAt: new Date(newCard.createdAt),
-        updatedAt: new Date(newCard.updatedAt),
+        createdAt: newCard.createdAt,
+        updatedAt: newCard.updatedAt,
       }
       setCreditCards((prev) => [...prev, cardWithDates])
       success.create('Cartão de Crédito')
@@ -93,8 +93,8 @@ export function CreditCardsProvider({
       const updatedCard = await creditCardsService.update(id, cardData)
       const cardWithDates = {
         ...updatedCard,
-        createdAt: new Date(updatedCard.createdAt),
-        updatedAt: new Date(updatedCard.updatedAt),
+        createdAt: updatedCard.createdAt,
+        updatedAt: updatedCard.updatedAt,
       }
       setCreditCards((prev) =>
         prev.map((card) => (card.id === id ? cardWithDates : card)),

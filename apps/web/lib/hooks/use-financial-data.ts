@@ -4,12 +4,7 @@ import { dateToSeconds } from '@saas/utils'
 import { useEffect, useState } from 'react'
 
 import { dateStringToTimestamp } from '../format'
-import {
-  Category,
-  CategoryFormData,
-  Transaction,
-  TransactionFormData,
-} from '../types'
+import { Category, CategoryFormData, Entry, EntryFormData } from '../types'
 import { useCrudToast } from './use-crud-toast'
 
 const STORAGE_KEYS = {
@@ -20,7 +15,7 @@ const STORAGE_KEYS = {
 // Removido DEFAULT_CATEGORIES - agora só carrega dados do localStorage ou mock
 
 export function useFinancialData() {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [transactions, setTransactions] = useState<Entry[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { success, error, warning } = useCrudToast()
@@ -37,7 +32,7 @@ export function useFinancialData() {
         if (storedTransactions) {
           const parsedTransactions = JSON.parse(storedTransactions).map(
             (
-              t: Omit<Transaction, 'date' | 'createdAt' | 'updatedAt'> & {
+              t: Omit<Entry, 'date' | 'createdAt' | 'updatedAt'> & {
                 date: string
                 createdAt: string
                 updatedAt: string
@@ -76,7 +71,7 @@ export function useFinancialData() {
   }, [])
 
   // Salvar transações no localStorage
-  const saveTransactions = (newTransactions: Transaction[]) => {
+  const saveTransactions = (newTransactions: Entry[]) => {
     localStorage.setItem(
       STORAGE_KEYS.TRANSACTIONS,
       JSON.stringify(newTransactions),
@@ -91,9 +86,9 @@ export function useFinancialData() {
   }
 
   // Adicionar transação
-  const addTransaction = (data: TransactionFormData) => {
+  const addTransaction = (data: EntryFormData) => {
     try {
-      const newTransaction: Transaction = {
+      const newTransaction: Entry = {
         id: Date.now().toString(),
         description: data.description,
         amount: parseFloat(data.amount),
@@ -119,7 +114,7 @@ export function useFinancialData() {
   }
 
   // Editar transação
-  const updateTransaction = (id: string, data: TransactionFormData) => {
+  const updateTransaction = (id: string, data: EntryFormData) => {
     try {
       const updatedTransactions = transactions.map((transaction) => {
         if (transaction.id === id) {
@@ -151,10 +146,7 @@ export function useFinancialData() {
   }
 
   // Atualizar campos específicos da transação
-  const updateTransactionStatus = (
-    id: string,
-    updates: Partial<Transaction>,
-  ) => {
+  const updateTransactionStatus = (id: string, updates: Partial<Entry>) => {
     const updatedTransactions = transactions.map((transaction) => {
       if (transaction.id === id) {
         return {
@@ -323,7 +315,7 @@ export function useFinancialData() {
   }
 
   // Obter transações com categorias
-  const getTransactionsWithCategories = (): (Transaction & {
+  const getTransactionsWithCategories = (): (Entry & {
     category: Category
   })[] => {
     return transactions.map((transaction) => {

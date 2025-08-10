@@ -76,30 +76,43 @@ export interface EntriesResponse {
 export const entriesService = {
   // Listar lançamentos com filtros
   async getAll(params?: EntriesQueryParams): Promise<EntriesResponse> {
-    const response = await apiClient.get('/entries', { params })
-    return response.data
+    const queryParams = new URLSearchParams()
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const endpoint = queryParams.toString()
+      ? `/entries?${queryParams.toString()}`
+      : '/entries'
+    const response = await apiClient.get<EntriesResponse>(endpoint)
+    return response
   },
 
   // Buscar lançamento por ID
   async getById(id: string): Promise<Entry> {
-    const response = await apiClient.get(`/entries/${id}`)
-    return response.data
+    const response = await apiClient.get<Entry>(`/entries/${id}`)
+    return response
   },
 
   // Criar novo lançamento
   async create(data: EntryFormData): Promise<Entry> {
-    const response = await apiClient.post('/entries', data)
-    return response.data
+    const response = await apiClient.post<Entry>('/entries', data)
+    return response
   },
 
   // Atualizar lançamento
   async update(id: string, data: Partial<EntryFormData>): Promise<Entry> {
-    const response = await apiClient.put(`/entries/${id}`, data)
-    return response.data
+    const response = await apiClient.put<Entry>(`/entries/${id}`, data)
+    return response
   },
 
   // Deletar lançamento
   async delete(id: string): Promise<void> {
-    await apiClient.delete(`/entries/${id}`)
+    await apiClient.delete<void>(`/entries/${id}`)
   },
 }

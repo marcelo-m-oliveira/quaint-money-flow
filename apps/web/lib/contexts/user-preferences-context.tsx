@@ -38,8 +38,8 @@ export function UserPreferencesProvider({
       const response = await userPreferencesService.get()
       const preferencesWithDates = {
         ...response,
-        createdAt: new Date(response.createdAt),
-        updatedAt: new Date(response.updatedAt),
+        createdAt: response.createdAt,
+        updatedAt: response.updatedAt,
       }
       setPreferences(preferencesWithDates)
       setIsInitialized(true)
@@ -50,8 +50,8 @@ export function UserPreferencesProvider({
         const defaultPreferences = await userPreferencesService.upsert({})
         const preferencesWithDates = {
           ...defaultPreferences,
-          createdAt: new Date(defaultPreferences.createdAt),
-          updatedAt: new Date(defaultPreferences.updatedAt),
+          createdAt: defaultPreferences.createdAt,
+          updatedAt: defaultPreferences.updatedAt,
         }
         setPreferences(preferencesWithDates)
         setIsInitialized(true)
@@ -78,8 +78,8 @@ export function UserPreferencesProvider({
         const updatedPreferences = await userPreferencesService.update(data)
         const preferencesWithDates = {
           ...updatedPreferences,
-          createdAt: new Date(updatedPreferences.createdAt),
-          updatedAt: new Date(updatedPreferences.updatedAt),
+          createdAt: updatedPreferences.createdAt,
+          updatedAt: updatedPreferences.updatedAt,
         }
         setPreferences(preferencesWithDates)
         success.update('Preferências atualizadas com sucesso')
@@ -106,8 +106,8 @@ export function UserPreferencesProvider({
         const upsertedPreferences = await userPreferencesService.upsert(data)
         const preferencesWithDates = {
           ...upsertedPreferences,
-          createdAt: new Date(upsertedPreferences.createdAt),
-          updatedAt: new Date(upsertedPreferences.updatedAt),
+          createdAt: upsertedPreferences.createdAt,
+          updatedAt: upsertedPreferences.updatedAt,
         }
         setPreferences(preferencesWithDates)
         success.create('Preferências salvas com sucesso')
@@ -130,8 +130,8 @@ export function UserPreferencesProvider({
       const resetPreferences = await userPreferencesService.reset()
       const preferencesWithDates = {
         ...resetPreferences,
-        createdAt: new Date(resetPreferences.createdAt),
-        updatedAt: new Date(resetPreferences.updatedAt),
+        createdAt: resetPreferences.createdAt,
+        updatedAt: resetPreferences.updatedAt,
       }
       setPreferences(preferencesWithDates)
       success.update('Preferências resetadas para o padrão')

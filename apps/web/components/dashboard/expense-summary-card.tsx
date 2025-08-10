@@ -9,10 +9,10 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
 import { CategoryIcon } from '@/lib/icon-map'
-import { Category, Transaction } from '@/lib/types'
+import { Category, Entry } from '@/lib/types'
 
 interface ExpenseSummaryCardProps {
-  transactions: Transaction[]
+  transactions: Entry[]
   categories: Category[]
 }
 

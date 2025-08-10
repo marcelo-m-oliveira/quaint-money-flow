@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 
-import { Category, CreditCard, Transaction } from './types'
+import { Category, CreditCard, Entry } from './types'
 
 // Cores predefinidas para categorias
 const CATEGORY_COLORS = [
@@ -135,7 +135,7 @@ export function generateMockCategory(
     type,
     icon,
     parentId,
-    createdAt: faker.date.past({ years: 1 }),
+    createdAt: faker.date.past({ years: 1 }).getTime(),
   }
 }
 
@@ -183,7 +183,7 @@ export function generateMockTransaction(
   categories: Category[],
   type?: 'income' | 'expense',
   creditCards?: CreditCard[],
-): Transaction {
+): Entry {
   const transactionType =
     type || faker.helpers.arrayElement(['income', 'expense'])
   const availableCategories = categories.filter(
@@ -267,7 +267,7 @@ export function generateMockTransaction(
     description,
     amount,
     type: transactionType,
-    categoryId: category.id,
+    categoryId: category.id || '',
     category,
     creditCardId,
     date: transactionDate,
@@ -284,8 +284,8 @@ export function generateMockTransactions(
   categories: Category[],
   count: number = 50,
   creditCards?: CreditCard[],
-): Transaction[] {
-  const transactions: Transaction[] = []
+): Entry[] {
+  const transactions: Entry[] = []
 
   for (let i = 0; i < count; i++) {
     // 70% despesas, 30% receitas para simular comportamento real
@@ -338,7 +338,7 @@ export function generateMockCreditCard(): CreditCard {
     dueDay = dueDay - 31
   }
 
-  const createdAt = faker.date.past({ years: 2 })
+  const createdAt = faker.date.past({ years: 2 }).getTime()
 
   return {
     id: faker.string.uuid(),

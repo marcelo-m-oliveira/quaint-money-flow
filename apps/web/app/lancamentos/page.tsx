@@ -59,11 +59,12 @@ import {
 } from '@/components/ui/tooltip'
 import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
-import { useCategories } from '@/lib/hooks/use-categories'
+import { useCategorySelectOptions } from '@/lib/hooks/use-category-select-options'
 import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useEntries } from '@/lib/hooks/use-entries'
 import { usePreferences } from '@/lib/hooks/use-preferences'
+import { CategoryIcon } from '@/lib/icon-map'
 import { EntryFormSchema } from '@/lib/schemas'
 import { Entry } from '@/lib/services/entries'
 
@@ -110,12 +111,12 @@ function getEndOfDay(date: Date): Date {
   return end
 }
 
-export default function EntryPage() {
+export default function LancamentoPage() {
   const { entries, isLoading, addEntry, updateEntry, deleteEntry } =
     useEntries()
 
   const { accounts } = useAccounts()
-  const { categories } = useCategories()
+  const { options: categoryOptions } = useCategorySelectOptions()
   const { creditCards } = useCreditCardsWithAutoInit()
   const { success, error } = useCrudToast()
 
@@ -449,9 +450,6 @@ export default function EntryPage() {
     }
   }
 
-  const incomeCategories = categories.filter((cat) => cat.type === 'income')
-  const expenseCategories = categories.filter((cat) => cat.type === 'expense')
-
   if (isLoading) {
     return (
       <PageLayout>
@@ -733,14 +731,23 @@ export default function EntryPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                    {categoryOptions.map((category) => (
+                      <SelectItem key={category.value} value={category.value}>
                         <div className="flex items-center gap-2">
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          {category.name}
+                          <div className="flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full border border-border">
+                            <div
+                              className="flex h-full w-full items-center justify-center rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            >
+                              {category.icon && (
+                                <CategoryIcon
+                                  iconName={category.icon}
+                                  className="h-2 w-2 text-white"
+                                />
+                              )}
+                            </div>
+                          </div>
+                          {category.label}
                         </div>
                       </SelectItem>
                     ))}
@@ -1245,9 +1252,6 @@ export default function EntryPage() {
           }}
           entry={editingEntry}
           onSubmit={handleSubmitEntry}
-          categories={
-            entryType === 'income' ? incomeCategories : expenseCategories
-          }
           type={entryType}
           title={
             editingEntry

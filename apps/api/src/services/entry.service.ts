@@ -2,10 +2,7 @@ import { Prisma, PrismaClient } from '@prisma/client'
 
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { EntryRepository } from '@/repositories/entry.repository'
-import {
-  TransactionCreateSchema,
-  TransactionUpdateSchema,
-} from '@/utils/schemas'
+import { EntryCreateSchema, EntryUpdateSchema } from '@/utils/schemas'
 
 export class EntryService {
   constructor(
@@ -42,7 +39,7 @@ export class EntryService {
 
     try {
       // Build where clause
-      const where: Prisma.TransactionWhereInput = { userId }
+      const where: Prisma.EntryWhereInput = { userId }
 
       if (type) {
         where.type = type
@@ -93,7 +90,6 @@ export class EntryService {
             select: {
               id: true,
               name: true,
-              color: true,
               icon: true,
               type: true,
             },
@@ -102,7 +98,6 @@ export class EntryService {
             select: {
               id: true,
               name: true,
-              color: true,
               icon: true,
               limit: true,
             },
@@ -148,7 +143,6 @@ export class EntryService {
           select: {
             id: true,
             name: true,
-            color: true,
             icon: true,
             type: true,
           },
@@ -157,7 +151,6 @@ export class EntryService {
           select: {
             id: true,
             name: true,
-            color: true,
             icon: true,
             limit: true,
           },
@@ -172,7 +165,7 @@ export class EntryService {
     return entry
   }
 
-  async create(data: TransactionCreateSchema, userId: string) {
+  async create(data: EntryCreateSchema, userId: string) {
     // Validate that category exists
     const category = await this.prisma.category.findUnique({
       where: { id: data.categoryId, userId },
@@ -248,11 +241,7 @@ export class EntryService {
     })
   }
 
-  async update(
-    id: string,
-    data: Partial<TransactionUpdateSchema>,
-    userId: string,
-  ) {
+  async update(id: string, data: Partial<EntryUpdateSchema>, userId: string) {
     // Check if entry exists
     await this.findById(id, userId)
 
@@ -289,20 +278,9 @@ export class EntryService {
       }
     }
 
-    return this.entryRepository.update({
+    return this.prisma.entry.update({
       where: { id, userId },
-      data: {
-        ...data,
-        ...(data.categoryId && {
-          category: { connect: { id: data.categoryId } },
-        }),
-        ...(data.accountId && {
-          account: { connect: { id: data.accountId } },
-        }),
-        ...(data.creditCardId && {
-          creditCard: { connect: { id: data.creditCardId } },
-        }),
-      },
+      data,
       include: {
         category: {
           select: {
@@ -317,7 +295,6 @@ export class EntryService {
           select: {
             id: true,
             name: true,
-            color: true,
             icon: true,
             type: true,
           },
@@ -326,7 +303,6 @@ export class EntryService {
           select: {
             id: true,
             name: true,
-            color: true,
             icon: true,
             limit: true,
           },
@@ -339,7 +315,7 @@ export class EntryService {
     // Check if entry exists
     await this.findById(id, userId)
 
-    return this.entryRepository.delete({
+    return this.prisma.entry.delete({
       where: { id, userId },
     })
   }

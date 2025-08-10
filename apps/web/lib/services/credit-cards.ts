@@ -2,6 +2,13 @@ import { apiClient } from '../api'
 import { CreditCardFormSchema } from '../schemas'
 import { CreditCard } from '../types'
 
+export interface SelectOption {
+  value: string
+  label: string
+  icon: string
+  iconType: 'bank' | 'generic'
+}
+
 export interface CreditCardsQueryParams {
   page?: number
   limit?: number
@@ -49,5 +56,9 @@ export const creditCardsService = {
 
   async delete(id: string): Promise<void> {
     return apiClient.delete<void>(`/credit-cards/${id}`)
+  },
+
+  async getSelectOptions(): Promise<SelectOption[]> {
+    return apiClient.get<SelectOption[]>('/credit-cards/select-options')
   },
 }

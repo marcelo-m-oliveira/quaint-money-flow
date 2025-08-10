@@ -11,6 +11,7 @@ import {
   creditCardUsageSchema,
   idParamSchema,
   paginationSchema,
+  selectOptionSchema,
 } from '@/utils/schemas'
 
 import { authMiddleware } from '../middlewares/auth'
@@ -32,6 +33,21 @@ export async function creditCardRoutes(app: FastifyInstance) {
       preHandler: [authMiddleware],
     },
     creditCardController.index.bind(creditCardController),
+  )
+
+  // GET /credit-cards/select-options - Buscar cartões formatados para select
+  app.get(
+    '/credit-cards/select-options',
+    {
+      schema: {
+        response: {
+          200: z.array(selectOptionSchema),
+          401: z.object({ error: z.string() }),
+        },
+      },
+      preHandler: [authMiddleware],
+    },
+    creditCardController.selectOptions.bind(creditCardController),
   )
 
   app.get(

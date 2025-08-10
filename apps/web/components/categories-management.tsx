@@ -94,8 +94,14 @@ export function CategoriesManagement({
           const subcategories = categories.filter(
             (cat) => cat.parentId === category.id,
           )
-          subcategories.forEach((sub) => onDeleteCategory(sub.id))
-          onDeleteCategory(category.id)
+          subcategories.forEach((sub) => {
+            if (sub.id) {
+              onDeleteCategory(sub.id)
+            }
+          })
+          if (category.id) {
+            onDeleteCategory(category.id)
+          }
           setConfirmDialog({ ...confirmDialog, isOpen: false })
         },
       })
@@ -106,7 +112,9 @@ export function CategoriesManagement({
         description:
           'Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.',
         onConfirm: () => {
-          onDeleteCategory(category.id)
+          if (category.id) {
+            onDeleteCategory(category.id)
+          }
           setConfirmDialog({ ...confirmDialog, isOpen: false })
         },
       })
@@ -124,7 +132,7 @@ export function CategoriesManagement({
         data.parentId !== undefined ? data.parentId : parentCategory?.id,
     }
 
-    if (editingCategory) {
+    if (editingCategory && editingCategory.id) {
       onUpdateCategory(editingCategory.id, categoryData)
     } else {
       onAddCategory(categoryData)
@@ -141,10 +149,12 @@ export function CategoriesManagement({
     return (
       <div className="space-y-4">
         {mainCategories.map((category) => {
-          const subcategories = getSubCategories(categoryList, category.id)
+          const subcategories = category.id
+            ? getSubCategories(categoryList, category.id)
+            : []
 
           return (
-            <Card key={category.id} className="border border-border">
+            <Card key={category.id || 'temp'} className="border border-border">
               <CardContent className="p-4">
                 {/* Categoria Principal */}
                 <div className="flex items-center justify-between">

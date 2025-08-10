@@ -120,6 +120,7 @@ export class CategoryRepository {
       label: category.name,
       icon: category.icon,
       iconType: 'generic', // Categorias sempre usam ícones genéricos
+      color: category.color, // Incluir cor para uso no frontend
     }))
   }
 

@@ -8,7 +8,7 @@ import { useCrudToast } from './use-crud-toast'
 
 // Definir tipo específico para as preferências do usuário
 export type UserPreferences = {
-  transactionOrder: 'ascending' | 'descending'
+  entryOrder: 'ascending' | 'descending'
   defaultNavigationPeriod:
     | 'daily'
     | 'weekly'
@@ -26,7 +26,7 @@ export type PreferencesFormData = Partial<UserPreferences>
 const PREFERENCES_STORAGE_KEY = 'quaint-money-preferences'
 
 const DEFAULT_PREFERENCES: UserPreferences = {
-  transactionOrder: 'descending',
+  entryOrder: 'descending',
   defaultNavigationPeriod: 'monthly',
   showDailyBalance: false,
   viewMode: 'all',

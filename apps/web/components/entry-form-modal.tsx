@@ -6,12 +6,14 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { formatDateForInput, timestampToDateString } from '@/lib/format'
-import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
-import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
+import { useAccountSelectOptions } from '@/lib/hooks/use-account-select-options'
+import { useCategorySelectOptions } from '@/lib/hooks/use-category-select-options'
+import { useCreditCardSelectOptions } from '@/lib/hooks/use-credit-card-select-options'
 import { CategoryIcon } from '@/lib/icon-map'
 import { EntryFormSchema, entrySchema } from '@/lib/schemas'
-import { Category, Entry } from '@/lib/types'
+import { Entry } from '@/lib/types'
 
+import { AccountSelectIcon } from './account-select-icon'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { CurrencyInput } from './ui/currency-input'
@@ -32,7 +34,6 @@ interface EntryFormModalProps {
   onClose: () => void
   entry?: Entry
   onSubmit: (data: EntryFormSchema, shouldClose?: boolean) => void
-  categories: Category[]
   type: 'income' | 'expense'
   title: string
   showCreateAnotherButton?: boolean
@@ -43,13 +44,13 @@ export function EntryFormModal({
   onClose,
   entry,
   onSubmit,
-  categories,
   type,
   title,
   showCreateAnotherButton = true,
 }: EntryFormModalProps) {
-  const { accounts } = useAccountsWithAutoInit()
-  const { creditCards } = useCreditCardsWithAutoInit()
+  const { options: accountOptions } = useAccountSelectOptions()
+  const { options: categoryOptions } = useCategorySelectOptions()
+  const { options: creditCardOptions } = useCreditCardSelectOptions()
 
   const {
     register,
@@ -100,17 +101,17 @@ export function EntryFormModal({
     }
   }, [entry, type, reset])
 
+  const selectedDate = watch('date') ? new Date(watch('date')) : new Date()
+
   const handleFormSubmit = (
     data: EntryFormSchema,
     shouldCreateAnother = false,
   ) => {
-    const shouldClose = !shouldCreateAnother
-    onSubmit(data, shouldClose)
-
+    onSubmit(data, !shouldCreateAnother)
     if (!shouldCreateAnother) {
       handleClose()
     } else {
-      // Limpar formulário mas manter tipo e data
+      // Resetar apenas os campos do formulário, mantendo o tipo
       reset({
         description: '',
         amount: '',
@@ -124,7 +125,6 @@ export function EntryFormModal({
     }
   }
 
-  // Wrapper para o react-hook-form
   const onSubmitForm = (data: EntryFormSchema) => {
     handleFormSubmit(data, false)
   }
@@ -140,16 +140,11 @@ export function EntryFormModal({
     }
   }
 
-  const watchedDate = watch('date')
-  const selectedDate = watchedDate
-    ? new Date(watchedDate + 'T12:00:00')
-    : new Date()
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
@@ -160,9 +155,9 @@ export function EntryFormModal({
             </Label>
             <Input
               id="description"
-              {...register('description')}
               placeholder="Digite a descrição..."
               className="h-12"
+              {...register('description')}
             />
             {errors.description && (
               <p className="text-sm text-red-500">
@@ -177,24 +172,19 @@ export function EntryFormModal({
               <Label htmlFor="amount" className="text-sm font-medium">
                 Valor
               </Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  R$
-                </span>
-                <Controller
-                  name="amount"
-                  control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <CurrencyInput
-                      id="amount"
-                      value={value}
-                      onChange={onChange}
-                      className="h-12 pl-10"
-                      placeholder="0,00"
-                    />
-                  )}
-                />
-              </div>
+              <Controller
+                name="amount"
+                control={control}
+                render={({ field }) => (
+                  <CurrencyInput
+                    id="amount"
+                    placeholder="R$ 0,00"
+                    value={field.value}
+                    onChange={field.onChange}
+                    className="h-12"
+                  />
+                )}
+              />
               {errors.amount && (
                 <p className="text-sm text-red-500">{errors.amount.message}</p>
               )}
@@ -226,48 +216,29 @@ export function EntryFormModal({
                 onValueChange={(value) => setValue('categoryId', value)}
               >
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Buscar a categoria..." />
+                  <SelectValue placeholder="Selecione a categoria..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories
-                    .filter((category) => {
-                      // Filtrar categorias baseado no tipo de transação
-                      return category.type === type
-                    })
-                    // Ordenar categorias principais primeiro, depois subcategorias
-                    .sort((a, b) => {
-                      if (!a.parentId && b.parentId) return -1
-                      if (a.parentId && !b.parentId) return 1
-                      return a.name.localeCompare(b.name)
-                    })
-                    .map((category) => (
-                      <SelectItem
-                        key={category.id}
-                        value={category.id as string}
-                      >
-                        <div
-                          className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}
-                        >
-                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border">
-                            <div
-                              className="flex h-full w-full items-center justify-center rounded-full"
-                              style={{ backgroundColor: category.color }}
-                            >
-                              {category.icon && (
-                                <CategoryIcon
-                                  iconName={category.icon}
-                                  className="h-3 w-3 text-white"
-                                />
-                              )}
-                            </div>
+                  {categoryOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border">
+                          <div
+                            className="flex h-full w-full items-center justify-center rounded-full"
+                            style={{ backgroundColor: option.color }}
+                          >
+                            {option.icon && (
+                              <CategoryIcon
+                                iconName={option.icon}
+                                className="h-3 w-3 text-white"
+                              />
+                            )}
                           </div>
-                          <span className={category.parentId ? 'text-sm' : ''}>
-                            {category.parentId && '└ '}
-                            {category.name}
-                          </span>
                         </div>
-                      </SelectItem>
-                    ))}
+                        <span>{option.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.categoryId && (
@@ -293,8 +264,8 @@ export function EntryFormModal({
                   }
 
                   // Verificar se é uma conta ou cartão e definir o campo apropriado
-                  const isAccount = accounts.some(
-                    (account) => account.id === value,
+                  const isAccount = accountOptions.some(
+                    (account) => account.value === value,
                   )
                   if (isAccount) {
                     setValue('accountId', value)
@@ -306,22 +277,27 @@ export function EntryFormModal({
                 }}
               >
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecionar conta/cartão..." />
+                  <SelectValue placeholder="Selecione conta/cartão..." />
                 </SelectTrigger>
                 <SelectContent>
                   {/* Contas */}
-                  {accounts.length > 0 && (
+                  {accountOptions.length > 0 && (
                     <>
                       <SelectItem value="accounts-header" disabled>
                         <span className="font-medium text-muted-foreground">
                           Contas
                         </span>
                       </SelectItem>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          <div className="flex items-center gap-3">
-                            <div className="h-3 w-3 flex-shrink-0 rounded-full bg-blue-500" />
-                            <span>{account.name}</span>
+                      {accountOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex items-center gap-2">
+                            <AccountSelectIcon
+                              icon={option.icon}
+                              iconType={option.iconType}
+                              name={option.label}
+                              size="sm"
+                            />
+                            <span>{option.label}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -329,9 +305,9 @@ export function EntryFormModal({
                   )}
 
                   {/* Cartões de Crédito */}
-                  {creditCards.length > 0 && (
+                  {creditCardOptions.length > 0 && (
                     <>
-                      {accounts.length > 0 && (
+                      {accountOptions.length > 0 && (
                         <SelectItem value="separator" disabled>
                           <span>—</span>
                         </SelectItem>
@@ -341,11 +317,16 @@ export function EntryFormModal({
                           Cartões
                         </span>
                       </SelectItem>
-                      {creditCards.map((card) => (
-                        <SelectItem key={card.id} value={card.id}>
-                          <div className="flex items-center gap-3">
-                            <div className="h-3 w-3 flex-shrink-0 rounded-full bg-purple-500" />
-                            <span>{card.name}</span>
+                      {creditCardOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex items-center gap-2">
+                            <AccountSelectIcon
+                              icon={option.icon}
+                              iconType={option.iconType}
+                              name={option.label}
+                              size="sm"
+                            />
+                            <span>{option.label}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -353,7 +334,8 @@ export function EntryFormModal({
                   )}
 
                   {/* Opção para não selecionar */}
-                  {(accounts.length > 0 || creditCards.length > 0) && (
+                  {(accountOptions.length > 0 ||
+                    creditCardOptions.length > 0) && (
                     <>
                       <SelectItem value="separator2" disabled>
                         <span>—</span>
@@ -399,24 +381,22 @@ export function EntryFormModal({
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="h-12 flex-1"
+              className="flex-1"
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              className="h-12 bg-green-600 px-4 text-white hover:bg-green-700"
-            >
-              <Save className="h-4 w-4" />
+            <Button type="submit" className="flex-1">
+              <Save className="mr-2 h-4 w-4" />
+              Salvar
             </Button>
             {showCreateAnotherButton && (
               <Button
                 type="button"
-                onClick={handleSubmit((data) => handleFormSubmit(data, true))}
-                className="h-12 flex-1 bg-green-600 text-white hover:bg-green-700"
+                onClick={() => handleFormSubmit(watch(), true)}
+                className="flex-1"
               >
                 <Check className="mr-2 h-4 w-4" />
-                Salvar e criar outra
+                Salvar e criar outro
               </Button>
             )}
           </div>

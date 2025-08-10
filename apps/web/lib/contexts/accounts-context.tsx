@@ -38,8 +38,8 @@ export function AccountsProvider({ children }: { children: React.ReactNode }) {
       const response = await accountsService.getAll()
       const accountsWithDates = response.accounts.map((account) => ({
         ...account,
-        createdAt: new Date(account.createdAt),
-        updatedAt: new Date(account.updatedAt),
+        createdAt: account.createdAt,
+        updatedAt: account.updatedAt,
       }))
       setAccounts(accountsWithDates)
       setIsInitialized(true)
@@ -72,8 +72,8 @@ export function AccountsProvider({ children }: { children: React.ReactNode }) {
       console.log('AccountsContext: account created successfully:', newAccount)
       const accountWithDates = {
         ...newAccount,
-        createdAt: new Date(newAccount.createdAt),
-        updatedAt: new Date(newAccount.updatedAt),
+        createdAt: newAccount.createdAt,
+        updatedAt: newAccount.updatedAt,
       }
       setAccounts((prev) => [...prev, accountWithDates])
       success.create('Conta')
@@ -94,8 +94,8 @@ export function AccountsProvider({ children }: { children: React.ReactNode }) {
       const updatedAccount = await accountsService.update(id, accountData)
       const accountWithDates = {
         ...updatedAccount,
-        createdAt: new Date(updatedAccount.createdAt),
-        updatedAt: new Date(updatedAccount.updatedAt),
+        createdAt: updatedAccount.createdAt,
+        updatedAt: updatedAccount.updatedAt,
       }
       setAccounts((prev) =>
         prev.map((account) => (account.id === id ? accountWithDates : account)),
