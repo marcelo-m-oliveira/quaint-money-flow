@@ -57,13 +57,13 @@ export function Topbar() {
                 Visão Geral
               </Button>
             </Link>
-            <Link href="/transacoes">
+            <Link href="/lancamentos">
               <Button
                 variant="ghost"
                 size="sm"
                 className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
-                Lancamentos
+                Lançamentos
               </Button>
             </Link>
             <Link href="/relatorios">
@@ -234,9 +234,9 @@ export function Topbar() {
                       <span>Visão Geral</span>
                     </DropdownMenuItem>
                   </Link>
-                  <Link href="/transacoes">
+                  <Link href="/lancamentos">
                     <DropdownMenuItem>
-                      <span>Transações</span>
+                      <span>Lançamentos</span>
                     </DropdownMenuItem>
                   </Link>
                   <Link href="/relatorios">
