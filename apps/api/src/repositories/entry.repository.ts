@@ -2,8 +2,8 @@ import { PrismaClient } from '@prisma/client'
 
 import { BaseRepository } from './base.repository'
 
-export class TransactionRepository extends BaseRepository<'transaction'> {
+export class EntryRepository extends BaseRepository<'entry'> {
   constructor(prisma: PrismaClient) {
-    super(prisma, 'transaction')
+    super(prisma, 'entry')
   }
 }

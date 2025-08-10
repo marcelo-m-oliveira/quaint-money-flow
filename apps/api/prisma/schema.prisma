@@ -21,11 +21,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  accounts     Account[]
-  creditCards  CreditCard[]
-  categories   Category[]
-  transactions Transaction[]
-  preferences  UserPreferences?
+  accounts    Account[]
+  creditCards CreditCard[]
+  categories  Category[]
+  entries     Entry[]
+  preferences UserPreferences?
 
   @@map("users")
   @@schema("auth")
@@ -43,9 +43,9 @@ model Account {
   updatedAt               DateTime    @updatedAt
 
   // Relacionamentos
-  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions       Transaction[]
-  creditCardPayments CreditCard[]  @relation("DefaultPaymentAccount")
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries            Entry[]
+  creditCardPayments CreditCard[] @relation("DefaultPaymentAccount")
 
   @@map("accounts")
   @@schema("finance")
@@ -65,9 +65,9 @@ model CreditCard {
   updatedAt               DateTime @updatedAt
 
   // Relacionamentos
-  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  defaultPaymentAccount Account?      @relation("DefaultPaymentAccount", fields: [defaultPaymentAccountId], references: [id])
-  transactions          Transaction[]
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultPaymentAccount Account? @relation("DefaultPaymentAccount", fields: [defaultPaymentAccountId], references: [id])
+  entries               Entry[]
 
   @@map("credit_cards")
   @@schema("finance")
@@ -77,7 +77,7 @@ model Category {
   id        String          @id @default(cuid())
   name      String
   color     String
-  type      TransactionType
+  type      EntryType
   icon      String
   parentId  String?
   userId    String
@@ -85,20 +85,20 @@ model Category {
   updatedAt DateTime        @updatedAt
 
   // Relacionamentos
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent       Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children     Category[]    @relation("CategoryHierarchy")
-  transactions Transaction[]
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  entries  Entry[]
 
   @@map("categories")
   @@schema("finance")
 }
 
-model Transaction {
+model Entry {
   id           String          @id @default(cuid())
   description  String
   amount       Decimal         @db.Decimal(18, 2)
-  type         TransactionType
+  type         EntryType
   date         DateTime
   paid         Boolean         @default(false)
   categoryId   String
@@ -114,13 +114,13 @@ model Transaction {
   account    Account?    @relation(fields: [accountId], references: [id])
   creditCard CreditCard? @relation(fields: [creditCardId], references: [id])
 
-  @@map("transactions")
+  @@map("entries")
   @@schema("finance")
 }
 
 model UserPreferences {
   id                         String           @id @default(cuid())
-  transactionOrder           TransactionOrder @default(descending)
+  entryOrder                EntryOrder       @default(descending)
   defaultNavigationPeriod    NavigationPeriod @default(monthly)
   showDailyBalance           Boolean          @default(false)
   viewMode                   ViewMode         @default(all)
@@ -155,19 +155,19 @@ enum IconType {
   @@schema("finance")
 }
 
-enum TransactionType {
+enum EntryType {
   income
   expense
 
-  @@map("transaction_type")
+  @@map("entry_type")
   @@schema("finance")
 }
 
-enum TransactionOrder {
+enum EntryOrder {
   ascending
   descending
 
-  @@map("transaction_order")
+  @@map("entry_order")
   @@schema("finance")
 }
 

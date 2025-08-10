@@ -15,7 +15,7 @@ import { useCrudToast } from './use-crud-toast'
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [errorState, setErrorState] = useState<string | null>(null)
+  const [errorState] = useState<string | null>(null)
   const [pagination, setPagination] = useState<
     CategoriesResponse['pagination']
   >({

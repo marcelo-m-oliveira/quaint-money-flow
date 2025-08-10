@@ -5,7 +5,7 @@ export interface Category {
   type: 'income' | 'expense'
   icon: string
   parentId?: string // Para subcategorias
-  createdAt: number // Timestamp em segundos
+  createdAt?: number // Timestamp em segundos
   updatedAt?: number // Timestamp em segundos
   parent?: {
     id: string
@@ -22,7 +22,7 @@ export interface Category {
   }>
 }
 
-export interface Transaction {
+export interface Entry {
   id: string
   description: string
   amount: number
@@ -37,7 +37,7 @@ export interface Transaction {
   updatedAt: number // Timestamp em milissegundos
 }
 
-export interface TransactionFormData {
+export interface EntryFormData {
   description: string
   amount: string
   type: 'income' | 'expense'

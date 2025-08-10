@@ -16,7 +16,7 @@ const mockPrisma = {
     delete: jest.fn(),
     count: jest.fn(),
   },
-  transaction: {
+  entry: {
     count: jest.fn(),
   },
 } as unknown as PrismaClient
@@ -129,7 +129,7 @@ describe('AccountService', () => {
         id: 'account-1',
         name: 'Conta para Deletar',
       })
-      ;(mockPrisma.transaction.count as jest.Mock).mockResolvedValue(0)
+      ;(mockPrisma.entry.count as jest.Mock).mockResolvedValue(0)
       ;(mockAccountRepository.delete as jest.Mock).mockResolvedValue({
         id: 'account-1',
       })
@@ -141,12 +141,12 @@ describe('AccountService', () => {
       })
     })
 
-    it('should throw BadRequestError when account has transactions', async () => {
+    it('should throw BadRequestError when account has entries', async () => {
       ;(mockAccountRepository.findUnique as jest.Mock).mockResolvedValue({
         id: 'account-1',
         name: 'Conta com Transações',
       })
-      ;(mockPrisma.transaction.count as jest.Mock).mockResolvedValue(5)
+      ;(mockPrisma.entry.count as jest.Mock).mockResolvedValue(5)
 
       await expect(accountService.delete('account-1', userId)).rejects.toThrow(
         new BadRequestError(

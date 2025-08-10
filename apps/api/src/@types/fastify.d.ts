@@ -13,7 +13,7 @@ declare module 'fastify' {
       account: Account
       creditCard: CreditCard
       category: Category
-      transaction: Transaction
+      entry: Entry
       userPreferences: UserPreferences
       user: User
     }>

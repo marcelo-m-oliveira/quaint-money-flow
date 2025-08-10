@@ -1,5 +1,5 @@
 import { getBankIcon } from '@/lib/data/banks'
-import { Account, CreditCard, Transaction } from '@/lib/types'
+import { Account, CreditCard, Entry } from '@/lib/types'
 
 import {
   Tooltip,
@@ -9,7 +9,7 @@ import {
 } from './ui/tooltip'
 
 interface AccountCardIconProps {
-  transaction: Transaction
+  entry: Entry
   accounts: Account[]
   creditCards: CreditCard[]
 }
@@ -25,13 +25,13 @@ const GENERIC_ICON_MAP = {
 }
 
 export function AccountCardIcon({
-  transaction,
+  entry,
   accounts,
   creditCards,
 }: AccountCardIconProps) {
-  const account = transaction.accountId
-    ? accounts.find((acc) => acc.id === transaction.accountId)
-    : creditCards.find((card) => card.id === transaction.creditCardId)
+  const account = entry.accountId
+    ? accounts.find((acc) => acc.id === entry.accountId)
+    : creditCards.find((card) => card.id === entry.creditCardId)
 
   if (!account) return null
 

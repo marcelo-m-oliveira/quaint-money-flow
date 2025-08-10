@@ -19,12 +19,8 @@ export class CategoryService {
   private inheritFromParent(data: any, parentCategory: Category) {
     return {
       ...data,
-      color:
-        data.color && data.color.trim() !== ''
-          ? data.color
-          : parentCategory.color,
-      icon:
-        data.icon && data.icon.trim() !== '' ? data.icon : parentCategory.icon,
+      color: data.parentId ? parentCategory.color : data.color,
+      icon: data.parentId ? parentCategory.icon : data.icon,
     }
   }
 
@@ -273,13 +269,13 @@ export class CategoryService {
     await this.findById(id, userId)
 
     // Verificar se há transações associadas
-    const transactionCount = await this.prisma.transaction.count({
+    const entryCount = await this.prisma.entry.count({
       where: { categoryId: id, userId },
     })
 
-    if (transactionCount > 0) {
+    if (entryCount > 0) {
       throw new BadRequestError(
-        'Nao e possivel excluir uma categoria que possui transacoes',
+        'Nao e possivel excluir uma categoria que possui entries',
       )
     }
 
@@ -317,8 +313,7 @@ export class CategoryService {
 
   async getUsageStats(userId: string): Promise<CategoryUsageSchema[]> {
     try {
-      const usage = await this.categoryRepository.getUsageStats(userId)
-      return usage
+      return await this.categoryRepository.getUsageStats(userId)
     } catch (error) {
       console.error('Erro ao buscar estatísticas de uso:', error)
       throw error

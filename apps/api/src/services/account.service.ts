@@ -35,11 +35,11 @@ export class AccountService {
     }
 
     // Buscar contas com transações para calcular o balance
-    const accountsWithTransactions =
+    const accountsWithEntries =
       await this.accountRepository.getAccountsWithBalance(userId)
 
     // Filtrar e paginar as contas
-    const filteredAccounts = accountsWithTransactions.filter((account) => {
+    const filteredAccounts = accountsWithEntries.filter((account) => {
       if (type && account.type !== type) return false
       return !(
         includeInGeneralBalance !== undefined &&
@@ -61,9 +61,9 @@ export class AccountService {
 
     // Calcular o balance para cada conta
     const accountsWithBalance = paginatedAccounts.map((account) => {
-      const balance = account.transactions.reduce((acc, transaction) => {
-        const amount = Number(transaction.amount)
-        return transaction.type === 'income' ? acc + amount : acc - amount
+      const balance = account.entries.reduce((acc, entriy) => {
+        const amount = Number(entriy.amount)
+        return entriy.type === 'income' ? acc + amount : acc - amount
       }, 0)
 
       // Remover as transações do retorno e adicionar o balance
@@ -148,11 +148,11 @@ export class AccountService {
     await this.findById(id, userId)
 
     // Verificar se há transações associadas
-    const transactionCount = await this.prisma.transaction.count({
+    const entryCount = await this.prisma.entry.count({
       where: { accountId: id, userId },
     })
 
-    if (transactionCount > 0) {
+    if (entryCount > 0) {
       throw new BadRequestError(
         'Não é possível excluir uma conta que possui transações',
       )
@@ -168,7 +168,7 @@ export class AccountService {
     await this.findById(id, userId)
 
     // Calcular saldo baseado nas transações pagas
-    const transactions = await this.prisma.transaction.findMany({
+    const entries = await this.prisma.entry.findMany({
       where: {
         accountId: id,
         userId,
@@ -180,9 +180,9 @@ export class AccountService {
       },
     })
 
-    const balance = transactions.reduce((acc, transaction) => {
-      const amount = Number(transaction.amount)
-      return transaction.type === 'income' ? acc + amount : acc - amount
+    const balance = entries.reduce((acc, entriy) => {
+      const amount = Number(entriy.amount)
+      return entriy.type === 'income' ? acc + amount : acc - amount
     }, 0)
 
     return {

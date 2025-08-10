@@ -60,14 +60,14 @@ export class AccountRepository {
   }
 
   // Métodos específicos de negócio
-  async findByUserId(userId: string, includeTransactions = false) {
+  async findByUserId(userId: string, includeEntries = false) {
     return this.prisma.account.findMany({
       where: { userId },
       include: {
-        transactions: includeTransactions,
+        entries: includeEntries,
         _count: {
           select: {
-            transactions: true,
+            entries: true,
           },
         },
       },
@@ -117,7 +117,7 @@ export class AccountRepository {
     return this.prisma.account.findMany({
       where: { userId },
       include: {
-        transactions: {
+        entries: {
           where: { paid: true },
           select: {
             amount: true,

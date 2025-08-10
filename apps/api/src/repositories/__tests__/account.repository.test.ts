@@ -14,7 +14,7 @@ const mockPrisma = {
     count: jest.fn(),
     upsert: jest.fn(),
   },
-  transaction: {
+  entry: {
     aggregate: jest.fn(),
   },
 } as unknown as PrismaClient
@@ -237,10 +237,10 @@ describe('AccountRepository', () => {
       expect(mockPrisma.account.findMany).toHaveBeenCalledWith({
         where: { userId },
         include: {
-          transactions: false,
+          entries: false,
           _count: {
             select: {
-              transactions: true,
+              entries: true,
             },
           },
         },
@@ -326,7 +326,7 @@ describe('AccountRepository', () => {
           id: 'account-1',
           name: 'Conta 1',
           userId,
-          transactions: [
+          entries: [
             { amount: 1000, type: 'income' },
             { amount: 500, type: 'expense' },
           ],
@@ -335,7 +335,7 @@ describe('AccountRepository', () => {
           id: 'account-2',
           name: 'Conta 2',
           userId,
-          transactions: [
+          entries: [
             { amount: 2000, type: 'income' },
             { amount: 300, type: 'expense' },
           ],
@@ -351,7 +351,7 @@ describe('AccountRepository', () => {
       expect(mockPrisma.account.findMany).toHaveBeenCalledWith({
         where: { userId },
         include: {
-          transactions: {
+          entries: {
             where: { paid: true },
             select: {
               amount: true,
@@ -366,13 +366,13 @@ describe('AccountRepository', () => {
       expect(result[1]).toEqual(mockAccounts[1])
     })
 
-    it('should handle accounts with no transactions', async () => {
+    it('should handle accounts with no entries', async () => {
       const mockAccounts = [
         {
           id: 'account-1',
           name: 'Conta Vazia',
           userId,
-          transactions: [],
+          entries: [],
         },
       ]
 

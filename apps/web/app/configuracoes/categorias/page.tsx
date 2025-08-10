@@ -89,7 +89,7 @@ export default function CategoriasPage() {
             (cat) => cat.parentId === category.id,
           )
           subcategories.forEach((sub) => deleteCategory(sub.id))
-          deleteCategory(category.id)
+          deleteCategory(category.id as string)
           setConfirmDialog({ ...confirmDialog, isOpen: false })
         },
       })
@@ -100,7 +100,7 @@ export default function CategoriasPage() {
         description:
           'Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.',
         onConfirm: () => {
-          deleteCategory(category.id)
+          deleteCategory(category.id as string)
           setConfirmDialog({ ...confirmDialog, isOpen: false })
         },
       })
@@ -119,7 +119,7 @@ export default function CategoriasPage() {
     }
 
     if (editingCategory) {
-      updateCategory(editingCategory.id, categoryData)
+      updateCategory(editingCategory.id as string, categoryData)
     } else {
       addCategory(categoryData)
     }
@@ -135,7 +135,10 @@ export default function CategoriasPage() {
     return (
       <div className="space-y-4">
         {mainCategories.map((category) => {
-          const subcategories = getSubCategories(categoryList, category.id)
+          const subcategories = getSubCategories(
+            categoryList,
+            category.id as string,
+          )
 
           return (
             <Card key={category.id} className="border border-border">

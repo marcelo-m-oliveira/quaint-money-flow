@@ -42,6 +42,23 @@ import {
   creditCardUpdateSchema,
   type CreditCardUsageSchema,
   creditCardUsageSchema,
+  // Tipos
+  type EntryBaseSchema,
+  // Schemas base
+  entryBaseSchema,
+  type EntryCreateSchema,
+  // Schemas de request
+  entryCreateSchema,
+  type EntryFiltersSchema,
+  entryFiltersSchema,
+  type EntryListResponseSchema,
+  // Schemas compostos
+  entryListResponseSchema,
+  type EntryResponseSchema,
+  // Schemas de response
+  entryResponseSchema,
+  type EntryUpdateSchema,
+  entryUpdateSchema,
   type IdParamSchema,
   // Schemas de validação
   idParamSchema,
@@ -62,23 +79,6 @@ import {
   registerSchema,
   type SelectOptionSchema,
   selectOptionSchema,
-  // Tipos
-  type TransactionBaseSchema,
-  // Schemas base
-  transactionBaseSchema,
-  type TransactionCreateSchema,
-  // Schemas de request
-  transactionCreateSchema,
-  type TransactionFiltersSchema,
-  transactionFiltersSchema,
-  type TransactionListResponseSchema,
-  // Schemas compostos
-  transactionListResponseSchema,
-  type TransactionResponseSchema,
-  // Schemas de response
-  transactionResponseSchema,
-  type TransactionUpdateSchema,
-  transactionUpdateSchema,
   type UpdateProfileSchema,
   updateProfileSchema,
 } from '@saas/validations'
@@ -90,7 +90,7 @@ import { z } from 'zod'
 
 // Schemas base
 export {
-  transactionBaseSchema,
+  entryBaseSchema,
   categoryBaseSchema,
   accountBaseSchema,
   creditCardBaseSchema,
@@ -99,8 +99,8 @@ export {
 
 // Schemas de request
 export {
-  transactionCreateSchema,
-  transactionUpdateSchema,
+  entryCreateSchema,
+  entryUpdateSchema,
   categoryCreateSchema,
   categoryUpdateSchema,
   accountCreateSchema,
@@ -113,7 +113,7 @@ export {
 
 // Schemas de response
 export {
-  transactionResponseSchema,
+  entryResponseSchema,
   categoryResponseSchema,
   accountResponseSchema,
   creditCardResponseSchema,
@@ -122,7 +122,7 @@ export {
 
 // Schemas compostos
 export {
-  transactionListResponseSchema,
+  entryListResponseSchema,
   accountListResponseSchema,
   creditCardListResponseSchema,
   selectOptionSchema,
@@ -135,7 +135,7 @@ export {
 export {
   idParamSchema,
   paginationSchema,
-  transactionFiltersSchema,
+  entryFiltersSchema,
   categoryFiltersSchema,
   accountFiltersSchema,
 }
@@ -154,7 +154,7 @@ export {
 
 // Tipos base
 export type {
-  TransactionBaseSchema,
+  EntryBaseSchema,
   CategoryBaseSchema,
   AccountBaseSchema,
   CreditCardBaseSchema,
@@ -163,8 +163,8 @@ export type {
 
 // Tipos de request
 export type {
-  TransactionCreateSchema,
-  TransactionUpdateSchema,
+  EntryCreateSchema,
+  EntryUpdateSchema,
   CategoryCreateSchema,
   CategoryUpdateSchema,
   AccountCreateSchema,
@@ -177,7 +177,7 @@ export type {
 
 // Tipos de response
 export type {
-  TransactionResponseSchema,
+  EntryResponseSchema,
   CategoryResponseSchema,
   AccountResponseSchema,
   CreditCardResponseSchema,
@@ -186,7 +186,7 @@ export type {
 
 // Tipos compostos
 export type {
-  TransactionListResponseSchema,
+  EntryListResponseSchema,
   AccountListResponseSchema,
   CreditCardListResponseSchema,
   SelectOptionSchema,
@@ -199,7 +199,7 @@ export type {
 export type {
   IdParamSchema,
   PaginationSchema,
-  TransactionFiltersSchema,
+  EntryFiltersSchema,
   CategoryFiltersSchema,
   AccountFiltersSchema,
 }

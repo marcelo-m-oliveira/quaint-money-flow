@@ -39,9 +39,9 @@ export class CreditCardService {
     // Calcular o uso para cada cartão
     const creditCardsWithUsageCalculated = paginatedCreditCards.map(
       (creditCard) => {
-        const usage = creditCard.transactions.reduce((acc, transaction) => {
-          const amount = Number(transaction.amount)
-          return transaction.type === 'expense' ? acc + amount : acc
+        const usage = creditCard.entries.reduce((acc, entriy) => {
+          const amount = Number(entriy.amount)
+          return entriy.type === 'expense' ? acc + amount : acc
         }, 0)
 
         // Remover as transações do retorno e adicionar o uso
@@ -201,11 +201,11 @@ export class CreditCardService {
     await this.findById(id, userId)
 
     // Verificar se há transações associadas
-    const transactionCount = await this.prisma.transaction.count({
+    const entriyCount = await this.prisma.entry.count({
       where: { creditCardId: id, userId },
     })
 
-    if (transactionCount > 0) {
+    if (entriyCount > 0) {
       throw new BadRequestError(
         'Não é possível excluir um cartão de crédito que possui transações',
       )
@@ -221,7 +221,7 @@ export class CreditCardService {
     const creditCard = await this.findById(id, userId)
 
     // Calcular uso baseado nas transações de despesa
-    const transactions = await this.prisma.transaction.findMany({
+    const entriy = await this.prisma.entry.findMany({
       where: {
         creditCardId: id,
         userId,
@@ -232,8 +232,8 @@ export class CreditCardService {
       },
     })
 
-    const usage = transactions.reduce((acc, transaction) => {
-      const amount = Number(transaction.amount)
+    const usage = entriy.reduce((acc, entriy) => {
+      const amount = Number(entriy.amount)
       return acc + amount
     }, 0)
 

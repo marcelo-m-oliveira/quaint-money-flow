@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Category, TransactionType } from '@prisma/client'
+import { Category, EntryType } from '@prisma/client'
 import { dateToSeconds } from '@saas/utils'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
@@ -65,7 +65,7 @@ export class CategoryController {
   async select(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub
-      const type = request.query as TransactionType
+      const type = request.query as EntryType
 
       request.log.info(
         { userId, type },

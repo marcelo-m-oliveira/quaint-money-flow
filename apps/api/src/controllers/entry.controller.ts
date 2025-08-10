@@ -1,38 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { dateToSeconds, secondsToDate } from '@saas/utils'
+import {
+  EntryCreateSchema,
+  EntryFiltersSchema,
+  EntryUpdateSchema,
+} from '@saas/validations'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
-import { TransactionService } from '@/services/transaction.service'
+import { EntryService } from '@/services/entry.service'
 import { handleError } from '@/utils/errors'
-import {
-  IdParamSchema,
-  idParamSchema,
-  PaginationSchema,
-  TransactionCreateSchema,
-  TransactionUpdateSchema,
-} from '@/utils/schemas'
+import { IdParamSchema, idParamSchema } from '@/utils/schemas'
 
-interface TransactionFilters extends PaginationSchema {
-  type?: 'income' | 'expense'
-  categoryId?: string
-  accountId?: string
-  creditCardId?: string
-  startDate?: string
-  endDate?: string
-  search?: string
-}
-
-export class TransactionController {
-  constructor(private transactionService: TransactionService) {}
+export class EntryController {
+  constructor(private entryService: EntryService) {}
 
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub
-      const filters = request.query as TransactionFilters
+      const filters = request.query as EntryFiltersSchema
 
       request.log.info({ userId, filters }, 'Listando transações do usuario')
 
-      const result = await this.transactionService.findMany(userId, {
+      const result = await this.entryService.findMany(userId, {
         page: filters.page || 1,
         limit: filters.limit || 20,
         type: filters.type,
@@ -51,7 +40,7 @@ export class TransactionController {
       request.log.info(
         {
           userId,
-          totalTransactions: result.transactions.length,
+          totalEntries: result.entries.length,
           totalPages: result.pagination.totalPages,
         },
         'Transações listadas com sucesso',
@@ -60,30 +49,30 @@ export class TransactionController {
       // Convert dates to seconds for frontend
       const convertedResult = {
         ...result,
-        transactions: result.transactions.map((transaction) => ({
-          ...transaction,
-          date: dateToSeconds(transaction.date),
-          createdAt: dateToSeconds(transaction.createdAt),
-          updatedAt: dateToSeconds(transaction.updatedAt),
-          category: transaction.category
+        entries: result.entries.map((entry: any) => ({
+          ...entry,
+          date: dateToSeconds(entry.date),
+          createdAt: dateToSeconds(entry.createdAt),
+          updatedAt: dateToSeconds(entry.updatedAt),
+          category: entry.category
             ? {
-                ...transaction.category,
-                createdAt: dateToSeconds(transaction.category.createdAt),
-                updatedAt: dateToSeconds(transaction.category.updatedAt),
+                ...entry.category,
+                createdAt: dateToSeconds(entry.category.createdAt),
+                updatedAt: dateToSeconds(entry.category.updatedAt),
               }
             : null,
-          account: transaction.account
+          account: entry.account
             ? {
-                ...transaction.account,
-                createdAt: dateToSeconds(transaction.account.createdAt),
-                updatedAt: dateToSeconds(transaction.account.updatedAt),
+                ...entry.account,
+                createdAt: dateToSeconds(entry.account.createdAt),
+                updatedAt: dateToSeconds(entry.account.updatedAt),
               }
             : null,
-          creditCard: transaction.creditCard
+          creditCard: entry.creditCard
             ? {
-                ...transaction.creditCard,
-                createdAt: dateToSeconds(transaction.creditCard.createdAt),
-                updatedAt: dateToSeconds(transaction.creditCard.updatedAt),
+                ...entry.creditCard,
+                createdAt: dateToSeconds(entry.creditCard.createdAt),
+                updatedAt: dateToSeconds(entry.creditCard.updatedAt),
               }
             : null,
         })),
@@ -104,32 +93,29 @@ export class TransactionController {
       const userId = request.user.sub
       const { id } = request.params as IdParamSchema
 
-      request.log.info(
-        { userId, transactionId: id },
-        'Buscando transação por ID',
-      )
+      request.log.info({ userId, entryId: id }, 'Buscando transação por ID')
 
-      const transaction = await this.transactionService.findById(id, userId)
+      const entry = await this.entryService.findById(id, userId)
 
       request.log.info(
-        { userId, transactionId: transaction.id },
+        { userId, entryId: entry.id },
         'Transação encontrada com sucesso',
       )
 
       // Convert dates to seconds for frontend
-      const convertedTransaction = {
-        ...transaction,
-        date: dateToSeconds(transaction.date),
-        createdAt: dateToSeconds(transaction.createdAt),
-        updatedAt: dateToSeconds(transaction.updatedAt),
+      const convertedEntry = {
+        ...entry,
+        date: dateToSeconds(entry.date),
+        createdAt: dateToSeconds(entry.createdAt),
+        updatedAt: dateToSeconds(entry.updatedAt),
       }
 
-      return reply.status(200).send(convertedTransaction)
+      return reply.status(200).send(convertedEntry)
     } catch (error: any) {
       request.log.error(
         {
           userId: request.user.sub,
-          transactionId: idParamSchema,
+          entryId: idParamSchema,
           error: error.message,
         },
         'Erro ao buscar transação',
@@ -141,12 +127,9 @@ export class TransactionController {
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub
-      const data = request.body as TransactionCreateSchema
+      const data = request.body as EntryCreateSchema
 
-      request.log.info(
-        { userId, transactionData: data },
-        'Criando nova transação',
-      )
+      request.log.info({ userId, entryData: data }, 'Criando nova transação')
 
       // Convert date from seconds to Date before saving to database
       const processedData = {
@@ -154,25 +137,22 @@ export class TransactionController {
         date: data.date ? secondsToDate(Number(data.date)) : new Date(),
       }
 
-      const transaction = await this.transactionService.create(
-        processedData,
-        userId,
-      )
+      const entry = await this.entryService.create(processedData, userId)
 
       request.log.info(
-        { transactionId: transaction.id, description: transaction.description },
+        { entryId: entry.id, description: entry.description },
         'Transação criada com sucesso',
       )
 
       // Convert dates to seconds for frontend
-      const convertedTransaction = {
-        ...transaction,
-        date: dateToSeconds(transaction.date),
-        createdAt: dateToSeconds(transaction.createdAt),
-        updatedAt: dateToSeconds(transaction.updatedAt),
+      const convertedEntry = {
+        ...entry,
+        date: dateToSeconds(entry.date),
+        createdAt: dateToSeconds(entry.createdAt),
+        updatedAt: dateToSeconds(entry.updatedAt),
       }
 
-      return reply.status(201).send(convertedTransaction)
+      return reply.status(201).send(convertedEntry)
     } catch (error: any) {
       request.log.error(
         { userId: request.user.sub, error: error.message },
@@ -186,10 +166,10 @@ export class TransactionController {
     try {
       const userId = request.user.sub
       const { id } = request.params as IdParamSchema
-      const data = request.body as TransactionUpdateSchema
+      const data = request.body as EntryUpdateSchema
 
       request.log.info(
-        { userId, transactionId: id, updateData: data },
+        { userId, entryId: id, updateData: data },
         'Atualizando transação',
       )
 
@@ -199,31 +179,27 @@ export class TransactionController {
         ...(data.date && { date: secondsToDate(Number(data.date)) }),
       }
 
-      const transaction = await this.transactionService.update(
-        id,
-        processedData,
-        userId,
-      )
+      const entry = await this.entryService.update(id, processedData, userId)
 
       request.log.info(
-        { transactionId: transaction.id, description: transaction.description },
+        { entryId: entry.id, description: entry.description },
         'Transação atualizada com sucesso',
       )
 
       // Convert dates to seconds for frontend
-      const convertedTransaction = {
-        ...transaction,
-        date: dateToSeconds(transaction.date),
-        createdAt: dateToSeconds(transaction.createdAt),
-        updatedAt: dateToSeconds(transaction.updatedAt),
+      const convertedEntry = {
+        ...entry,
+        date: dateToSeconds(entry.date),
+        createdAt: dateToSeconds(entry.createdAt),
+        updatedAt: dateToSeconds(entry.updatedAt),
       }
 
-      return reply.status(200).send(convertedTransaction)
+      return reply.status(200).send(convertedEntry)
     } catch (error: any) {
       request.log.error(
         {
           userId: request.user.sub,
-          transactionId: idParamSchema,
+          entryId: idParamSchema,
           error: error.message,
         },
         'Erro ao atualizar transação',
@@ -237,18 +213,18 @@ export class TransactionController {
       const userId = request.user.sub
       const { id } = request.params as IdParamSchema
 
-      request.log.info({ userId, transactionId: id }, 'Deletando transação')
+      request.log.info({ userId, entryId: id }, 'Deletando transação')
 
-      await this.transactionService.delete(id, userId)
+      await this.entryService.delete(id, userId)
 
-      request.log.info({ transactionId: id }, 'Transação deletada com sucesso')
+      request.log.info({ entryId: id }, 'Transação deletada com sucesso')
 
       return reply.status(204).send()
     } catch (error: any) {
       request.log.error(
         {
           userId: request.user.sub,
-          transactionId: idParamSchema,
+          entryId: idParamSchema,
           error: error.message,
         },
         'Erro ao deletar transação',

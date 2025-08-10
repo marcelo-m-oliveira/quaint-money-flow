@@ -9,8 +9,8 @@ import { formatDateForInput, timestampToDateString } from '@/lib/format'
 import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
 import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { CategoryIcon } from '@/lib/icon-map'
-import { TransactionFormSchema, transactionSchema } from '@/lib/schemas'
-import { Category, Transaction } from '@/lib/types'
+import { EntryFormSchema, entrySchema } from '@/lib/schemas'
+import { Category, Entry } from '@/lib/types'
 
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
@@ -27,27 +27,27 @@ import {
   SelectValue,
 } from './ui/select'
 
-interface TransactionFormModalProps {
+interface EntryFormModalProps {
   isOpen: boolean
   onClose: () => void
-  transaction?: Transaction
-  onSubmit: (data: TransactionFormSchema, shouldClose?: boolean) => void
+  entry?: Entry
+  onSubmit: (data: EntryFormSchema, shouldClose?: boolean) => void
   categories: Category[]
   type: 'income' | 'expense'
   title: string
   showCreateAnotherButton?: boolean
 }
 
-export function TransactionFormModal({
+export function EntryFormModal({
   isOpen,
   onClose,
-  transaction,
+  entry,
   onSubmit,
   categories,
   type,
   title,
   showCreateAnotherButton = true,
-}: TransactionFormModalProps) {
+}: EntryFormModalProps) {
   const { accounts } = useAccountsWithAutoInit()
   const { creditCards } = useCreditCardsWithAutoInit()
 
@@ -59,8 +59,8 @@ export function TransactionFormModal({
     setValue,
     watch,
     control,
-  } = useForm<TransactionFormSchema>({
-    resolver: zodResolver(transactionSchema),
+  } = useForm<EntryFormSchema>({
+    resolver: zodResolver(entrySchema),
     defaultValues: {
       description: '',
       amount: '',
@@ -73,18 +73,18 @@ export function TransactionFormModal({
     },
   })
 
-  // Atualizar formulário quando transaction mudar
+  // Atualizar formulário quando entry mudar
   useEffect(() => {
-    if (transaction) {
+    if (entry) {
       reset({
-        description: transaction.description,
-        amount: transaction.amount.toString(),
-        type: transaction.type,
-        categoryId: transaction.categoryId,
-        accountId: transaction.accountId || '',
-        creditCardId: transaction.creditCardId || '',
-        date: timestampToDateString(transaction.date),
-        paid: transaction.paid || false,
+        description: entry.description,
+        amount: entry.amount.toString(),
+        type: entry.type,
+        categoryId: entry.categoryId,
+        accountId: entry.accountId || '',
+        creditCardId: entry.creditCardId || '',
+        date: timestampToDateString(entry.date),
+        paid: entry.paid || false,
       })
     } else {
       reset({
@@ -98,10 +98,10 @@ export function TransactionFormModal({
         paid: false,
       })
     }
-  }, [transaction, type, reset])
+  }, [entry, type, reset])
 
   const handleFormSubmit = (
-    data: TransactionFormSchema,
+    data: EntryFormSchema,
     shouldCreateAnother = false,
   ) => {
     const shouldClose = !shouldCreateAnother
@@ -125,7 +125,7 @@ export function TransactionFormModal({
   }
 
   // Wrapper para o react-hook-form
-  const onSubmitForm = (data: TransactionFormSchema) => {
+  const onSubmitForm = (data: EntryFormSchema) => {
     handleFormSubmit(data, false)
   }
 
@@ -241,7 +241,10 @@ export function TransactionFormModal({
                       return a.name.localeCompare(b.name)
                     })
                     .map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                      <SelectItem
+                        key={category.id}
+                        value={category.id as string}
+                      >
                         <div
                           className={`flex items-center gap-3 ${category.parentId ? 'pl-4' : ''}`}
                         >

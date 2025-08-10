@@ -113,4 +113,4 @@ export const categoriesService = {
   async getUsageStats(): Promise<CategoryUsage[]> {
     return apiClient.get<CategoryUsage[]>('/categories/usage')
   },
-} 
+}

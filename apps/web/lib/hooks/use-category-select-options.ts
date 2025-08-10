@@ -50,4 +50,4 @@ export function useCategorySelectOptions(type?: 'income' | 'expense') {
       fetchOptions()
     },
   }
-} 
+}

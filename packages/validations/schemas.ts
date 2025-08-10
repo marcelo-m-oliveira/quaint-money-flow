@@ -5,7 +5,7 @@ import { z } from 'zod'
 // ============================================================================
 
 // Schema base para transações
-export const transactionBaseSchema = z.object({
+export const entryBaseSchema = z.object({
   description: z
     .string()
     .min(1, 'Descrição é obrigatória')
@@ -103,7 +103,7 @@ export const creditCardBaseSchema = z.object({
 
 // Schema base para preferências do usuário
 export const preferencesBaseSchema = z.object({
-  transactionOrder: z
+  entryOrder: z
     .enum(['ascending', 'descending'])
     .optional()
     .default('descending'),
@@ -121,10 +121,10 @@ export const preferencesBaseSchema = z.object({
 // ============================================================================
 
 // Schema para criação de transações
-export const transactionCreateSchema = transactionBaseSchema
+export const entryCreateSchema = entryBaseSchema
 
 // Schema para atualização de transações
-export const transactionUpdateSchema = transactionBaseSchema.partial()
+export const entryUpdateSchema = entryBaseSchema.partial()
 
 // Schema para criação de categorias
 export const categoryCreateSchema = categoryBaseSchema
@@ -153,7 +153,7 @@ export const preferencesUpdateSchema = preferencesBaseSchema.partial()
 // ============================================================================
 
 // Schema para resposta de transações
-export const transactionResponseSchema = transactionBaseSchema.extend({
+export const entryResponseSchema = entryBaseSchema.extend({
   id: z.string(),
   userId: z.string(),
   createdAt: z.number(), // timestamp em segundos
@@ -251,8 +251,8 @@ export const preferencesResponseSchema = preferencesBaseSchema.extend({
 // ============================================================================
 
 // Schema para listagem paginada de transações
-export const transactionListResponseSchema = z.object({
-  transactions: z.array(transactionResponseSchema),
+export const entryListResponseSchema = z.object({
+  entries: z.array(entryResponseSchema),
   pagination: z.object({
     page: z.number(),
     limit: z.number(),
@@ -304,7 +304,7 @@ export const categoryUsageSchema = z.object({
   name: z.string(),
   icon: z.string(),
   type: z.enum(['income', 'expense']),
-  transactionCount: z.number(),
+  entryCount: z.number(),
   totalAmount: z.number(),
 })
 
@@ -340,7 +340,7 @@ export const paginationSchema = z.object({
 })
 
 // Schema para filtros de transação
-export const transactionFiltersSchema = z
+export const entryFiltersSchema = z
   .object({
     type: z.enum(['income', 'expense']).optional(),
     categoryId: z.string().optional(),
@@ -412,15 +412,15 @@ export const changePasswordSchema = z
 // ============================================================================
 
 // Tipos base
-export type TransactionBaseSchema = z.infer<typeof transactionBaseSchema>
+export type EntryBaseSchema = z.infer<typeof entryBaseSchema>
 export type CategoryBaseSchema = z.infer<typeof categoryBaseSchema>
 export type AccountBaseSchema = z.infer<typeof accountBaseSchema>
 export type CreditCardBaseSchema = z.infer<typeof creditCardBaseSchema>
 export type PreferencesBaseSchema = z.infer<typeof preferencesBaseSchema>
 
 // Tipos de request
-export type TransactionCreateSchema = z.infer<typeof transactionCreateSchema>
-export type TransactionUpdateSchema = z.infer<typeof transactionUpdateSchema>
+export type EntryCreateSchema = z.infer<typeof entryCreateSchema>
+export type EntryUpdateSchema = z.infer<typeof entryUpdateSchema>
 export type CategoryCreateSchema = z.infer<typeof categoryCreateSchema>
 export type CategoryUpdateSchema = z.infer<typeof categoryUpdateSchema>
 export type AccountCreateSchema = z.infer<typeof accountCreateSchema>
@@ -431,9 +431,7 @@ export type PreferencesCreateSchema = z.infer<typeof preferencesCreateSchema>
 export type PreferencesUpdateSchema = z.infer<typeof preferencesUpdateSchema>
 
 // Tipos de response
-export type TransactionResponseSchema = z.infer<
-  typeof transactionResponseSchema
->
+export type EntryResponseSchema = z.infer<typeof entryResponseSchema>
 export type CategoryResponseSchema = z.infer<typeof categoryResponseSchema>
 export type AccountResponseSchema = z.infer<typeof accountResponseSchema>
 export type CreditCardResponseSchema = z.infer<typeof creditCardResponseSchema>
@@ -442,9 +440,7 @@ export type PreferencesResponseSchema = z.infer<
 >
 
 // Tipos compostos
-export type TransactionListResponseSchema = z.infer<
-  typeof transactionListResponseSchema
->
+export type EntryListResponseSchema = z.infer<typeof entryListResponseSchema>
 export type AccountListResponseSchema = z.infer<
   typeof accountListResponseSchema
 >
@@ -459,7 +455,7 @@ export type CreditCardUsageSchema = z.infer<typeof creditCardUsageSchema>
 // Tipos de validação
 export type IdParamSchema = z.infer<typeof idParamSchema>
 export type PaginationSchema = z.infer<typeof paginationSchema>
-export type TransactionFiltersSchema = z.infer<typeof transactionFiltersSchema>
+export type EntryFiltersSchema = z.infer<typeof entryFiltersSchema>
 export type CategoryFiltersSchema = z.infer<typeof categoryFiltersSchema>
 export type AccountFiltersSchema = z.infer<typeof accountFiltersSchema>
 
@@ -473,8 +469,8 @@ export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>
 // ALIASES PARA COMPATIBILIDADE (DEPRECATED - REMOVER EM VERSÕES FUTURAS)
 // ============================================================================
 
-// @deprecated - Use transactionCreateSchema instead
-export const transactionSchema = transactionCreateSchema
+// @deprecated - Use entryCreateSchema instead
+export const entrySchema = entryCreateSchema
 // @deprecated - Use categoryCreateSchema instead
 export const categorySchema = categoryCreateSchema
 // @deprecated - Use accountCreateSchema instead
@@ -484,8 +480,8 @@ export const creditCardSchema = creditCardCreateSchema
 // @deprecated - Use preferencesCreateSchema instead
 export const preferencesSchema = preferencesCreateSchema
 
-// @deprecated - Use TransactionCreateSchema instead
-export type TransactionFormSchema = TransactionCreateSchema
+// @deprecated - Use EntryCreateSchema instead
+export type EntryFormSchema = EntryCreateSchema
 // @deprecated - Use CategoryCreateSchema instead
 export type CategoryFormSchema = CategoryCreateSchema
 // @deprecated - Use AccountCreateSchema instead

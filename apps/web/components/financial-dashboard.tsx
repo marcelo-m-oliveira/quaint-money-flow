@@ -12,8 +12,8 @@ import {
   BillsToReceiveCard,
   ExpenseSummaryCard,
 } from './dashboard'
+import { EntryFormModal } from './entry-form-modal'
 import { PageLayout } from './layouts/page-layout'
-import { TransactionFormModal } from './transaction-form-modal'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { ConfirmationDialog } from './ui/confirmation-dialog'
@@ -223,7 +223,7 @@ export function FinancialDashboard() {
 
                 {/* Modais reformulados - Renderização condicional para evitar carregamento desnecessário */}
                 {isExpenseDialogOpen && (
-                  <TransactionFormModal
+                  <EntryFormModal
                     isOpen={isExpenseDialogOpen}
                     onClose={closeExpenseDialog}
                     transaction={editingTransaction}
@@ -238,7 +238,7 @@ export function FinancialDashboard() {
                 )}
 
                 {isIncomeDialogOpen && (
-                  <TransactionFormModal
+                  <EntryFormModal
                     isOpen={isIncomeDialogOpen}
                     onClose={closeIncomeDialog}
                     transaction={editingTransaction}

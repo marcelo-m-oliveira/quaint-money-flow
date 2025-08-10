@@ -14,7 +14,7 @@ const mockPrisma = {
     count: jest.fn(),
     upsert: jest.fn(),
   },
-  transaction: {
+  entry: {
     aggregate: jest.fn(),
   },
 } as unknown as PrismaClient
@@ -233,9 +233,9 @@ describe('CreditCardRepository', () => {
           id: 'credit-card-1',
           name: 'Cartão 1',
           userId,
-          transactions: [],
+          entries: [],
           defaultPaymentAccount: null,
-          _count: { transactions: 0 },
+          _count: { entries: 0 },
         },
       ]
 
@@ -248,11 +248,11 @@ describe('CreditCardRepository', () => {
       expect(mockPrisma.creditCard.findMany).toHaveBeenCalledWith({
         where: { userId },
         include: {
-          transactions: false,
+          entries: false,
           defaultPaymentAccount: true,
           _count: {
             select: {
-              transactions: true,
+              entries: true,
             },
           },
         },
@@ -261,15 +261,15 @@ describe('CreditCardRepository', () => {
       expect(result).toEqual(mockCreditCards)
     })
 
-    it('should find credit cards by user ID with transactions included', async () => {
+    it('should find credit cards by user ID with entries included', async () => {
       const mockCreditCards = [
         {
           id: 'credit-card-1',
           name: 'Cartão 1',
           userId,
-          transactions: [{ id: 'transaction-1', amount: 100 }],
+          entries: [{ id: 'entry-1', amount: 100 }],
           defaultPaymentAccount: null,
-          _count: { transactions: 1 },
+          _count: { entries: 1 },
         },
       ]
 
@@ -282,11 +282,11 @@ describe('CreditCardRepository', () => {
       expect(mockPrisma.creditCard.findMany).toHaveBeenCalledWith({
         where: { userId },
         include: {
-          transactions: true,
+          entries: true,
           defaultPaymentAccount: true,
           _count: {
             select: {
-              transactions: true,
+              entries: true,
             },
           },
         },
@@ -360,7 +360,7 @@ describe('CreditCardRepository', () => {
           id: 'credit-card-1',
           name: 'Cartão 1',
           userId,
-          transactions: [
+          entries: [
             { amount: 100, type: 'expense' },
             { amount: 200, type: 'expense' },
           ],
@@ -380,7 +380,7 @@ describe('CreditCardRepository', () => {
       expect(mockPrisma.creditCard.findMany).toHaveBeenCalledWith({
         where: { userId },
         include: {
-          transactions: {
+          entries: {
             select: {
               amount: true,
               type: true,

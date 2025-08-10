@@ -17,7 +17,7 @@ const mockPrisma = {
     delete: jest.fn(),
     count: jest.fn(),
   },
-  transaction: {
+  entry: {
     count: jest.fn(),
     findMany: jest.fn(),
   },
@@ -303,14 +303,14 @@ describe('CreditCardService', () => {
       ;(mockCreditCardRepository.findUnique as jest.Mock).mockResolvedValue(
         existingCreditCard,
       )
-      ;(mockPrisma.transaction.count as jest.Mock).mockResolvedValue(0)
+      ;(mockPrisma.entry.count as jest.Mock).mockResolvedValue(0)
       ;(mockCreditCardRepository.delete as jest.Mock).mockResolvedValue(
         existingCreditCard,
       )
 
       const result = await creditCardService.delete('credit-card-1', userId)
 
-      expect(mockPrisma.transaction.count).toHaveBeenCalledWith({
+      expect(mockPrisma.entry.count).toHaveBeenCalledWith({
         where: { creditCardId: 'credit-card-1', userId },
       })
       expect(mockCreditCardRepository.delete).toHaveBeenCalledWith({
@@ -319,7 +319,7 @@ describe('CreditCardService', () => {
       expect(result).toEqual(existingCreditCard)
     })
 
-    it('should throw BadRequestError when credit card has transactions', async () => {
+    it('should throw BadRequestError when credit card has entries', async () => {
       const existingCreditCard = {
         id: 'credit-card-1',
         name: 'Cartão com Transações',
@@ -330,7 +330,7 @@ describe('CreditCardService', () => {
       ;(mockCreditCardRepository.findUnique as jest.Mock).mockResolvedValue(
         existingCreditCard,
       )
-      ;(mockPrisma.transaction.count as jest.Mock).mockResolvedValue(5)
+      ;(mockPrisma.entry.count as jest.Mock).mockResolvedValue(5)
 
       await expect(
         creditCardService.delete('credit-card-1', userId),
@@ -352,22 +352,16 @@ describe('CreditCardService', () => {
         defaultPaymentAccount: null,
       }
 
-      const mockTransactions = [
-        { amount: 100 },
-        { amount: 200 },
-        { amount: 150 },
-      ]
+      const mockEntries = [{ amount: 100 }, { amount: 200 }, { amount: 150 }]
 
       ;(mockCreditCardRepository.findUnique as jest.Mock).mockResolvedValue(
         existingCreditCard,
       )
-      ;(mockPrisma.transaction.findMany as jest.Mock).mockResolvedValue(
-        mockTransactions,
-      )
+      ;(mockPrisma.entry.findMany as jest.Mock).mockResolvedValue(mockEntries)
 
       const result = await creditCardService.getUsage('credit-card-1', userId)
 
-      expect(mockPrisma.transaction.findMany).toHaveBeenCalledWith({
+      expect(mockPrisma.entry.findMany).toHaveBeenCalledWith({
         where: {
           creditCardId: 'credit-card-1',
           userId,
@@ -387,7 +381,7 @@ describe('CreditCardService', () => {
       })
     })
 
-    it('should return zero usage when no transactions', async () => {
+    it('should return zero usage when no entries', async () => {
       const existingCreditCard = {
         id: 'credit-card-1',
         name: 'Cartão Sem Uso',
@@ -399,7 +393,7 @@ describe('CreditCardService', () => {
       ;(mockCreditCardRepository.findUnique as jest.Mock).mockResolvedValue(
         existingCreditCard,
       )
-      ;(mockPrisma.transaction.findMany as jest.Mock).mockResolvedValue([])
+      ;(mockPrisma.entry.findMany as jest.Mock).mockResolvedValue([])
 
       const result = await creditCardService.getUsage('credit-card-1', userId)
 
@@ -422,7 +416,7 @@ describe('CreditCardService', () => {
           limit: 5000,
           userId,
           createdAt: new Date('2023-01-01'),
-          transactions: [
+          entries: [
             { amount: 100, type: 'expense' },
             { amount: 200, type: 'expense' },
           ],
@@ -434,7 +428,7 @@ describe('CreditCardService', () => {
           limit: 3000,
           userId,
           createdAt: new Date('2023-01-02'),
-          transactions: [{ amount: 150, type: 'expense' }],
+          entries: [{ amount: 150, type: 'expense' }],
           defaultPaymentAccount: null,
         },
       ]

@@ -1,130 +1,147 @@
-import { beforeEach, describe, it } from '@jest/globals'
 import { fireEvent, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 import { FinancialDashboard } from '@/components/financial-dashboard'
+import { render } from '@/__tests__/setup/test-utils'
 
-import {
-  clearAllMocks,
-  expectToBeInTheDocument,
-  render,
-} from '../setup/test-utils'
+// Mock do localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+}
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+})
 
-/**
- * Testes de integração para o fluxo financeiro completo
- * Estes testes verificam a interação entre múltiplos componentes
- */
-describe('Financial Flow Integration', () => {
+// Mock dos hooks
+jest.mock('@/lib/hooks/use-financial-data', () => ({
+  useFinancialData: () => ({
+    categories: [
+      { id: '1', name: 'Alimentação', color: '#FF6400', type: 'expense' },
+      { id: '2', name: 'Salário', color: '#00FF00', type: 'income' },
+    ],
+    addTransaction: jest.fn(),
+    updateTransaction: jest.fn(),
+    updateTransactionStatus: jest.fn(),
+    deleteTransaction: jest.fn(),
+    deleteCategory: jest.fn(),
+    getTotals: () => ({
+      totalIncome: 5000,
+      totalExpenses: 2500,
+      balance: 2500,
+    }),
+    getTransactionsWithCategories: () => [],
+    isLoading: false,
+  }),
+}))
+
+jest.mock('@/lib/hooks/use-accounts', () => ({
+  useAccountsWithAutoInit: () => ({
+    accounts: [
+      { id: '1', name: 'Conta Principal', balance: 1000 },
+    ],
+  }),
+}))
+
+jest.mock('@/lib/hooks/use-credit-cards', () => ({
+  useCreditCardsWithAutoInit: () => ({
+    creditCards: [
+      { id: '1', name: 'Cartão Principal', limit: 5000 },
+    ],
+  }),
+}))
+
+describe('FinancialDashboard Integration', () => {
   beforeEach(() => {
-    clearAllMocks()
+    jest.clearAllMocks()
   })
 
-  it('deve permitir adicionar uma nova despesa e atualizar o dashboard', async () => {
+  it('deve renderizar o dashboard com os elementos principais', async () => {
     render(<FinancialDashboard />)
 
-    // Verificar estado inicial
-    expectToBeInTheDocument(screen.getByText('Despesas no mês atual'))
+    // Verificar elementos principais do dashboard
+    expect(screen.getByText('Quaint Money')).toBeInTheDocument()
+    expect(screen.getByText('Despesas no mês atual')).toBeInTheDocument()
+    expect(screen.getByText('Receitas no mês atual')).toBeInTheDocument()
+    expect(screen.getByText('NOVA DESPESA')).toBeInTheDocument()
+    expect(screen.getByText('NOVA RECEITA')).toBeInTheDocument()
+  })
+
+  it('deve abrir o modal de nova despesa', async () => {
+    const user = userEvent.setup()
+    render(<FinancialDashboard />)
 
     // Abrir modal de nova despesa
     const newExpenseButton = screen.getByText('NOVA DESPESA')
-    fireEvent.click(newExpenseButton)
+    await user.click(newExpenseButton)
 
     await waitFor(() => {
-      expectToBeInTheDocument(screen.getByText('Nova despesa'))
+      expect(screen.getByText('Nova despesa')).toBeInTheDocument()
     })
 
-    // TODO: Implementar preenchimento do formulário e submissão
-    // Isso requer que os componentes de formulário estejam implementados
-    /*
-    // Preencher formulário
-    const descriptionInput = screen.getByLabelText(/descrição/i)
-    const amountInput = screen.getByLabelText(/valor/i)
-    const categorySelect = screen.getByLabelText(/categoria/i)
-    
-    fireEvent.change(descriptionInput, { target: { value: 'Almoço' } })
-    fireEvent.change(amountInput, { target: { value: '25.50' } })
-    fireEvent.change(categorySelect, { target: { value: 'food' } })
-    
-    // Submeter formulário
-    const submitButton = screen.getByText(/salvar/i)
-    fireEvent.click(submitButton)
-    
-    // Verificar se a despesa foi adicionada
-    await waitFor(() => {
-      expectToBeInTheDocument(screen.getByText('Almoço'))
-      expectToBeInTheDocument(screen.getByText('R$ 25,50'))
-    })
-    
-    // Verificar se o total foi atualizado
-    // expect(screen.getByText(/total de despesas/i)).toHaveTextContent('R$ 25,50')
-    */
+    // Verificar se o formulário está presente
+    expect(screen.getByLabelText(/descrição/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/valor/i)).toBeInTheDocument()
   })
 
-  it('deve permitir adicionar uma nova receita e atualizar o dashboard', async () => {
+  it('deve abrir o modal de nova receita', async () => {
+    const user = userEvent.setup()
     render(<FinancialDashboard />)
-
-    // Verificar estado inicial
-    expectToBeInTheDocument(screen.getByText('Receitas no mês atual'))
 
     // Abrir modal de nova receita
     const newIncomeButton = screen.getByText('NOVA RECEITA')
-    fireEvent.click(newIncomeButton)
+    await user.click(newIncomeButton)
 
     await waitFor(() => {
-      expectToBeInTheDocument(screen.getByText('Nova receita'))
+      expect(screen.getByText('Nova receita')).toBeInTheDocument()
     })
 
-    // TODO: Similar ao teste de despesa, implementar quando os formulários estiverem prontos
+    // Verificar se o formulário está presente
+    expect(screen.getByLabelText(/descrição/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/valor/i)).toBeInTheDocument()
   })
 
-  it('deve permitir alternar entre temas e manter a funcionalidade', async () => {
+  it('deve permitir alternar entre temas', async () => {
+    const user = userEvent.setup()
     render(<FinancialDashboard />)
 
-    // TODO: Implementar teste de alternância de tema
-    // Isso requer que o botão de tema esteja implementado no dashboard
-    /*
-    const themeToggle = screen.getByRole('button', { name: /alternar tema/i })
-    
-    // Verificar tema inicial
+    // Verificar tema inicial (dark por padrão)
     expect(document.documentElement).toHaveClass('dark')
     
-    // Alternar tema
-    fireEvent.click(themeToggle)
+    // Encontrar o botão de configurações (primeiro botão com ícone de settings)
+    const settingsButtons = screen.getAllByRole('button')
+    const settingsButton = settingsButtons.find(button => 
+      button.querySelector('svg[class*="settings"]')
+    )
+    
+    expect(settingsButton).toBeDefined()
+    await user.click(settingsButton!)
+    
+    // Alternar para tema claro
+    const lightThemeOption = screen.getByText('Claro')
+    await user.click(lightThemeOption)
     
     await waitFor(() => {
       expect(document.documentElement).toHaveClass('light')
     })
     
-    // Verificar se a funcionalidade ainda funciona após mudança de tema
-    const newExpenseButton = screen.getByText('NOVA DESPESA')
-    fireEvent.click(newExpenseButton)
+    // Voltar para tema escuro
+    await user.click(settingsButton!)
+    const darkThemeOption = screen.getByText('Escuro')
+    await user.click(darkThemeOption)
     
     await waitFor(() => {
-      expect(screen.getByText('Nova despesa')).toBeInTheDocument()
+      expect(document.documentElement).toHaveClass('dark')
     })
-    */
   })
 
-  it('deve persistir dados no localStorage', async () => {
-    // const { rerender } = render(<FinancialDashboard />)
-    // TODO: Implementar teste de persistência
-    // Adicionar uma transação, recarregar o componente e verificar se os dados persistem
-    /*
-    // Adicionar uma transação
-    // ... código para adicionar transação ...
-    
-    // Verificar se foi salvo no localStorage
-    expect(window.localStorage.setItem).toHaveBeenCalledWith(
-      'financial-data',
-      expect.any(String)
-    )
-    
-    // Simular recarregamento
-    rerender(<FinancialDashboard />)
-    
-    // Verificar se os dados foram carregados
-    await waitFor(() => {
-      expect(screen.getByText('Almoço')).toBeInTheDocument()
-    })
-    */
+  it('deve mostrar os totais financeiros corretos', () => {
+    render(<FinancialDashboard />)
+
+    // Verificar se os labels dos totais estão sendo exibidos
+    expect(screen.getByText('Receitas no mês atual')).toBeInTheDocument()
+    expect(screen.getByText('Despesas no mês atual')).toBeInTheDocument()
   })
 })

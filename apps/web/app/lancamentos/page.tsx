@@ -21,8 +21,8 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import { AccountCardIcon } from '@/components/account-card-icon'
+import { EntryFormModal } from '@/components/entry-form-modal'
 import { PageLayout } from '@/components/layouts/page-layout'
-import { TransactionFormModal } from '@/components/transaction-form-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
@@ -59,12 +59,13 @@ import {
 } from '@/components/ui/tooltip'
 import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useCategories } from '@/lib/hooks/use-categories'
 import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { useEntries } from '@/lib/hooks/use-entries'
 import { usePreferences } from '@/lib/hooks/use-preferences'
-import { TransactionFormSchema } from '@/lib/schemas'
-import { Transaction } from '@/lib/types'
+import { EntryFormSchema } from '@/lib/schemas'
+import { Entry } from '@/lib/services/entries'
 
 // Funções utilitárias para filtros de período
 function getStartOfWeek(date: Date): Date {
@@ -109,36 +110,27 @@ function getEndOfDay(date: Date): Date {
   return end
 }
 
-export default function TransacoesPage() {
-  const {
-    categories,
-    isLoading,
-    addTransaction,
-    updateTransaction,
-    deleteTransaction,
-    getTransactionsWithCategories,
-  } = useFinancialData()
+export default function EntryPage() {
+  const { entries, isLoading, addEntry, updateEntry, deleteEntry } =
+    useEntries()
 
   const { accounts } = useAccounts()
+  const { categories } = useCategories()
   const { creditCards } = useCreditCardsWithAutoInit()
   const { success, error } = useCrudToast()
 
   const { preferences, updatePreference } = usePreferences()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingTransaction, setEditingTransaction] = useState<
-    Transaction | undefined
-  >(undefined)
-  const [transactionType, setTransactionType] = useState<'income' | 'expense'>(
-    'expense',
-  )
+  const [editingEntry, setEditingEntry] = useState<Entry | undefined>(undefined)
+  const [entryType, setEntryType] = useState<'income' | 'expense'>('expense')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedType, setSelectedType] = useState<string>('all')
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean
-    transactionId: string | null
-  }>({ isOpen: false, transactionId: null })
+    entryId: string | null
+  }>({ isOpen: false, entryId: null })
 
   // Estados para controle de período
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -232,45 +224,42 @@ export default function TransacoesPage() {
     return periodFunction ? periodFunction() : PERIOD_RANGE_FUNCTIONS.monthly()
   }
 
-  const transactionsWithCategories = getTransactionsWithCategories()
-
-  // Filtrar transações
-  const filteredTransactions = useMemo(() => {
+  // Filtrar lançamentos
+  const filteredEntries = useMemo(() => {
     const { start, end } = getCurrentPeriodRange()
 
-    const filtered = transactionsWithCategories.filter((transaction) => {
-      const transactionTimestamp = transaction.date
-      const matchesSearch = transaction.description
+    const filtered = entries.filter((entry) => {
+      const entryTimestamp = entry.date * 1000 // Converter segundos para milissegundos
+      const matchesSearch = entry.description
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
       const matchesCategory =
         selectedCategory === 'all'
           ? true
-          : transaction.categoryId === selectedCategory
-      // Key mapping para filtros de tipo de transação
+          : entry.categoryId === selectedCategory
+      // Key mapping para filtros de tipo de lançamento
       const TYPE_FILTERS = {
         all: () => true,
-        income: (t: Transaction) => t.type === 'income',
-        expense: (t: Transaction) => t.type === 'expense',
-        'income-paid': (t: Transaction) => t.type === 'income' && t.paid,
-        'income-unpaid': (t: Transaction) => t.type === 'income' && !t.paid,
-        'expense-paid': (t: Transaction) => t.type === 'expense' && t.paid,
-        'expense-unpaid': (t: Transaction) => t.type === 'expense' && !t.paid,
+        income: (e: Entry) => e.type === 'income',
+        expense: (e: Entry) => e.type === 'expense',
+        'income-paid': (e: Entry) => e.type === 'income' && e.paid,
+        'income-unpaid': (e: Entry) => e.type === 'income' && !e.paid,
+        'expense-paid': (e: Entry) => e.type === 'expense' && e.paid,
+        'expense-unpaid': (e: Entry) => e.type === 'expense' && !e.paid,
       } as const
 
       const typeFilter = TYPE_FILTERS[selectedType as keyof typeof TYPE_FILTERS]
-      const matchesType = typeFilter ? typeFilter(transaction) : true
+      const matchesType = typeFilter ? typeFilter(entry) : true
       const matchesPeriod =
-        transactionTimestamp >= start.getTime() &&
-        transactionTimestamp <= end.getTime()
+        entryTimestamp >= start.getTime() && entryTimestamp <= end.getTime()
 
       return matchesSearch && matchesCategory && matchesType && matchesPeriod
     })
 
-    console.log('📊 Total de transações após filtro:', filtered.length)
+    console.log('📊 Total de lançamentos após filtro:', filtered.length)
     return filtered
   }, [
-    transactionsWithCategories,
+    entries,
     searchTerm,
     selectedCategory,
     selectedType,
@@ -278,23 +267,23 @@ export default function TransacoesPage() {
     currentPeriod,
   ])
 
-  // Ordenar transações por data (mais recentes primeiro)
-  const sortedTransactions = useMemo(() => {
-    return filteredTransactions.sort((a, b) => b.date - a.date)
-  }, [filteredTransactions])
+  // Ordenar lançamentos por data (mais recentes primeiro)
+  const sortedEntries = useMemo(() => {
+    return filteredEntries.sort((a, b) => b.date - a.date)
+  }, [filteredEntries])
 
-  // Agrupar transações por data
-  const groupedTransactions = useMemo(() => {
-    const groups = sortedTransactions.reduce(
-      (groups, transaction) => {
-        const date = new Date(transaction.date).toDateString()
+  // Agrupar lançamentos por data
+  const groupedEntries = useMemo(() => {
+    const groups = sortedEntries.reduce(
+      (groups, entry) => {
+        const date = new Date(entry.date * 1000).toDateString()
         if (!groups[date]) {
           groups[date] = []
         }
-        groups[date].push(transaction)
+        groups[date].push(entry)
         return groups
       },
-      {} as Record<string, typeof sortedTransactions>,
+      {} as Record<string, typeof sortedEntries>,
     )
 
     // Converter para array ordenado
@@ -302,7 +291,7 @@ export default function TransacoesPage() {
       ([dateA], [dateB]) =>
         new Date(dateB).getTime() - new Date(dateA).getTime(),
     )
-  }, [sortedTransactions])
+  }, [sortedEntries])
 
   // Key mapping para formatação de títulos de período
   const PERIOD_TITLE_FORMATTERS = {
@@ -336,52 +325,51 @@ export default function TransacoesPage() {
     return formatter ? formatter() : PERIOD_TITLE_FORMATTERS.monthly()
   }
 
-  // Calcular totais das transações filtradas
+  // Calcular totais dos lançamentos filtrados
   const filteredTotals = useMemo(() => {
-    const income = filteredTransactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0)
+    const income = filteredEntries
+      .filter((e) => e.type === 'income')
+      .reduce((sum, e) => sum + e.amount, 0)
 
-    const expense = filteredTransactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
+    const expense = filteredEntries
+      .filter((e) => e.type === 'expense')
+      .reduce((sum, e) => sum + e.amount, 0)
 
     return {
       income,
       expense,
       balance: income - expense,
     }
-  }, [filteredTransactions])
+  }, [filteredEntries])
 
   // Calcular dados do fluxo de caixa
   const cashflowData = useMemo(() => {
     const { start } = getCurrentPeriodRange()
-    const allTransactions = getTransactionsWithCategories()
 
     // Saldo anterior (antes do período atual)
-    const previousBalance = allTransactions
-      .filter((t) => new Date(t.date) < start)
-      .reduce((sum, t) => {
-        return t.type === 'income' ? sum + t.amount : sum - t.amount
+    const previousBalance = entries
+      .filter((e) => new Date(e.date * 1000) < start)
+      .reduce((sum, e) => {
+        return e.type === 'income' ? sum + e.amount : sum - e.amount
       }, 0)
 
     // Receitas e despesas realizadas (pagas)
-    const realizedIncome = filteredTransactions
-      .filter((t) => t.type === 'income' && t.paid)
-      .reduce((sum, t) => sum + t.amount, 0)
+    const realizedIncome = filteredEntries
+      .filter((e) => e.type === 'income' && e.paid)
+      .reduce((sum, e) => sum + e.amount, 0)
 
-    const realizedExpense = filteredTransactions
-      .filter((t) => t.type === 'expense' && t.paid)
-      .reduce((sum, t) => sum + t.amount, 0)
+    const realizedExpense = filteredEntries
+      .filter((e) => e.type === 'expense' && e.paid)
+      .reduce((sum, e) => sum + e.amount, 0)
 
     // Receitas e despesas previstas (não pagas)
-    const expectedIncome = filteredTransactions
-      .filter((t) => t.type === 'income' && !t.paid)
-      .reduce((sum, t) => sum + t.amount, 0)
+    const expectedIncome = filteredEntries
+      .filter((e) => e.type === 'income' && !e.paid)
+      .reduce((sum, e) => sum + e.amount, 0)
 
-    const expectedExpense = filteredTransactions
-      .filter((t) => t.type === 'expense' && !t.paid)
-      .reduce((sum, t) => sum + t.amount, 0)
+    const expectedExpense = filteredEntries
+      .filter((e) => e.type === 'expense' && !e.paid)
+      .reduce((sum, e) => sum + e.amount, 0)
 
     // Saldo atual e previsto
     const currentBalance = previousBalance + realizedIncome - realizedExpense
@@ -396,69 +384,62 @@ export default function TransacoesPage() {
       currentBalance,
       projectedBalance,
     }
-  }, [
-    filteredTransactions,
-    getCurrentPeriodRange,
-    getTransactionsWithCategories,
-  ])
+  }, [filteredEntries, getCurrentPeriodRange, entries])
 
-  const handleAddTransaction = (type: 'income' | 'expense') => {
-    setTransactionType(type)
-    setEditingTransaction(undefined)
+  const handleAddEntry = (type: 'income' | 'expense') => {
+    setEntryType(type)
+    setEditingEntry(undefined)
     setIsModalOpen(true)
   }
 
-  const handleEditTransaction = (transaction: Transaction) => {
-    setEditingTransaction(transaction)
-    setTransactionType(transaction.type)
+  const handleEditEntry = (entry: Entry) => {
+    setEditingEntry(entry)
+    setEntryType(entry.type)
     setIsModalOpen(true)
   }
 
-  const handleSubmitTransaction = (
-    data: TransactionFormSchema,
-    shouldClose = true,
-  ) => {
-    if (editingTransaction) {
-      updateTransaction(editingTransaction.id, data)
+  const handleSubmitEntry = (data: EntryFormSchema, shouldClose = true) => {
+    if (editingEntry) {
+      updateEntry(editingEntry.id, data)
     } else {
-      addTransaction(data)
+      addEntry(data)
     }
 
     if (shouldClose) {
       setIsModalOpen(false)
-      setEditingTransaction(undefined)
+      setEditingEntry(undefined)
     }
   }
 
-  const handleDeleteTransaction = (id: string) => {
-    setDeleteConfirmation({ isOpen: true, transactionId: id })
+  const handleDeleteEntry = (id: string) => {
+    setDeleteConfirmation({ isOpen: true, entryId: id })
   }
 
   const confirmDelete = () => {
-    if (deleteConfirmation.transactionId) {
-      deleteTransaction(deleteConfirmation.transactionId)
+    if (deleteConfirmation.entryId) {
+      deleteEntry(deleteConfirmation.entryId)
     }
-    setDeleteConfirmation({ isOpen: false, transactionId: null })
+    setDeleteConfirmation({ isOpen: false, entryId: null })
   }
 
-  const handleTogglePaidStatus = (transaction: Transaction) => {
+  const handleTogglePaidStatus = (entry: Entry) => {
     try {
       // Apenas alterar o status de pagamento, preservando todos os outros dados
       const updatedData = {
-        description: transaction.description,
-        amount: transaction.amount.toString(),
-        type: transaction.type,
-        categoryId: transaction.categoryId,
-        accountId: transaction.accountId || undefined,
-        creditCardId: transaction.creditCardId || undefined,
-        date: timestampToDateString(transaction.date), // Converter timestamp para string de data
-        paid: !transaction.paid,
+        description: entry.description,
+        amount: entry.amount.toString(),
+        type: entry.type,
+        categoryId: entry.categoryId,
+        accountId: entry.accountId || undefined,
+        creditCardId: entry.creditCardId || undefined,
+        date: timestampToDateString(entry.date * 1000), // Converter timestamp para string de data
+        paid: !entry.paid,
       }
 
-      updateTransaction(transaction.id, updatedData)
+      updateEntry(entry.id, updatedData)
 
-      const statusText = !transaction.paid ? 'pago' : 'não pago'
-      const entityType = transaction.type === 'income' ? 'Receita' : 'Despesa'
+      const statusText = !entry.paid ? 'pago' : 'não pago'
+      const entityType = entry.type === 'income' ? 'Receita' : 'Despesa'
       success.update(`${entityType} marcada como ${statusText}`)
     } catch (err) {
       error.update(
@@ -478,7 +459,7 @@ export default function TransacoesPage() {
           <div className="text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Carregando transações...
+              Carregando lançamentos...
             </p>
           </div>
         </div>
@@ -504,14 +485,14 @@ export default function TransacoesPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem
-                      onClick={() => handleAddTransaction('income')}
+                      onClick={() => handleAddEntry('income')}
                       className="text-green-600"
                     >
                       <CirclePlus className="mr-2 h-4 w-4" />
                       Nova Receita
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleAddTransaction('expense')}
+                      onClick={() => handleAddEntry('expense')}
                       className="text-red-600"
                     >
                       <CircleMinus className="mr-2 h-4 w-4" />
@@ -713,7 +694,7 @@ export default function TransacoesPage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                   <Input
                     id="search"
-                    placeholder="Buscar transações..."
+                    placeholder="Buscar lançamentos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -780,40 +761,40 @@ export default function TransacoesPage() {
                 </Button>
               </div>
             </div>
-            <CardTitle>Transações ({sortedTransactions.length})</CardTitle>
+            <CardTitle>Lançamentos ({sortedEntries.length})</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto px-4 py-4 sm:px-6">
-            {/* Lista de transações */}
-            {sortedTransactions.length === 0 ? (
+            {/* Lista de lançamentos */}
+            {sortedEntries.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">
                 <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p className="mb-2 text-lg font-medium">
                   {searchTerm ||
                   selectedCategory !== 'all' ||
                   selectedType !== 'all'
-                    ? 'Nenhuma transação encontrada'
-                    : 'Nenhuma transação cadastrada'}
+                    ? 'Nenhum lançamento encontrado'
+                    : 'Nenhum lançamento cadastrado'}
                 </p>
                 <p className="mb-4 text-sm">
                   {searchTerm ||
                   selectedCategory !== 'all' ||
                   selectedType !== 'all'
-                    ? 'Tente ajustar os filtros para encontrar suas transações'
-                    : 'Comece adicionando sua primeira transação'}
+                    ? 'Tente ajustar os filtros para encontrar seus lançamentos'
+                    : 'Comece adicionando seu primeiro lançamento'}
                 </p>
                 {!searchTerm &&
                   selectedCategory === 'all' &&
                   selectedType === 'all' && (
                     <div className="flex justify-center gap-2">
                       <Button
-                        onClick={() => handleAddTransaction('income')}
+                        onClick={() => handleAddEntry('income')}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <CirclePlus className="mr-2 h-4 w-4" />
                         Nova Receita
                       </Button>
                       <Button
-                        onClick={() => handleAddTransaction('expense')}
+                        onClick={() => handleAddEntry('expense')}
                         variant="destructive"
                       >
                         <CircleMinus className="mr-2 h-4 w-4" />
@@ -824,7 +805,7 @@ export default function TransacoesPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {groupedTransactions.map(([dateString, transactions]) => {
+                {groupedEntries.map(([dateString, entries]) => {
                   const date = new Date(dateString)
                   const today = new Date()
                   const yesterday = new Date(today)
@@ -837,8 +818,8 @@ export default function TransacoesPage() {
                     dateLabel = 'Ontem'
                   }
 
-                  const dayTotal = transactions.reduce((sum, t) => {
-                    return sum + (t.type === 'income' ? t.amount : -t.amount)
+                  const dayTotal = entries.reduce((sum, e) => {
+                    return sum + (e.type === 'income' ? e.amount : -e.amount)
                   }, 0)
 
                   return (
@@ -853,8 +834,8 @@ export default function TransacoesPage() {
                         </div>
                         <div className="flex flex-shrink-0 items-center gap-2">
                           <span className="text-xs text-muted-foreground">
-                            {transactions.length} transaç
-                            {transactions.length === 1 ? 'ão' : 'ões'}
+                            {entries.length} lançamento
+                            {entries.length === 1 ? '' : 's'}
                           </span>
                           <span className="text-xs">•</span>
                           <span
@@ -868,24 +849,24 @@ export default function TransacoesPage() {
                         </div>
                       </div>
 
-                      {/* Lista de transações do dia */}
+                      {/* Lista de lançamentos do dia */}
                       <div className="space-y-2">
-                        {transactions.map((transaction) => (
-                          <div key={transaction.id}>
+                        {entries.map((entry) => (
+                          <div key={entry.id}>
                             <div className="flex flex-col gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:gap-4">
                               {/* Linha superior em mobile / Coluna esquerda em desktop: Ícone + Nome + Categoria */}
                               <div className="flex min-w-0 flex-1 items-center gap-3">
                                 <div
                                   className={`flex-shrink-0 rounded-full p-2 ${
-                                    transaction.type === 'income'
+                                    entry.type === 'income'
                                       ? 'bg-green-100 dark:bg-green-900'
                                       : 'bg-red-100 dark:bg-red-900'
                                   }`}
                                 >
-                                  {transaction.type === 'income' ? (
+                                  {entry.type === 'income' ? (
                                     <ArrowUpIcon
                                       className={`h-4 w-4 ${
-                                        transaction.type === 'income'
+                                        entry.type === 'income'
                                           ? 'text-green-600'
                                           : 'text-red-600'
                                       }`}
@@ -896,7 +877,7 @@ export default function TransacoesPage() {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate font-medium">
-                                    {transaction.description}
+                                    {entry.description}
                                   </p>
                                   <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                                     <div className="flex min-w-0 items-center gap-1">
@@ -904,11 +885,11 @@ export default function TransacoesPage() {
                                         className="h-2 w-2 flex-shrink-0 rounded-full"
                                         style={{
                                           backgroundColor:
-                                            transaction.category.color,
+                                            entry.category?.color,
                                         }}
                                       />
                                       <span className="truncate">
-                                        {transaction.category.name}
+                                        {entry.category?.name}
                                       </span>
                                     </div>
                                   </div>
@@ -917,10 +898,9 @@ export default function TransacoesPage() {
 
                               {/* Linha do meio em mobile / Coluna centro em desktop: Conta/Cartão */}
                               <div className="flex justify-center sm:flex-1 sm:justify-center">
-                                {(transaction.accountId ||
-                                  transaction.creditCardId) && (
+                                {(entry.accountId || entry.creditCardId) && (
                                   <AccountCardIcon
-                                    transaction={transaction}
+                                    entry={entry}
                                     accounts={accounts}
                                     creditCards={creditCards}
                                   />
@@ -931,13 +911,13 @@ export default function TransacoesPage() {
                               <div className="flex flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
                                 <p
                                   className={`truncate text-lg font-semibold ${
-                                    transaction.type === 'income'
+                                    entry.type === 'income'
                                       ? 'text-green-600'
                                       : 'text-red-600'
                                   }`}
                                 >
-                                  {transaction.type === 'income' ? '+' : '-'}
-                                  {formatCurrency(transaction.amount)}
+                                  {entry.type === 'income' ? '+' : '-'}
+                                  {formatCurrency(entry.amount)}
                                 </p>
                                 <div className="flex flex-shrink-0 gap-1">
                                   <TooltipProvider>
@@ -947,15 +927,15 @@ export default function TransacoesPage() {
                                           variant="ghost"
                                           size="icon"
                                           onClick={() =>
-                                            handleTogglePaidStatus(transaction)
+                                            handleTogglePaidStatus(entry)
                                           }
                                           className={`${
-                                            transaction.paid
+                                            entry.paid
                                               ? 'text-green-600 hover:text-green-700'
                                               : 'text-gray-400 hover:text-gray-600'
                                           }`}
                                         >
-                                          {transaction.paid ? (
+                                          {entry.paid ? (
                                             <ThumbsUp className="h-4 w-4" />
                                           ) : (
                                             <ThumbsDown className="h-4 w-4" />
@@ -965,9 +945,7 @@ export default function TransacoesPage() {
                                       <TooltipContent>
                                         <p>
                                           Marcar como{' '}
-                                          {transaction.paid
-                                            ? 'não pago'
-                                            : 'pago'}
+                                          {entry.paid ? 'não pago' : 'pago'}
                                         </p>
                                       </TooltipContent>
                                     </Tooltip>
@@ -978,15 +956,13 @@ export default function TransacoesPage() {
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          onClick={() =>
-                                            handleEditTransaction(transaction)
-                                          }
+                                          onClick={() => handleEditEntry(entry)}
                                         >
                                           <Edit className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <p>Editar transação</p>
+                                        <p>Editar lançamento</p>
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
@@ -998,16 +974,14 @@ export default function TransacoesPage() {
                                           size="icon"
                                           className="text-destructive hover:text-destructive"
                                           onClick={() =>
-                                            handleDeleteTransaction(
-                                              transaction.id,
-                                            )
+                                            handleDeleteEntry(entry.id)
                                           }
                                         >
                                           <Trash2 className="h-4 w-4" />
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <p>Excluir transação</p>
+                                        <p>Excluir lançamento</p>
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
@@ -1262,23 +1236,23 @@ export default function TransacoesPage() {
           </div>
         )}
 
-        {/* Modal de transação */}
-        <TransactionFormModal
+        {/* Modal de lançamento */}
+        <EntryFormModal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false)
-            setEditingTransaction(undefined)
+            setEditingEntry(undefined)
           }}
-          transaction={editingTransaction}
-          onSubmit={handleSubmitTransaction}
+          entry={editingEntry}
+          onSubmit={handleSubmitEntry}
           categories={
-            transactionType === 'income' ? incomeCategories : expenseCategories
+            entryType === 'income' ? incomeCategories : expenseCategories
           }
-          type={transactionType}
+          type={entryType}
           title={
-            editingTransaction
-              ? `Editar ${transactionType === 'income' ? 'Receita' : 'Despesa'}`
-              : `Nova ${transactionType === 'income' ? 'Receita' : 'Despesa'}`
+            editingEntry
+              ? `Editar ${entryType === 'income' ? 'Receita' : 'Despesa'}`
+              : `Nova ${entryType === 'income' ? 'Receita' : 'Despesa'}`
           }
         />
 
@@ -1286,11 +1260,11 @@ export default function TransacoesPage() {
         <ConfirmationDialog
           isOpen={deleteConfirmation.isOpen}
           onClose={() =>
-            setDeleteConfirmation({ isOpen: false, transactionId: null })
+            setDeleteConfirmation({ isOpen: false, entryId: null })
           }
           onConfirm={confirmDelete}
-          title="Excluir Transação"
-          description="Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita."
+          title="Excluir Lançamento"
+          description="Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita."
           confirmText="Excluir"
           cancelText="Cancelar"
         />

@@ -1,15 +1,15 @@
 import { Prisma, PrismaClient } from '@prisma/client'
 
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
-import { TransactionRepository } from '@/repositories/transaction.repository'
+import { EntryRepository } from '@/repositories/entry.repository'
 import {
   TransactionCreateSchema,
   TransactionUpdateSchema,
 } from '@/utils/schemas'
 
-export class TransactionService {
+export class EntryService {
   constructor(
-    private transactionRepository: TransactionRepository,
+    private entryRepository: EntryRepository,
     private prisma: PrismaClient,
   ) {}
 
@@ -74,7 +74,7 @@ export class TransactionService {
         }
       }
 
-      const transactions = await this.transactionRepository.findMany({
+      const entries = await this.entryRepository.findMany({
         where,
         skip,
         take: limit,
@@ -111,11 +111,11 @@ export class TransactionService {
       })
 
       // Get total count for pagination
-      const total = await this.transactionRepository.count({ where })
+      const total = await this.entryRepository.count({ where })
       const totalPages = Math.ceil(total / limit)
 
       return {
-        transactions,
+        entries,
         pagination: {
           page,
           limit,
@@ -126,13 +126,13 @@ export class TransactionService {
         },
       }
     } catch (error) {
-      console.error('Error fetching transactions:', error)
+      console.error('Error fetching entries:', error)
       throw error
     }
   }
 
   async findById(id: string, userId: string) {
-    const transaction = await this.transactionRepository.findUnique({
+    const entry = await this.entryRepository.findUnique({
       where: { id, userId },
       include: {
         category: {
@@ -165,11 +165,11 @@ export class TransactionService {
       },
     })
 
-    if (!transaction) {
-      throw new BadRequestError('Transação não encontrada')
+    if (!entry) {
+      throw new BadRequestError('Lançamento não encontrado')
     }
 
-    return transaction
+    return entry
   }
 
   async create(data: TransactionCreateSchema, userId: string) {
@@ -204,7 +204,7 @@ export class TransactionService {
       }
     }
 
-    return this.transactionRepository.create({
+    return this.entryRepository.create({
       data: {
         ...data,
         user: { connect: { id: userId } },
@@ -253,7 +253,7 @@ export class TransactionService {
     data: Partial<TransactionUpdateSchema>,
     userId: string,
   ) {
-    // Check if transaction exists
+    // Check if entry exists
     await this.findById(id, userId)
 
     // Validate that category exists (if provided)
@@ -289,7 +289,7 @@ export class TransactionService {
       }
     }
 
-    return this.transactionRepository.update({
+    return this.entryRepository.update({
       where: { id, userId },
       data: {
         ...data,
@@ -336,10 +336,10 @@ export class TransactionService {
   }
 
   async delete(id: string, userId: string) {
-    // Check if transaction exists
+    // Check if entry exists
     await this.findById(id, userId)
 
-    return this.transactionRepository.delete({
+    return this.entryRepository.delete({
       where: { id, userId },
     })
   }

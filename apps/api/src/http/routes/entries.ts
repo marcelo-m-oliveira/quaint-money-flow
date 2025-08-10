@@ -1,88 +1,88 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
-import { TransactionFactory } from '@/factories/transaction.factory'
+import { EntryFactory } from '@/factories/entry.factory'
 import {
+  entryCreateSchema,
+  entryFiltersSchema,
+  entryListResponseSchema,
+  entryResponseSchema,
+  entryUpdateSchema,
   idParamSchema,
-  transactionCreateSchema,
-  transactionFiltersSchema,
-  transactionListResponseSchema,
-  transactionResponseSchema,
-  transactionUpdateSchema,
 } from '@/utils/schemas'
 
 import { authMiddleware } from '../middlewares/auth'
 
-export async function transactionRoutes(app: FastifyInstance) {
-  const transactionController = TransactionFactory.getController()
+export async function entryRoutes(app: FastifyInstance) {
+  const entryController = EntryFactory.getController()
 
   // Aplicar middleware de autenticação em todas as rotas
   app.addHook('onRequest', authMiddleware)
 
-  // GET /transactions - Listar transações do usuário com filtros
+  // GET /entries - Listar transações do usuário com filtros
   app.get(
     '/',
     {
       schema: {
-        querystring: transactionFiltersSchema,
+        querystring: entryFiltersSchema,
         response: {
-          200: transactionListResponseSchema,
+          200: entryListResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
     },
-    transactionController.index.bind(transactionController),
+    entryController.index.bind(entryController),
   )
 
-  // GET /transactions/:id - Buscar transação específica
+  // GET /entries/:id - Buscar transação específica
   app.get(
     '/:id',
     {
       schema: {
         params: idParamSchema,
         response: {
-          200: transactionResponseSchema,
+          200: entryResponseSchema,
           401: z.object({ error: z.string() }),
           404: z.object({ error: z.string() }),
         },
       },
     },
-    transactionController.show.bind(transactionController),
+    entryController.show.bind(entryController),
   )
 
-  // POST /transactions - Criar nova transação
+  // POST /entries - Criar nova transação
   app.post(
     '/',
     {
       schema: {
-        body: transactionCreateSchema,
+        body: entryCreateSchema,
         response: {
-          201: transactionResponseSchema,
+          201: entryResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
     },
-    transactionController.store.bind(transactionController),
+    entryController.store.bind(entryController),
   )
 
-  // PUT /transactions/:id - Atualizar transação
+  // PUT /entries/:id - Atualizar transação
   app.put(
     '/:id',
     {
       schema: {
         params: idParamSchema,
-        body: transactionUpdateSchema,
+        body: entryUpdateSchema,
         response: {
-          200: transactionResponseSchema,
+          200: entryResponseSchema,
           401: z.object({ error: z.string() }),
           404: z.object({ error: z.string() }),
         },
       },
     },
-    transactionController.update.bind(transactionController),
+    entryController.update.bind(entryController),
   )
 
-  // DELETE /transactions/:id - Excluir transação específica
+  // DELETE /entries/:id - Excluir transação específica
   app.delete(
     '/:id',
     {
@@ -95,6 +95,6 @@ export async function transactionRoutes(app: FastifyInstance) {
         },
       },
     },
-    transactionController.destroy.bind(transactionController),
+    entryController.destroy.bind(entryController),
   )
 }

@@ -34,7 +34,7 @@ export class UserPreferencesService {
 
     // Criar preferências com valores padrão
     const defaultPreferences = {
-      transactionOrder: 'descending' as const,
+      entryOrder: 'descending' as const,
       defaultNavigationPeriod: 'monthly' as const,
       showDailyBalance: false,
       viewMode: 'all' as const,
@@ -62,7 +62,7 @@ export class UserPreferencesService {
     if (!existingPreferences) {
       // Se não existir, criar com os dados fornecidos
       const defaultPreferences = {
-        transactionOrder: 'descending' as const,
+        entryOrder: 'descending' as const,
         defaultNavigationPeriod: 'monthly' as const,
         showDailyBalance: false,
         viewMode: 'all' as const,
@@ -92,7 +92,7 @@ export class UserPreferencesService {
     data: Partial<UserPreferencesSchema>,
   ): Promise<UserPreferences> {
     const defaultPreferences = {
-      transactionOrder: 'descending' as const,
+      entryOrder: 'descending' as const,
       defaultNavigationPeriod: 'monthly' as const,
       showDailyBalance: false,
       viewMode: 'all' as const,
@@ -114,7 +114,7 @@ export class UserPreferencesService {
 
   async reset(userId: string): Promise<UserPreferences> {
     const defaultPreferences = {
-      transactionOrder: 'descending' as const,
+      entryOrder: 'descending' as const,
       defaultNavigationPeriod: 'monthly' as const,
       showDailyBalance: false,
       viewMode: 'all' as const,

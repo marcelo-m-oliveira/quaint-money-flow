@@ -60,15 +60,15 @@ export class CreditCardRepository {
   }
 
   // Métodos específicos de negócio
-  async findByUserId(userId: string, includeTransactions = false) {
+  async findByUserId(userId: string, includeEntries = false) {
     return this.prisma.creditCard.findMany({
       where: { userId },
       include: {
-        transactions: includeTransactions,
+        entries: includeEntries,
         defaultPaymentAccount: true,
         _count: {
           select: {
-            transactions: true,
+            entries: true,
           },
         },
       },
@@ -98,7 +98,7 @@ export class CreditCardRepository {
     return this.prisma.creditCard.findMany({
       where: { userId },
       include: {
-        transactions: {
+        entries: {
           select: {
             amount: true,
             type: true,

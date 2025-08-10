@@ -63,7 +63,7 @@ export function Topbar() {
                 size="sm"
                 className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
               >
-                Transações
+                Lancamentos
               </Button>
             </Link>
             <Link href="/relatorios">

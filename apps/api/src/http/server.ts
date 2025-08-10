@@ -13,7 +13,7 @@ import {
 import { accountRoutes } from '@/http/routes/accounts'
 import { categoryRoutes } from '@/http/routes/categories'
 import { creditCardRoutes } from '@/http/routes/credit-cards'
-import { transactionRoutes } from '@/http/routes/transactions'
+import { entryRoutes } from '@/http/routes/entries'
 import { userPreferencesRoutes } from '@/http/routes/user-preferences'
 import { setupSwagger } from '@/lib/swagger'
 import { errorHandler } from '@/utils/errors'
@@ -82,7 +82,7 @@ export async function createApp() {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 
-  app.register(transactionRoutes, {
+  app.register(entryRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 

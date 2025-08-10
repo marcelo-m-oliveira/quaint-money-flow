@@ -69,7 +69,7 @@ export class CategoryRepository {
         _count: {
           select: {
             children: true,
-            transactions: true,
+            entries: true,
           },
         },
       },
@@ -129,7 +129,7 @@ export class CategoryRepository {
       include: {
         _count: {
           select: {
-            transactions: true,
+            entries: true,
             children: true,
           },
         },
@@ -143,7 +143,7 @@ export class CategoryRepository {
       name: category.name,
       icon: category.icon,
       type: category.type as 'income' | 'expense',
-      transactionCount: category._count.transactions,
+      entryCount: category._count.entries,
       totalAmount: 0, // Por enquanto, não calculamos o valor total
     }))
   }

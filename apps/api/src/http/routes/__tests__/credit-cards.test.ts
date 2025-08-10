@@ -185,7 +185,7 @@ const createTestApp = (): FastifyInstance => {
             .send({ error: 'Cartão de crédito não encontrado' })
         }
 
-        const transactions = await prisma.transaction.findMany({
+        const entries = await prisma.entry.findMany({
           where: {
             creditCardId: id,
             userId,
@@ -196,8 +196,8 @@ const createTestApp = (): FastifyInstance => {
           },
         })
 
-        const usage = transactions.reduce((acc, transaction) => {
-          return acc + Number(transaction.amount)
+        const usage = entries.reduce((acc, entry) => {
+          return acc + Number(entry.amount)
         }, 0)
 
         const availableLimit = Number(creditCard.limit) - usage
@@ -481,7 +481,7 @@ describe('Credit Cards Routes', () => {
       })
 
       // Criar algumas transações de teste
-      await prisma.transaction.createMany({
+      await prisma.entry.createMany({
         data: [
           {
             description: 'Compra 1',
