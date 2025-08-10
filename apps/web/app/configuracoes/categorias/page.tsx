@@ -21,13 +21,8 @@ import { CategoryIcon } from '@/lib/icon-map'
 import { Category, CategoryFormData } from '@/lib/types'
 
 export default function CategoriasPage() {
-  const {
-    categories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    isLoading,
-  } = useCategories()
+  const { categories, addCategory, updateCategory, deleteCategory, isLoading } =
+    useCategories()
 
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense')
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false)

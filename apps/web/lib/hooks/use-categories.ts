@@ -46,11 +46,13 @@ export function useCategories() {
     try {
       const newCategory = await categoriesService.create(data)
       setCategories((prev) => [newCategory, ...prev])
-      success.create('Categoria')
+      data.parentId
+        ? success.update('SubCategoria')
+        : success.update('Categoria')
       return newCategory
     } catch (err) {
       console.error('Error creating category:', err)
-      error.create('Categoria')
+      data.parentId ? error.update('SubCategoria') : error.update('Categoria')
       throw err
     }
   }
@@ -66,11 +68,14 @@ export function useCategories() {
           category.id === id ? updatedCategory : category,
         ),
       )
-      success.update('Categoria')
+
+      data.parentId
+        ? success.update('SubCategoria')
+        : success.update('Categoria')
       return updatedCategory
     } catch (err) {
       console.error('Error updating category:', err)
-      error.update('Categoria')
+      data.parentId ? error.update('SubCategoria') : error.update('Categoria')
       throw err
     }
   }
@@ -125,7 +130,7 @@ export function useCategories() {
   return {
     categories,
     isLoading,
-         error: errorState,
+    error: errorState,
     pagination,
     fetchCategories,
     addCategory,
