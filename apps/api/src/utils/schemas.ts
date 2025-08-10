@@ -1,113 +1,252 @@
-// Arquivo de exemplo mostrando como importar e usar os schemas existentes
+// Arquivo de schemas da API usando a estrutura padronizada
 // Este arquivo demonstra a integração com o package @quaint-money/validations
 
 import {
+  type AccountBalanceSchema,
+  accountBalanceSchema,
+  type AccountBaseSchema,
+  accountBaseSchema,
   type AccountCreateSchema,
   accountCreateSchema,
-  type AccountFormSchema,
-  accountSchema,
-  type CategoryFormSchema,
-  categorySchema,
-  type CreditCardFormSchema,
+  type AccountFiltersSchema,
+  accountFiltersSchema,
+  type AccountListResponseSchema,
+  accountListResponseSchema,
+  type AccountResponseSchema,
+  accountResponseSchema,
+  type AccountUpdateSchema,
+  accountUpdateSchema,
+  type CategoryBaseSchema,
+  categoryBaseSchema,
+  type CategoryCreateSchema,
+  categoryCreateSchema,
+  type CategoryFiltersSchema,
+  categoryFiltersSchema,
+  type CategoryResponseSchema,
+  categoryResponseSchema,
+  type CategoryUpdateSchema,
+  categoryUpdateSchema,
+  type CategoryUsageSchema,
+  categoryUsageSchema,
+  type ChangePasswordSchema,
+  changePasswordSchema,
+  type CreditCardBaseSchema,
+  creditCardBaseSchema,
+  type CreditCardCreateSchema,
+  creditCardCreateSchema,
+  type CreditCardListResponseSchema,
+  creditCardListResponseSchema,
+  type CreditCardResponseSchema,
   creditCardResponseSchema,
-  creditCardSchema,
-  preferencesSchema,
-  type TransactionFormSchema,
-  transactionSchema,
-  type UserPreferencesSchema,
+  type CreditCardUpdateSchema,
+  creditCardUpdateSchema,
+  type CreditCardUsageSchema,
+  creditCardUsageSchema,
+  type IdParamSchema,
+  // Schemas de validação
+  idParamSchema,
+  type LoginSchema,
+  // Schemas de autenticação
+  loginSchema,
+  type PaginationSchema,
+  paginationSchema,
+  type PreferencesBaseSchema,
+  preferencesBaseSchema,
+  type PreferencesCreateSchema,
+  preferencesCreateSchema,
+  type PreferencesResponseSchema,
+  preferencesResponseSchema,
+  type PreferencesUpdateSchema,
+  preferencesUpdateSchema,
+  type RegisterSchema,
+  registerSchema,
+  type SelectOptionSchema,
+  selectOptionSchema,
+  // Tipos
+  type TransactionBaseSchema,
+  // Schemas base
+  transactionBaseSchema,
+  type TransactionCreateSchema,
+  // Schemas de request
+  transactionCreateSchema,
+  type TransactionFiltersSchema,
+  transactionFiltersSchema,
+  type TransactionListResponseSchema,
+  // Schemas compostos
+  transactionListResponseSchema,
+  type TransactionResponseSchema,
+  // Schemas de response
+  transactionResponseSchema,
+  type TransactionUpdateSchema,
+  transactionUpdateSchema,
+  type UpdateProfileSchema,
+  updateProfileSchema,
 } from '@saas/validations'
-// Schemas adicionais específicos da API
 import { z } from 'zod'
 
-// Re-exportar schemas para uso nas rotas
+// ============================================================================
+// RE-EXPORTAÇÃO DOS SCHEMAS PRINCIPAIS
+// ============================================================================
+
+// Schemas base
 export {
-  transactionSchema,
-  categorySchema,
+  transactionBaseSchema,
+  categoryBaseSchema,
+  accountBaseSchema,
+  creditCardBaseSchema,
+  preferencesBaseSchema,
+}
+
+// Schemas de request
+export {
+  transactionCreateSchema,
+  transactionUpdateSchema,
+  categoryCreateSchema,
+  categoryUpdateSchema,
   accountCreateSchema,
-  accountSchema,
-  creditCardSchema,
+  accountUpdateSchema,
+  creditCardCreateSchema,
+  creditCardUpdateSchema,
+  preferencesCreateSchema,
+  preferencesUpdateSchema,
+}
+
+// Schemas de response
+export {
+  transactionResponseSchema,
+  categoryResponseSchema,
+  accountResponseSchema,
   creditCardResponseSchema,
-  preferencesSchema,
+  preferencesResponseSchema,
 }
 
-// Schema para criação de cartão de crédito (baseado no creditCardSchema)
-export const creditCardCreateSchema = creditCardSchema
+// Schemas compostos
+export {
+  transactionListResponseSchema,
+  accountListResponseSchema,
+  creditCardListResponseSchema,
+  selectOptionSchema,
+  categoryUsageSchema,
+  accountBalanceSchema,
+  creditCardUsageSchema,
+}
 
-// Re-exportar tipos para uso nos handlers
+// Schemas de validação
+export {
+  idParamSchema,
+  paginationSchema,
+  transactionFiltersSchema,
+  categoryFiltersSchema,
+  accountFiltersSchema,
+}
+
+// Schemas de autenticação
+export {
+  loginSchema,
+  registerSchema,
+  updateProfileSchema,
+  changePasswordSchema,
+}
+
+// ============================================================================
+// RE-EXPORTAÇÃO DOS TIPOS
+// ============================================================================
+
+// Tipos base
 export type {
-  TransactionFormSchema,
-  CategoryFormSchema,
-  AccountCreateSchema,
-  AccountFormSchema,
-  CreditCardFormSchema,
-  UserPreferencesSchema,
+  TransactionBaseSchema,
+  CategoryBaseSchema,
+  AccountBaseSchema,
+  CreditCardBaseSchema,
+  PreferencesBaseSchema,
 }
 
-export type CreditCardCreateSchema = z.infer<typeof creditCardCreateSchema>
+// Tipos de request
+export type {
+  TransactionCreateSchema,
+  TransactionUpdateSchema,
+  CategoryCreateSchema,
+  CategoryUpdateSchema,
+  AccountCreateSchema,
+  AccountUpdateSchema,
+  CreditCardCreateSchema,
+  CreditCardUpdateSchema,
+  PreferencesCreateSchema,
+  PreferencesUpdateSchema,
+}
 
-// Schema para parâmetros de ID
-export const idParamSchema = z.object({
-  id: z.string().min(1, 'ID é obrigatório'),
+// Tipos de response
+export type {
+  TransactionResponseSchema,
+  CategoryResponseSchema,
+  AccountResponseSchema,
+  CreditCardResponseSchema,
+  PreferencesResponseSchema,
+}
+
+// Tipos compostos
+export type {
+  TransactionListResponseSchema,
+  AccountListResponseSchema,
+  CreditCardListResponseSchema,
+  SelectOptionSchema,
+  CategoryUsageSchema,
+  AccountBalanceSchema,
+  CreditCardUsageSchema,
+}
+
+// Tipos de validação
+export type {
+  IdParamSchema,
+  PaginationSchema,
+  TransactionFiltersSchema,
+  CategoryFiltersSchema,
+  AccountFiltersSchema,
+}
+
+// Tipos de autenticação
+export type {
+  LoginSchema,
+  RegisterSchema,
+  UpdateProfileSchema,
+  ChangePasswordSchema,
+}
+
+// ============================================================================
+// SCHEMAS ESPECÍFICOS DA API (se necessário)
+// ============================================================================
+
+// Schema para resposta de erro padrão
+export const errorResponseSchema = z.object({
+  error: z.string(),
+  message: z.string(),
+  details: z
+    .array(
+      z.object({
+        field: z.string(),
+        message: z.string(),
+      }),
+    )
+    .optional(),
 })
 
-// Schema para paginação
-export const paginationSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
+// Schema para resposta de sucesso genérica
+export const successResponseSchema = z.object({
+  message: z.string(),
+  data: z.unknown().optional(),
 })
 
-// Schema para filtros de transação
-export const transactionFiltersSchema = z
-  .object({
-    type: z.enum(['income', 'expense']).optional(),
-    categoryId: z.string().optional(),
-    accountId: z.string().optional(),
-    creditCardId: z.string().optional(),
-    paid: z.coerce.boolean().optional(),
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
-    search: z.string().optional(),
-  })
-  .merge(paginationSchema)
-
-// Schema para login
-export const loginSchema = z.object({
-  email: z.string().email('Email deve ser válido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+// Schema para resposta de paginação genérica
+export const paginationResponseSchema = z.object({
+  page: z.number(),
+  limit: z.number(),
+  total: z.number(),
+  totalPages: z.number(),
+  hasNext: z.boolean(),
+  hasPrev: z.boolean(),
 })
 
-// Schema para registro
-export const registerSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email deve ser válido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-})
-
-// Schema para atualização de perfil
-export const updateProfileSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
-  email: z.string().email('Email deve ser válido').optional(),
-})
-
-// Schema para alteração de senha
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Senha atual é obrigatória'),
-    newPassword: z
-      .string()
-      .min(6, 'Nova senha deve ter pelo menos 6 caracteres'),
-    confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória'),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Senhas não coincidem',
-    path: ['confirmPassword'],
-  })
-
-// Tipos inferidos dos schemas da API
-export type IdParamSchema = z.infer<typeof idParamSchema>
-export type PaginationSchema = z.infer<typeof paginationSchema>
-export type TransactionFiltersSchema = z.infer<typeof transactionFiltersSchema>
-export type LoginSchema = z.infer<typeof loginSchema>
-export type RegisterSchema = z.infer<typeof registerSchema>
-export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>
-export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>
+// Tipos inferidos dos schemas específicos da API
+export type ErrorResponseSchema = z.infer<typeof errorResponseSchema>
+export type SuccessResponseSchema = z.infer<typeof successResponseSchema>
+export type PaginationResponseSchema = z.infer<typeof paginationResponseSchema>

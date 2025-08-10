@@ -4,10 +4,14 @@ import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
 import {
+  accountBalanceSchema,
   accountCreateSchema,
-  accountSchema,
+  accountFiltersSchema,
+  accountListResponseSchema,
+  accountResponseSchema,
+  accountUpdateSchema,
   idParamSchema,
-  paginationSchema,
+  selectOptionSchema,
 } from '@/utils/schemas'
 
 import { authMiddleware } from '../middlewares/auth'
@@ -21,14 +25,7 @@ export async function accountRoutes(app: FastifyInstance) {
     {
       schema: {
         response: {
-          200: z.array(
-            z.object({
-              value: z.string(),
-              label: z.string(),
-              icon: z.string(),
-              iconType: z.string(),
-            }),
-          ),
+          200: z.array(selectOptionSchema),
           401: z.object({ error: z.string() }),
         },
       },
@@ -42,24 +39,9 @@ export async function accountRoutes(app: FastifyInstance) {
     '/accounts',
     {
       schema: {
-        querystring: paginationSchema.merge(
-          z.object({
-            type: z.enum(['bank', 'investment', 'cash', 'other']).optional(),
-            includeInGeneralBalance: z.boolean().optional(),
-          }),
-        ),
+        querystring: accountFiltersSchema,
         response: {
-          200: z.object({
-            accounts: z.array(accountSchema as any),
-            pagination: z.object({
-              page: z.number(),
-              limit: z.number(),
-              total: z.number(),
-              totalPages: z.number(),
-              hasNext: z.boolean(),
-              hasPrev: z.boolean(),
-            }),
-          }),
+          200: accountListResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -74,7 +56,7 @@ export async function accountRoutes(app: FastifyInstance) {
       schema: {
         params: idParamSchema,
         response: {
-          200: accountSchema,
+          200: accountResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -89,7 +71,7 @@ export async function accountRoutes(app: FastifyInstance) {
       schema: {
         body: accountCreateSchema,
         response: {
-          201: accountSchema,
+          201: accountResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -103,9 +85,9 @@ export async function accountRoutes(app: FastifyInstance) {
     {
       schema: {
         params: idParamSchema,
-        body: accountCreateSchema.partial(),
+        body: accountUpdateSchema,
         response: {
-          200: accountSchema,
+          200: accountResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -135,11 +117,7 @@ export async function accountRoutes(app: FastifyInstance) {
       schema: {
         params: idParamSchema,
         response: {
-          200: z.object({
-            balance: z.number(),
-            accountId: z.string(),
-            lastUpdated: z.string(),
-          }),
+          200: accountBalanceSchema,
           401: z.object({ error: z.string() }),
         },
       },

@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { dateToSeconds } from '@saas/utils'
+import { UserPreferencesSchema } from '@saas/validations'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
 import { UserPreferencesService } from '@/services/user-preferences.service'
 import { handleError } from '@/utils/errors'
-
-import type { UserPreferencesSchema } from '../utils/schemas'
 
 export class UserPreferencesController {
   constructor(private userPreferencesService: UserPreferencesService) {}

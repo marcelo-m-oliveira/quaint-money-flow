@@ -3,7 +3,11 @@ import { z } from 'zod'
 
 import { UserPreferencesFactory } from '@/factories/user-preferences.factory'
 import { authMiddleware } from '@/http/middlewares/auth'
-import { preferencesSchema } from '@/utils/schemas'
+import {
+  preferencesCreateSchema,
+  preferencesResponseSchema,
+  preferencesUpdateSchema,
+} from '@/utils/schemas'
 
 export async function userPreferencesRoutes(app: FastifyInstance) {
   const userPreferencesController = UserPreferencesFactory.getController()
@@ -14,12 +18,7 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
     {
       schema: {
         response: {
-          200: preferencesSchema.extend({
-            id: z.string(),
-            userId: z.string(),
-            createdAt: z.number(),
-            updatedAt: z.number(),
-          }),
+          200: preferencesResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -33,14 +32,9 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
     '/user-preferences',
     {
       schema: {
-        body: preferencesSchema.partial(),
+        body: preferencesUpdateSchema,
         response: {
-          200: preferencesSchema.extend({
-            id: z.string(),
-            userId: z.string(),
-            createdAt: z.number(),
-            updatedAt: z.number(),
-          }),
+          200: preferencesResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -54,14 +48,9 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
     '/user-preferences',
     {
       schema: {
-        body: preferencesSchema.partial(),
+        body: preferencesCreateSchema,
         response: {
-          200: preferencesSchema.extend({
-            id: z.string(),
-            userId: z.string(),
-            createdAt: z.number(),
-            updatedAt: z.number(),
-          }),
+          200: preferencesResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },
@@ -76,12 +65,7 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
     {
       schema: {
         response: {
-          200: preferencesSchema.extend({
-            id: z.string(),
-            userId: z.string(),
-            createdAt: z.number(),
-            updatedAt: z.number(),
-          }),
+          200: preferencesResponseSchema,
           401: z.object({ error: z.string() }),
         },
       },

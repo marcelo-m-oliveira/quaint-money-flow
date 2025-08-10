@@ -2,7 +2,7 @@
 import { dateToSeconds, secondsToDate } from '@saas/utils'
 import { FastifyReply, FastifyRequest } from 'fastify'
 
-import { TransactionService } from '../services/transaction.service'
+import { TransactionService } from '@/services/transaction.service'
 
 export class TransactionController {
   private transactionService: TransactionService

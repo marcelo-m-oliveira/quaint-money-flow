@@ -1,4 +1,14 @@
 import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+
+import {
+  idParamSchema,
+  transactionCreateSchema,
+  transactionFiltersSchema,
+  transactionListResponseSchema,
+  transactionResponseSchema,
+  transactionUpdateSchema,
+} from '@/utils/schemas'
 
 import { TransactionFactory } from '../../factories/transaction.factory'
 import { authMiddleware } from '../middlewares/auth'
@@ -10,26 +20,109 @@ export async function transactionRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authMiddleware)
 
   // GET /transactions - Listar transações do usuário com filtros
-  app.get('/', transactionController.index.bind(transactionController))
+  app.get(
+    '/',
+    {
+      schema: {
+        querystring: transactionFiltersSchema,
+        response: {
+          200: transactionListResponseSchema,
+          401: z.object({ error: z.string() }),
+        },
+      },
+    },
+    transactionController.index.bind(transactionController),
+  )
 
   // GET /transactions/:id - Buscar transação específica
-  app.get('/:id', transactionController.show.bind(transactionController))
+  app.get(
+    '/:id',
+    {
+      schema: {
+        params: idParamSchema,
+        response: {
+          200: transactionResponseSchema,
+          401: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+        },
+      },
+    },
+    transactionController.show.bind(transactionController),
+  )
 
   // POST /transactions - Criar nova transação
-  app.post('/', transactionController.store.bind(transactionController))
+  app.post(
+    '/',
+    {
+      schema: {
+        body: transactionCreateSchema,
+        response: {
+          201: transactionResponseSchema,
+          401: z.object({ error: z.string() }),
+        },
+      },
+    },
+    transactionController.store.bind(transactionController),
+  )
 
   // PUT /transactions/:id - Atualizar transação
-  app.put('/:id', transactionController.update.bind(transactionController))
+  app.put(
+    '/:id',
+    {
+      schema: {
+        params: idParamSchema,
+        body: transactionUpdateSchema,
+        response: {
+          200: transactionResponseSchema,
+          401: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+        },
+      },
+    },
+    transactionController.update.bind(transactionController),
+  )
 
   // DELETE /transactions/:id - Excluir transação específica
-  app.delete('/:id', transactionController.destroy.bind(transactionController))
+  app.delete(
+    '/:id',
+    {
+      schema: {
+        params: idParamSchema,
+        response: {
+          204: z.null(),
+          401: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+        },
+      },
+    },
+    transactionController.destroy.bind(transactionController),
+  )
 
   // DELETE /transactions - Excluir todas as transações do usuário
-  app.delete('/', transactionController.destroyAll.bind(transactionController))
+  app.delete(
+    '/',
+    {
+      schema: {
+        response: {
+          204: z.null(),
+          401: z.object({ error: z.string() }),
+        },
+      },
+    },
+    transactionController.destroyAll.bind(transactionController),
+  )
 
   // DELETE /transactions/user-data - Excluir todos os dados do usuário
   app.delete(
     '/user-data',
+    {
+      schema: {
+        response: {
+          204: z.null(),
+          401: z.object({ error: z.string() }),
+        },
+      },
+    },
     transactionController.destroyAllUserData.bind(transactionController),
   )
 }

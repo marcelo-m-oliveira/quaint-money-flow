@@ -34,32 +34,45 @@ export async function authMiddleware(
 
     // Para desenvolvimento, vamos usar um usuário padrão
     // Em produção, você deve decodificar o JWT token aqui
-    const user = await prisma.user.findFirst({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-      },
-    })
+    try {
+      const user = await prisma.user.findFirst({
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      })
 
-    if (!user) {
-      request.log.warn(
-        { ...requestInfo },
-        'Usuario nao encontrado na base de dados',
+      if (!user) {
+        request.log.warn(
+          { ...requestInfo },
+          'Usuario nao encontrado na base de dados',
+        )
+        return reply.status(401).send({ message: 'Usuario nao encontrado' })
+      }
+
+      // Adicionar usuario ao request
+      request.user = {
+        ...user,
+        sub: user.id,
+      }
+
+      request.log.info(
+        { ...requestInfo, userId: user.id, userEmail: user.email },
+        'Autenticacao realizada com sucesso',
       )
-      return reply.status(401).send({ message: 'Usuario nao encontrado' })
+    } catch (dbError: any) {
+      request.log.error(
+        {
+          method: request.method,
+          url: request.url,
+          ip: request.ip,
+          error: dbError.message,
+        },
+        'Erro ao buscar usuario no banco de dados',
+      )
+      return reply.status(500).send({ message: 'Erro interno do servidor' })
     }
-
-    // Adicionar usuario ao request
-    request.user = {
-      ...user,
-      sub: user.id,
-    }
-
-    request.log.info(
-      { ...requestInfo, userId: user.id, userEmail: user.email },
-      'Autenticacao realizada com sucesso',
-    )
   } catch (error: any) {
     request.log.error(
       {
