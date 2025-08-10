@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client'
+import { Category, Prisma, PrismaClient } from '@prisma/client'
 
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { CategoryRepository } from '@/repositories/category.repository'
@@ -13,6 +13,15 @@ export class CategoryService {
     private categoryRepository: CategoryRepository,
     private prisma: PrismaClient,
   ) {}
+
+  // Função auxiliar para herdar propriedades do parent
+  private inheritFromParent(data: any, parentCategory: Category) {
+    return {
+      ...data,
+      color: data.parentId ? parentCategory.color : data.color,
+      icon: data.parentId ? parentCategory.icon : data.icon,
+    }
+  }
 
   async findMany(
     userId: string,
@@ -137,12 +146,8 @@ export class CategoryService {
         throw new BadRequestError('Categoria pai nao encontrada')
       }
 
-      // Herdar cor e ícone do parent se não foram fornecidos
-      finalData = {
-        ...finalData,
-        color: finalData.color || parentCategory.color,
-        icon: finalData.icon || parentCategory.icon,
-      }
+      // Herdar cor e ícone do parent
+      finalData = this.inheritFromParent(finalData, parentCategory)
     }
 
     // Preparar dados para criação, removendo parentId e adicionando as conexões
@@ -200,7 +205,9 @@ export class CategoryService {
       }
     }
 
-    // Verificar se a categoria pai existe (se fornecida)
+    // Verificar se a categoria pai existe (se fornecida) e herdar propriedades
+    let finalData = { ...data }
+    
     if (data.parentId) {
       const parentCategory = await this.prisma.category.findUnique({
         where: {
@@ -212,10 +219,13 @@ export class CategoryService {
       if (!parentCategory) {
         throw new BadRequestError('Categoria pai nao encontrada')
       }
+
+      // Herdar cor e ícone do parent
+      finalData = this.inheritFromParent(finalData, parentCategory)
     }
 
     // Preparar dados para atualização, removendo parentId
-    const { parentId, ...updateData } = data
+    const { parentId, ...updateData } = finalData
 
     // Conectar categoria pai se fornecida
     const updatePayload: any = { ...updateData }
@@ -231,7 +241,7 @@ export class CategoryService {
 
     return this.categoryRepository.update({
       where: { id, userId },
-      data: updateData,
+      data: updatePayload,
       include: {
         parent: {
           select: {
