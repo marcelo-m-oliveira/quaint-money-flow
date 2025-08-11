@@ -46,7 +46,7 @@ export async function categoryRoutes(app: FastifyInstance) {
 
   // GET /categories/select - Opções para selects
   app.get(
-    '/categories/select',
+    '/categories/select-options',
     {
       schema: {
         querystring: z.object({

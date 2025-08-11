@@ -116,7 +116,7 @@ export default function LancamentoPage() {
 
   const { success, error } = useCrudToast()
 
-  const { preferences, updatePreferences } = useUserPreferencesWithAutoInit()
+  const { preferences, isInitialized, updatePreferences } = useUserPreferencesWithAutoInit()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<Entry | undefined>(undefined)
@@ -131,7 +131,9 @@ export default function LancamentoPage() {
 
   // Estados para controle de período
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [currentPeriod, setCurrentPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'>('monthly')
+  const [currentPeriod, setCurrentPeriod] = useState<
+    'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+  >('monthly')
 
   // Estados para modo de visualização
   const [viewMode, setViewMode] = useState<'cashflow' | 'all'>('all')
@@ -139,7 +141,8 @@ export default function LancamentoPage() {
   const [tempViewMode, setTempViewMode] = useState<'cashflow' | 'all'>('all')
 
   // Estado para controlar expansão do resumo financeiro
-  const [isFinancialSummaryExpanded, setIsFinancialSummaryExpanded] = useState(false)
+  const [isFinancialSummaryExpanded, setIsFinancialSummaryExpanded] =
+    useState(false)
 
   // Função para alterar modo de visualização e salvar preferência
   const handleViewModeChange = (newViewMode: 'cashflow' | 'all') => {
@@ -168,13 +171,13 @@ export default function LancamentoPage() {
 
   // Sincronizar estados locais com preferências quando mudarem
   useEffect(() => {
-    if (preferences && preferences.isInitialized) {
+    if (preferences && isInitialized) {
       setCurrentPeriod(preferences.defaultNavigationPeriod)
       setViewMode(preferences.viewMode)
       setTempViewMode(preferences.viewMode)
       setIsFinancialSummaryExpanded(preferences.isFinancialSummaryExpanded)
     }
-  }, [preferences])
+  }, [preferences, isInitialized])
 
   // Funções para navegação de período
   const navigatePeriod = (direction: 'prev' | 'next') => {
@@ -790,7 +793,9 @@ export default function LancamentoPage() {
                               <span className="text-xs">•</span>
                               <span
                                 className={`text-sm font-medium ${
-                                  dayTotal >= 0 ? 'text-green-600' : 'text-red-600'
+                                  dayTotal >= 0
+                                    ? 'text-green-600'
+                                    : 'text-red-600'
                                 }`}
                               >
                                 {dayTotal >= 0 ? '+' : ''}

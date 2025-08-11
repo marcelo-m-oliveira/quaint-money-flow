@@ -49,7 +49,8 @@ export function EntryFormModal({
   showCreateAnotherButton = true,
 }: EntryFormModalProps) {
   const { options: accountOptions } = useAccountSelectOptions()
-  const { options: categoryOptions, isLoading: categoryLoading } = useCategorySelectOptions(type, isOpen)
+  const { options: categoryOptions, isLoading: categoryLoading } =
+    useCategorySelectOptions(type, isOpen)
   const { options: creditCardOptions } = useCreditCardSelectOptions()
 
   const {
@@ -217,7 +218,13 @@ export function EntryFormModal({
                 disabled={categoryLoading}
               >
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder={categoryLoading ? "Carregando..." : "Selecione a categoria..."} />
+                  <SelectValue
+                    placeholder={
+                      categoryLoading
+                        ? 'Carregando...'
+                        : 'Selecione a categoria...'
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {categoryLoading ? (

@@ -106,7 +106,7 @@ export const categoriesService = {
     if (type) searchParams.append('type', type)
 
     const queryString = searchParams.toString()
-    const endpoint = `/categories/select${queryString ? `?${queryString}` : ''}`
+    const endpoint = `/categories/select-options${queryString ? `?${queryString}` : ''}`
 
     return apiClient.get<SelectOption[]>(endpoint)
   },

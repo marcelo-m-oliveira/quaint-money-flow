@@ -56,11 +56,10 @@ export class UserPreferencesService {
     data: Partial<UserPreferencesSchema>,
   ): Promise<UserPreferences> {
     // Verificar se as preferências existem
-    const existingPreferences =
-      await this.userPreferencesRepository.findByUserId(userId)
+    const existingPreferences = await this.userPreferencesRepository.findByUserId(userId)
 
     if (!existingPreferences) {
-      // Se não existir, criar com os dados fornecidos
+      // Se não existir, criar com valores padrão + dados fornecidos
       const defaultPreferences = {
         entryOrder: 'descending' as const,
         defaultNavigationPeriod: 'monthly' as const,
@@ -80,7 +79,7 @@ export class UserPreferencesService {
       })
     }
 
-    // Atualizar preferências existentes
+    // Se existir, apenas atualizar os campos fornecidos
     return this.userPreferencesRepository.update({
       where: { userId },
       data,

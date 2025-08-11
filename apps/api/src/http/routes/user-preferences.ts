@@ -27,8 +27,8 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
     userPreferencesController.show.bind(userPreferencesController),
   )
 
-  // PUT /user-preferences - Atualizar preferências do usuário
-  app.put(
+  // PATCH /user-preferences - Atualizar preferências do usuário (parcial)
+  app.patch(
     '/user-preferences',
     {
       schema: {

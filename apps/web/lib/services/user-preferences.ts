@@ -7,7 +7,7 @@ export const userPreferencesService = {
   },
 
   async update(data: UserPreferencesFormData): Promise<UserPreferences> {
-    return apiClient.put<UserPreferences>('/user-preferences', data)
+    return apiClient.patch<UserPreferences>('/user-preferences', data)
   },
 
   async upsert(data: UserPreferencesFormData): Promise<UserPreferences> {

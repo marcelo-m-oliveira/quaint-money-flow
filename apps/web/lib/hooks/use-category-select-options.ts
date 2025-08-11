@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react'
 
 import { categoriesService, SelectOption } from '@/lib/services/categories'
 
-export function useCategorySelectOptions(type?: 'income' | 'expense', shouldFetch = true) {
+export function useCategorySelectOptions(
+  type?: 'income' | 'expense',
+  shouldFetch = true,
+) {
   const [options, setOptions] = useState<SelectOption[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +44,7 @@ export function useCategorySelectOptions(type?: 'income' | 'expense', shouldFetc
     error,
     refetch: () => {
       if (!shouldFetch) return
-      
+
       const fetchOptions = async () => {
         try {
           setIsLoading(true)

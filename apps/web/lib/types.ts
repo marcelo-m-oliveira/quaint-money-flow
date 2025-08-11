@@ -126,7 +126,7 @@ export interface BankIcon {
 export interface UserPreferences {
   id: string
   userId: string
-  transactionOrder: 'ascending' | 'descending'
+  entryOrder: 'ascending' | 'descending'
   defaultNavigationPeriod:
     | 'daily'
     | 'weekly'
@@ -141,7 +141,7 @@ export interface UserPreferences {
 }
 
 export interface UserPreferencesFormData {
-  transactionOrder?: 'ascending' | 'descending'
+  entryOrder?: 'ascending' | 'descending'
   defaultNavigationPeriod?:
     | 'daily'
     | 'weekly'

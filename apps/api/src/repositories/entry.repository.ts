@@ -13,4 +13,11 @@ export class EntryRepository extends BaseRepository<'entry'> {
   }) {
     return this.prisma.entry.findUnique(params)
   }
+
+  async create(params: {
+    data: Prisma.EntryCreateInput
+    include?: Prisma.EntryInclude
+  }) {
+    return this.prisma.entry.create(params)
+  }
 }

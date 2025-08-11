@@ -36,8 +36,12 @@ export function UserPreferencesProvider({
     try {
       setIsLoading(true)
       const response = await userPreferencesService.get()
+
+      // Mapear campos da API para o frontend
       const preferencesWithDates = {
         ...response,
+        // Mapear entryOrder para entryOrder
+        entryOrder: response.entryOrder,
         createdAt: response.createdAt,
         updatedAt: response.updatedAt,
       }
@@ -48,8 +52,12 @@ export function UserPreferencesProvider({
       // Se não encontrar preferências, criar com valores padrão
       try {
         const defaultPreferences = await userPreferencesService.upsert({})
+
+        // Mapear campos da API para o frontend
         const preferencesWithDates = {
           ...defaultPreferences,
+          // Mapear entryOrder para entryOrder
+          entryOrder: defaultPreferences.entryOrder,
           createdAt: defaultPreferences.createdAt,
           updatedAt: defaultPreferences.updatedAt,
         }
@@ -75,13 +83,14 @@ export function UserPreferencesProvider({
     async (data: UserPreferencesFormData) => {
       try {
         setIsLoading(true)
-        const updatedPreferences = await userPreferencesService.update(data)
-        const preferencesWithDates = {
-          ...updatedPreferences,
-          createdAt: updatedPreferences.createdAt,
-          updatedAt: updatedPreferences.updatedAt,
-        }
-        setPreferences(preferencesWithDates)
+
+        // Enviar apenas os campos que estão sendo alterados
+        const apiData: Partial<UserPreferencesFormData> = { ...data }
+
+        const updatedPreferences = await userPreferencesService.update(apiData)
+
+        // Mapear campos da API para o frontend
+        setPreferences(updatedPreferences)
         success.update('Preferências atualizadas com sucesso')
         return updatedPreferences
       } catch (err) {
@@ -103,13 +112,13 @@ export function UserPreferencesProvider({
     async (data: UserPreferencesFormData) => {
       try {
         setIsLoading(true)
-        const upsertedPreferences = await userPreferencesService.upsert(data)
-        const preferencesWithDates = {
-          ...upsertedPreferences,
-          createdAt: upsertedPreferences.createdAt,
-          updatedAt: upsertedPreferences.updatedAt,
-        }
-        setPreferences(preferencesWithDates)
+
+        // Enviar apenas os campos que estão sendo alterados
+        const apiData: Partial<UserPreferencesFormData> = { ...data }
+
+        const upsertedPreferences = await userPreferencesService.upsert(apiData)
+
+        setPreferences(upsertedPreferences)
         success.create('Preferências salvas com sucesso')
         return upsertedPreferences
       } catch (err) {
@@ -128,12 +137,8 @@ export function UserPreferencesProvider({
     try {
       setIsLoading(true)
       const resetPreferences = await userPreferencesService.reset()
-      const preferencesWithDates = {
-        ...resetPreferences,
-        createdAt: resetPreferences.createdAt,
-        updatedAt: resetPreferences.updatedAt,
-      }
-      setPreferences(preferencesWithDates)
+
+      setPreferences(resetPreferences)
       success.update('Preferências resetadas para o padrão')
       return resetPreferences
     } catch (err) {
