@@ -52,7 +52,7 @@ export class EntryController {
         entries: result.entries.map((entry: any) => ({
           ...entry,
           amount: entry.amount.toString(), // Convert Decimal to string
-          date: entry.date ? entry.date.toISOString() : '', // Convert Date to string (YYYY-MM-DD)
+          date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secund
           createdAt: entry.createdAt
             ? dateToSeconds(entry.createdAt)
             : undefined,
@@ -124,7 +124,7 @@ export class EntryController {
       const convertedEntry = {
         ...entry,
         amount: entry.amount.toString(), // Convert Decimal to string
-        date: entry.date ? entry.date.toISOString() : '', // Convert Date to string (YYYY-MM-DD)
+        date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secunds
         createdAt: entry.createdAt ? dateToSeconds(entry.createdAt) : undefined,
         updatedAt: entry.updatedAt ? dateToSeconds(entry.updatedAt) : undefined,
         creditCardId: entry.creditCardId || '', // Convert null to empty string
@@ -151,11 +151,11 @@ export class EntryController {
 
       request.log.info({ userId, entryData: data }, 'Criando nova transação')
 
-      // Convert date from string to Date and amount from string to number before saving to database
+      // Convert date from seconds to Date and amount from string to number before saving to database
       const processedData = {
         ...data,
         amount: parseFloat(data.amount || '0'),
-        date: data.date ? new Date(data.date) : new Date(),
+        date: data.date ? secondsToDate(data.date) : new Date(),
       } as any // Temporary type assertion to bypass type checking
 
       const entry = await this.entryService.create(processedData, userId)
@@ -169,7 +169,7 @@ export class EntryController {
       const convertedEntry = {
         ...entry,
         amount: entry.amount.toString(), // Convert Decimal to string
-        date: entry.date ? entry.date.toISOString() : '', // Convert Date to string (YYYY-MM-DD)
+        date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secunds
         createdAt: entry.createdAt ? dateToSeconds(entry.createdAt) : undefined,
         updatedAt: entry.updatedAt ? dateToSeconds(entry.updatedAt) : undefined,
         creditCardId: entry.creditCardId || '', // Convert null to empty string
@@ -196,13 +196,13 @@ export class EntryController {
         'Atualizando transação',
       )
 
-      // Convert date from string to Date and amount from string to number before saving to database
+      // Convert date from seconds to Date and amount from string to number before saving to database
       const processedData = {
         ...data,
         ...(data.amount !== undefined && {
           amount: parseFloat(data.amount || '0'),
         }),
-        ...(data.date && { date: new Date(data.date) }),
+        ...(data.date && { date: secondsToDate(data.date) }),
       } as any // Temporary type assertion to bypass type checking
 
       const entry = await this.entryService.update(id, processedData, userId)
@@ -216,7 +216,7 @@ export class EntryController {
       const convertedEntry = {
         ...entry,
         amount: entry.amount.toString(), // Convert Decimal to string
-        date: entry.date ? entry.date.toISOString() : '', // Convert Date to string (YYYY-MM-DD)
+        date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secunds
         createdAt: entry.createdAt ? dateToSeconds(entry.createdAt) : undefined,
         updatedAt: entry.updatedAt ? dateToSeconds(entry.updatedAt) : undefined,
         creditCardId: entry.creditCardId || '', // Convert null to empty string

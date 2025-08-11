@@ -1,4 +1,4 @@
-import { dateStringToTimestamp } from '@saas/utils'
+import { dateToSeconds } from '@saas/utils'
 
 import { apiClient } from '@/lib/api'
 import type {
@@ -35,20 +35,20 @@ export const entriesService = {
 
   // Criar novo lançamento
   async create(data: EntryFormData): Promise<Entry> {
-    // Convert date string to timestamp for API
+    // Convert date string to seconds for API
     const processedData = {
       ...data,
-      date: dateStringToTimestamp(data.date),
+      date: dateToSeconds(new Date(data.date)),
     }
     return await apiClient.post<Entry>('/entries', processedData)
   },
 
   // Atualizar lançamento
   async update(id: string, data: Partial<EntryFormData>): Promise<Entry> {
-    // Convert date string to timestamp for API if date is provided
+    // Convert date string to seconds for API if date is provided
     const processedData = {
       ...data,
-      ...(data.date && { date: dateStringToTimestamp(data.date) }),
+      ...(data.date && { date: dateToSeconds(new Date(data.date)) }),
     }
     return await apiClient.put<Entry>(`/entries/${id}`, processedData)
   },
