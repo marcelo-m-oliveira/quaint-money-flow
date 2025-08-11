@@ -104,7 +104,13 @@ export const creditCardBaseSchema = z.object({
 // Schema base para preferências do usuário (sem valores padrão)
 export const preferencesStrictBaseSchema = z.object({
   entryOrder: z.enum(['ascending', 'descending']),
-  defaultNavigationPeriod: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly']),
+  defaultNavigationPeriod: z.enum([
+    'daily',
+    'weekly',
+    'monthly',
+    'quarterly',
+    'yearly',
+  ]),
   showDailyBalance: z.boolean(),
   viewMode: z.enum(['all', 'cashflow']),
   isFinancialSummaryExpanded: z.boolean(),
@@ -426,7 +432,9 @@ export type EntryBaseSchema = z.infer<typeof entryBaseSchema>
 export type CategoryBaseSchema = z.infer<typeof categoryBaseSchema>
 export type AccountBaseSchema = z.infer<typeof accountBaseSchema>
 export type CreditCardBaseSchema = z.infer<typeof creditCardBaseSchema>
-export type PreferencesStrictBaseSchema = z.infer<typeof preferencesStrictBaseSchema>
+export type PreferencesStrictBaseSchema = z.infer<
+  typeof preferencesStrictBaseSchema
+>
 export type PreferencesBaseSchema = z.infer<typeof preferencesBaseSchema>
 
 // Tipos de request

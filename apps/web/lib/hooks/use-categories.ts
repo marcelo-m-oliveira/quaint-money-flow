@@ -63,11 +63,24 @@ export function useCategories() {
   ) => {
     try {
       const updatedCategory = await categoriesService.update(id, data)
-      setCategories((prev) =>
-        prev.map((category) =>
-          category.id === id ? updatedCategory : category,
-        ),
-      )
+      setCategories((prev) => {
+        return prev.map((category) => {
+          // Atualizar a categoria principal
+          if (category.id === id) {
+            return updatedCategory
+          }
+          // Se a categoria editada é pai desta categoria e houve mudança na cor ou ícone,
+          // atualizar as categorias filhas com as novas propriedades
+          if (category.parentId === id && (data.color || data.icon)) {
+            return {
+              ...category,
+              ...(data.color && { color: data.color }),
+              ...(data.icon && { icon: data.icon }),
+            }
+          }
+          return category
+        })
+      })
 
       data.parentId
         ? success.update('SubCategoria')

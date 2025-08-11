@@ -234,15 +234,61 @@ export class CategoryService {
       updatePayload.parent = {
         connect: { id: parentId },
       }
-    } else {
+    } else if (parentId === null) {
       updatePayload.parent = {
         disconnect: true,
       }
     }
 
-    return this.categoryRepository.update({
+    // Atualizar a categoria principal
+    await this.categoryRepository.update({
       where: { id, userId },
       data: updatePayload,
+      include: {
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
+        children: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
+      },
+    })
+
+    // Se houve mudança na cor ou ícone, verificar se há categorias filhas e atualizá-las
+    if (data.color || data.icon) {
+      const childrenUpdateData: any = {}
+
+      if (data.color) {
+        childrenUpdateData.color = data.color
+      }
+
+      if (data.icon) {
+        childrenUpdateData.icon = data.icon
+      }
+
+      // Atualizar todas as categorias filhas com a nova cor/ícone
+      await this.prisma.category.updateMany({
+        where: {
+          parentId: id,
+          userId,
+        },
+        data: childrenUpdateData,
+      })
+    }
+
+    // Retornar a categoria atualizada com as filhas atualizadas
+    return this.categoryRepository.findUnique({
+      where: { id, userId },
       include: {
         parent: {
           select: {
