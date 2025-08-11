@@ -47,8 +47,8 @@ export class CategoryController {
         ...result,
         categories: result.categories.map((category: Category) => ({
           ...category,
-          createdAt: dateToSeconds(category.createdAt),
-          updatedAt: dateToSeconds(category.updatedAt),
+          createdAt: category.createdAt ? dateToSeconds(category.createdAt) : undefined,
+          updatedAt: category.updatedAt ? dateToSeconds(category.updatedAt) : undefined,
         })),
       }
 
@@ -131,8 +131,8 @@ export class CategoryController {
       // Convert dates to seconds for frontend
       const convertedCategory = {
         ...category,
-        createdAt: dateToSeconds(category.createdAt),
-        updatedAt: dateToSeconds(category.updatedAt),
+        createdAt: category.createdAt ? dateToSeconds(category.createdAt) : undefined,
+        updatedAt: category.updatedAt ? dateToSeconds(category.updatedAt) : undefined,
       }
 
       return reply.status(200).send(convertedCategory)
@@ -166,8 +166,8 @@ export class CategoryController {
       // Convert dates to seconds for frontend
       const convertedCategory = {
         ...category,
-        createdAt: dateToSeconds(category.createdAt),
-        updatedAt: dateToSeconds(category.updatedAt),
+        createdAt: category.createdAt ? dateToSeconds(category.createdAt) : undefined,
+        updatedAt: category.updatedAt ? dateToSeconds(category.updatedAt) : undefined,
       }
 
       return reply.status(201).send(convertedCategory)
@@ -205,8 +205,8 @@ export class CategoryController {
       // Convert dates to seconds for frontend
       const convertedCategory = {
         ...category,
-        createdAt: dateToSeconds(category.createdAt),
-        updatedAt: dateToSeconds(category.updatedAt),
+        createdAt: category.createdAt ? dateToSeconds(category.createdAt) : undefined,
+        updatedAt: category.updatedAt ? dateToSeconds(category.updatedAt) : undefined,
       }
 
       return reply.status(200).send(convertedCategory)

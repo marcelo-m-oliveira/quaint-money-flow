@@ -199,16 +199,19 @@ export class EntryService {
       }
     }
 
+    // Remove ID fields from data to avoid conflicts with Prisma relations
+    const { categoryId, accountId, creditCardId, ...entryData } = data
+
     return this.entryRepository.create({
       data: {
-        ...data,
+        ...entryData,
         user: { connect: { id: userId } },
-        category: { connect: { id: data.categoryId } },
-        ...(data.accountId && {
-          account: { connect: { id: data.accountId } },
+        category: { connect: { id: categoryId } },
+        ...(accountId && {
+          account: { connect: { id: accountId } },
         }),
-        ...(data.creditCardId && {
-          creditCard: { connect: { id: data.creditCardId } },
+        ...(creditCardId && {
+          creditCard: { connect: { id: creditCardId } },
         }),
       },
       include: {
@@ -279,9 +282,31 @@ export class EntryService {
       }
     }
 
+    // Remove ID fields from data to avoid conflicts with Prisma relations
+    const { categoryId, accountId, creditCardId, ...updateData } = data
+
+    // Build update data with proper relations
+    const updatePayload: any = { ...updateData }
+    
+    if (categoryId) {
+      updatePayload.category = { connect: { id: categoryId } }
+    }
+    
+    if (accountId) {
+      updatePayload.account = { connect: { id: accountId } }
+    } else if (accountId === null) {
+      updatePayload.account = { disconnect: true }
+    }
+    
+    if (creditCardId) {
+      updatePayload.creditCard = { connect: { id: creditCardId } }
+    } else if (creditCardId === null) {
+      updatePayload.creditCard = { disconnect: true }
+    }
+
     return this.prisma.entry.update({
       where: { id, userId },
-      data,
+      data: updatePayload,
       include: {
         category: {
           select: {

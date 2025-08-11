@@ -46,8 +46,8 @@ export class AccountController {
         ...result,
         accounts: result.accounts.map((account) => ({
           ...account,
-          createdAt: dateToSeconds(account.createdAt),
-          updatedAt: dateToSeconds(account.updatedAt),
+          createdAt: account.createdAt ? dateToSeconds(account.createdAt) : undefined,
+          updatedAt: account.updatedAt ? dateToSeconds(account.updatedAt) : undefined,
         })),
       }
 
@@ -102,8 +102,8 @@ export class AccountController {
       // Convert dates to seconds for frontend
       const convertedAccount = {
         ...account,
-        createdAt: dateToSeconds(account.createdAt),
-        updatedAt: dateToSeconds(account.updatedAt),
+        createdAt: account.createdAt ? dateToSeconds(account.createdAt) : undefined,
+        updatedAt: account.updatedAt ? dateToSeconds(account.updatedAt) : undefined,
       }
 
       return reply.status(200).send(convertedAccount)
@@ -131,8 +131,8 @@ export class AccountController {
       // Convert dates to seconds for frontend
       const convertedAccount = {
         ...account,
-        createdAt: dateToSeconds(account.createdAt),
-        updatedAt: dateToSeconds(account.updatedAt),
+        createdAt: account.createdAt ? dateToSeconds(account.createdAt) : undefined,
+        updatedAt: account.updatedAt ? dateToSeconds(account.updatedAt) : undefined,
       }
 
       return reply.status(201).send(convertedAccount)
@@ -164,8 +164,8 @@ export class AccountController {
       // Convert dates to seconds for frontend
       const convertedAccount = {
         ...account,
-        createdAt: dateToSeconds(account.createdAt),
-        updatedAt: dateToSeconds(account.updatedAt),
+        createdAt: account.createdAt ? dateToSeconds(account.createdAt) : undefined,
+        updatedAt: account.updatedAt ? dateToSeconds(account.updatedAt) : undefined,
       }
 
       return reply.status(200).send(convertedAccount)
