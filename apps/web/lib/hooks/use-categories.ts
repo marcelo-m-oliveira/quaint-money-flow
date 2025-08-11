@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 
+import { categoriesService } from '@/lib/services/categories'
 import {
   CategoriesQueryParams,
   CategoriesResponse,
-  categoriesService,
   Category,
   CategoryFormData,
-} from '@/lib/services/categories'
+} from '@/lib/types'
 
 import { useCrudToast } from './use-crud-toast'
 

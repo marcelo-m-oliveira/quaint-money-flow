@@ -1,29 +1,11 @@
 import { apiClient } from '../api'
 import { CreditCardFormSchema } from '../schemas'
-import { CreditCard } from '../types'
-
-export interface SelectOption {
-  value: string
-  label: string
-  icon: string
-  iconType: 'bank' | 'generic'
-}
-
-export interface CreditCardsQueryParams {
-  page?: number
-  limit?: number
-  search?: string
-}
-
-export interface CreditCardsResponse {
-  creditCards: CreditCard[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-}
+import type {
+  CreditCard,
+  CreditCardsQueryParams,
+  CreditCardsResponse,
+  SelectOption,
+} from '../types'
 
 export const creditCardsService = {
   async getAll(params?: CreditCardsQueryParams): Promise<CreditCardsResponse> {

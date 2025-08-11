@@ -6,9 +6,9 @@ import { useMemo, useState } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CategoryIcon } from '@/lib/components/category-icon'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
-import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Entry } from '@/lib/types'
 
 interface ExpenseSummaryCardProps {

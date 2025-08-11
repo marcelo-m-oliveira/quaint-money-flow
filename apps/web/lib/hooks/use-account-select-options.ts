@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
-import { accountsService, SelectOption } from '@/lib/services/accounts'
+import { accountsService } from '@/lib/services/accounts'
+import { SelectOption } from '@/lib/types'
 
 export function useAccountSelectOptions() {
   const [options, setOptions] = useState<SelectOption[]>([])

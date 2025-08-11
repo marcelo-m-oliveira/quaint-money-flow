@@ -63,7 +63,7 @@ import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useEntries } from '@/lib/hooks/use-entries'
 import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
 import { EntryFormSchema } from '@/lib/schemas'
-import { Entry } from '@/lib/services/entries'
+import { Entry } from '@/lib/types'
 
 // Funções utilitárias para filtros de período
 function getStartOfWeek(date: Date): Date {
@@ -116,7 +116,8 @@ export default function LancamentoPage() {
 
   const { success, error } = useCrudToast()
 
-  const { preferences, isInitialized, updatePreferences } = useUserPreferencesWithAutoInit()
+  const { preferences, isInitialized, updatePreferences } =
+    useUserPreferencesWithAutoInit()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<Entry | undefined>(undefined)
@@ -268,14 +269,14 @@ export default function LancamentoPage() {
         groups[date].push(entry)
         return groups
       },
-      {} as Record<string, typeof sortedEntries>,
+      {} as Record<string, Entry[]>,
     )
 
     // Converter para array ordenado
     return Object.entries(groups).sort(
       ([dateA], [dateB]) =>
         new Date(dateB).getTime() - new Date(dateA).getTime(),
-    )
+    ) as [string, Entry[]][]
   }, [sortedEntries])
 
   // Key mapping para formatação de títulos de período

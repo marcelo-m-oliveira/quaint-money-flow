@@ -3,7 +3,9 @@
  */
 
 // Tipo para os períodos disponíveis
-export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+import type { PeriodType } from './types'
+
+export type { PeriodType }
 
 // Funções auxiliares para cálculo de períodos
 function getStartOfWeek(date: Date): Date {

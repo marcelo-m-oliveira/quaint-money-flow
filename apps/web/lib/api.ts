@@ -1,22 +1,10 @@
 import { env } from '@saas/env'
 
+import type { ApiResponse, PaginatedResponse } from './types'
+
 const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
-export interface ApiResponse<T> {
-  data?: T
-  error?: string
-  message?: string
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-}
+export type { ApiResponse, PaginatedResponse }
 
 class ApiClient {
   private baseURL: string

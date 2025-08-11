@@ -354,8 +354,10 @@ export function CreditCardFormModal({
                     <SelectItem key={option.value} value={option.value}>
                       <div className="flex items-center gap-2">
                         <AccountSelectIcon
-                          icon={option.icon}
-                          iconType={option.iconType}
+                          icon={option.icon || ''}
+                          iconType={
+                            (option.iconType as 'bank' | 'generic') || 'generic'
+                          }
                           name={option.label}
                           size="sm"
                         />

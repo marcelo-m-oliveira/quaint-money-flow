@@ -46,8 +46,12 @@ export class CreditCardController {
           ...creditCard,
           limit: Number(creditCard.limit),
           usage: Number(creditCard.usage || 0),
-          createdAt: creditCard.createdAt ? dateToSeconds(creditCard.createdAt) : undefined,
-          updatedAt: creditCard.updatedAt ? dateToSeconds(creditCard.updatedAt) : undefined,
+          createdAt: creditCard.createdAt
+            ? dateToSeconds(creditCard.createdAt)
+            : undefined,
+          updatedAt: creditCard.updatedAt
+            ? dateToSeconds(creditCard.updatedAt)
+            : undefined,
         })),
       }
 
@@ -110,8 +114,12 @@ export class CreditCardController {
         ...creditCard,
         limit: Number(creditCard.limit),
         usage: 0,
-        createdAt: creditCard.createdAt ? dateToSeconds(creditCard.createdAt) : undefined,
-        updatedAt: creditCard.updatedAt ? dateToSeconds(creditCard.updatedAt) : undefined,
+        createdAt: creditCard.createdAt
+          ? dateToSeconds(creditCard.createdAt)
+          : undefined,
+        updatedAt: creditCard.updatedAt
+          ? dateToSeconds(creditCard.updatedAt)
+          : undefined,
       }
 
       return reply.status(200).send(convertedCreditCard)
@@ -144,8 +152,12 @@ export class CreditCardController {
         ...creditCard,
         limit: Number(creditCard.limit),
         usage: 0,
-        createdAt: creditCard.createdAt ? dateToSeconds(creditCard.createdAt) : undefined,
-        updatedAt: creditCard.updatedAt ? dateToSeconds(creditCard.updatedAt) : undefined,
+        createdAt: creditCard.createdAt
+          ? dateToSeconds(creditCard.createdAt)
+          : undefined,
+        updatedAt: creditCard.updatedAt
+          ? dateToSeconds(creditCard.updatedAt)
+          : undefined,
       }
 
       return reply.status(201).send(convertedCreditCard)
@@ -179,8 +191,12 @@ export class CreditCardController {
         ...creditCard,
         limit: Number(creditCard.limit),
         usage: 0,
-        createdAt: creditCard.createdAt ? dateToSeconds(creditCard.createdAt) : undefined,
-        updatedAt: creditCard.updatedAt ? dateToSeconds(creditCard.updatedAt) : undefined,
+        createdAt: creditCard.createdAt
+          ? dateToSeconds(creditCard.createdAt)
+          : undefined,
+        updatedAt: creditCard.updatedAt
+          ? dateToSeconds(creditCard.updatedAt)
+          : undefined,
       }
 
       return reply.status(200).send(convertedCreditCard)

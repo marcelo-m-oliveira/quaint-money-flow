@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
-import { categoriesService, SelectOption } from '@/lib/services/categories'
+import { categoriesService } from '@/lib/services/categories'
+import { SelectOption } from '@/lib/types'
 
 export function useCategorySelectOptions(
   type?: 'income' | 'expense',

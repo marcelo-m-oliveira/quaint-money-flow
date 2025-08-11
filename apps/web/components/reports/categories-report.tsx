@@ -16,9 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { CategoryIcon } from '@/lib/components/category-icon'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useTheme } from '@/lib/hooks/use-theme'
-import { CategoryIcon } from '@/lib/icon-map'
 
 interface CategoriesReportProps {
   period: ReportPeriod

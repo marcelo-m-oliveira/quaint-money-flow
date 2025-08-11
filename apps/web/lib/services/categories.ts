@@ -1,73 +1,12 @@
 import { apiClient } from '@/lib/api'
-
-export interface Category {
-  id: string
-  name: string
-  color: string
-  type: 'income' | 'expense'
-  icon: string
-  parentId?: string
-  createdAt: number
-  updatedAt: number
-  parent?: {
-    id: string
-    name: string
-    color: string
-    icon: string
-  }
-  children?: Array<{
-    id: string
-    name: string
-    color: string
-    icon: string
-    type: 'income' | 'expense'
-  }>
-}
-
-export interface CategoryFormData {
-  name: string
-  color: string
-  type: 'income' | 'expense'
-  icon: string
-  parentId?: string
-}
-
-export interface CategoriesQueryParams {
-  page?: number
-  limit?: number
-  type?: 'income' | 'expense'
-  search?: string
-  parentId?: string
-}
-
-export interface CategoriesResponse {
-  categories: Category[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-    hasNext: boolean
-    hasPrev: boolean
-  }
-}
-
-export interface SelectOption {
-  value: string
-  label: string
-  icon: string
-  iconType: string
-  color?: string
-}
-
-export interface CategoryUsage {
-  id: string
-  name: string
-  icon: string
-  type: 'income' | 'expense'
-  transactionCount: number
-  totalAmount: number
-}
+import type {
+  CategoriesQueryParams,
+  CategoriesResponse,
+  Category,
+  CategoryFormData,
+  CategoryUsage,
+  SelectOption,
+} from '@/lib/types'
 
 export const categoriesService = {
   async getAll(params?: CategoriesQueryParams): Promise<CategoriesResponse> {

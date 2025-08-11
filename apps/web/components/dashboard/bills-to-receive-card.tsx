@@ -13,9 +13,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { CategoryIcon } from '@/lib/components/category-icon'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import { CategoryIcon } from '@/lib/icon-map'
 import { Category, Entry } from '@/lib/types'
 
 interface BillsToReceiveCardProps {

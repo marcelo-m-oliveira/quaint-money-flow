@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CategoryIcon } from '@/lib/components/category-icon'
 import { PERIOD_TITLE_FORMATTERS, PeriodType } from '@/lib/date-utils'
-import { CategoryIcon } from '@/lib/icon-map'
 
 import {
   Select,

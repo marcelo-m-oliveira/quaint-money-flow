@@ -2,6 +2,8 @@
 
 import { toast } from 'sonner'
 
+// Tipos para facilitar o uso
+
 /**
  * Hook personalizado para exibir toasts padronizados para operações CRUD
  * Utiliza o Sonner para notificações mais modernas e performáticas
@@ -97,7 +99,3 @@ export function useCrudToast() {
     warning,
   }
 }
-
-// Tipos para facilitar o uso
-export type CrudToastType = 'success' | 'error' | 'warning' | 'info'
-export type CrudOperation = 'create' | 'update' | 'delete' | 'save'

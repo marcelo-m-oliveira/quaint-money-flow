@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma, PrismaClient } from '@prisma/client'
 
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
@@ -287,17 +288,17 @@ export class EntryService {
 
     // Build update data with proper relations
     const updatePayload: any = { ...updateData }
-    
+
     if (categoryId) {
       updatePayload.category = { connect: { id: categoryId } }
     }
-    
+
     if (accountId) {
       updatePayload.account = { connect: { id: accountId } }
     } else if (accountId === null) {
       updatePayload.account = { disconnect: true }
     }
-    
+
     if (creditCardId) {
       updatePayload.creditCard = { connect: { id: creditCardId } }
     } else if (creditCardId === null) {

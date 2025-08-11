@@ -1,29 +1,11 @@
-import { apiClient } from '../api'
-import { Account, AccountFormData } from '../types'
-
-export interface AccountsQueryParams {
-  page?: number
-  limit?: number
-  search?: string
-  type?: string
-}
-
-export interface AccountsResponse {
-  accounts: Account[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-}
-
-export interface SelectOption {
-  value: string
-  label: string
-  icon: string
-  iconType: 'bank' | 'generic'
-}
+import type {
+  Account,
+  AccountFormData,
+  AccountsQueryParams,
+  AccountsResponse,
+  SelectOption,
+} from '@/lib'
+import { apiClient } from '@/lib'
 
 export const accountsService = {
   async getAll(params?: AccountsQueryParams): Promise<AccountsResponse> {

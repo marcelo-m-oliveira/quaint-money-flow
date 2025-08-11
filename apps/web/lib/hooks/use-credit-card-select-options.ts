@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
-import { creditCardsService, SelectOption } from '@/lib/services/credit-cards'
+import { creditCardsService } from '@/lib/services/credit-cards'
+import { SelectOption } from '@/lib/types'
 
 export function useCreditCardSelectOptions() {
   const [options, setOptions] = useState<SelectOption[]>([])

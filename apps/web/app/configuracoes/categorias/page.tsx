@@ -16,8 +16,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { CategoryIcon } from '@/lib/components/category-icon'
 import { useCategories } from '@/lib/hooks/use-categories'
-import { CategoryIcon } from '@/lib/icon-map'
 import { Category, CategoryFormData } from '@/lib/types'
 
 export default function CategoriasPage() {
@@ -88,7 +88,9 @@ export default function CategoriasPage() {
           const subcategories = categories.filter(
             (cat) => cat.parentId === category.id,
           )
-          subcategories.forEach((sub) => deleteCategory(sub.id))
+          subcategories.forEach((sub) => {
+            if (sub.id) deleteCategory(sub.id)
+          })
           deleteCategory(category.id as string)
           setConfirmDialog({ ...confirmDialog, isOpen: false })
         },

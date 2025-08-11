@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 
+import { entriesService } from '@/lib/services/entries'
 import {
   EntriesQueryParams,
   EntriesResponse,
-  entriesService,
   Entry,
   EntryFormData,
-} from '@/lib/services/entries'
+} from '@/lib/types'
 
 import { useCrudToast } from './use-crud-toast'
 

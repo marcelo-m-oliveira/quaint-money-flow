@@ -35,7 +35,7 @@ export default function PreferenciasPage() {
   } = useForm<UserPreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
-      transactionOrder: preferences?.transactionOrder || 'descending',
+      entryOrder: preferences?.entryOrder || 'descending',
       defaultNavigationPeriod:
         preferences?.defaultNavigationPeriod || 'monthly',
       showDailyBalance: preferences?.showDailyBalance ?? true,
@@ -124,7 +124,7 @@ export default function PreferenciasPage() {
               </div>
               <div className="w-32">
                 <Controller
-                  name="transactionOrder"
+                  name="entryOrder"
                   control={control}
                   render={({ field }) => (
                     <RadioGroup
@@ -155,9 +155,9 @@ export default function PreferenciasPage() {
                 />
               </div>
             </div>
-            {errors.transactionOrder && (
+            {errors.entryOrder && (
               <p className="text-sm text-red-500">
-                {errors.transactionOrder.message}
+                {errors.entryOrder.message}
               </p>
             )}
           </div>

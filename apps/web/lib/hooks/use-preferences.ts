@@ -3,25 +3,9 @@
 import { useEffect, useState } from 'react'
 
 import { preferencesSchema } from '@/lib/schemas'
+import type { UserPreferences } from '@/lib/types'
 
 import { useCrudToast } from './use-crud-toast'
-
-// Definir tipo específico para as preferências do usuário
-export type UserPreferences = {
-  entryOrder: 'ascending' | 'descending'
-  defaultNavigationPeriod:
-    | 'daily'
-    | 'weekly'
-    | 'monthly'
-    | 'quarterly'
-    | 'yearly'
-  showDailyBalance: boolean
-  viewMode: 'all' | 'cashflow'
-  isFinancialSummaryExpanded: boolean
-}
-
-// Tipo para o formulário (campos opcionais)
-export type PreferencesFormData = Partial<UserPreferences>
 
 const PREFERENCES_STORAGE_KEY = 'quaint-money-preferences'
 

@@ -56,7 +56,8 @@ export class UserPreferencesService {
     data: Partial<UserPreferencesSchema>,
   ): Promise<UserPreferences> {
     // Verificar se as preferências existem
-    const existingPreferences = await this.userPreferencesRepository.findByUserId(userId)
+    const existingPreferences =
+      await this.userPreferencesRepository.findByUserId(userId)
 
     if (!existingPreferences) {
       // Se não existir, criar com valores padrão + dados fornecidos

@@ -5,11 +5,11 @@ import { Check, Save } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
+import { CategoryIcon } from '@/lib/components/category-icon'
 import { formatDateForInput, timestampToDateString } from '@/lib/format'
 import { useAccountSelectOptions } from '@/lib/hooks/use-account-select-options'
 import { useCategorySelectOptions } from '@/lib/hooks/use-category-select-options'
 import { useCreditCardSelectOptions } from '@/lib/hooks/use-credit-card-select-options'
-import { CategoryIcon } from '@/lib/icon-map'
 import { EntryFormSchema, entrySchema } from '@/lib/schemas'
 import { Entry } from '@/lib/types'
 
@@ -309,8 +309,11 @@ export function EntryFormModal({
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center gap-2">
                             <AccountSelectIcon
-                              icon={option.icon}
-                              iconType={option.iconType}
+                              icon={option.icon || ''}
+                              iconType={
+                                (option.iconType as 'bank' | 'generic') ||
+                                'generic'
+                              }
                               name={option.label}
                               size="sm"
                             />
@@ -338,8 +341,11 @@ export function EntryFormModal({
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center gap-2">
                             <AccountSelectIcon
-                              icon={option.icon}
-                              iconType={option.iconType}
+                              icon={option.icon || ''}
+                              iconType={
+                                (option.iconType as 'bank' | 'generic') ||
+                                'generic'
+                              }
                               name={option.label}
                               size="sm"
                             />

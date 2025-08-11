@@ -168,7 +168,7 @@ enum EntryOrder {
   descending
 
   @@map("entry_order")
-  @@schema("finance")
+  @@schema("auth")
 }
 
 enum NavigationPeriod {
@@ -179,7 +179,7 @@ enum NavigationPeriod {
   yearly
 
   @@map("navigation_period")
-  @@schema("finance")
+  @@schema("auth")
 }
 
 enum ViewMode {
@@ -187,5 +187,5 @@ enum ViewMode {
   cashflow
 
   @@map("view_mode")
-  @@schema("finance")
+  @@schema("auth")
 }
