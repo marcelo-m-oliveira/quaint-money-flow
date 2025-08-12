@@ -363,8 +363,12 @@ export const entryFiltersSchema = z
     accountId: z.string().optional(),
     creditCardId: z.string().optional(),
     paid: z.coerce.boolean().optional(),
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
+    startDate: z
+      .union([z.string().datetime(), z.string().regex(/^\d+$/)])
+      .optional(),
+    endDate: z
+      .union([z.string().datetime(), z.string().regex(/^\d+$/)])
+      .optional(),
     search: z.string().optional(),
   })
   .merge(paginationSchema)

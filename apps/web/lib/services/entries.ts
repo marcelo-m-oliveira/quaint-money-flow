@@ -8,6 +8,16 @@ import type {
   EntryFormData,
 } from '@/lib/types'
 
+// Helper function to convert API response to proper types
+function convertEntryFromApi(
+  entry: Entry & { amount: string | number },
+): Entry {
+  return {
+    ...entry,
+    amount: entry.amount,
+  }
+}
+
 // Service
 export const entriesService = {
   // Listar lançamentos com filtros
@@ -22,15 +32,23 @@ export const entriesService = {
       })
     }
 
-    const endpoint = queryParams.toString()
-      ? `/entries?${queryParams.toString()}`
-      : '/entries'
-    return await apiClient.get<EntriesResponse>(endpoint)
+    // Adicionar cache-busting para forçar nova requisição
+    queryParams.append('_t', Date.now().toString())
+
+    const endpoint = `/entries?${queryParams.toString()}`
+    const response = await apiClient.get<EntriesResponse>(endpoint)
+
+    // Convert entries to proper types
+    return {
+      ...response,
+      entries: response.entries.map(convertEntryFromApi),
+    }
   },
 
   // Buscar lançamento por ID
   async getById(id: string): Promise<Entry> {
-    return await apiClient.get<Entry>(`/entries/${id}`)
+    const entry = await apiClient.get<Entry>(`/entries/${id}`)
+    return convertEntryFromApi(entry)
   },
 
   // Criar novo lançamento
@@ -40,7 +58,8 @@ export const entriesService = {
       ...data,
       date: dateToSeconds(new Date(data.date)),
     }
-    return await apiClient.post<Entry>('/entries', processedData)
+    const entry = await apiClient.post<Entry>('/entries', processedData)
+    return convertEntryFromApi(entry)
   },
 
   // Atualizar lançamento
@@ -50,7 +69,8 @@ export const entriesService = {
       ...data,
       ...(data.date && { date: dateToSeconds(new Date(data.date)) }),
     }
-    return await apiClient.put<Entry>(`/entries/${id}`, processedData)
+    const entry = await apiClient.put<Entry>(`/entries/${id}`, processedData)
+    return convertEntryFromApi(entry)
   },
 
   // Deletar lançamento

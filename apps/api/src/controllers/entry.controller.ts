@@ -14,6 +14,15 @@ import { IdParamSchema, idParamSchema } from '@/utils/schemas'
 export class EntryController {
   constructor(private entryService: EntryService) {}
 
+  private parseFilterDate(dateValue: string): Date {
+    // Se for um número (timestamp em segundos), converte usando secondsToDate
+    if (/^\d+$/.test(dateValue)) {
+      return secondsToDate(Number(dateValue))
+    }
+    // Se for uma string datetime ISO, converte diretamente para Date
+    return new Date(dateValue)
+  }
+
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub
@@ -29,10 +38,10 @@ export class EntryController {
         accountId: filters.accountId,
         creditCardId: filters.creditCardId,
         startDate: filters.startDate
-          ? secondsToDate(Number(filters.startDate))
+          ? this.parseFilterDate(filters.startDate)
           : undefined,
         endDate: filters.endDate
-          ? secondsToDate(Number(filters.endDate))
+          ? this.parseFilterDate(filters.endDate)
           : undefined,
         search: filters.search,
       })

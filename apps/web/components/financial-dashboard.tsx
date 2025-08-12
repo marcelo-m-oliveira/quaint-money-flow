@@ -1,5 +1,7 @@
 'use client'
 
+import { timestampToDateInputString } from '@saas/utils'
+import { EntryFormSchema } from '@saas/validations'
 import { CircleMinus, CirclePlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -105,8 +107,13 @@ export function FinancialDashboard() {
     setEditingTransaction(undefined)
   }
 
-  const handleExpenseSubmit = (data: EntryFormData, shouldClose = true) => {
-    const expenseData = { ...data, type: 'expense' as const }
+  const handleExpenseSubmit = (data: EntryFormSchema, shouldClose = true) => {
+    // Convert EntryFormSchema to EntryFormData
+    const expenseData: EntryFormData = {
+      ...data,
+      type: 'expense' as const,
+      date: timestampToDateInputString(data.date),
+    }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, expenseData)
       setEditingTransaction(undefined)
@@ -118,8 +125,13 @@ export function FinancialDashboard() {
     }
   }
 
-  const handleIncomeSubmit = (data: EntryFormData, shouldClose = true) => {
-    const incomeData = { ...data, type: 'income' as const }
+  const handleIncomeSubmit = (data: EntryFormSchema, shouldClose = true) => {
+    // Convert EntryFormSchema to EntryFormData
+    const incomeData: EntryFormData = {
+      ...data,
+      type: 'income' as const,
+      date: timestampToDateInputString(data.date),
+    }
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, incomeData)
       setEditingTransaction(undefined)

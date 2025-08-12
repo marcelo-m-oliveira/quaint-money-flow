@@ -1,6 +1,11 @@
 'use client'
 
 import {
+  createLocalDateFromTimestamp,
+  dateToSeconds,
+  timestampToDateInputString,
+} from '@saas/utils'
+import {
   ArrowDownIcon,
   ArrowUpIcon,
   CalendarIcon,
@@ -63,7 +68,7 @@ import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useEntries } from '@/lib/hooks/use-entries'
 import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
 import { EntryFormSchema } from '@/lib/schemas'
-import { Entry } from '@/lib/types'
+import { Entry, EntryFormData } from '@/lib/types'
 
 // Funções utilitárias para filtros de período
 function getStartOfWeek(date: Date): Date {
@@ -109,8 +114,53 @@ function getEndOfDay(date: Date): Date {
 }
 
 export default function LancamentoPage() {
-  const { entries, isLoading, addEntry, updateEntry, deleteEntry } =
-    useEntries()
+  // Estados para controle de período
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [currentPeriod, setCurrentPeriod] = useState<
+    'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+  >('monthly')
+
+  // Função para obter o range de datas do período atual
+  const getCurrentPeriodRange = () => {
+    const PERIOD_RANGE_FUNCTIONS = {
+      daily: () => ({
+        start: getStartOfDay(currentDate),
+        end: getEndOfDay(currentDate),
+      }),
+      weekly: () => ({
+        start: getStartOfWeek(currentDate),
+        end: getEndOfWeek(currentDate),
+      }),
+      monthly: () => ({
+        start: getStartOfMonth(currentDate),
+        end: getEndOfMonth(currentDate),
+      }),
+    } as const
+
+    const periodFunction =
+      PERIOD_RANGE_FUNCTIONS[
+        currentPeriod as keyof typeof PERIOD_RANGE_FUNCTIONS
+      ]
+    return periodFunction ? periodFunction() : PERIOD_RANGE_FUNCTIONS.monthly()
+  }
+
+  // Calcular filtros de data baseados no período atual
+  const getDateFilters = () => {
+    const { start, end } = getCurrentPeriodRange()
+    return {
+      startDate: dateToSeconds(start).toString(),
+      endDate: dateToSeconds(end).toString(),
+    }
+  }
+
+  const {
+    entries,
+    isLoading,
+    addEntry,
+    updateEntry,
+    deleteEntry,
+    updateFilters,
+  } = useEntries(getDateFilters())
 
   const { accounts } = useAccounts()
 
@@ -129,12 +179,6 @@ export default function LancamentoPage() {
     isOpen: boolean
     entryId: string | null
   }>({ isOpen: false, entryId: null })
-
-  // Estados para controle de período
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [currentPeriod, setCurrentPeriod] = useState<
-    'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-  >('monthly')
 
   // Estados para modo de visualização
   const [viewMode, setViewMode] = useState<'cashflow' | 'all'>('all')
@@ -181,7 +225,7 @@ export default function LancamentoPage() {
   }, [preferences, isInitialized])
 
   // Funções para navegação de período
-  const navigatePeriod = (direction: 'prev' | 'next') => {
+  const navigatePeriod = async (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate)
 
     if (currentPeriod === 'daily') {
@@ -193,36 +237,43 @@ export default function LancamentoPage() {
     }
 
     setCurrentDate(newDate)
-  }
 
-  // Key mapping para funções de período
-  const PERIOD_RANGE_FUNCTIONS = {
-    daily: () => ({
-      start: getStartOfDay(currentDate),
-      end: getEndOfDay(currentDate),
-    }),
-    weekly: () => ({
-      start: getStartOfWeek(currentDate),
-      end: getEndOfWeek(currentDate),
-    }),
-    monthly: () => ({
-      start: getStartOfMonth(currentDate),
-      end: getEndOfMonth(currentDate),
-    }),
-  } as const
+    // Calcular novos filtros de data baseados na nova data
+    const PERIOD_RANGE_FUNCTIONS = {
+      daily: () => ({
+        start: getStartOfDay(newDate),
+        end: getEndOfDay(newDate),
+      }),
+      weekly: () => ({
+        start: getStartOfWeek(newDate),
+        end: getEndOfWeek(newDate),
+      }),
+      monthly: () => ({
+        start: getStartOfMonth(newDate),
+        end: getEndOfMonth(newDate),
+      }),
+    } as const
 
-  // Função para obter o range de datas do período atual
-  const getCurrentPeriodRange = () => {
     const periodFunction =
       PERIOD_RANGE_FUNCTIONS[
         currentPeriod as keyof typeof PERIOD_RANGE_FUNCTIONS
       ]
-    return periodFunction ? periodFunction() : PERIOD_RANGE_FUNCTIONS.monthly()
+    const range = periodFunction
+      ? periodFunction()
+      : PERIOD_RANGE_FUNCTIONS.monthly()
+
+    // Atualizar filtros no hook
+    await updateFilters({
+      startDate: dateToSeconds(range.start).toString(),
+      endDate: dateToSeconds(range.end).toString(),
+    })
   }
 
   // Filtrar lançamentos
   const filteredEntries = useMemo(() => {
     const { start, end } = getCurrentPeriodRange()
+
+    // Filtrar lançamentos por período, busca e tipo
 
     const filtered = entries.filter((entry) => {
       const entryTimestamp = entry.date * 1000 // Converter segundos para milissegundos
@@ -249,7 +300,6 @@ export default function LancamentoPage() {
       return matchesSearch && matchesCategory && matchesType && matchesPeriod
     })
 
-    console.log('📊 Total de lançamentos após filtro:', filtered.length)
     return filtered
   }, [entries, searchTerm, selectedType, currentDate, currentPeriod])
 
@@ -262,7 +312,7 @@ export default function LancamentoPage() {
   const groupedEntries = useMemo(() => {
     const groups = sortedEntries.reduce(
       (groups, entry) => {
-        const date = new Date(entry.date * 1000).toDateString()
+        const date = createLocalDateFromTimestamp(entry.date).toDateString()
         if (!groups[date]) {
           groups[date] = []
         }
@@ -334,7 +384,7 @@ export default function LancamentoPage() {
 
     // Saldo anterior (antes do período atual)
     const previousBalance = entries
-      .filter((e) => new Date(e.date * 1000) < start)
+      .filter((e) => createLocalDateFromTimestamp(e.date) < start)
       .reduce((sum, e) => {
         return e.type === 'income' ? sum + e.amount : sum - e.amount
       }, 0)
@@ -385,10 +435,22 @@ export default function LancamentoPage() {
   }
 
   const handleSubmitEntry = (data: EntryFormSchema, shouldClose = true) => {
+    // Convert EntryFormSchema to EntryFormData format
+    const formData: EntryFormData = {
+      description: data.description,
+      amount: data.amount,
+      type: data.type,
+      categoryId: data.categoryId,
+      accountId: data.accountId,
+      creditCardId: data.creditCardId,
+      date: timestampToDateInputString(data.date),
+      paid: data.paid,
+    }
+
     if (editingEntry) {
-      updateEntry(editingEntry.id, data)
+      updateEntry(editingEntry.id, formData)
     } else {
-      addEntry(data)
+      addEntry(formData)
     }
 
     if (shouldClose) {

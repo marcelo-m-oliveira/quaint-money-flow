@@ -12,10 +12,13 @@ import {
 
 import { useCrudToast } from './use-crud-toast'
 
-export function useEntries() {
+export function useEntries(initialFilters?: EntriesQueryParams) {
   const [entries, setEntries] = useState<Entry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorState, setErrorState] = useState<string | null>(null)
+  const [currentFilters, setCurrentFilters] = useState<
+    EntriesQueryParams | undefined
+  >(initialFilters)
   const [pagination, setPagination] = useState<EntriesResponse['pagination']>({
     page: 1,
     limit: 20,
@@ -39,6 +42,11 @@ export function useEntries() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const updateFilters = async (newFilters: EntriesQueryParams) => {
+    setCurrentFilters(newFilters)
+    await fetchEntries(newFilters)
   }
 
   const addEntry = async (data: EntryFormData) => {
@@ -91,9 +99,9 @@ export function useEntries() {
     }
   }
 
-  // Carregar lançamentos na inicialização
+  // Carregar lançamentos na inicialização com filtros
   useEffect(() => {
-    fetchEntries()
+    fetchEntries(currentFilters)
   }, [])
 
   return {
@@ -101,11 +109,13 @@ export function useEntries() {
     isLoading,
     error: errorState,
     pagination,
+    currentFilters,
     fetchEntries,
+    updateFilters,
     addEntry,
     updateEntry,
     deleteEntry,
     getEntryById,
-    refetch: () => fetchEntries(),
+    refetch: () => fetchEntries(currentFilters),
   }
 }

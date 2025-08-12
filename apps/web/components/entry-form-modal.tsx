@@ -1,12 +1,12 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { createLocalDateFromTimestamp, dateToLocalTimestamp } from '@saas/utils'
 import { Check, Save } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { CategoryIcon } from '@/lib/components/category-icon'
-import { formatDateForInput, timestampToDateString } from '@/lib/format'
 import { useAccountSelectOptions } from '@/lib/hooks/use-account-select-options'
 import { useCategorySelectOptions } from '@/lib/hooks/use-category-select-options'
 import { useCreditCardSelectOptions } from '@/lib/hooks/use-credit-card-select-options'
@@ -70,7 +70,7 @@ export function EntryFormModal({
       categoryId: '',
       accountId: '',
       creditCardId: '',
-      date: formatDateForInput(new Date()),
+      date: dateToLocalTimestamp(new Date()),
       paid: false,
     },
   })
@@ -85,7 +85,7 @@ export function EntryFormModal({
         categoryId: entry.categoryId,
         accountId: entry.accountId || '',
         creditCardId: entry.creditCardId || '',
-        date: timestampToDateString(entry.date * 1000),
+        date: entry.date,
         paid: entry.paid || false,
       })
     } else {
@@ -96,13 +96,15 @@ export function EntryFormModal({
         categoryId: '',
         accountId: '',
         creditCardId: '',
-        date: formatDateForInput(new Date()),
+        date: dateToLocalTimestamp(new Date()),
         paid: false,
       })
     }
   }, [entry, type, reset])
 
-  const selectedDate = watch('date') ? new Date(watch('date')) : new Date()
+  const selectedDate = watch('date')
+    ? createLocalDateFromTimestamp(watch('date'))
+    : new Date()
 
   const handleFormSubmit = (
     data: EntryFormSchema,
@@ -120,7 +122,7 @@ export function EntryFormModal({
         categoryId: '',
         accountId: '',
         creditCardId: '',
-        date: formatDateForInput(new Date()),
+        date: dateToLocalTimestamp(new Date()),
         paid: false,
       })
     }
@@ -137,7 +139,7 @@ export function EntryFormModal({
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-      setValue('date', formatDateForInput(date))
+      setValue('date', dateToLocalTimestamp(date))
     }
   }
 

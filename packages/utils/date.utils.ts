@@ -86,6 +86,42 @@ export function timestampToDateString(timestamp: number): string {
 }
 
 /**
+ * Converte timestamp (em segundos) para Date local com meio-dia
+ * Evita problemas de fuso horário definindo a hora como 12:00
+ */
+export function createLocalDateFromTimestamp(timestamp: number): Date {
+  const date = new Date(timestamp * 1000)
+  // Criar uma nova data no fuso horário local para evitar problemas de UTC
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0)
+}
+
+/**
+ * Converte Date para timestamp (em segundos) com meio-dia
+ * Evita problemas de fuso horário definindo a hora como 12:00
+ */
+export function dateToLocalTimestamp(date: Date): number {
+  // Criar uma nova data com meio-dia para evitar problemas de fuso horário
+  const localDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    12,
+    0,
+    0,
+  )
+  return Math.floor(localDate.getTime() / 1000)
+}
+
+/**
+ * Converte timestamp (em segundos) para string de data (YYYY-MM-DD)
+ * Usa conversão local para evitar problemas de fuso horário
+ */
+export function timestampToDateInputString(timestamp: number): string {
+  const date = createLocalDateFromTimestamp(timestamp)
+  return formatDateForInput(date)
+}
+
+/**
  * Determina o período do dia com base na hora atual
  * @returns Objeto contendo a saudação e o ícone correspondente
  */
