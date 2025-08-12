@@ -95,7 +95,7 @@ const createTestApp = (): FastifyInstance => {
           return reply.code(404).send({ error: 'Lançamento não encontrado' })
         }
 
-        const dataToUpdate: any = { ...updateData }
+        const dataToUpdate: Record<string, unknown> = { ...updateData }
         if (updateData.amount) {
           dataToUpdate.amount = parseFloat(updateData.amount)
         }

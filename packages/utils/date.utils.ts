@@ -87,12 +87,19 @@ export function timestampToDateString(timestamp: number): string {
 
 /**
  * Converte timestamp (em segundos) para Date local com meio-dia
- * Evita problemas de fuso horário definindo a hora como 12:00
+ * Evita problemas de fuso horário usando componentes UTC
  */
 export function createLocalDateFromTimestamp(timestamp: number): Date {
   const date = new Date(timestamp * 1000)
-  // Criar uma nova data no fuso horário local para evitar problemas de UTC
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0)
+  // Usar componentes UTC para evitar problemas de fuso horário
+  return new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    12,
+    0,
+    0,
+  )
 }
 
 /**

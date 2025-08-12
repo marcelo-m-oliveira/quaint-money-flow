@@ -63,7 +63,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { formatCurrency, formatDate, timestampToDateString } from '@/lib/format'
+import { formatCurrency, formatDate } from '@/lib/format'
 import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useEntries } from '@/lib/hooks/use-entries'
@@ -159,6 +159,7 @@ export default function LancamentoPage() {
     isLoading,
     addEntry,
     updateEntry,
+    patchEntry,
     deleteEntry,
     updateFilters,
   } = useEntries(getDateFilters())
@@ -481,19 +482,12 @@ export default function LancamentoPage() {
 
   const handleTogglePaidStatus = (entry: Entry) => {
     try {
-      // Apenas alterar o status de pagamento, preservando todos os outros dados
-      const updatedData = {
-        description: entry.description,
-        amount: entry.amount.toString(),
-        type: entry.type,
-        categoryId: entry.categoryId,
-        accountId: entry.accountId || undefined,
-        creditCardId: entry.creditCardId || undefined,
-        date: timestampToDateString(entry.date * 1000), // Converter timestamp para string de data
+      // Usar PATCH para alterar apenas o status de pagamento
+      const patchData = {
         paid: !entry.paid,
       }
 
-      updateEntry(entry.id, updatedData)
+      patchEntry(entry.id, patchData)
 
       const statusText = !entry.paid ? 'pago' : 'não pago'
       const entityType = entry.type === 'income' ? 'Receita' : 'Despesa'

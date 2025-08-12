@@ -6,6 +6,7 @@ import {
   entryCreateSchema,
   entryFiltersSchema,
   entryListResponseSchema,
+  entryPatchSchema,
   entryResponseSchema,
   entryUpdateSchema,
   idParamSchema,
@@ -81,6 +82,24 @@ export async function entryRoutes(app: FastifyInstance) {
       preHandler: [authMiddleware],
     },
     entryController.update.bind(entryController),
+  )
+
+  // PATCH /entries/:id - Atualizar transação parcialmente
+  app.patch(
+    '/entries/:id',
+    {
+      schema: {
+        params: idParamSchema,
+        body: entryPatchSchema,
+        response: {
+          200: entryResponseSchema,
+          401: z.object({ error: z.string() }),
+          404: z.object({ error: z.string() }),
+        },
+      },
+      preHandler: [authMiddleware],
+    },
+    entryController.patch.bind(entryController),
   )
 
   // DELETE /entries/:id - Excluir transação específica

@@ -77,6 +77,21 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
     }
   }
 
+  const patchEntry = async (id: string, data: Partial<EntryFormData>) => {
+    try {
+      const updatedEntry = await entriesService.patch(id, data)
+      setEntries((prev) =>
+        prev.map((entry) => (entry.id === id ? updatedEntry : entry)),
+      )
+      success.update('Lançamento')
+      return updatedEntry
+    } catch (err) {
+      console.error('Error patching entry:', err)
+      error.update('Lançamento')
+      throw err
+    }
+  }
+
   const deleteEntry = async (id: string) => {
     try {
       await entriesService.delete(id)
@@ -114,6 +129,7 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
     updateFilters,
     addEntry,
     updateEntry,
+    patchEntry,
     deleteEntry,
     getEntryById,
     refetch: () => fetchEntries(currentFilters),

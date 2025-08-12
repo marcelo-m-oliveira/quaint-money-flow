@@ -93,6 +93,30 @@ export const entriesService = {
     return convertEntryFromApi(entry)
   },
 
+  // Atualizar lançamento parcialmente (PATCH)
+  async patch(id: string, data: Partial<EntryFormData>): Promise<Entry> {
+    // Convert date string to seconds for API if date is provided
+    const processedData: Record<string, string | number | boolean> = {}
+
+    // Only include fields that are explicitly provided
+    if (data.description !== undefined)
+      processedData.description = data.description
+    if (data.amount !== undefined) processedData.amount = data.amount
+    if (data.type !== undefined) processedData.type = data.type
+    if (data.categoryId !== undefined)
+      processedData.categoryId = data.categoryId
+    if (data.paid !== undefined) processedData.paid = data.paid
+    if (data.date !== undefined)
+      processedData.date = dateToSeconds(new Date(data.date))
+
+    // Handle optional fields - only include if they have truthy values
+    if (data.accountId) processedData.accountId = data.accountId
+    if (data.creditCardId) processedData.creditCardId = data.creditCardId
+
+    const entry = await apiClient.patch<Entry>(`/entries/${id}`, processedData)
+    return convertEntryFromApi(entry)
+  },
+
   // Deletar lançamento
   async delete(id: string): Promise<void> {
     await apiClient.delete<void>(`/entries/${id}`)

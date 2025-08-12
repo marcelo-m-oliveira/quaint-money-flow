@@ -111,6 +111,9 @@ export {
   preferencesUpdateSchema,
 }
 
+// Schema específico para PATCH - permite atualizações parciais
+export const entryPatchSchema = entryUpdateSchema.partial()
+
 // Schemas de response
 export {
   entryResponseSchema,
@@ -174,6 +177,9 @@ export type {
   PreferencesCreateSchema,
   PreferencesUpdateSchema,
 }
+
+// Tipo específico para PATCH
+export type EntryPatchSchema = z.infer<typeof entryPatchSchema>
 
 // Tipos de response
 export type {
