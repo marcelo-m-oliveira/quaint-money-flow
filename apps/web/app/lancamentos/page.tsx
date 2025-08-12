@@ -246,7 +246,7 @@ export default function LancamentoPage() {
   ])
 
   // Funções para navegação de período
-  const navigatePeriod = async (direction: 'prev' | 'next') => {
+  const navigatePeriod = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate)
 
     if (currentPeriod === 'daily') {
@@ -258,37 +258,7 @@ export default function LancamentoPage() {
     }
 
     setCurrentDate(newDate)
-
-    // Calcular novos filtros de data baseados na nova data
-    const PERIOD_RANGE_FUNCTIONS = {
-      daily: () => ({
-        start: getStartOfDay(newDate),
-        end: getEndOfDay(newDate),
-      }),
-      weekly: () => ({
-        start: getStartOfWeek(newDate),
-        end: getEndOfWeek(newDate),
-      }),
-      monthly: () => ({
-        start: getStartOfMonth(newDate),
-        end: getEndOfMonth(newDate),
-      }),
-    } as const
-
-    const periodFunction =
-      PERIOD_RANGE_FUNCTIONS[
-        currentPeriod as keyof typeof PERIOD_RANGE_FUNCTIONS
-      ]
-    const range = periodFunction
-      ? periodFunction()
-      : PERIOD_RANGE_FUNCTIONS.monthly()
-
-    // Atualizar filtros no hook
-    await updateFilters({
-      startDate: dateToSeconds(range.start).toString(),
-      endDate: dateToSeconds(range.end).toString(),
-      viewMode,
-    })
+    // O useEffect que monitora currentDate irá atualizar os filtros automaticamente
   }
 
   // Filtrar lançamentos
