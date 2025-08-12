@@ -9,7 +9,7 @@ import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
 import { EntryService } from '@/services/entry.service'
 import { handleError } from '@/utils/errors'
-import { IdParamSchema, idParamSchema } from '@/utils/schemas'
+import { EntryPatchSchema, IdParamSchema, idParamSchema } from '@/utils/schemas'
 
 export class EntryController {
   constructor(private entryService: EntryService) {}
@@ -257,6 +257,70 @@ export class EntryController {
           error: error.message,
         },
         'Erro ao atualizar transação',
+      )
+      return handleError(error as FastifyError, reply)
+    }
+  }
+
+  async patch(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user.sub
+      const { id } = request.params as IdParamSchema
+      const data = request.body as EntryPatchSchema
+
+      request.log.info(
+        { userId, entryId: id, patchData: data },
+        'Atualizando transação parcialmente',
+      )
+
+      // Convert only provided fields
+      const processedData: any = {}
+
+      if (data.amount !== undefined) {
+        processedData.amount = parseFloat(data.amount || '0')
+      }
+
+      if (data.date !== undefined) {
+        processedData.date = secondsToDate(data.date)
+      }
+
+      // Copy other fields directly if provided
+      if (data.description !== undefined)
+        processedData.description = data.description
+      if (data.type !== undefined) processedData.type = data.type
+      if (data.categoryId !== undefined)
+        processedData.categoryId = data.categoryId
+      if (data.accountId !== undefined) processedData.accountId = data.accountId
+      if (data.creditCardId !== undefined)
+        processedData.creditCardId = data.creditCardId
+      if (data.paid !== undefined) processedData.paid = data.paid
+
+      const entry = await this.entryService.update(id, processedData, userId)
+
+      request.log.info(
+        { entryId: entry.id, description: entry.description },
+        'Transação atualizada parcialmente com sucesso',
+      )
+
+      // Convert data to match response schema
+      const convertedEntry = this.convertNullToUndefined({
+        ...entry,
+        amount: entry.amount.toString(), // Convert Decimal to string
+        date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to seconds
+        createdAt: entry.createdAt ? dateToSeconds(entry.createdAt) : undefined,
+        updatedAt: entry.updatedAt ? dateToSeconds(entry.updatedAt) : undefined,
+        creditCardId: entry.creditCardId || '', // Convert null to empty string
+      })
+
+      return reply.status(200).send(convertedEntry)
+    } catch (error: any) {
+      request.log.error(
+        {
+          userId: request.user.sub,
+          entryId: idParamSchema,
+          error: error.message,
+        },
+        'Erro ao atualizar transação parcialmente',
       )
       return handleError(error as FastifyError, reply)
     }
