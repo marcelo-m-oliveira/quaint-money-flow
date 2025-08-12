@@ -157,6 +157,7 @@ export default function LancamentoPage() {
   const {
     entries,
     isLoading,
+    previousBalance,
     addEntry,
     updateEntry,
     patchEntry,
@@ -382,16 +383,8 @@ export default function LancamentoPage() {
 
   // Calcular dados do fluxo de caixa
   const cashflowData = useMemo(() => {
-    const { start } = getCurrentPeriodRange()
-
-    // Saldo anterior (antes do período atual)
-    const previousBalance = entries
-      .filter((e) => createLocalDateFromTimestamp(e.date) < start)
-      .reduce((sum, e) => {
-        return e.type === 'income'
-          ? new Decimal(sum).plus(e.amount).toNumber()
-          : new Decimal(sum).minus(e.amount).toNumber()
-      }, 0)
+    // Usar o saldo anterior calculado pelo backend
+    const backendPreviousBalance = previousBalance || 0
 
     // Receitas e despesas realizadas (pagas)
     const realizedIncome = filteredEntries
@@ -412,7 +405,7 @@ export default function LancamentoPage() {
       .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
 
     // Saldo atual e previsto
-    const currentBalance = new Decimal(previousBalance)
+    const currentBalance = new Decimal(backendPreviousBalance)
       .plus(realizedIncome)
       .minus(realizedExpense)
       .toNumber()
@@ -422,7 +415,7 @@ export default function LancamentoPage() {
       .toNumber()
 
     return {
-      previousBalance,
+      previousBalance: backendPreviousBalance,
       realizedIncome,
       expectedIncome,
       realizedExpense,
@@ -430,7 +423,7 @@ export default function LancamentoPage() {
       currentBalance,
       projectedBalance,
     }
-  }, [filteredEntries, getCurrentPeriodRange, entries])
+  }, [filteredEntries, previousBalance])
 
   const handleAddEntry = (type: 'income' | 'expense') => {
     setEntryType(type)

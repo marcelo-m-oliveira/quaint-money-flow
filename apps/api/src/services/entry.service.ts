@@ -107,12 +107,39 @@ export class EntryService {
         },
       })
 
+      // Calculate previous balance (sum of all paid entries before startDate)
+      let previousBalance = 0
+      if (startDate) {
+        const previousEntries = await this.entryRepository.findMany({
+          where: {
+            userId,
+            paid: true,
+            date: {
+              lt: startDate,
+            },
+          },
+          select: {
+            amount: true,
+            type: true,
+          },
+        })
+
+        previousBalance = previousEntries.reduce(
+          (sum: number, entry: { amount: any; type: string }) => {
+            const amount = Number(entry.amount)
+            return entry.type === 'income' ? sum + amount : sum - amount
+          },
+          0,
+        )
+      }
+
       // Get total count for pagination
       const total = await this.entryRepository.count({ where })
       const totalPages = Math.ceil(total / limit)
 
       return {
         entries,
+        previousBalance,
         pagination: {
           page,
           limit,
@@ -168,7 +195,10 @@ export class EntryService {
     return entry
   }
 
-  async create(data: EntryCreateSchema, userId: string) {
+  async create(
+    data: EntryCreateSchema & { date: Date; amount: number },
+    userId: string,
+  ) {
     // Validate that category exists
     const category = await this.prisma.category.findUnique({
       where: { id: data.categoryId, userId },
@@ -246,7 +276,11 @@ export class EntryService {
     })
   }
 
-  async update(id: string, data: Partial<EntryUpdateSchema>, userId: string) {
+  async update(
+    id: string,
+    data: Partial<EntryUpdateSchema> & { date?: Date; amount?: number },
+    userId: string,
+  ) {
     // Check if entry exists
     await this.findById(id, userId)
 

@@ -27,6 +27,7 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
     hasNext: false,
     hasPrev: false,
   })
+  const [previousBalance, setPreviousBalance] = useState<number>(0)
   const { success, error } = useCrudToast()
 
   const fetchEntries = async (params?: EntriesQueryParams) => {
@@ -36,6 +37,7 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
       const response = await entriesService.getAll(params)
       setEntries(response.entries)
       setPagination(response.pagination)
+      setPreviousBalance(response.previousBalance || 0)
     } catch (err) {
       console.error('Error fetching entries:', err)
       error.general('Erro ao carregar lançamentos')
@@ -124,6 +126,7 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
     isLoading,
     error: errorState,
     pagination,
+    previousBalance,
     currentFilters,
     fetchEntries,
     updateFilters,

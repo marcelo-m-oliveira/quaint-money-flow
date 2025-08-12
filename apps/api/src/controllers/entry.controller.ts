@@ -73,6 +73,7 @@ export class EntryController {
       // Convert data to match response schema
       const convertedResult = {
         ...result,
+        previousBalance: result.previousBalance || 0,
         entries: result.entries.map((entry: any) =>
           this.convertNullToUndefined({
             ...entry,

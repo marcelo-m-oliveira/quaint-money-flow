@@ -232,6 +232,7 @@ export interface CreditCardsQueryParams {
 
 export interface EntriesResponse {
   entries: Entry[]
+  previousBalance?: number
   pagination: {
     page: number
     limit: number

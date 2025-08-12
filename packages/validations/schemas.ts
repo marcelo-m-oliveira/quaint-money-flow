@@ -268,6 +268,7 @@ export const preferencesResponseSchema = preferencesBaseSchema.extend({
 // Schema para listagem paginada de transações
 export const entryListResponseSchema = z.object({
   entries: z.array(entryResponseSchema),
+  previousBalance: z.number().optional(),
   pagination: z.object({
     page: z.number(),
     limit: z.number(),
