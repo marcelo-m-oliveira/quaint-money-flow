@@ -18,6 +18,11 @@ export class EntryController {
     if (obj === null) return undefined
     if (typeof obj !== 'object' || obj === undefined) return obj
 
+    // Handle arrays separately to preserve array structure
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.convertNullToUndefined(item))
+    }
+
     const converted: any = { ...obj }
     for (const key in converted) {
       if (converted[key] === null) {
@@ -59,6 +64,7 @@ export class EntryController {
           ? this.parseFilterDate(filters.endDate)
           : undefined,
         search: filters.search,
+        viewMode: filters.viewMode,
       })
 
       request.log.info(
@@ -71,57 +77,67 @@ export class EntryController {
       )
 
       // Convert data to match response schema
-      const convertedResult = {
-        ...result,
-        previousBalance: result.previousBalance || 0,
-        entries: result.entries.map((entry: any) =>
-          this.convertNullToUndefined({
-            ...entry,
-            amount: entry.amount.toString(), // Convert Decimal to string
-            date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secund
-            createdAt: entry.createdAt
-              ? dateToSeconds(entry.createdAt)
-              : undefined,
-            updatedAt: entry.updatedAt
-              ? dateToSeconds(entry.updatedAt)
-              : undefined,
-            creditCardId: entry.creditCardId || '', // Convert null to empty string
-            category: entry.category
-              ? {
-                  ...entry.category,
-                  createdAt: entry.category.createdAt
-                    ? dateToSeconds(entry.category.createdAt)
-                    : undefined,
-                  updatedAt: entry.category.updatedAt
-                    ? dateToSeconds(entry.category.updatedAt)
-                    : undefined,
-                }
-              : undefined,
-            account: entry.account
-              ? {
-                  ...entry.account,
-                  createdAt: entry.account.createdAt
-                    ? dateToSeconds(entry.account.createdAt)
-                    : undefined,
-                  updatedAt: entry.account.updatedAt
-                    ? dateToSeconds(entry.account.updatedAt)
-                    : undefined,
-                }
-              : undefined,
-            creditCard: entry.creditCard
-              ? {
-                  ...entry.creditCard,
-                  createdAt: entry.creditCard.createdAt
-                    ? dateToSeconds(entry.creditCard.createdAt)
-                    : undefined,
-                  updatedAt: entry.creditCard.updatedAt
-                    ? dateToSeconds(entry.creditCard.updatedAt)
-                    : undefined,
-                }
-              : undefined,
-          }),
-        ),
+      // O schema espera o summary diretamente, não aninhado
+      let convertedSummary
+      if (result.summary) {
+        if (filters.viewMode === 'cashflow' && result.summary.cashflow) {
+          // Para viewMode 'cashflow', usar os campos completos do objeto 'cashflow'
+          convertedSummary = result.summary.cashflow
+        } else if (filters.viewMode === 'all' && result.summary.all) {
+          // Para viewMode 'all', extrair os campos do objeto 'all'
+          convertedSummary = result.summary.all
+        }
       }
+
+      const convertedResult = this.convertNullToUndefined({
+        ...result,
+        summary: convertedSummary,
+        entries: result.entries.map((entry: any) => ({
+          ...entry,
+          amount: entry.amount.toString(), // Convert Decimal to string
+          date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secund
+          createdAt: entry.createdAt
+            ? dateToSeconds(entry.createdAt)
+            : undefined,
+          updatedAt: entry.updatedAt
+            ? dateToSeconds(entry.updatedAt)
+            : undefined,
+          creditCardId: entry.creditCardId || '', // Convert null to empty string
+          category: entry.category
+            ? {
+                ...entry.category,
+                createdAt: entry.category.createdAt
+                  ? dateToSeconds(entry.category.createdAt)
+                  : undefined,
+                updatedAt: entry.category.updatedAt
+                  ? dateToSeconds(entry.category.updatedAt)
+                  : undefined,
+              }
+            : undefined,
+          account: entry.account
+            ? {
+                ...entry.account,
+                createdAt: entry.account.createdAt
+                  ? dateToSeconds(entry.account.createdAt)
+                  : undefined,
+                updatedAt: entry.account.updatedAt
+                  ? dateToSeconds(entry.account.updatedAt)
+                  : undefined,
+              }
+            : undefined,
+          creditCard: entry.creditCard
+            ? {
+                ...entry.creditCard,
+                createdAt: entry.creditCard.createdAt
+                  ? dateToSeconds(entry.creditCard.createdAt)
+                  : undefined,
+                updatedAt: entry.creditCard.updatedAt
+                  ? dateToSeconds(entry.creditCard.updatedAt)
+                  : undefined,
+              }
+            : undefined,
+        })),
+      })
 
       return reply.status(200).send(convertedResult)
     } catch (error: any) {

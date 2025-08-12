@@ -39,10 +39,12 @@ export const entriesService = {
     const response = await apiClient.get<EntriesResponse>(endpoint)
 
     // Convert entries to proper types
-    return {
+    const processedResponse = {
       ...response,
       entries: response.entries.map(convertEntryFromApi),
     }
+
+    return processedResponse
   },
 
   // Buscar lançamento por ID

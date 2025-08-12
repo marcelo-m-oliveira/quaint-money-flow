@@ -12,7 +12,10 @@ import {
 
 import { useCrudToast } from './use-crud-toast'
 
-export function useEntries(initialFilters?: EntriesQueryParams) {
+export function useEntries(
+  initialFilters?: EntriesQueryParams,
+  shouldFetch = true,
+) {
   const [entries, setEntries] = useState<Entry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorState, setErrorState] = useState<string | null>(null)
@@ -27,7 +30,7 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
     hasNext: false,
     hasPrev: false,
   })
-  const [previousBalance, setPreviousBalance] = useState<number>(0)
+  const [summary, setSummary] = useState<EntriesResponse['summary']>()
   const { success, error } = useCrudToast()
 
   const fetchEntries = async (params?: EntriesQueryParams) => {
@@ -35,9 +38,10 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
       setIsLoading(true)
       setErrorState(null)
       const response = await entriesService.getAll(params)
+
       setEntries(response.entries)
       setPagination(response.pagination)
-      setPreviousBalance(response.previousBalance || 0)
+      setSummary(response.summary)
     } catch (err) {
       console.error('Error fetching entries:', err)
       error.general('Erro ao carregar lançamentos')
@@ -116,17 +120,19 @@ export function useEntries(initialFilters?: EntriesQueryParams) {
     }
   }
 
-  // Carregar lançamentos na inicialização com filtros
+  // Carregar lançamentos na inicialização com filtros apenas se shouldFetch for true
   useEffect(() => {
-    fetchEntries(currentFilters)
-  }, [])
+    if (shouldFetch) {
+      fetchEntries(currentFilters)
+    }
+  }, [shouldFetch])
 
   return {
     entries,
     isLoading,
     error: errorState,
     pagination,
-    previousBalance,
+    summary,
     currentFilters,
     fetchEntries,
     updateFilters,

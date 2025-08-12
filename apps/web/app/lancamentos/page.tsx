@@ -121,6 +121,12 @@ export default function LancamentoPage() {
     'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
   >('monthly')
 
+  // Estados para modo de visualização
+  const [viewMode, setViewMode] = useState<'cashflow' | 'all'>('all')
+  const [isViewModeModalOpen, setIsViewModeModalOpen] = useState(false)
+  const [tempViewMode, setTempViewMode] = useState<'cashflow' | 'all'>('all')
+  const [hasPreferencesLoaded, setHasPreferencesLoaded] = useState(false)
+
   // Função para obter o range de datas do período atual
   const getCurrentPeriodRange = () => {
     const PERIOD_RANGE_FUNCTIONS = {
@@ -151,19 +157,20 @@ export default function LancamentoPage() {
     return {
       startDate: dateToSeconds(start).toString(),
       endDate: dateToSeconds(end).toString(),
+      viewMode,
     }
   }
 
   const {
     entries,
     isLoading,
-    previousBalance,
+    summary,
     addEntry,
     updateEntry,
     patchEntry,
     deleteEntry,
     updateFilters,
-  } = useEntries(getDateFilters())
+  } = useEntries(getDateFilters(), false)
 
   const { accounts } = useAccounts()
 
@@ -183,19 +190,15 @@ export default function LancamentoPage() {
     entryId: string | null
   }>({ isOpen: false, entryId: null })
 
-  // Estados para modo de visualização
-  const [viewMode, setViewMode] = useState<'cashflow' | 'all'>('all')
-  const [isViewModeModalOpen, setIsViewModeModalOpen] = useState(false)
-  const [tempViewMode, setTempViewMode] = useState<'cashflow' | 'all'>('all')
-
   // Estado para controlar expansão do resumo financeiro
   const [isFinancialSummaryExpanded, setIsFinancialSummaryExpanded] =
     useState(false)
 
   // Função para alterar modo de visualização e salvar preferência
-  const handleViewModeChange = (newViewMode: 'cashflow' | 'all') => {
+  const handleViewModeChange = async (newViewMode: 'cashflow' | 'all') => {
     setViewMode(newViewMode)
     updatePreferences({ viewMode: newViewMode })
+    // O useEffect que monitora viewMode irá atualizar os filtros automaticamente
   }
 
   // Função para confirmar mudança de modo de visualização
@@ -224,8 +227,23 @@ export default function LancamentoPage() {
       setViewMode(preferences.viewMode)
       setTempViewMode(preferences.viewMode)
       setIsFinancialSummaryExpanded(preferences.isFinancialSummaryExpanded)
+      setHasPreferencesLoaded(true)
     }
   }, [preferences, isInitialized])
+
+  // Atualizar filtros quando viewMode mudar ou quando as preferências estiverem carregadas
+  useEffect(() => {
+    if (isInitialized && hasPreferencesLoaded) {
+      const dateFilters = getDateFilters()
+      updateFilters(dateFilters)
+    }
+  }, [
+    viewMode,
+    isInitialized,
+    currentPeriod,
+    currentDate,
+    hasPreferencesLoaded,
+  ])
 
   // Funções para navegação de período
   const navigatePeriod = async (direction: 'prev' | 'next') => {
@@ -269,6 +287,7 @@ export default function LancamentoPage() {
     await updateFilters({
       startDate: dateToSeconds(range.start).toString(),
       endDate: dateToSeconds(range.end).toString(),
+      viewMode,
     })
   }
 
@@ -364,8 +383,13 @@ export default function LancamentoPage() {
     return formatter ? formatter() : PERIOD_TITLE_FORMATTERS.monthly()
   }
 
-  // Calcular totais dos lançamentos filtrados
+  // Usar dados do summary do backend ou calcular localmente como fallback
   const filteredTotals = useMemo(() => {
+    if (summary?.all) {
+      return summary.all
+    }
+
+    // Fallback: calcular localmente se summary não estiver disponível
     const income = filteredEntries
       .filter((e) => e.type === 'income')
       .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
@@ -379,51 +403,43 @@ export default function LancamentoPage() {
       expense,
       balance: new Decimal(income).minus(expense).toNumber(),
     }
-  }, [filteredEntries])
+  }, [summary, filteredEntries])
 
-  // Calcular dados do fluxo de caixa
-  const cashflowData = useMemo(() => {
-    // Usar o saldo anterior calculado pelo backend
-    const backendPreviousBalance = previousBalance || 0
-
-    // Receitas e despesas realizadas (pagas)
-    const realizedIncome = filteredEntries
-      .filter((e) => e.type === 'income' && e.paid)
-      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
-
-    const realizedExpense = filteredEntries
-      .filter((e) => e.type === 'expense' && e.paid)
-      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
-
-    // Receitas e despesas previstas (não pagas)
-    const expectedIncome = filteredEntries
-      .filter((e) => e.type === 'income' && !e.paid)
-      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
-
-    const expectedExpense = filteredEntries
-      .filter((e) => e.type === 'expense' && !e.paid)
-      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
-
-    // Saldo atual e previsto
-    const currentBalance = new Decimal(backendPreviousBalance)
-      .plus(realizedIncome)
-      .minus(realizedExpense)
-      .toNumber()
-    const projectedBalance = new Decimal(currentBalance)
-      .plus(expectedIncome)
-      .minus(expectedExpense)
-      .toNumber()
-
-    return {
-      previousBalance: backendPreviousBalance,
-      realizedIncome,
-      expectedIncome,
-      realizedExpense,
-      expectedExpense,
-      currentBalance,
-      projectedBalance,
+  // Usar apenas dados do summary do backend
+  const cashflowData = useMemo((): {
+    previousBalance: number
+    realizedIncome: number
+    expectedIncome: number
+    realizedExpense: number
+    expectedExpense: number
+    currentBalance: number
+    projectedBalance: number
+  } => {
+    // When viewMode is 'cashflow', backend returns cashflow data directly in summary
+    // When viewMode is 'all', backend doesn't return cashflow data
+    if (viewMode === 'cashflow' && summary && 'previousBalance' in summary) {
+      return summary as {
+        previousBalance: number
+        realizedIncome: number
+        expectedIncome: number
+        realizedExpense: number
+        expectedExpense: number
+        currentBalance: number
+        projectedBalance: number
+      }
     }
-  }, [filteredEntries, previousBalance])
+
+    // Retornar valores zerados quando não houver dados do backend
+    return {
+      previousBalance: 0,
+      realizedIncome: 0,
+      expectedIncome: 0,
+      realizedExpense: 0,
+      expectedExpense: 0,
+      currentBalance: 0,
+      projectedBalance: 0,
+    }
+  }, [summary, viewMode])
 
   const handleAddEntry = (type: 'income' | 'expense') => {
     setEntryType(type)

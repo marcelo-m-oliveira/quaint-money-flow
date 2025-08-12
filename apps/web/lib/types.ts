@@ -203,6 +203,7 @@ export interface EntriesQueryParams {
   startDate?: string
   endDate?: string
   search?: string
+  viewMode?: 'cashflow' | 'all'
 }
 
 export interface CategoriesQueryParams {
@@ -233,6 +234,22 @@ export interface CreditCardsQueryParams {
 export interface EntriesResponse {
   entries: Entry[]
   previousBalance?: number
+  summary?: {
+    cashflow?: {
+      previousBalance: number
+      realizedIncome: number
+      expectedIncome: number
+      realizedExpense: number
+      expectedExpense: number
+      currentBalance: number
+      projectedBalance: number
+    }
+    all?: {
+      income: number
+      expense: number
+      balance: number
+    }
+  }
   pagination: {
     page: number
     limit: number

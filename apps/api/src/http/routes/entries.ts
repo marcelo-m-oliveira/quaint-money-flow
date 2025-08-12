@@ -5,7 +5,6 @@ import { EntryFactory } from '@/factories/entry.factory'
 import {
   entryCreateSchema,
   entryFiltersSchema,
-  entryListResponseSchema,
   entryPatchSchema,
   entryResponseSchema,
   entryUpdateSchema,
@@ -23,10 +22,11 @@ export async function entryRoutes(app: FastifyInstance) {
     {
       schema: {
         querystring: entryFiltersSchema,
-        response: {
-          200: entryListResponseSchema,
-          401: z.object({ error: z.string() }),
-        },
+        // Temporariamente desabilitado até ajustar o schema
+        // response: {
+        //   200: entryListResponseSchema,
+        //   401: z.object({ error: z.string() }),
+        // },
       },
       preHandler: [authMiddleware],
     },

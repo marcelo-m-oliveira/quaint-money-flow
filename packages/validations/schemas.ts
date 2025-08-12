@@ -269,6 +269,22 @@ export const preferencesResponseSchema = preferencesBaseSchema.extend({
 export const entryListResponseSchema = z.object({
   entries: z.array(entryResponseSchema),
   previousBalance: z.number().optional(),
+  summary: z
+    .object({
+      // Para modo 'cashflow'
+      previousBalance: z.number().optional(),
+      realizedIncome: z.number().optional(),
+      expectedIncome: z.number().optional(),
+      realizedExpense: z.number().optional(),
+      expectedExpense: z.number().optional(),
+      currentBalance: z.number().optional(),
+      projectedBalance: z.number().optional(),
+      // Para modo 'all'
+      income: z.number().optional(),
+      expense: z.number().optional(),
+      balance: z.number().optional(),
+    })
+    .optional(),
   pagination: z.object({
     page: z.number(),
     limit: z.number(),
@@ -371,6 +387,7 @@ export const entryFiltersSchema = z
       .union([z.string().datetime(), z.string().regex(/^\d+$/)])
       .optional(),
     search: z.string().optional(),
+    viewMode: z.enum(['cashflow', 'all']).optional().default('all'),
   })
   .merge(paginationSchema)
 

@@ -23,6 +23,7 @@ export class EntryService {
       startDate?: Date
       endDate?: Date
       search?: string
+      viewMode?: 'cashflow' | 'all'
     },
   ) {
     const {
@@ -35,6 +36,7 @@ export class EntryService {
       startDate,
       endDate,
       search,
+      viewMode = 'all',
     } = filters
     const skip = (page - 1) * limit
 
@@ -137,9 +139,170 @@ export class EntryService {
       const total = await this.entryRepository.count({ where })
       const totalPages = Math.ceil(total / limit)
 
-      return {
+      // Calculate summary based on viewMode
+      let summary
+      console.log(
+        '🔍 [DEBUG] Calculating summary for viewMode:',
+        viewMode,
+        'startDate:',
+        startDate,
+        'endDate:',
+        endDate,
+      )
+
+      if (viewMode === 'cashflow') {
+        // Define date range for calculations
+        const dateFilter =
+          startDate && endDate
+            ? {
+                date: {
+                  gte: startDate,
+                  lte: endDate,
+                },
+              }
+            : {}
+
+        // Get all entries in the period for cashflow calculations
+        const periodEntries = await this.entryRepository.findMany({
+          where: {
+            userId,
+            ...dateFilter,
+          },
+          select: {
+            amount: true,
+            type: true,
+            paid: true,
+          },
+        })
+
+        const realizedIncome = periodEntries
+          .filter(
+            (entry: { type: string; paid: any }) =>
+              entry.type === 'income' && entry.paid,
+          )
+          .reduce(
+            (sum: number, entry: { amount: any }) => sum + Number(entry.amount),
+            0,
+          )
+
+        const expectedIncome = periodEntries
+          .filter(
+            (entry: { type: string; paid: any }) =>
+              entry.type === 'income' && !entry.paid,
+          )
+          .reduce(
+            (sum: number, entry: { amount: any }) => sum + Number(entry.amount),
+            0,
+          )
+
+        const realizedExpense = periodEntries
+          .filter(
+            (entry: { type: string; paid: any }) =>
+              entry.type === 'expense' && entry.paid,
+          )
+          .reduce(
+            (sum: number, entry: { amount: any }) => sum + Number(entry.amount),
+            0,
+          )
+
+        const expectedExpense = periodEntries
+          .filter(
+            (entry: { type: string; paid: any }) =>
+              entry.type === 'expense' && !entry.paid,
+          )
+          .reduce(
+            (sum: number, entry: { amount: any }) => sum + Number(entry.amount),
+            0,
+          )
+
+        const currentBalance =
+          previousBalance + realizedIncome - realizedExpense
+        const projectedBalance =
+          currentBalance + expectedIncome - expectedExpense
+
+        summary = {
+          previousBalance,
+          realizedIncome,
+          expectedIncome,
+          realizedExpense,
+          expectedExpense,
+          currentBalance,
+          projectedBalance,
+        }
+      } else {
+        // Get all entries for simple totals (with or without date filter)
+        const dateFilter =
+          startDate && endDate
+            ? {
+                date: {
+                  gte: startDate,
+                  lte: endDate,
+                },
+              }
+            : {}
+
+        const periodEntries = await this.entryRepository.findMany({
+          where: {
+            userId,
+            ...dateFilter,
+          },
+          select: {
+            amount: true,
+            type: true,
+          },
+        })
+
+        const income = periodEntries
+          .filter((entry: { type: string }) => entry.type === 'income')
+          .reduce(
+            (sum: number, entry: { amount: any }) => sum + Number(entry.amount),
+            0,
+          )
+
+        const expense = periodEntries
+          .filter((entry: { type: string }) => entry.type === 'expense')
+          .reduce(
+            (sum: number, entry: { amount: any }) => sum + Number(entry.amount),
+            0,
+          )
+
+        const balance = income - expense
+
+        summary = {
+          income,
+          expense,
+          balance,
+        }
+      }
+
+      // Structure summary according to frontend expectations
+      let structuredSummary
+      if (viewMode === 'cashflow') {
+        structuredSummary = {
+          cashflow: summary,
+          all: {
+            income: summary.realizedIncome + summary.expectedIncome,
+            expense: summary.realizedExpense + summary.expectedExpense,
+            balance:
+              summary.realizedIncome +
+              summary.expectedIncome -
+              (summary.realizedExpense + summary.expectedExpense),
+          },
+        }
+      } else {
+        structuredSummary = {
+          all: summary,
+        }
+      }
+
+      console.log(
+        '🏗️ [DEBUG] Structured summary for frontend:',
+        structuredSummary,
+      )
+
+      const result = {
         entries,
-        previousBalance,
+        summary: structuredSummary,
         pagination: {
           page,
           limit,
@@ -149,6 +312,11 @@ export class EntryService {
           hasPrev: page > 1,
         },
       }
+      console.log(
+        '🚀 [DEBUG] Service returning result with summary:',
+        !!result.summary,
+      )
+      return result
     } catch (error) {
       console.error('Error fetching entries:', error)
       throw error
