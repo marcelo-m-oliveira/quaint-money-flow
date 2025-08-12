@@ -5,6 +5,7 @@ import {
   dateToSeconds,
   timestampToDateInputString,
 } from '@saas/utils'
+import { Decimal } from 'decimal.js'
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -365,16 +366,16 @@ export default function LancamentoPage() {
   const filteredTotals = useMemo(() => {
     const income = filteredEntries
       .filter((e) => e.type === 'income')
-      .reduce((sum, e) => sum + e.amount, 0)
+      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
 
     const expense = filteredEntries
       .filter((e) => e.type === 'expense')
-      .reduce((sum, e) => sum + e.amount, 0)
+      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
 
     return {
       income,
       expense,
-      balance: income - expense,
+      balance: new Decimal(income).minus(expense).toNumber(),
     }
   }, [filteredEntries])
 
@@ -386,30 +387,38 @@ export default function LancamentoPage() {
     const previousBalance = entries
       .filter((e) => createLocalDateFromTimestamp(e.date) < start)
       .reduce((sum, e) => {
-        return e.type === 'income' ? sum + e.amount : sum - e.amount
+        return e.type === 'income'
+          ? new Decimal(sum).plus(e.amount).toNumber()
+          : new Decimal(sum).minus(e.amount).toNumber()
       }, 0)
 
     // Receitas e despesas realizadas (pagas)
     const realizedIncome = filteredEntries
       .filter((e) => e.type === 'income' && e.paid)
-      .reduce((sum, e) => sum + e.amount, 0)
+      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
 
     const realizedExpense = filteredEntries
       .filter((e) => e.type === 'expense' && e.paid)
-      .reduce((sum, e) => sum + e.amount, 0)
+      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
 
     // Receitas e despesas previstas (não pagas)
     const expectedIncome = filteredEntries
       .filter((e) => e.type === 'income' && !e.paid)
-      .reduce((sum, e) => sum + e.amount, 0)
+      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
 
     const expectedExpense = filteredEntries
       .filter((e) => e.type === 'expense' && !e.paid)
-      .reduce((sum, e) => sum + e.amount, 0)
+      .reduce((sum, e) => new Decimal(sum).plus(e.amount).toNumber(), 0)
 
     // Saldo atual e previsto
-    const currentBalance = previousBalance + realizedIncome - realizedExpense
-    const projectedBalance = currentBalance + expectedIncome - expectedExpense
+    const currentBalance = new Decimal(previousBalance)
+      .plus(realizedIncome)
+      .minus(realizedExpense)
+      .toNumber()
+    const projectedBalance = new Decimal(currentBalance)
+      .plus(expectedIncome)
+      .minus(expectedExpense)
+      .toNumber()
 
     return {
       previousBalance,
