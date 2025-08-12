@@ -60,6 +60,12 @@ export function useEntries(
       const newEntry = await entriesService.create(data)
       setEntries((prev) => [newEntry, ...prev])
       success.create('Lançamento')
+
+      // Atualizar summary após criar lançamento
+      if (currentFilters) {
+        await fetchEntries(currentFilters)
+      }
+
       return newEntry
     } catch (err) {
       console.error('Error creating entry:', err)
@@ -75,6 +81,12 @@ export function useEntries(
         prev.map((entry) => (entry.id === id ? updatedEntry : entry)),
       )
       success.update('Lançamento')
+
+      // Atualizar summary após atualizar lançamento
+      if (currentFilters) {
+        await fetchEntries(currentFilters)
+      }
+
       return updatedEntry
     } catch (err) {
       console.error('Error updating entry:', err)
@@ -90,6 +102,12 @@ export function useEntries(
         prev.map((entry) => (entry.id === id ? updatedEntry : entry)),
       )
       success.update('Lançamento')
+
+      // Atualizar summary após fazer patch do lançamento
+      if (currentFilters) {
+        await fetchEntries(currentFilters)
+      }
+
       return updatedEntry
     } catch (err) {
       console.error('Error patching entry:', err)
@@ -103,6 +121,11 @@ export function useEntries(
       await entriesService.delete(id)
       setEntries((prev) => prev.filter((entry) => entry.id !== id))
       success.delete('Lançamento')
+
+      // Atualizar summary após deletar lançamento
+      if (currentFilters) {
+        await fetchEntries(currentFilters)
+      }
     } catch (err) {
       console.error('Error deleting entry:', err)
       error.delete('Lançamento')

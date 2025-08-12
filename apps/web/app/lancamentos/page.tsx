@@ -223,13 +223,16 @@ export default function LancamentoPage() {
   // Sincronizar estados locais com preferências quando mudarem
   useEffect(() => {
     if (preferences && isInitialized) {
-      setCurrentPeriod(preferences.defaultNavigationPeriod)
+      // Só atualizar o período se ainda não foi carregado (primeira vez)
+      if (!hasPreferencesLoaded) {
+        setCurrentPeriod(preferences.defaultNavigationPeriod)
+      }
       setViewMode(preferences.viewMode)
       setTempViewMode(preferences.viewMode)
       setIsFinancialSummaryExpanded(preferences.isFinancialSummaryExpanded)
       setHasPreferencesLoaded(true)
     }
-  }, [preferences, isInitialized])
+  }, [preferences, isInitialized, hasPreferencesLoaded])
 
   // Atualizar filtros quando viewMode mudar ou quando as preferências estiverem carregadas
   useEffect(() => {
