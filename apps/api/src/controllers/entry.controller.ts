@@ -14,6 +14,21 @@ import { IdParamSchema, idParamSchema } from '@/utils/schemas'
 export class EntryController {
   constructor(private entryService: EntryService) {}
 
+  private convertNullToUndefined(obj: any): any {
+    if (obj === null) return undefined
+    if (typeof obj !== 'object' || obj === undefined) return obj
+
+    const converted: any = { ...obj }
+    for (const key in converted) {
+      if (converted[key] === null) {
+        converted[key] = undefined
+      } else if (typeof converted[key] === 'object') {
+        converted[key] = this.convertNullToUndefined(converted[key])
+      }
+    }
+    return converted
+  }
+
   private parseFilterDate(dateValue: string): Date {
     // Se for um número (timestamp em segundos), converte usando secondsToDate
     if (/^\d+$/.test(dateValue)) {
@@ -58,51 +73,53 @@ export class EntryController {
       // Convert data to match response schema
       const convertedResult = {
         ...result,
-        entries: result.entries.map((entry: any) => ({
-          ...entry,
-          amount: entry.amount.toString(), // Convert Decimal to string
-          date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secund
-          createdAt: entry.createdAt
-            ? dateToSeconds(entry.createdAt)
-            : undefined,
-          updatedAt: entry.updatedAt
-            ? dateToSeconds(entry.updatedAt)
-            : undefined,
-          creditCardId: entry.creditCardId || '', // Convert null to empty string
-          category: entry.category
-            ? {
-                ...entry.category,
-                createdAt: entry.category.createdAt
-                  ? dateToSeconds(entry.category.createdAt)
-                  : undefined,
-                updatedAt: entry.category.updatedAt
-                  ? dateToSeconds(entry.category.updatedAt)
-                  : undefined,
-              }
-            : undefined,
-          account: entry.account
-            ? {
-                ...entry.account,
-                createdAt: entry.account.createdAt
-                  ? dateToSeconds(entry.account.createdAt)
-                  : undefined,
-                updatedAt: entry.account.updatedAt
-                  ? dateToSeconds(entry.account.updatedAt)
-                  : undefined,
-              }
-            : undefined,
-          creditCard: entry.creditCard
-            ? {
-                ...entry.creditCard,
-                createdAt: entry.creditCard.createdAt
-                  ? dateToSeconds(entry.creditCard.createdAt)
-                  : undefined,
-                updatedAt: entry.creditCard.updatedAt
-                  ? dateToSeconds(entry.creditCard.updatedAt)
-                  : undefined,
-              }
-            : undefined,
-        })),
+        entries: result.entries.map((entry: any) =>
+          this.convertNullToUndefined({
+            ...entry,
+            amount: entry.amount.toString(), // Convert Decimal to string
+            date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secund
+            createdAt: entry.createdAt
+              ? dateToSeconds(entry.createdAt)
+              : undefined,
+            updatedAt: entry.updatedAt
+              ? dateToSeconds(entry.updatedAt)
+              : undefined,
+            creditCardId: entry.creditCardId || '', // Convert null to empty string
+            category: entry.category
+              ? {
+                  ...entry.category,
+                  createdAt: entry.category.createdAt
+                    ? dateToSeconds(entry.category.createdAt)
+                    : undefined,
+                  updatedAt: entry.category.updatedAt
+                    ? dateToSeconds(entry.category.updatedAt)
+                    : undefined,
+                }
+              : undefined,
+            account: entry.account
+              ? {
+                  ...entry.account,
+                  createdAt: entry.account.createdAt
+                    ? dateToSeconds(entry.account.createdAt)
+                    : undefined,
+                  updatedAt: entry.account.updatedAt
+                    ? dateToSeconds(entry.account.updatedAt)
+                    : undefined,
+                }
+              : undefined,
+            creditCard: entry.creditCard
+              ? {
+                  ...entry.creditCard,
+                  createdAt: entry.creditCard.createdAt
+                    ? dateToSeconds(entry.creditCard.createdAt)
+                    : undefined,
+                  updatedAt: entry.creditCard.updatedAt
+                    ? dateToSeconds(entry.creditCard.updatedAt)
+                    : undefined,
+                }
+              : undefined,
+          }),
+        ),
       }
 
       return reply.status(200).send(convertedResult)
@@ -130,14 +147,14 @@ export class EntryController {
       )
 
       // Convert data to match response schema
-      const convertedEntry = {
+      const convertedEntry = this.convertNullToUndefined({
         ...entry,
         amount: entry.amount.toString(), // Convert Decimal to string
         date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secunds
         createdAt: entry.createdAt ? dateToSeconds(entry.createdAt) : undefined,
         updatedAt: entry.updatedAt ? dateToSeconds(entry.updatedAt) : undefined,
         creditCardId: entry.creditCardId || '', // Convert null to empty string
-      }
+      })
 
       return reply.status(200).send(convertedEntry)
     } catch (error: any) {
@@ -175,14 +192,14 @@ export class EntryController {
       )
 
       // Convert data to match response schema
-      const convertedEntry = {
+      const convertedEntry = this.convertNullToUndefined({
         ...entry,
         amount: entry.amount.toString(), // Convert Decimal to string
         date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secunds
         createdAt: entry.createdAt ? dateToSeconds(entry.createdAt) : undefined,
         updatedAt: entry.updatedAt ? dateToSeconds(entry.updatedAt) : undefined,
         creditCardId: entry.creditCardId || '', // Convert null to empty string
-      }
+      })
 
       return reply.status(201).send(convertedEntry)
     } catch (error: any) {
@@ -222,14 +239,14 @@ export class EntryController {
       )
 
       // Convert data to match response schema
-      const convertedEntry = {
+      const convertedEntry = this.convertNullToUndefined({
         ...entry,
         amount: entry.amount.toString(), // Convert Decimal to string
         date: entry.date ? dateToSeconds(entry.date) : undefined, // Convert Date to secunds
         createdAt: entry.createdAt ? dateToSeconds(entry.createdAt) : undefined,
         updatedAt: entry.updatedAt ? dateToSeconds(entry.updatedAt) : undefined,
         creditCardId: entry.creditCardId || '', // Convert null to empty string
-      }
+      })
 
       return reply.status(200).send(convertedEntry)
     } catch (error: any) {
