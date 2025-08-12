@@ -37,9 +37,9 @@ export class OverviewService {
       id: account.id,
       description: account.description,
       amount: Number(account.amount),
-      dueDate: account.dueDate,
+      date: account.date,
       categoryName: account.category?.name || 'Sem categoria',
-      isOverdue: account.dueDate < new Date(),
+      isOverdue: account.date < new Date(),
     }))
 
     // Processar contas a receber
@@ -47,9 +47,9 @@ export class OverviewService {
       id: account.id,
       description: account.description,
       amount: Number(account.amount),
-      dueDate: account.dueDate,
+      date: account.date,
       categoryName: account.category?.name || 'Sem categoria',
-      isOverdue: account.dueDate < new Date(),
+      isOverdue: account.date < new Date(),
     }))
 
     // Calcular totais das contas pendentes
@@ -76,14 +76,17 @@ export class OverviewService {
     }
   }
 
-  async getTopExpensesByCategory(userId: string, period: string = 'mes-atual') {
+  async getTopExpensesByCategory(
+    userId: string,
+    period: string = 'current-month',
+  ) {
     // Validar período
     const validPeriods = [
-      'mes-atual',
-      'ultimos-15-dias',
-      'ultimos-30-dias',
-      'ultimos-3-meses',
-      'ultimos-6-meses',
+      'current-month',
+      'last-15-days',
+      'last-30-days',
+      'last-3-months',
+      'last-6-months',
     ]
 
     if (!validPeriods.includes(period)) {
@@ -132,11 +135,11 @@ export class OverviewService {
 
     // Contar contas vencidas
     const overduePayable = monthlyData.accountsPayable.filter(
-      (account) => account.dueDate < new Date(),
+      (account) => account.date < new Date(),
     ).length
 
     const overdueReceivable = monthlyData.accountsReceivable.filter(
-      (account) => account.dueDate < new Date(),
+      (account) => account.date < new Date(),
     ).length
 
     // Calcular saldo do mês

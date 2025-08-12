@@ -266,7 +266,7 @@ export const pendingAccountSchema = z.object({
   id: z.string(),
   description: z.string(),
   amount: z.number(),
-  dueDate: z.number(), // timestamp em segundos
+  date: z.number(), // timestamp em segundos
   categoryName: z.string(),
   isOverdue: z.boolean(),
 })
@@ -313,16 +313,16 @@ export const quickStatsSchema = z.object({
 
 // Schema para query de período dos maiores gastos
 export const topExpensesQuerySchema = z.object({
-  periodo: z
+  period: z
     .enum([
-      'mes-atual',
-      'ultimos-15-dias',
-      'ultimos-30-dias',
-      'ultimos-3-meses',
-      'ultimos-6-meses',
+      'current-month',
+      'last-15-days',
+      'last-30-days',
+      'last-3-months',
+      'last-6-months',
     ])
     .optional()
-    .default('mes-atual'),
+    .default('current-month'),
 })
 
 // Tipos inferidos dos schemas do overview

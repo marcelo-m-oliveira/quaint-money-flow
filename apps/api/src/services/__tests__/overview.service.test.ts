@@ -35,7 +35,7 @@ describe('OverviewService', () => {
             id: 'entry-1',
             description: 'Conta de luz',
             amount: 150,
-            dueDate: new Date('2024-01-15'),
+            date: new Date('2024-01-15'),
             category: { name: 'Utilidades' },
           },
         ],
@@ -44,7 +44,7 @@ describe('OverviewService', () => {
             id: 'entry-2',
             description: 'Freelance',
             amount: 1000,
-            dueDate: new Date('2024-01-20'),
+            date: new Date('2024-01-20'),
             category: { name: 'Trabalho' },
           },
         ],
@@ -72,7 +72,7 @@ describe('OverviewService', () => {
             id: 'entry-1',
             description: 'Conta de luz',
             amount: 150,
-            dueDate: new Date('2024-01-15'),
+            date: new Date('2024-01-15'),
             categoryName: 'Utilidades',
             isOverdue: expect.any(Boolean),
           },
@@ -82,7 +82,7 @@ describe('OverviewService', () => {
             id: 'entry-2',
             description: 'Freelance',
             amount: 1000,
-            dueDate: new Date('2024-01-20'),
+            date: new Date('2024-01-20'),
             categoryName: 'Trabalho',
             isOverdue: expect.any(Boolean),
           },
@@ -194,11 +194,11 @@ describe('OverviewService', () => {
           { type: 'expense', _sum: { amount: 3000 } },
         ],
         accountsPayable: [
-          { dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // vencida
-          { dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000) }, // futura
+          { date: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // vencida
+          { date: new Date(Date.now() + 24 * 60 * 60 * 1000) }, // futura
         ],
         accountsReceivable: [
-          { dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // vencida
+          { date: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // vencida
         ],
       }
 

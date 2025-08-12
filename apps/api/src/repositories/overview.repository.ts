@@ -14,7 +14,7 @@ export class OverviewRepository {
       where: {
         userId,
         paid: true,
-        dueDate: {
+        date: {
           gte: startDate,
           lte: endDate,
         },
@@ -33,13 +33,13 @@ export class OverviewRepository {
         OR: [
           // Vencidas
           {
-            dueDate: {
+            date: {
               lt: new Date(),
             },
           },
           // Próximas do vencimento (próximos 7 dias)
           {
-            dueDate: {
+            date: {
               gte: new Date(),
               lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             },
@@ -50,7 +50,7 @@ export class OverviewRepository {
         id: true,
         description: true,
         amount: true,
-        dueDate: true,
+        date: true,
         category: {
           select: {
             name: true,
@@ -58,7 +58,7 @@ export class OverviewRepository {
         },
       },
       orderBy: {
-        dueDate: 'asc',
+        date: 'asc',
       },
     })
 
@@ -71,13 +71,13 @@ export class OverviewRepository {
         OR: [
           // Vencidas
           {
-            dueDate: {
+            date: {
               lt: new Date(),
             },
           },
           // Próximas do vencimento (próximos 7 dias)
           {
-            dueDate: {
+            date: {
               gte: new Date(),
               lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             },
@@ -88,7 +88,7 @@ export class OverviewRepository {
         id: true,
         description: true,
         amount: true,
-        dueDate: true,
+        date: true,
         category: {
           select: {
             name: true,
@@ -96,7 +96,7 @@ export class OverviewRepository {
         },
       },
       orderBy: {
-        dueDate: 'asc',
+        date: 'asc',
       },
     })
 
@@ -119,7 +119,7 @@ export class OverviewRepository {
         userId,
         type: 'expense',
         paid: true,
-        dueDate: {
+        date: {
           gte: startDate,
           lte: endDate,
         },
@@ -206,19 +206,19 @@ export class OverviewRepository {
     let startDate: Date
 
     switch (period) {
-      case 'ultimos-15-dias':
+      case 'last-15-days':
         startDate = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)
         break
-      case 'ultimos-30-dias':
+      case 'last-30-days':
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
         break
-      case 'ultimos-3-meses':
+      case 'last-3-months':
         startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
         break
-      case 'ultimos-6-meses':
+      case 'last-6-months':
         startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
         break
-      case 'mes-atual':
+      case 'current-month':
       default:
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
         break

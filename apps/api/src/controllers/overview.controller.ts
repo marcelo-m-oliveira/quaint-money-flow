@@ -6,7 +6,7 @@ import { OverviewService } from '@/services/overview.service'
 import { handleError } from '@/utils/errors'
 
 interface TopExpensesQuery {
-  periodo?: string
+  period?: string
 }
 
 export class OverviewController {
@@ -35,11 +35,11 @@ export class OverviewController {
         ...overview,
         accountsPayable: overview.accountsPayable.map((account) => ({
           ...account,
-          dueDate: account.dueDate ? dateToSeconds(account.dueDate) : undefined,
+          date: account.date ? dateToSeconds(account.date) : undefined,
         })),
         accountsReceivable: overview.accountsReceivable.map((account) => ({
           ...account,
-          dueDate: account.dueDate ? dateToSeconds(account.dueDate) : undefined,
+          date: account.date ? dateToSeconds(account.date) : undefined,
         })),
       }
 
@@ -53,21 +53,21 @@ export class OverviewController {
   async getTopExpensesByCategory(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = request.user.sub
-      const { periodo = 'mes-atual' } = request.query as TopExpensesQuery
+      const { period = 'current-month' } = request.query as TopExpensesQuery
 
       request.log.info(
-        { userId, periodo },
+        { userId, period },
         'Buscando maiores gastos por categoria',
       )
       const topExpenses = await this.overviewService.getTopExpensesByCategory(
         userId,
-        periodo,
+        period,
       )
 
       request.log.info(
         {
           userId,
-          periodo,
+          period,
           expensesCount: topExpenses.expenses.length,
           totalExpenses: topExpenses.totalExpenses,
         },

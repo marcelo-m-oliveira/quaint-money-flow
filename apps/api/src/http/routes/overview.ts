@@ -30,9 +30,9 @@ export async function overviewRoutes(app: FastifyInstance) {
     overviewController.getGeneralOverview.bind(overviewController),
   )
 
-  // GET /overview/maiores-gastos - Buscar maiores gastos por categoria
+  // GET /overview/top-expenses - Buscar maiores gastos por categoria
   app.get(
-    '/overview/maiores-gastos',
+    '/overview/top-expenses',
     {
       schema: {
         querystring: topExpensesQuerySchema,
