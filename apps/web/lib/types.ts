@@ -336,7 +336,10 @@ export interface GeneralOverview {
 }
 
 export interface CategoryExpense {
+  id: string
   categoryName: string
+  icon: string
+  color: string
   totalAmount: number
 }
 

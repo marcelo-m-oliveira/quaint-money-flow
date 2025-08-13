@@ -20,18 +20,6 @@ const PERIOD_OPTIONS = [
   { value: '6months' as PeriodType, label: 'Últimos 6 meses' },
 ]
 
-// Cores padrão para o gráfico ECharts
-const DEFAULT_COLORS = [
-  '#FF6B6B', // Coral
-  '#4ECDC4', // Turquesa
-  '#45B7D1', // Azul claro
-  '#96CEB4', // Verde menta
-  '#FFEAA7', // Amarelo claro
-  '#DDA0DD', // Ameixa
-  '#98D8C8', // Verde água
-  '#F7DC6F', // Dourado
-]
-
 export function ExpenseSummaryCard() {
   const [selectedPeriod, setSelectedPeriod] =
     useState<PeriodType>('current_month')
@@ -73,13 +61,20 @@ export function ExpenseSummaryCard() {
       return []
     }
 
-    return topExpenses.expenses.map((expense, index) => ({
-      categoryId: `category-${index}`,
+    // Calcular o total de todas as despesas
+    const totalAmount = topExpenses.expenses.reduce(
+      (sum, expense) => sum + expense.totalAmount,
+      0,
+    )
+
+    return topExpenses.expenses.map((expense) => ({
+      categoryId: expense.id,
       categoryName: expense.categoryName,
       amount: expense.totalAmount,
-      percentage: 0, // Será calculado pelo gráfico
-      color: DEFAULT_COLORS[index % DEFAULT_COLORS.length],
-      icon: 'Receipt', // Ícone padrão
+      percentage:
+        totalAmount > 0 ? (expense.totalAmount / totalAmount) * 100 : 0,
+      color: expense.color,
+      icon: expense.icon,
     }))
   }, [topExpenses])
 

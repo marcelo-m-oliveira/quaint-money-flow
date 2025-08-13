@@ -34,7 +34,8 @@
     "fastify-type-provider-zod": "^5.0.3",
     "jsonwebtoken": "^9.0.2",
     "swagger-themes": "^1.4.3",
-    "zod": "^4.0.15"
+    "zod": "^4.0.15",
+    "decimal.js": "^10.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

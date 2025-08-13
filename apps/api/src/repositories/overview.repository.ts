@@ -145,6 +145,8 @@ export class OverviewRepository {
       select: {
         id: true,
         name: true,
+        icon: true,
+        color: true,
         parentId: true,
         parent: {
           select: {
@@ -159,7 +161,7 @@ export class OverviewRepository {
     const categoryMap = new Map(categories.map((cat) => [cat.id, cat]))
     const parentCategoryTotals = new Map<
       string,
-      { name: string; total: number }
+      { id: string; name: string; total: number; icon: string; color: string }
     >()
 
     expenses.forEach((expense) => {
@@ -176,8 +178,11 @@ export class OverviewRepository {
         existing.total += amount
       } else {
         parentCategoryTotals.set(parentId, {
+          id: category.id,
           name: parentName,
           total: amount,
+          icon: category.icon,
+          color: category.color,
         })
       }
     })
@@ -186,8 +191,11 @@ export class OverviewRepository {
     return Array.from(parentCategoryTotals.values())
       .sort((a, b) => b.total - a.total)
       .map((item) => ({
+        id: item.id,
         categoryName: item.name,
         totalAmount: item.total,
+        icon: item.icon,
+        color: item.color,
       }))
   }
 

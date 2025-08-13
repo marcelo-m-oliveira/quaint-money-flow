@@ -47,6 +47,9 @@ importers:
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
+      decimal.js:
+        specifier: ^10.6.0
+        version: 10.6.0
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1

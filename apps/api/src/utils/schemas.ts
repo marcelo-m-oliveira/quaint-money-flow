@@ -287,7 +287,10 @@ export const generalOverviewSchema = z.object({
 
 // Schema para gasto por categoria
 export const categoryExpenseSchema = z.object({
+  id: z.string(),
   categoryName: z.string(),
+  icon: z.string(),
+  color: z.string(),
   totalAmount: z.number(),
 })
 
