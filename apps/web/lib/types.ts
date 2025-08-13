@@ -319,9 +319,13 @@ export interface PendingAccount {
   amount: number
   date: number // timestamp em segundos
   categoryName: string
+  categoryId: string
+  type: 'income' | 'expense'
   icon: string
   color: string
   isOverdue: boolean
+  updatedAt: number
+  createdAt: number
 }
 
 export interface GeneralOverview {

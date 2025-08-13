@@ -20,14 +20,33 @@ import {
 import { CategoryIcon } from '@/lib/components/category-icon'
 import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
-import { EntryFormData } from '@/lib/types'
+import { PendingAccount } from '@/lib/types'
 
 interface BillsToPayCardProps {
-  onUpdateEntry?: (entryId: string, updatedData: Partial<EntryFormData>) => void
+  onUpdateEntry?: (
+    entryId: string,
+    updatedData: Partial<{ paid: boolean }>,
+  ) => void
+  onEditEntry?: (account: PendingAccount) => void
 }
 
-export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
-  const { generalOverview } = useOverviewContext()
+interface BillData {
+  id: string
+  description: string
+  amount: number
+  dueDate: Date
+  categoryName: string
+  categoryColor: string
+  icon: string
+  isOverdue: boolean
+  daysUntilDue: number
+}
+
+export function BillsToPayCard({
+  onUpdateEntry,
+  onEditEntry,
+}: BillsToPayCardProps) {
+  const { generalOverview, isLoading } = useOverviewContext()
   const { error } = useCrudToast()
   const [visibleOverdueBills, setVisibleOverdueBills] = useState(5)
   const [visibleUpcomingBills, setVisibleUpcomingBills] = useState(5)
@@ -43,53 +62,42 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
   }
 
   const { overdueBills, upcomingBills } = useMemo(() => {
-    // Usar dados do overview
     if (!generalOverview?.accountsPayable) {
-      return {
-        overdueBills: [],
-        upcomingBills: [],
-      }
+      return { overdueBills: [], upcomingBills: [] }
     }
 
-    const overviewBills = generalOverview.accountsPayable
-      .map((bill) => {
-        try {
-          // Verificar se date é válido (timestamp em segundos)
-          if (!bill.date) {
-            console.warn('Invalid date for bill:', bill.id, bill.date)
-            return null
-          }
+    const currentDate = new Date()
+    currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
 
-          // Converter timestamp para Date
-          const dueDate = createLocalDateFromTimestamp(bill.date)
-          // Calcular dias até o vencimento
-          const now = new Date()
-          const timeDiff = dueDate.getTime() - now.getTime()
-          const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
+    const billsData: BillData[] = generalOverview.accountsPayable.map(
+      (account) => {
+        // Converter timestamp em segundos para Date
+        const dueDate = createLocalDateFromTimestamp(account.date)
+        dueDate.setHours(0, 0, 0, 0)
 
-          return {
-            id: bill.id,
-            description: bill.description || 'Descrição não disponível',
-            amount: bill.amount || 0,
-            dueDate,
-            categoryName: bill.categoryName || 'Categoria não informada',
-            categoryColor: bill.color, // Default color since not available in overview
-            icon: bill.icon, // Default icon since not available in overview
-            isOverdue: bill.isOverdue,
-            daysUntilDue,
-          }
-        } catch (error) {
-          console.error('Error processing bill:', bill.id, error)
-          return null
+        const timeDiff = dueDate.getTime() - currentDate.getTime()
+        const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
+
+        return {
+          id: account.id,
+          description: account.description,
+          amount: account.amount,
+          dueDate,
+          categoryName: account.categoryName,
+          categoryColor: account.color,
+          icon: account.icon,
+          isOverdue: account.isOverdue,
+          daysUntilDue,
         }
-      })
-      .filter((bill): bill is NonNullable<typeof bill> => bill !== null)
+      },
+    )
 
-    const overdue = overviewBills
+    // Separar em atrasadas e próximas
+    const overdue = billsData
       .filter((bill) => bill.isOverdue)
       .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
 
-    const upcoming = overviewBills
+    const upcoming = billsData
       .filter((bill) => !bill.isOverdue)
       .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
 
@@ -97,9 +105,28 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
       overdueBills: overdue,
       upcomingBills: upcoming,
     }
-  }, [generalOverview])
+  }, [generalOverview?.accountsPayable])
 
   const totalBills = overdueBills.length + upcomingBills.length
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Contas a pagar
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="py-8 text-center text-muted-foreground">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+            <p className="text-sm">Carregando contas...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (totalBills === 0) {
     return (
@@ -150,12 +177,22 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
 
             <div className="space-y-3">
               {overdueBills.slice(0, visibleOverdueBills).map((bill) => {
+                const account = generalOverview?.accountsPayable.find(
+                  (acc) => acc.id === bill.id,
+                )
                 return (
                   <div
                     key={bill.id}
                     className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
                   >
-                    <div className="flex cursor-pointer items-center gap-3">
+                    <div
+                      className="flex cursor-pointer items-center gap-3"
+                      onClick={() => {
+                        if (onEditEntry && account) {
+                          onEditEntry(account)
+                        }
+                      }}
+                    >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                         <div
                           className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -252,13 +289,23 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
             <div className="space-y-3">
               {upcomingBills.slice(0, visibleUpcomingBills).map((bill) => {
                 const isNearDue = bill.daysUntilDue <= 7
+                const account = generalOverview?.accountsPayable.find(
+                  (acc) => acc.id === bill.id,
+                )
 
                 return (
                   <div
                     key={bill.id}
                     className="flex  items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
-                    <div className="flex cursor-pointer items-center gap-3">
+                    <div
+                      className="flex cursor-pointer items-center gap-3"
+                      onClick={() => {
+                        if (onEditEntry && account) {
+                          onEditEntry(account)
+                        }
+                      }}
+                    >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                         <div
                           className="flex h-full w-full items-center justify-center rounded-full text-white"

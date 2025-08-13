@@ -20,18 +20,37 @@ import {
 import { CategoryIcon } from '@/lib/components/category-icon'
 import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
-import { EntryFormData } from '@/lib/types'
+import { PendingAccount } from '@/lib/types'
 
 interface BillsToReceiveCardProps {
-  onUpdateEntry?: (entryId: string, updatedData: Partial<EntryFormData>) => void
+  onUpdateEntry?: (
+    entryId: string,
+    updatedData: Partial<{ paid: boolean }>,
+  ) => void
+  onEditEntry?: (account: PendingAccount) => void
 }
 
-export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
-  const { generalOverview } = useOverviewContext()
-  const { error } = useCrudToast()
-  const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(5)
+interface ReceivableData {
+  id: string
+  description: string
+  amount: number
+  dueDate: Date
+  categoryName: string
+  categoryColor: string
+  icon: string
+  isOverdue: boolean
+  daysUntilDue: number
+}
+
+export function BillsToReceiveCard({
+  onUpdateEntry,
+  onEditEntry,
+}: BillsToReceiveCardProps) {
+  const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(3)
   const [visibleUpcomingReceivables, setVisibleUpcomingReceivables] =
-    useState(5)
+    useState(3)
+  const { error } = useCrudToast()
+  const { generalOverview, isLoading } = useOverviewContext()
 
   const handleToggleReceivedStatus = (entryId: string) => {
     try {
@@ -44,69 +63,73 @@ export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
   }
 
   const { overdueReceivables, upcomingReceivables } = useMemo(() => {
-    // Usar dados do overview quando disponíveis
-    if (generalOverview?.accountsReceivable) {
-      const overviewReceivables = generalOverview.accountsReceivable
-        .map((bill) => {
-          try {
-            // Verificar se date é válido (timestamp em segundos)
-            if (!bill.date) {
-              console.warn('Invalid date for bill:', bill.id, bill.date)
-              return null
-            }
-
-            // Converter timestamp para Date
-            const dueDate = createLocalDateFromTimestamp(bill.date)
-
-            // Criar novas instâncias de Date para evitar mutação durante renderização
-            const currentDate = new Date()
-            currentDate.setHours(0, 0, 0, 0)
-            const dueDateCopy = new Date(dueDate)
-            dueDateCopy.setHours(0, 0, 0, 0)
-
-            const timeDiff = dueDateCopy.getTime() - currentDate.getTime()
-            const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
-
-            return {
-              id: bill.id,
-              description: bill.description || 'Descrição não disponível',
-              amount: bill.amount || 0,
-              dueDate: dueDateCopy,
-              categoryName: bill.categoryName || 'Categoria não informada',
-              categoryColor: bill.color, // Default color since not available in overview
-              icon: bill.icon, // Default icon since not available in overview
-              isOverdue: bill.isOverdue,
-              daysUntilDue,
-            }
-          } catch (error) {
-            console.error('Error processing bill:', bill.id, error)
-            return null
-          }
-        })
-        .filter((bill): bill is NonNullable<typeof bill> => bill !== null)
-
-      const overdue = overviewReceivables
-        .filter((receivable) => receivable.isOverdue)
-        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
-
-      const upcoming = overviewReceivables
-        .filter((receivable) => !receivable.isOverdue)
-        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
-
+    if (!generalOverview?.accountsReceivable) {
       return {
-        overdueReceivables: overdue,
-        upcomingReceivables: upcoming,
+        overdueReceivables: [],
+        upcomingReceivables: [],
       }
     }
 
+    const currentDate = new Date()
+    currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
+
+    const receivablesData: ReceivableData[] =
+      generalOverview.accountsReceivable.map((account) => {
+        const dueDate = createLocalDateFromTimestamp(account.date) // Convert timestamp to Date
+        dueDate.setHours(0, 0, 0, 0)
+
+        const timeDiff = dueDate.getTime() - currentDate.getTime()
+        const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
+
+        return {
+          id: account.id,
+          description: account.description,
+          amount: account.amount,
+          dueDate,
+          categoryName: account.categoryName,
+          categoryColor: account.color,
+          icon: account.icon,
+          isOverdue: daysUntilDue < 0,
+          daysUntilDue,
+        }
+      })
+
+    // Separar em atrasadas e próximas
+    const overdue = receivablesData
+      .filter((receivable) => receivable.isOverdue)
+      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+
+    const upcoming = receivablesData
+      .filter((receivable) => !receivable.isOverdue)
+      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+
     return {
-      overdueReceivables: [],
-      upcomingReceivables: [],
+      overdueReceivables: overdue,
+      upcomingReceivables: upcoming,
     }
   }, [generalOverview])
 
   const totalReceivables =
     overdueReceivables.length + upcomingReceivables.length
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Contas a receber
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="py-8 text-center text-muted-foreground">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+            <p className="text-sm">Carregando contas...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (totalReceivables === 0) {
     return (
@@ -162,12 +185,22 @@ export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
               {overdueReceivables
                 .slice(0, visibleOverdueReceivables)
                 .map((receivable) => {
+                  const account = generalOverview?.accountsReceivable.find(
+                    (acc) => acc.id === receivable.id,
+                  )
                   return (
                     <div
                       key={receivable.id}
                       className="flex  items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
                     >
-                      <div className="flex cursor-pointer items-center gap-3">
+                      <div
+                        className="flex cursor-pointer items-center gap-3"
+                        onClick={() => {
+                          if (onEditEntry && account) {
+                            onEditEntry(account)
+                          }
+                        }}
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                           <div
                             className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -277,13 +310,23 @@ export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
                 .slice(0, visibleUpcomingReceivables)
                 .map((receivable) => {
                   const isNearDue = receivable.daysUntilDue <= 7
+                  const account = generalOverview?.accountsReceivable.find(
+                    (acc) => acc.id === receivable.id,
+                  )
 
                   return (
                     <div
                       key={receivable.id}
                       className="flex  items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                     >
-                      <div className="flex cursor-pointer items-center gap-3">
+                      <div
+                        className="flex cursor-pointer items-center gap-3"
+                        onClick={() => {
+                          if (onEditEntry && account) {
+                            onEditEntry(account)
+                          }
+                        }}
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                           <div
                             className="flex h-full w-full items-center justify-center rounded-full text-white"

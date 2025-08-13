@@ -9,7 +9,7 @@ import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { formatCurrency, getDayPeriod } from '@/lib/format'
 import { useCategories } from '@/lib/hooks/use-categories'
 import { useEntries } from '@/lib/hooks/use-entries'
-import { Entry, EntryFormData } from '@/lib/types'
+import { Entry, EntryFormData, PendingAccount } from '@/lib/types'
 
 import {
   BillsToPayCard,
@@ -93,6 +93,29 @@ export function FinancialDashboard() {
         }
       },
     })
+  }
+
+  // Função para editar entrada a partir dos cards de contas
+  const handleEditEntry = (account: PendingAccount) => {
+    // Converter PendingAccount para Entry para compatibilidade com o modal
+    const entry: Entry = {
+      id: account.id,
+      description: account.description,
+      amount: account.amount,
+      date: account.date,
+      type: account.type || 'expense', // Assumir expense se não especificado
+      categoryId: account.categoryId || '',
+      paid: false,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    }
+
+    setEditingEntry(entry)
+    if (entry.type === 'expense') {
+      setIsExpenseDialogOpen(true)
+    } else {
+      setIsIncomeDialogOpen(true)
+    }
   }
 
   // Evita warning do ESLint sobre variáveis não utilizadas
@@ -267,12 +290,18 @@ export function FinancialDashboard() {
           <div className="flex flex-col gap-6 lg:flex-row">
             {/* Card de Contas a Pagar */}
             <div className="flex-1">
-              <BillsToPayCard onUpdateEntry={patchEntry} />
+              <BillsToPayCard
+                onUpdateEntry={patchEntry}
+                onEditEntry={handleEditEntry}
+              />
             </div>
 
             {/* Card de Contas a Receber */}
             <div className="flex-1">
-              <BillsToReceiveCard onUpdateEntry={patchEntry} />
+              <BillsToReceiveCard
+                onUpdateEntry={patchEntry}
+                onEditEntry={handleEditEntry}
+              />
             </div>
           </div>
         </div>
