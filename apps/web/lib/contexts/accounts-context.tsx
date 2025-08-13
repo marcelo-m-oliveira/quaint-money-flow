@@ -2,9 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useState } from 'react'
 
-import { useCrudToast } from '../hooks/use-crud-toast'
-import { accountsService } from '../services/accounts'
-import { Account, AccountFormData } from '../types'
+import { Account, AccountFormData, accountsService, useCrudToast } from '@/lib'
 
 interface AccountsContextType {
   accounts: Account[]

@@ -1,5 +1,5 @@
 import { getBankIcon } from '@/lib/data/banks'
-import { Account, Entry } from '@/lib/types'
+import { Entry } from '@/lib/types'
 
 import {
   Tooltip,
@@ -10,7 +10,6 @@ import {
 
 interface AccountCardIconProps {
   entry: Entry
-  accounts: Account[]
 }
 
 const GENERIC_ICON_MAP = {
@@ -23,11 +22,8 @@ const GENERIC_ICON_MAP = {
   'dollar-sign': '💰',
 }
 
-export function AccountCardIcon({ entry, accounts }: AccountCardIconProps) {
-  const account = entry.accountId
-    ? accounts.find((acc) => acc.id === entry.accountId)
-    : entry.creditCard
-
+export function AccountCardIcon({ entry }: AccountCardIconProps) {
+  const account = entry.accountId ? entry.account : entry.creditCard
   if (!account) return null
 
   return (

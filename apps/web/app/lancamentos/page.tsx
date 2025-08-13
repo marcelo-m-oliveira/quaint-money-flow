@@ -64,7 +64,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { useEntries } from '@/lib/hooks/use-entries'
 import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
@@ -171,8 +170,6 @@ export default function LancamentoPage() {
     deleteEntry,
     updateFilters,
   } = useEntries(getDateFilters(), false)
-
-  const { accounts } = useAccounts()
 
   const { error } = useCrudToast()
 
@@ -903,11 +900,8 @@ export default function LancamentoPage() {
 
                               {/* Linha do meio em mobile / Coluna centro em desktop: Conta/Cartão */}
                               <div className="flex justify-center sm:flex-1 sm:justify-center">
-                                {(entry.accountId || entry.creditCardId) && (
-                                  <AccountCardIcon
-                                    entry={entry}
-                                    accounts={accounts}
-                                  />
+                                {(entry.account || entry.creditCard) && (
+                                  <AccountCardIcon entry={entry} />
                                 )}
                               </div>
 
