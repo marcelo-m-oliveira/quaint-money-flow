@@ -12,7 +12,7 @@ import {
 
 import { useCrudToast } from './use-crud-toast'
 
-export function useCategories() {
+export function useCategories(shouldFetch = true) {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorState] = useState<string | null>(null)
@@ -135,10 +135,12 @@ export function useCategories() {
     }
   }
 
-  // Carregar categorias na inicialização
+  // Carregar categorias na inicialização apenas se shouldFetch for true
   useEffect(() => {
-    fetchCategories()
-  }, [])
+    if (shouldFetch) {
+      fetchCategories()
+    }
+  }, [shouldFetch])
 
   return {
     categories,

@@ -1,6 +1,6 @@
 'use client'
 
-import { formatCurrency, formatDate } from '@saas/utils'
+import { formatCurrency, formatDate, secondsToDate } from '@saas/utils'
 import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -14,48 +14,25 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { CategoryIcon } from '@/lib/components/category-icon'
+import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import { Category, Entry } from '@/lib/types'
+import { EntryFormData } from '@/lib/types'
 
 interface BillsToReceiveCardProps {
-  transactions: Entry[]
-  categories: Category[]
-  onUpdateTransaction?: (
-    transactionId: string,
-    updatedData: Partial<Entry>,
-  ) => void
-  onEditTransaction?: (transaction: Entry) => void
+  onUpdateEntry?: (entryId: string, updatedData: Partial<EntryFormData>) => void
 }
 
-interface ReceivableData {
-  id: string
-  description: string
-  amount: number
-  dueDate: Date
-  categoryName: string
-  categoryColor: string
-  icon: string
-  isOverdue: boolean
-  daysUntilDue: number
-}
-
-export function BillsToReceiveCard({
-  transactions,
-  categories,
-  onUpdateTransaction,
-  onEditTransaction,
-}: BillsToReceiveCardProps) {
-  const { getCategoryIcon } = useFinancialData()
+export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
+  const { generalOverview } = useOverviewContext()
   const { success, error } = useCrudToast()
   const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(5)
   const [visibleUpcomingReceivables, setVisibleUpcomingReceivables] =
     useState(5)
 
-  const handleToggleReceivedStatus = (transactionId: string) => {
+  const handleToggleReceivedStatus = (entryId: string) => {
     try {
-      if (onUpdateTransaction) {
-        onUpdateTransaction(transactionId, { paid: true })
+      if (onUpdateEntry) {
+        onUpdateEntry(entryId, { paid: true })
         success.update('Receita marcada como recebida')
       }
     } catch (err) {
@@ -64,53 +41,83 @@ export function BillsToReceiveCard({
   }
 
   const { overdueReceivables, upcomingReceivables } = useMemo(() => {
-    const currentDate = new Date()
-    currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
+    // Usar dados do overview quando disponíveis
+    if (generalOverview?.accountsReceivable) {
+      const overviewReceivables = generalOverview.accountsReceivable
+        .map((bill) => {
+          try {
+            // Verificar se dueDate é válido
+            if (
+              !bill.dueDate ||
+              typeof bill.dueDate !== 'number' ||
+              bill.dueDate <= 0
+            ) {
+              console.warn(
+                'Invalid dueDate for receivable:',
+                bill.id,
+                bill.dueDate,
+              )
+              return null
+            }
 
-    // Filtrar apenas receitas não recebidas
-    const unpaidIncomes = transactions.filter(
-      (transaction) => transaction.type === 'income' && !transaction.paid,
-    )
+            const dueDate = secondsToDate(bill.dueDate) // Convert from seconds to Date
 
-    const receivablesData: ReceivableData[] = unpaidIncomes.map(
-      (transaction) => {
-        const category = categories.find(
-          (cat) => cat.id === transaction.categoryId,
-        )
-        const dueDate = new Date(transaction.date)
-        dueDate.setHours(0, 0, 0, 0)
+            // Verificar se a data convertida é válida
+            if (isNaN(dueDate.getTime())) {
+              console.warn(
+                'Invalid date conversion for receivable:',
+                bill.id,
+                bill.dueDate,
+              )
+              return null
+            }
 
-        const timeDiff = dueDate.getTime() - currentDate.getTime()
-        const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
+            // Criar novas instâncias de Date para evitar mutação durante renderização
+            const currentDate = new Date()
+            currentDate.setHours(0, 0, 0, 0)
+            const dueDateCopy = new Date(dueDate)
+            dueDateCopy.setHours(0, 0, 0, 0)
 
-        return {
-          id: transaction.id,
-          description: transaction.description,
-          amount: transaction.amount,
-          dueDate,
-          categoryName: category?.name || 'Categoria não encontrada',
-          categoryColor: category?.color || '#6B7280',
-          icon: getCategoryIcon(category),
-          isOverdue: daysUntilDue < 0,
-          daysUntilDue,
-        }
-      },
-    )
+            const timeDiff = dueDateCopy.getTime() - currentDate.getTime()
+            const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
 
-    // Separar em atrasadas e próximas
-    const overdue = receivablesData
-      .filter((receivable) => receivable.isOverdue)
-      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+            return {
+              id: bill.id,
+              description: bill.description || 'Descrição não disponível',
+              amount: bill.amount || 0,
+              dueDate: dueDateCopy,
+              categoryName: bill.categoryName || 'Categoria não informada',
+              categoryColor: '#10B981', // Default green color for receivables
+              icon: 'Receipt', // Default icon since not available in overview
+              isOverdue: bill.isOverdue,
+              daysUntilDue,
+            }
+          } catch (error) {
+            console.error('Error processing receivable:', bill.id, error)
+            return null
+          }
+        })
+        .filter((bill): bill is NonNullable<typeof bill> => bill !== null)
 
-    const upcoming = receivablesData
-      .filter((receivable) => !receivable.isOverdue)
-      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+      const overdue = overviewReceivables
+        .filter((receivable) => receivable.isOverdue)
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+
+      const upcoming = overviewReceivables
+        .filter((receivable) => !receivable.isOverdue)
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+
+      return {
+        overdueReceivables: overdue,
+        upcomingReceivables: upcoming,
+      }
+    }
 
     return {
-      overdueReceivables: overdue,
-      upcomingReceivables: upcoming,
+      overdueReceivables: [],
+      upcomingReceivables: [],
     }
-  }, [transactions, categories])
+  }, [generalOverview])
 
   const totalReceivables =
     overdueReceivables.length + upcomingReceivables.length
@@ -169,22 +176,12 @@ export function BillsToReceiveCard({
               {overdueReceivables
                 .slice(0, visibleOverdueReceivables)
                 .map((receivable) => {
-                  const transaction = transactions.find(
-                    (t) => t.id === receivable.id,
-                  )
                   return (
                     <div
                       key={receivable.id}
                       className="flex  items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
                     >
-                      <div
-                        className="flex cursor-pointer items-center gap-3"
-                        onClick={() => {
-                          if (onEditTransaction && transaction) {
-                            onEditTransaction(transaction)
-                          }
-                        }}
-                      >
+                      <div className="flex cursor-pointer items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                           <div
                             className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -212,7 +209,7 @@ export function BillsToReceiveCard({
                         <p className="font-semibold text-green-600 dark:text-green-400">
                           {formatCurrency(receivable.amount)}
                         </p>
-                        {onUpdateTransaction && (
+                        {onUpdateEntry && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -294,23 +291,13 @@ export function BillsToReceiveCard({
                 .slice(0, visibleUpcomingReceivables)
                 .map((receivable) => {
                   const isNearDue = receivable.daysUntilDue <= 7
-                  const transaction = transactions.find(
-                    (t) => t.id === receivable.id,
-                  )
 
                   return (
                     <div
                       key={receivable.id}
                       className="flex  items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                     >
-                      <div
-                        className="flex cursor-pointer items-center gap-3"
-                        onClick={() => {
-                          if (onEditTransaction && transaction) {
-                            onEditTransaction(transaction)
-                          }
-                        }}
-                      >
+                      <div className="flex cursor-pointer items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                           <div
                             className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -349,7 +336,7 @@ export function BillsToReceiveCard({
                         <p className="font-semibold text-green-600">
                           {formatCurrency(receivable.amount)}
                         </p>
-                        {onUpdateTransaction && (
+                        {onUpdateEntry && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>

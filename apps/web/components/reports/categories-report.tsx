@@ -52,15 +52,15 @@ const DEFAULT_COLORS = [
 ]
 
 export function CategoriesReport({ period }: CategoriesReportProps) {
-  const { transactions, categories } = useFinancialData()
+  const { entries, categories } = useFinancialData()
   const { isDark } = useTheme()
   const [chartType, setChartType] = useState<ChartType>('doughnut')
   const [transactionType, setTransactionType] =
     useState<TransactionType>('expense')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  // Filtrar transações por período
-  const filteredTransactions = useMemo(() => {
+  // Filtrar entradas por período
+  const filteredEntries = useMemo(() => {
     const now = new Date()
     let startDate: Date
 
@@ -87,35 +87,32 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
-    return transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.date)
-      const category = categories.find((c) => c.id === transaction.categoryId)
+    return entries.filter((entry) => {
+      const entryDate = new Date(entry.date)
+      const category = categories.find((c) => c.id === entry.categoryId)
 
       // Se uma categoria específica foi selecionada, incluir ela e suas subcategorias
       const matchesCategory =
         selectedCategory === 'all' ||
-        transaction.categoryId === selectedCategory ||
+        entry.categoryId === selectedCategory ||
         category?.parentId === selectedCategory
 
       return (
-        transactionDate >= startDate &&
-        transactionDate <= now &&
-        transaction.type === transactionType &&
+        entryDate >= startDate &&
+        entryDate <= now &&
+        entry.type === transactionType &&
         matchesCategory
       )
     })
-  }, [transactions, period, transactionType, selectedCategory])
+  }, [entries, period, transactionType, selectedCategory])
 
   // Processar dados das categorias agrupando subcategorias nas categorias pai
   const categoryData = useMemo(() => {
     const parentCategoryMap = new Map<string, CategoryData>()
-    const totalAmount = filteredTransactions.reduce(
-      (sum, t) => sum + t.amount,
-      0,
-    )
+    const totalAmount = filteredEntries.reduce((sum, t) => sum + t.amount, 0)
 
-    filteredTransactions.forEach((transaction) => {
-      const category = categories.find((c) => c.id === transaction.categoryId)
+    filteredEntries.forEach((entry) => {
+      const category = categories.find((c) => c.id === entry.categoryId)
       if (!category) return
 
       // Se é uma subcategoria, agregar na categoria pai
@@ -127,13 +124,13 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
 
       const existing = parentCategoryMap.get(parentCategory.id)
       if (existing) {
-        existing.amount += transaction.amount
+        existing.amount += entry.amount
         existing.transactionCount += 1
       } else {
         parentCategoryMap.set(parentCategory.id, {
           categoryId: parentCategory.id,
           categoryName: parentCategory.name,
-          amount: transaction.amount,
+          amount: entry.amount,
           percentage: 0,
           color: parentCategory.color,
           icon: parentCategory.icon,
@@ -151,7 +148,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
       .sort((a, b) => b.amount - a.amount)
 
     return result
-  }, [filteredTransactions, categories])
+  }, [filteredEntries, categories])
 
   // Configuração do gráfico Doughnut
   const doughnutOptions = useMemo(() => {
@@ -335,7 +332,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
   }, [categoryData, isDark, transactionType])
 
   const totalAmount = categoryData.reduce((sum, item) => sum + item.amount, 0)
-  const totalTransactions = categoryData.reduce(
+  const totalEntries = categoryData.reduce(
     (sum, item) => sum + item.transactionCount,
     0,
   )
@@ -449,9 +446,9 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Transações
+                  Entradas
                 </p>
-                <p className="text-2xl font-bold">{totalTransactions}</p>
+                <p className="text-2xl font-bold">{totalEntries}</p>
               </div>
               <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900">
                 <BarChart3 className="h-6 w-6 text-blue-600" />
@@ -548,16 +545,16 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                 )
 
                 // Buscar subcategorias que pertencem a esta categoria pai
-                const subcategoriesData = filteredTransactions
-                  .filter((transaction) => {
-                    const transactionCategory = categories.find(
-                      (c) => c.id === transaction.categoryId,
+                const subcategoriesData = filteredEntries
+                  .filter((entry) => {
+                    const entryCategory = categories.find(
+                      (c) => c.id === entry.categoryId,
                     )
-                    return transactionCategory?.parentId === item.categoryId
+                    return entryCategory?.parentId === item.categoryId
                   })
-                  .reduce((acc, transaction) => {
+                  .reduce((acc, entry) => {
                     const subCategory = categories.find(
-                      (c) => c.id === transaction.categoryId,
+                      (c) => c.id === entry.categoryId,
                     )
                     if (!subCategory) return acc
 
@@ -565,14 +562,14 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                       (sub: CategoryData) => sub.categoryId === subCategory.id,
                     )
                     if (existing) {
-                      existing.amount += transaction.amount
+                      existing.amount += entry.amount
                       existing.transactionCount += 1
                     } else {
                       if (subCategory.id) {
                         acc.push({
                           categoryId: subCategory.id,
                           categoryName: subCategory.name,
-                          amount: transaction.amount,
+                          amount: entry.amount,
                           percentage: 0,
                           color: subCategory.color,
                           icon: subCategory.icon,
@@ -610,8 +607,8 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                         <DetailItem.Info>
                           <p className="font-medium">{item.categoryName}</p>
                           <p className="text-sm text-muted-foreground">
-                            {item.transactionCount} transaç
-                            {item.transactionCount === 1 ? 'ão' : 'ões'}
+                            {item.transactionCount} entrada
+                            {item.transactionCount === 1 ? '' : 's'}
                             {subcategoriesData.length > 0 && (
                               <span className="ml-1">
                                 • {subcategoriesData.length} subcategoria
@@ -665,10 +662,8 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                                     {subItem.categoryName}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {subItem.transactionCount} transaç
-                                    {subItem.transactionCount === 1
-                                      ? 'ão'
-                                      : 'ões'}
+                                    {subItem.transactionCount} entrada
+                                    {subItem.transactionCount === 1 ? '' : 's'}
                                   </p>
                                 </DetailItem.Info>
                               </DetailItem.Content>

@@ -1,6 +1,6 @@
 'use client'
 
-import { formatCurrency, formatDate } from '@saas/utils'
+import { formatCurrency, formatDate, secondsToDate } from '@saas/utils'
 import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -14,47 +14,24 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { CategoryIcon } from '@/lib/components/category-icon'
+import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import { Category, Entry } from '@/lib/types'
+import { EntryFormData } from '@/lib/types'
 
 interface BillsToPayCardProps {
-  transactions: Entry[]
-  categories: Category[]
-  onUpdateTransaction?: (
-    transactionId: string,
-    updatedData: Partial<Entry>,
-  ) => void
-  onEditTransaction?: (transaction: Entry) => void
+  onUpdateEntry?: (entryId: string, updatedData: Partial<EntryFormData>) => void
 }
 
-interface BillData {
-  id: string
-  description: string
-  amount: number
-  dueDate: Date
-  categoryName: string
-  categoryColor: string
-  icon: string
-  isOverdue: boolean
-  daysUntilDue: number
-}
-
-export function BillsToPayCard({
-  transactions,
-  categories,
-  onUpdateTransaction,
-  onEditTransaction,
-}: BillsToPayCardProps) {
-  const { getCategoryIcon } = useFinancialData()
+export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
+  const { generalOverview } = useOverviewContext()
   const { success, error } = useCrudToast()
   const [visibleOverdueBills, setVisibleOverdueBills] = useState(5)
   const [visibleUpcomingBills, setVisibleUpcomingBills] = useState(5)
 
-  const handleTogglePaidStatus = (transactionId: string) => {
+  const handleTogglePaidStatus = (entryId: string) => {
     try {
-      if (onUpdateTransaction) {
-        onUpdateTransaction(transactionId, { paid: true })
+      if (onUpdateEntry) {
+        onUpdateEntry(entryId, { paid: true })
         success.update('Pagamento')
       }
     } catch (err) {
@@ -63,43 +40,71 @@ export function BillsToPayCard({
   }
 
   const { overdueBills, upcomingBills } = useMemo(() => {
-    const currentDate = new Date()
-    currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
-
-    // Filtrar apenas despesas não pagas
-    const unpaidExpenses = transactions.filter(
-      (transaction) => transaction.type === 'expense' && !transaction.paid,
-    )
-
-    const billsData: BillData[] = unpaidExpenses.map((transaction) => {
-      const category = categories.find(
-        (cat) => cat.id === transaction.categoryId,
-      )
-      const dueDate = new Date(transaction.date)
-      dueDate.setHours(0, 0, 0, 0)
-
-      const timeDiff = dueDate.getTime() - currentDate.getTime()
-      const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
-
+    // Usar dados do overview
+    if (!generalOverview?.accountsPayable) {
       return {
-        id: transaction.id,
-        description: transaction.description,
-        amount: transaction.amount,
-        dueDate,
-        categoryName: category?.name || 'Categoria não encontrada',
-        categoryColor: category?.color || '#6B7280',
-        icon: getCategoryIcon(category),
-        isOverdue: daysUntilDue < 0,
-        daysUntilDue,
+        overdueBills: [],
+        upcomingBills: [],
       }
-    })
+    }
 
-    // Separar em atrasadas e próximas
-    const overdue = billsData
+    const overviewBills = generalOverview.accountsPayable
+      .map((bill) => {
+        try {
+          // Verificar se dueDate é válido
+          if (
+            !bill.dueDate ||
+            typeof bill.dueDate !== 'number' ||
+            bill.dueDate <= 0
+          ) {
+            console.warn('Invalid dueDate for bill:', bill.id, bill.dueDate)
+            return null
+          }
+
+          const dueDate = secondsToDate(bill.dueDate) // Convert from seconds to Date
+
+          // Verificar se a data convertida é válida
+          if (isNaN(dueDate.getTime())) {
+            console.warn(
+              'Invalid date conversion for bill:',
+              bill.id,
+              bill.dueDate,
+            )
+            return null
+          }
+
+          // Criar novas instâncias de Date para evitar mutação durante renderização
+          const currentDate = new Date()
+          currentDate.setHours(0, 0, 0, 0)
+          const dueDateCopy = new Date(dueDate)
+          dueDateCopy.setHours(0, 0, 0, 0)
+
+          const timeDiff = dueDateCopy.getTime() - currentDate.getTime()
+          const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
+
+          return {
+            id: bill.id,
+            description: bill.description || 'Descrição não disponível',
+            amount: bill.amount || 0,
+            dueDate: dueDateCopy,
+            categoryName: bill.categoryName || 'Categoria não informada',
+            categoryColor: '#6B7280', // Default color since not available in overview
+            icon: 'Receipt', // Default icon since not available in overview
+            isOverdue: bill.isOverdue,
+            daysUntilDue,
+          }
+        } catch (error) {
+          console.error('Error processing bill:', bill.id, error)
+          return null
+        }
+      })
+      .filter((bill): bill is NonNullable<typeof bill> => bill !== null)
+
+    const overdue = overviewBills
       .filter((bill) => bill.isOverdue)
       .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
 
-    const upcoming = billsData
+    const upcoming = overviewBills
       .filter((bill) => !bill.isOverdue)
       .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
 
@@ -107,7 +112,12 @@ export function BillsToPayCard({
       overdueBills: overdue,
       upcomingBills: upcoming,
     }
-  }, [transactions, categories])
+
+    return {
+      overdueBills: [],
+      upcomingBills: [],
+    }
+  }, [generalOverview])
 
   const totalBills = overdueBills.length + upcomingBills.length
 
@@ -160,20 +170,12 @@ export function BillsToPayCard({
 
             <div className="space-y-3">
               {overdueBills.slice(0, visibleOverdueBills).map((bill) => {
-                const transaction = transactions.find((t) => t.id === bill.id)
                 return (
                   <div
                     key={bill.id}
                     className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50/50 p-3 transition-colors hover:bg-red-100/50 dark:border-red-800 dark:bg-red-950/10 dark:hover:bg-red-950/20"
                   >
-                    <div
-                      className="flex cursor-pointer items-center gap-3"
-                      onClick={() => {
-                        if (onEditTransaction && transaction) {
-                          onEditTransaction(transaction)
-                        }
-                      }}
-                    >
+                    <div className="flex cursor-pointer items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                         <div
                           className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -199,7 +201,7 @@ export function BillsToPayCard({
                       <p className="font-semibold text-red-600 dark:text-red-400">
                         {formatCurrency(bill.amount)}
                       </p>
-                      {onUpdateTransaction && (
+                      {onUpdateEntry && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -270,21 +272,13 @@ export function BillsToPayCard({
             <div className="space-y-3">
               {upcomingBills.slice(0, visibleUpcomingBills).map((bill) => {
                 const isNearDue = bill.daysUntilDue <= 7
-                const transaction = transactions.find((t) => t.id === bill.id)
 
                 return (
                   <div
                     key={bill.id}
                     className="flex  items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
-                    <div
-                      className="flex cursor-pointer items-center gap-3"
-                      onClick={() => {
-                        if (onEditTransaction && transaction) {
-                          onEditTransaction(transaction)
-                        }
-                      }}
-                    >
+                    <div className="flex cursor-pointer items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border">
                         <div
                           className="flex h-full w-full items-center justify-center rounded-full text-white"
@@ -321,7 +315,7 @@ export function BillsToPayCard({
                       <p className="font-semibold">
                         {formatCurrency(bill.amount)}
                       </p>
-                      {onUpdateTransaction && (
+                      {onUpdateEntry && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>

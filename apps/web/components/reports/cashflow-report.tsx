@@ -43,11 +43,11 @@ interface CashflowData {
 
 export function CashflowReport({ period }: CashflowReportProps) {
   const { isDark } = useTheme()
-  const { transactions } = useFinancialData()
+  const { entries } = useFinancialData()
   const [viewMode, setViewMode] = useState<ViewMode>('monthly')
 
   // Filtrar transações por período
-  const filteredTransactions = useMemo(() => {
+  const filteredEntries = useMemo(() => {
     const now = new Date()
     let startDate: Date
 
@@ -79,18 +79,18 @@ export function CashflowReport({ period }: CashflowReportProps) {
       }
     }
 
-    return transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.date)
-      return transactionDate >= startDate && transactionDate <= now
+    return entries.filter((entry) => {
+      const entryDate = new Date(entry.date)
+      return entryDate >= startDate && entryDate <= now
     })
-  }, [transactions, period])
+  }, [entries, period])
 
   // Processar dados do fluxo de caixa
   const cashflowData = useMemo(() => {
     const dataMap = new Map<string, CashflowData>()
 
-    filteredTransactions.forEach((transaction) => {
-      const date = new Date(transaction.date)
+    filteredEntries.forEach((entry) => {
+      const date = new Date(entry.date)
       let key: string
       let periodLabel: string
 
@@ -129,21 +129,18 @@ export function CashflowReport({ period }: CashflowReportProps) {
 
       const existing = dataMap.get(key)
       if (existing) {
-        if (transaction.type === 'income') {
-          existing.income += transaction.amount
+        if (entry.type === 'income') {
+          existing.income += entry.amount
         } else {
-          existing.expense += transaction.amount
+          existing.expense += entry.amount
         }
         existing.balance = existing.income - existing.expense
       } else {
         dataMap.set(key, {
           date: key,
-          income: transaction.type === 'income' ? transaction.amount : 0,
-          expense: transaction.type === 'expense' ? transaction.amount : 0,
-          balance:
-            transaction.type === 'income'
-              ? transaction.amount
-              : -transaction.amount,
+          income: entry.type === 'income' ? entry.amount : 0,
+          expense: entry.type === 'expense' ? entry.amount : 0,
+          balance: entry.type === 'income' ? entry.amount : -entry.amount,
           period: periodLabel,
         })
       }
@@ -152,7 +149,7 @@ export function CashflowReport({ period }: CashflowReportProps) {
     return Array.from(dataMap.values()).sort((a, b) =>
       a.date.localeCompare(b.date),
     )
-  }, [filteredTransactions, viewMode])
+  }, [filteredEntries, viewMode])
 
   // Hook de scroll infinito
   const {

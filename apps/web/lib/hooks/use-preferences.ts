@@ -112,7 +112,7 @@ export function usePreferences() {
   }
 
   // Excluir todas as transações (função especial)
-  const clearAllTransactions = async () => {
+  const clearAllEntries = async () => {
     try {
       let token = localStorage.getItem('quaint-money-token')
       if (!token) {
@@ -194,7 +194,7 @@ export function usePreferences() {
     updatePreference,
     savePreferences,
     resetPreferences,
-    clearAllTransactions,
+    clearAllEntries,
     deleteAccount,
   }
 }

@@ -310,6 +310,64 @@ export interface CategoryUsage {
 }
 
 // ============================================================================
+// TIPOS DE OVERVIEW - Para funcionalidade de visão geral
+// ============================================================================
+
+export interface PendingAccount {
+  id: string
+  description: string
+  amount: number
+  dueDate: number // Timestamp em segundos
+  categoryName: string
+  isOverdue: boolean
+}
+
+export interface GeneralOverview {
+  monthlyIncome: number
+  monthlyExpenses: number
+  totalAccountsPayable: number
+  totalAccountsReceivable: number
+  accountsPayable: PendingAccount[]
+  accountsReceivable: PendingAccount[]
+  period: {
+    year: number
+    month: number
+  }
+}
+
+export interface CategoryExpense {
+  categoryName: string
+  totalAmount: number
+}
+
+export interface TopExpensesByCategory {
+  expenses: CategoryExpense[]
+  period: string
+  dateRange: {
+    startDate: number // Timestamp em segundos
+    endDate: number // Timestamp em segundos
+  }
+  totalExpenses: number
+}
+
+export interface QuickStats {
+  monthlyBalance: number
+  overduePayable: number
+  overdueReceivable: number
+  totalPendingPayable: number
+  totalPendingReceivable: number
+}
+
+export interface TopExpensesQueryParams {
+  period?:
+    | 'current-month'
+    | 'last-15-days'
+    | 'last-30-days'
+    | 'last-3-months'
+    | 'last-6-months'
+}
+
+// ============================================================================
 // TIPOS DE UTILIDADE - Para hooks e componentes
 // ============================================================================
 

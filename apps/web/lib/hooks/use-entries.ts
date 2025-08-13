@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import { useCrudToast } from '@/lib'
 import { entriesService } from '@/lib/services/entries'
 import {
   EntriesQueryParams,
@@ -9,8 +10,6 @@ import {
   Entry,
   EntryFormData,
 } from '@/lib/types'
-
-import { useCrudToast } from './use-crud-toast'
 
 export function useEntries(
   initialFilters?: EntriesQueryParams,

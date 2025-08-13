@@ -50,6 +50,16 @@ export type {
   UseInfiniteScrollReturn,
 } from './types'
 
+// Tipos de overview
+export type {
+  PendingAccount,
+  GeneralOverview,
+  CategoryExpense,
+  TopExpensesByCategory,
+  QuickStats,
+  TopExpensesQueryParams,
+} from './types'
+
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - SERVIÇOS
 // ============================================================================
@@ -60,6 +70,7 @@ export { entriesService } from './services/entries'
 export { accountsService } from './services/accounts'
 export { creditCardsService } from './services/credit-cards'
 export { userPreferencesService } from './services/user-preferences'
+export { overviewService } from './services/overview'
 
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - HOOKS

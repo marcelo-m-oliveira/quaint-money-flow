@@ -69,15 +69,15 @@ const DEFAULT_COLORS = [
 ]
 
 export function AccountsReport({ period }: AccountsReportProps) {
-  const { transactions } = useFinancialData()
+  const { entries } = useFinancialData()
   const { accounts } = useAccountsWithAutoInit()
   const { creditCards } = useCreditCardsWithAutoInit()
   const { isDark } = useTheme()
   const [chartType, setChartType] = useState<ChartType>('doughnut')
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('all')
 
-  // Filtrar transações por período
-  const filteredTransactions = useMemo(() => {
+  // Filtrar entradas por período
+  const filteredEntries = useMemo(() => {
     const now = new Date()
     let startDate: Date
 
@@ -104,15 +104,15 @@ export function AccountsReport({ period }: AccountsReportProps) {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
-    return transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.date)
+    return entries.filter((entry) => {
+      const entryDate = new Date(entry.date)
       return (
-        transactionDate >= startDate &&
-        transactionDate <= now &&
-        (transaction.accountId || transaction.creditCardId)
+        entryDate >= startDate &&
+        entryDate <= now &&
+        (entry.accountId || entry.creditCardId)
       )
     })
-  }, [transactions, period])
+  }, [entries, period])
 
   // Processar dados das contas
   const accountData = useMemo(() => {
@@ -154,9 +154,9 @@ export function AccountsReport({ period }: AccountsReportProps) {
       })
     })
 
-    // Depois, processar as transações para atualizar os valores
-    filteredTransactions.forEach((transaction) => {
-      const accountId = transaction.accountId || transaction.creditCardId
+    // Depois, processar as entradas para atualizar os valores
+    filteredEntries.forEach((entry) => {
+      const accountId = entry.accountId || entry.creditCardId
       if (!accountId) return
 
       const account = allAccounts.find((a) => a.id === accountId)
@@ -164,10 +164,10 @@ export function AccountsReport({ period }: AccountsReportProps) {
 
       const existing = accountMap.get(account.id)
       if (existing) {
-        if (transaction.type === 'income') {
-          existing.totalIncome += transaction.amount
+        if (entry.type === 'income') {
+          existing.totalIncome += entry.amount
         } else {
-          existing.totalExpense += transaction.amount
+          existing.totalExpense += entry.amount
         }
         existing.balance = existing.totalIncome - existing.totalExpense
         existing.transactionCount += 1
@@ -177,7 +177,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
     return Array.from(accountMap.values()).sort(
       (a, b) => Math.abs(b.balance) - Math.abs(a.balance),
     )
-  }, [filteredTransactions, accounts, creditCards, accountFilter])
+  }, [filteredEntries, accounts, creditCards, accountFilter])
 
   // Configuração do gráfico Doughnut
   const doughnutOptions = useMemo(() => {
@@ -369,7 +369,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
       0,
     )
     const totalBalance = totalIncome - totalExpense
-    const totalTransactions = accountData.reduce(
+    const totalEntries = accountData.reduce(
       (sum, item) => sum + item.transactionCount,
       0,
     )
@@ -378,7 +378,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
       totalIncome,
       totalExpense,
       totalBalance,
-      totalTransactions,
+      totalEntries,
     }
   }, [accountData])
 
@@ -518,9 +518,9 @@ export function AccountsReport({ period }: AccountsReportProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Transações
+                  Entradas
                 </p>
-                <p className="text-2xl font-bold">{totals.totalTransactions}</p>
+                <p className="text-2xl font-bold">{totals.totalEntries}</p>
               </div>
               <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900">
                 <BarChart3 className="h-6 w-6 text-blue-600" />

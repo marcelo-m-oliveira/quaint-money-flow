@@ -18,7 +18,7 @@ import { UserPreferencesFormData } from '@/lib/types'
 
 export default function PreferenciasPage() {
   const { preferences, updatePreferences } = useUserPreferencesWithAutoInit()
-  const { clearAllTransactions, deleteAccount } = usePreferences()
+  const { clearAllEntries, deleteAccount } = usePreferences()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -62,15 +62,15 @@ export default function PreferenciasPage() {
     }
   }
 
-  const handleClearTransactions = () => {
+  const handleClearEntries = () => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Excluir minhas transações',
+      title: 'Excluir minhas entradas',
       description:
-        'Tem certeza que deseja excluir todas as suas transações? Esta ação não pode ser desfeita.',
+        'Tem certeza que deseja excluir todas as suas entradas? Esta ação não pode ser desfeita.',
       variant: 'destructive',
       onConfirm: () => {
-        clearAllTransactions()
+        clearAllEntries()
         setConfirmDialog({
           isOpen: false,
           title: '',
@@ -118,7 +118,7 @@ export default function PreferenciasPage() {
                   Ordenação dos seus Lançamentos
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Ordem (baseado na data) que suas transações serão listadas na
+                  Ordem (baseado na data) que suas entradas serão listadas na
                   tela de Lançamentos
                 </p>
               </div>
@@ -233,7 +233,7 @@ export default function PreferenciasPage() {
               <div className="flex-1">
                 <h3 className="text-base font-medium">Modo de Visualização</h3>
                 <p className="text-sm text-muted-foreground">
-                  Escolha como você deseja visualizar suas transações por padrão
+                  Escolha como você deseja visualizar suas entradas por padrão
                 </p>
               </div>
               <div className="w-32">
@@ -342,9 +342,9 @@ export default function PreferenciasPage() {
               <Button
                 variant="outline"
                 className="whitespace-nowrap border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950"
-                onClick={handleClearTransactions}
+                onClick={handleClearEntries}
               >
-                Excluir minhas transações
+                Excluir minhas entradas
               </Button>
             </div>
           </div>
