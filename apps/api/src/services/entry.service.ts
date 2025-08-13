@@ -141,14 +141,6 @@ export class EntryService {
 
       // Calculate summary based on viewMode
       let summary
-      console.log(
-        '🔍 [DEBUG] Calculating summary for viewMode:',
-        viewMode,
-        'startDate:',
-        startDate,
-        'endDate:',
-        endDate,
-      )
 
       if (viewMode === 'cashflow') {
         // Define date range for calculations
@@ -295,11 +287,6 @@ export class EntryService {
         }
       }
 
-      console.log(
-        '🏗️ [DEBUG] Structured summary for frontend:',
-        structuredSummary,
-      )
-
       const result = {
         entries,
         summary: structuredSummary,
@@ -312,10 +299,6 @@ export class EntryService {
           hasPrev: page > 1,
         },
       }
-      console.log(
-        '🚀 [DEBUG] Service returning result with summary:',
-        !!result.summary,
-      )
       return result
     } catch (error) {
       console.error('Error fetching entries:', error)
