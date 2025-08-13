@@ -1,6 +1,10 @@
 'use client'
 
-import { formatCurrency, formatDate, secondsToDate } from '@saas/utils'
+import {
+  createLocalDateFromTimestamp,
+  formatCurrency,
+  formatDate,
+} from '@saas/utils'
 import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -51,42 +55,24 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
     const overviewBills = generalOverview.accountsPayable
       .map((bill) => {
         try {
-          // Verificar se dueDate é válido
-          if (
-            !bill.dueDate ||
-            typeof bill.dueDate !== 'number' ||
-            bill.dueDate <= 0
-          ) {
-            console.warn('Invalid dueDate for bill:', bill.id, bill.dueDate)
+          // Verificar se date é válido (timestamp em segundos)
+          if (!bill.date) {
+            console.warn('Invalid date for bill:', bill.id, bill.date)
             return null
           }
 
-          const dueDate = secondsToDate(bill.dueDate) // Convert from seconds to Date
-
-          // Verificar se a data convertida é válida
-          if (isNaN(dueDate.getTime())) {
-            console.warn(
-              'Invalid date conversion for bill:',
-              bill.id,
-              bill.dueDate,
-            )
-            return null
-          }
-
-          // Criar novas instâncias de Date para evitar mutação durante renderização
-          const currentDate = new Date()
-          currentDate.setHours(0, 0, 0, 0)
-          const dueDateCopy = new Date(dueDate)
-          dueDateCopy.setHours(0, 0, 0, 0)
-
-          const timeDiff = dueDateCopy.getTime() - currentDate.getTime()
+          // Converter timestamp para Date
+          const dueDate = createLocalDateFromTimestamp(bill.date)
+          // Calcular dias até o vencimento
+          const now = new Date()
+          const timeDiff = dueDate.getTime() - now.getTime()
           const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
 
           return {
             id: bill.id,
             description: bill.description || 'Descrição não disponível',
             amount: bill.amount || 0,
-            dueDate: dueDateCopy,
+            dueDate,
             categoryName: bill.categoryName || 'Categoria não informada',
             categoryColor: '#6B7280', // Default color since not available in overview
             icon: 'Receipt', // Default icon since not available in overview

@@ -317,7 +317,7 @@ export interface PendingAccount {
   id: string
   description: string
   amount: number
-  dueDate: number // Timestamp em segundos
+  date: number // timestamp em segundos
   categoryName: string
   isOverdue: boolean
 }

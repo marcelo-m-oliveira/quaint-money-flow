@@ -174,7 +174,7 @@ export default function LancamentoPage() {
 
   const { accounts } = useAccounts()
 
-  const { success, error } = useCrudToast()
+  const { error } = useCrudToast()
 
   const { preferences, isInitialized, updatePreferences } =
     useUserPreferencesWithAutoInit()
@@ -471,9 +471,9 @@ export default function LancamentoPage() {
 
       patchEntry(entry.id, patchData)
 
-      const statusText = !entry.paid ? 'pago' : 'não pago'
-      const entityType = entry.type === 'income' ? 'Receita' : 'Despesa'
-      success.update(`${entityType} marcada como ${statusText}`)
+      // const statusText = !entry.paid ? 'pago' : 'não pago'
+      // const entityType = entry.type === 'income' ? 'Receita' : 'Despesa'
+      // // success.update(`${entityType} marcada como ${statusText}`)
     } catch (err) {
       error.update(
         'Status de pagamento',

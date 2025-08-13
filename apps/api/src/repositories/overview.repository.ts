@@ -24,27 +24,12 @@ export class OverviewRepository {
       },
     })
 
-    // Contas a pagar (pendentes, vencidas ou próximas do vencimento)
+    // Contas a pagar (todas as pendentes, independentemente da data)
     const accountsPayable = await this.prisma.entry.findMany({
       where: {
         userId,
         type: 'expense',
         paid: false,
-        OR: [
-          // Vencidas
-          {
-            date: {
-              lt: new Date(),
-            },
-          },
-          // Próximas do vencimento (próximos 7 dias)
-          {
-            date: {
-              gte: new Date(),
-              lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            },
-          },
-        ],
       },
       select: {
         id: true,
@@ -62,27 +47,12 @@ export class OverviewRepository {
       },
     })
 
-    // Contas a receber (pendentes, vencidas ou próximas do vencimento)
+    // Contas a receber (todas as pendentes, independentemente da data)
     const accountsReceivable = await this.prisma.entry.findMany({
       where: {
         userId,
         type: 'income',
         paid: false,
-        OR: [
-          // Vencidas
-          {
-            date: {
-              lt: new Date(),
-            },
-          },
-          // Próximas do vencimento (próximos 7 dias)
-          {
-            date: {
-              gte: new Date(),
-              lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            },
-          },
-        ],
       },
       select: {
         id: true,

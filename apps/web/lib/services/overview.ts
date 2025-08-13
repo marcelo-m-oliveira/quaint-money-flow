@@ -6,19 +6,9 @@ import type {
   TopExpensesQueryParams,
 } from '@/lib/types'
 
-// Helper function to convert API response timestamps to proper format
+// Helper function to convert API response (no conversion needed for dueDate as it's already timestamp)
 function convertOverviewFromApi(overview: GeneralOverview): GeneralOverview {
-  return {
-    ...overview,
-    accountsPayable: overview.accountsPayable.map((account) => ({
-      ...account,
-      dueDate: account.dueDate, // Already in seconds from API
-    })),
-    accountsReceivable: overview.accountsReceivable.map((account) => ({
-      ...account,
-      dueDate: account.dueDate, // Already in seconds from API
-    })),
-  }
+  return overview // No conversion needed, dueDate is already timestamp in seconds
 }
 
 function convertTopExpensesFromApi(

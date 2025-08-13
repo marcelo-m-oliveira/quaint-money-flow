@@ -1,6 +1,10 @@
 'use client'
 
-import { formatCurrency, formatDate, secondsToDate } from '@saas/utils'
+import {
+  createLocalDateFromTimestamp,
+  formatCurrency,
+  formatDate,
+} from '@saas/utils'
 import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -46,31 +50,14 @@ export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
       const overviewReceivables = generalOverview.accountsReceivable
         .map((bill) => {
           try {
-            // Verificar se dueDate é válido
-            if (
-              !bill.dueDate ||
-              typeof bill.dueDate !== 'number' ||
-              bill.dueDate <= 0
-            ) {
-              console.warn(
-                'Invalid dueDate for receivable:',
-                bill.id,
-                bill.dueDate,
-              )
+            // Verificar se date é válido (timestamp em segundos)
+            if (!bill.date) {
+              console.warn('Invalid date for bill:', bill.id, bill.date)
               return null
             }
 
-            const dueDate = secondsToDate(bill.dueDate) // Convert from seconds to Date
-
-            // Verificar se a data convertida é válida
-            if (isNaN(dueDate.getTime())) {
-              console.warn(
-                'Invalid date conversion for receivable:',
-                bill.id,
-                bill.dueDate,
-              )
-              return null
-            }
+            // Converter timestamp para Date
+            const dueDate = createLocalDateFromTimestamp(bill.date)
 
             // Criar novas instâncias de Date para evitar mutação durante renderização
             const currentDate = new Date()
@@ -93,7 +80,7 @@ export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
               daysUntilDue,
             }
           } catch (error) {
-            console.error('Error processing receivable:', bill.id, error)
+            console.error('Error processing bill:', bill.id, error)
             return null
           }
         })
