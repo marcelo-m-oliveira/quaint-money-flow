@@ -28,7 +28,7 @@ interface BillsToReceiveCardProps {
 
 export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
   const { generalOverview } = useOverviewContext()
-  const { success, error } = useCrudToast()
+  const { error } = useCrudToast()
   const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(5)
   const [visibleUpcomingReceivables, setVisibleUpcomingReceivables] =
     useState(5)
@@ -37,7 +37,6 @@ export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
     try {
       if (onUpdateEntry) {
         onUpdateEntry(entryId, { paid: true })
-        success.update('Receita marcada como recebida')
       }
     } catch (err) {
       error.update('Receita', 'Não foi possível marcar como recebida.')
@@ -74,8 +73,8 @@ export function BillsToReceiveCard({ onUpdateEntry }: BillsToReceiveCardProps) {
               amount: bill.amount || 0,
               dueDate: dueDateCopy,
               categoryName: bill.categoryName || 'Categoria não informada',
-              categoryColor: '#10B981', // Default green color for receivables
-              icon: 'Receipt', // Default icon since not available in overview
+              categoryColor: bill.color, // Default color since not available in overview
+              icon: bill.icon, // Default icon since not available in overview
               isOverdue: bill.isOverdue,
               daysUntilDue,
             }

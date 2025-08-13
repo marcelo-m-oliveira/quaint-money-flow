@@ -39,6 +39,8 @@ export class OverviewRepository {
         category: {
           select: {
             name: true,
+            color: true,
+            icon: true,
           },
         },
       },
@@ -62,6 +64,8 @@ export class OverviewRepository {
         category: {
           select: {
             name: true,
+            color: true,
+            icon: true,
           },
         },
       },

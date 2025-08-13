@@ -39,6 +39,8 @@ export class OverviewService {
       amount: Number(account.amount),
       date: account.date,
       categoryName: account.category?.name || 'Sem categoria',
+      icon: account.category?.icon || '',
+      color: account.category?.color || '',
       isOverdue: account.date < new Date(),
     }))
 
@@ -49,6 +51,8 @@ export class OverviewService {
       amount: Number(account.amount),
       date: account.date,
       categoryName: account.category?.name || 'Sem categoria',
+      icon: account.category?.icon || '',
+      color: account.category?.color || '',
       isOverdue: account.date < new Date(),
     }))
 

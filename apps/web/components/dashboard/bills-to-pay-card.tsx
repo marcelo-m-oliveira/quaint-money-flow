@@ -28,7 +28,7 @@ interface BillsToPayCardProps {
 
 export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
   const { generalOverview } = useOverviewContext()
-  const { success, error } = useCrudToast()
+  const { error } = useCrudToast()
   const [visibleOverdueBills, setVisibleOverdueBills] = useState(5)
   const [visibleUpcomingBills, setVisibleUpcomingBills] = useState(5)
 
@@ -36,7 +36,6 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
     try {
       if (onUpdateEntry) {
         onUpdateEntry(entryId, { paid: true })
-        success.update('Pagamento')
       }
     } catch (err) {
       error.update('Pagamento', 'Não foi possível marcar como pago.')
@@ -74,8 +73,8 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
             amount: bill.amount || 0,
             dueDate,
             categoryName: bill.categoryName || 'Categoria não informada',
-            categoryColor: '#6B7280', // Default color since not available in overview
-            icon: 'Receipt', // Default icon since not available in overview
+            categoryColor: bill.color, // Default color since not available in overview
+            icon: bill.icon, // Default icon since not available in overview
             isOverdue: bill.isOverdue,
             daysUntilDue,
           }
@@ -97,11 +96,6 @@ export function BillsToPayCard({ onUpdateEntry }: BillsToPayCardProps) {
     return {
       overdueBills: overdue,
       upcomingBills: upcoming,
-    }
-
-    return {
-      overdueBills: [],
-      upcomingBills: [],
     }
   }, [generalOverview])
 
