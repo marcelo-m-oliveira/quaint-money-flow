@@ -51,13 +51,23 @@ export function BillsToReceiveCard({
     useState(3)
   const { error } = useCrudToast()
   const { generalOverview, isLoading } = useOverviewContext()
+  const [receivedEntries, setReceivedEntries] = useState<Set<string>>(new Set())
 
-  const handleToggleReceivedStatus = (entryId: string) => {
+  const handleToggleReceivedStatus = async (entryId: string) => {
     try {
+      // Adicionar ao estado local imediatamente para feedback visual
+      setReceivedEntries((prev) => new Set(prev).add(entryId))
+
       if (onUpdateEntry) {
-        onUpdateEntry(entryId, { paid: true })
+        await onUpdateEntry(entryId, { paid: true })
       }
     } catch (err) {
+      // Remover do estado local se houver erro
+      setReceivedEntries((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(entryId)
+        return newSet
+      })
       error.update('Receita', 'Não foi possível marcar como recebida.')
     }
   }
@@ -73,8 +83,9 @@ export function BillsToReceiveCard({
     const currentDate = new Date()
     currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
 
-    const receivablesData: ReceivableData[] =
-      generalOverview.accountsReceivable.map((account) => {
+    const receivablesData: ReceivableData[] = generalOverview.accountsReceivable
+      .filter((account) => !receivedEntries.has(account.id)) // Filtrar itens recebidos localmente
+      .map((account) => {
         const dueDate = createLocalDateFromTimestamp(account.date) // Convert timestamp to Date
         dueDate.setHours(0, 0, 0, 0)
 
@@ -86,6 +97,9 @@ export function BillsToReceiveCard({
           description: account.description,
           amount: account.amount,
           dueDate,
+          accountId: account.accountId,
+          creditCardId: account.creditCardId,
+          categoryId: account.categoryId,
           categoryName: account.categoryName,
           categoryColor: account.color,
           icon: account.icon,
@@ -107,7 +121,7 @@ export function BillsToReceiveCard({
       overdueReceivables: overdue,
       upcomingReceivables: upcoming,
     }
-  }, [generalOverview])
+  }, [generalOverview, receivedEntries])
 
   const totalReceivables =
     overdueReceivables.length + upcomingReceivables.length

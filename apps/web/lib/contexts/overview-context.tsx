@@ -23,7 +23,10 @@ interface OverviewContextType {
   isLoading: boolean
   error: string | null
   refreshGeneralOverview: () => Promise<void>
-  refreshTopExpenses: (params?: TopExpensesQueryParams) => Promise<void>
+  refreshTopExpenses: (
+    params?: TopExpensesQueryParams,
+    forceRefresh?: boolean,
+  ) => Promise<void>
 }
 
 const OverviewContext = createContext<OverviewContextType | undefined>(
@@ -67,14 +70,15 @@ export function OverviewProvider({ children }: OverviewProviderProps) {
   }, [])
 
   const refreshTopExpenses = useCallback(
-    async (params?: TopExpensesQueryParams) => {
+    async (params?: TopExpensesQueryParams, forceRefresh?: boolean) => {
       // Evitar chamadas simultâneas
       if (topExpensesLoadingRef.current) return
 
       try {
-        // Evitar chamadas duplicadas com os mesmos parâmetros
+        // Evitar chamadas duplicadas com os mesmos parâmetros (exceto se forceRefresh for true)
         const paramsKey = JSON.stringify(params || {})
         if (
+          !forceRefresh &&
           lastTopExpensesParamsRef.current === paramsKey &&
           isInitializedRef.current
         ) {

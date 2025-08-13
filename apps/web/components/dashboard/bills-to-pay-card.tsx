@@ -50,13 +50,23 @@ export function BillsToPayCard({
   const { error } = useCrudToast()
   const [visibleOverdueBills, setVisibleOverdueBills] = useState(5)
   const [visibleUpcomingBills, setVisibleUpcomingBills] = useState(5)
+  const [paidEntries, setPaidEntries] = useState<Set<string>>(new Set())
 
-  const handleTogglePaidStatus = (entryId: string) => {
+  const handleTogglePaidStatus = async (entryId: string) => {
     try {
+      // Adicionar ao estado local imediatamente para feedback visual
+      setPaidEntries((prev) => new Set(prev).add(entryId))
+
       if (onUpdateEntry) {
-        onUpdateEntry(entryId, { paid: true })
+        await onUpdateEntry(entryId, { paid: true })
       }
     } catch (err) {
+      // Remover do estado local se houver erro
+      setPaidEntries((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(entryId)
+        return newSet
+      })
       error.update('Pagamento', 'Não foi possível marcar como pago.')
     }
   }
@@ -69,8 +79,9 @@ export function BillsToPayCard({
     const currentDate = new Date()
     currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
 
-    const billsData: BillData[] = generalOverview.accountsPayable.map(
-      (account) => {
+    const billsData: BillData[] = generalOverview.accountsPayable
+      .filter((account) => !paidEntries.has(account.id)) // Filtrar itens pagos localmente
+      .map((account) => {
         // Converter timestamp em segundos para Date
         const dueDate = createLocalDateFromTimestamp(account.date)
         dueDate.setHours(0, 0, 0, 0)
@@ -83,14 +94,16 @@ export function BillsToPayCard({
           description: account.description,
           amount: account.amount,
           dueDate,
+          accountId: account.accountId,
+          creditCardId: account.creditCardId,
+          categoryId: account.categoryId,
           categoryName: account.categoryName,
           categoryColor: account.color,
           icon: account.icon,
           isOverdue: account.isOverdue,
           daysUntilDue,
         }
-      },
-    )
+      })
 
     // Separar em atrasadas e próximas
     const overdue = billsData
@@ -105,7 +118,7 @@ export function BillsToPayCard({
       overdueBills: overdue,
       upcomingBills: upcoming,
     }
-  }, [generalOverview?.accountsPayable])
+  }, [generalOverview?.accountsPayable, paidEntries])
 
   const totalBills = overdueBills.length + upcomingBills.length
 

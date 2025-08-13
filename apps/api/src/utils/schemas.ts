@@ -267,7 +267,11 @@ export const pendingAccountSchema = z.object({
   description: z.string(),
   amount: z.number(),
   date: z.number(), // timestamp em segundos
+  type: z.string(),
+  categoryId: z.string(),
   categoryName: z.string(),
+  accountId: z.string().optional(),
+  creditCardId: z.string().optional(),
   icon: z.string(),
   color: z.string(),
   isOverdue: z.boolean(),

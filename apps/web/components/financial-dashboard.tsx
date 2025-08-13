@@ -31,7 +31,26 @@ export function FinancialDashboard() {
 
   const { deleteCategory } = useCategories(false)
 
-  const { generalOverview, isLoading } = useOverviewContext()
+  const {
+    generalOverview,
+    isLoading,
+    refreshGeneralOverview,
+    refreshTopExpenses,
+  } = useOverviewContext()
+
+  // Função customizada para patch que também atualiza o overview
+  const handlePatchEntry = async (id: string, data: Partial<EntryFormData>) => {
+    try {
+      await patchEntry(id, data)
+      // Atualizar o overview em tempo real após a alteração
+      await refreshGeneralOverview()
+      // Atualizar também os maiores gastos para refletir mudanças nas categorias
+      // Forçar atualização ignorando cache para garantir que mudanças sejam refletidas
+      await refreshTopExpenses({ period: 'current-month' }, true)
+    } catch (error) {
+      console.error('Erro ao atualizar lançamento:', error)
+    }
+  }
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = useState(false)
@@ -105,6 +124,8 @@ export function FinancialDashboard() {
       date: account.date,
       type: account.type || 'expense', // Assumir expense se não especificado
       categoryId: account.categoryId || '',
+      accountId: account.accountId,
+      creditCardId: account.creditCardId,
       paid: false,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
@@ -291,7 +312,7 @@ export function FinancialDashboard() {
             {/* Card de Contas a Pagar */}
             <div className="flex-1">
               <BillsToPayCard
-                onUpdateEntry={patchEntry}
+                onUpdateEntry={handlePatchEntry}
                 onEditEntry={handleEditEntry}
               />
             </div>
@@ -299,7 +320,7 @@ export function FinancialDashboard() {
             {/* Card de Contas a Receber */}
             <div className="flex-1">
               <BillsToReceiveCard
-                onUpdateEntry={patchEntry}
+                onUpdateEntry={handlePatchEntry}
                 onEditEntry={handleEditEntry}
               />
             </div>

@@ -36,8 +36,12 @@ export class OverviewRepository {
         description: true,
         amount: true,
         date: true,
+        type: true,
+        accountId: true,
+        creditCardId: true,
         category: {
           select: {
+            id: true,
             name: true,
             color: true,
             icon: true,
@@ -61,8 +65,12 @@ export class OverviewRepository {
         description: true,
         amount: true,
         date: true,
+        type: true,
+        accountId: true,
+        creditCardId: true,
         category: {
           select: {
+            id: true,
             name: true,
             color: true,
             icon: true,

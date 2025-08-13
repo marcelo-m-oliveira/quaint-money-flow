@@ -320,6 +320,8 @@ export interface PendingAccount {
   date: number // timestamp em segundos
   categoryName: string
   categoryId: string
+  accountId?: string // ID da conta relacionada
+  creditCardId?: string // ID do cartão de crédito relacionado
   type: 'income' | 'expense'
   icon: string
   color: string
