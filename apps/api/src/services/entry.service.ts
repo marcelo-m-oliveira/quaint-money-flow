@@ -478,14 +478,19 @@ export class EntryService {
       updatePayload.category = { connect: { id: categoryId } }
     }
 
+    // Garantir exclusividade entre account e creditCard
+    // Se accountId é fornecido, desconectar creditCard
     if (accountId) {
       updatePayload.account = { connect: { id: accountId } }
+      updatePayload.creditCard = { disconnect: true }
     } else if (accountId === null) {
       updatePayload.account = { disconnect: true }
     }
 
+    // Se creditCardId é fornecido, desconectar account
     if (creditCardId) {
       updatePayload.creditCard = { connect: { id: creditCardId } }
+      updatePayload.account = { disconnect: true }
     } else if (creditCardId === null) {
       updatePayload.creditCard = { disconnect: true }
     }
