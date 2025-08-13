@@ -8,7 +8,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { AccountsProvider } from '@/lib/contexts/accounts-context'
 import { BankIconsProvider } from '@/lib/contexts/bank-icons-context'
 import { CreditCardsProvider } from '@/lib/contexts/credit-cards-context'
-import { OverviewProvider } from '@/lib/contexts/overview-context'
 import { UserPreferencesProvider } from '@/lib/contexts/user-preferences-context'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -35,9 +34,7 @@ export default function RootLayout({
           <AccountsProvider>
             <CreditCardsProvider>
               <BankIconsProvider>
-                <OverviewProvider>
-                  <UserPreferencesProvider>{children}</UserPreferencesProvider>
-                </OverviewProvider>
+                <UserPreferencesProvider>{children}</UserPreferencesProvider>
               </BankIconsProvider>
             </CreditCardsProvider>
           </AccountsProvider>
