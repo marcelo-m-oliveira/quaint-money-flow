@@ -76,6 +76,10 @@ export interface CreditCard {
   closingDay: number // Dia do fechamento da fatura (1-31)
   dueDay: number // Dia do vencimento da fatura (1-31)
   defaultPaymentAccountId?: string // ID da conta padrão para pagamento
+  defaultPaymentAccount: {
+    id: string
+    name: string
+  }
   createdAt: number // Timestamp em segundos
   updatedAt?: number // Timestamp em segundos
 }

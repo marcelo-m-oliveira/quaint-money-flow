@@ -26,13 +26,11 @@ import {
 } from '@/components/ui/tooltip'
 import { getBankIcon } from '@/lib/data/banks'
 import { formatCurrency } from '@/lib/format'
-import { useAccounts } from '@/lib/hooks/use-accounts'
 import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
 import { CreditCardFormSchema } from '@/lib/schemas'
 import { CreditCard } from '@/lib/types'
 
 export default function CartoesPage() {
-  const { accounts } = useAccounts()
   const { creditCards, addCreditCard, updateCreditCard, deleteCreditCard } =
     useCreditCardsWithAutoInit()
   const [isCreditCardFormOpen, setIsCreditCardFormOpen] = useState(false)
@@ -193,11 +191,8 @@ export default function CartoesPage() {
                               {creditCard.defaultPaymentAccountId && (
                                 <span className="truncate">
                                   Conta:{' '}
-                                  {accounts.find(
-                                    (acc) =>
-                                      acc.id ===
-                                      creditCard.defaultPaymentAccountId,
-                                  )?.name || 'Não encontrada'}
+                                  {creditCard.defaultPaymentAccount?.name ||
+                                    'Não encontrada'}
                                 </span>
                               )}
                             </div>
