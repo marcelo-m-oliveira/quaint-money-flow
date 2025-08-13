@@ -146,14 +146,19 @@ export function FinancialDashboard() {
   const closeExpenseDialog = () => {
     setIsExpenseDialogOpen(false)
     setEditingEntry(undefined)
+    refreshGeneralOverview()
   }
 
   const closeIncomeDialog = () => {
     setIsIncomeDialogOpen(false)
     setEditingEntry(undefined)
+    refreshGeneralOverview()
   }
 
-  const handleExpenseSubmit = (data: EntryFormSchema, shouldClose = true) => {
+  const handleExpenseSubmit = async (
+    data: EntryFormSchema,
+    shouldClose = true,
+  ) => {
     // Convert EntryFormSchema to EntryFormData
     const expenseData: EntryFormData = {
       ...data,
@@ -161,17 +166,22 @@ export function FinancialDashboard() {
       date: timestampToDateInputString(data.date),
     }
     if (editingEntry) {
-      updateEntry(editingEntry.id, expenseData)
+      await updateEntry(editingEntry.id, expenseData)
       setEditingEntry(undefined)
+      // Atualizar maiores gastos após editar despesa
+      await refreshTopExpenses({ period: 'current-month' }, true)
     } else {
-      addEntry(expenseData)
+      await addEntry(expenseData)
     }
     if (shouldClose) {
       closeExpenseDialog()
     }
   }
 
-  const handleIncomeSubmit = (data: EntryFormSchema, shouldClose = true) => {
+  const handleIncomeSubmit = async (
+    data: EntryFormSchema,
+    shouldClose = true,
+  ) => {
     // Convert EntryFormSchema to EntryFormData
     const incomeData: EntryFormData = {
       ...data,
@@ -179,10 +189,10 @@ export function FinancialDashboard() {
       date: timestampToDateInputString(data.date),
     }
     if (editingEntry) {
-      updateEntry(editingEntry.id, incomeData)
+      await updateEntry(editingEntry.id, incomeData)
       setEditingEntry(undefined)
     } else {
-      addEntry(incomeData)
+      await addEntry(incomeData)
     }
     if (shouldClose) {
       closeIncomeDialog()
