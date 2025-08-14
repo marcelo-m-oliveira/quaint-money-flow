@@ -54,7 +54,8 @@ export class ReportsService {
         categoryId: filters.categoryId,
       }
 
-      const categories = await this.reportsRepository.getCategoriesReport(repositoryFilters)
+      const categories =
+        await this.reportsRepository.getCategoriesReport(repositoryFilters)
 
       // Calculate totals - need to get income/expense from entries since categories don't have type
       const totalIncome = 0 // Will be calculated from entries
@@ -110,7 +111,8 @@ export class ReportsService {
         viewMode: filters.viewMode || 'daily',
       }
 
-      const data = await this.reportsRepository.getCashflowReport(repositoryFilters)
+      const data =
+        await this.reportsRepository.getCashflowReport(repositoryFilters)
 
       // Calculate summary statistics
       const totalIncome = data.reduce((sum, item) => sum + item.income, 0)
@@ -143,7 +145,10 @@ export class ReportsService {
     userId: string,
     filters: ServiceAccountsReportFilters,
   ): Promise<{
-    accounts: (AccountReportData & { incomePercentage: number; expensePercentage: number })[]
+    accounts: (AccountReportData & {
+      incomePercentage: number
+      expensePercentage: number
+    })[]
     summary: {
       totalIncome: number
       totalExpense: number
@@ -168,7 +173,8 @@ export class ReportsService {
         endDate: filters.endDate || new Date(),
       }
 
-      const accounts = await this.reportsRepository.getAccountsReport(repositoryFilters)
+      const accounts =
+        await this.reportsRepository.getAccountsReport(repositoryFilters)
 
       // Calculate totals
       const totalIncome = accounts.reduce(

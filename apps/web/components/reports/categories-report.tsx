@@ -1,9 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { formatCurrency } from '@saas/utils'
 import ReactECharts from 'echarts-for-react'
 import { BarChart3, Filter, PieChart } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import {
+  AwaitedReactNode,
+  JSXElementConstructor,
+  Key,
+  ReactElement,
+  ReactNode,
+  ReactPortal,
+  useMemo,
+  useState,
+} from 'react'
 
 import { ReportPeriod } from '@/app/relatorios/page'
 import { Button } from '@/components/ui/button'
@@ -16,9 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { CategoryIcon } from '@/lib/components/category-icon'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { useReports } from '@/lib/hooks/use-reports'
 import { useTheme } from '@/lib/hooks/use-theme'
+import { CategoryReportData } from '@/lib/services/reports'
 
 interface CategoriesReportProps {
   period: ReportPeriod
@@ -38,29 +50,14 @@ interface CategoryData {
   subcategories?: CategoryData[]
 }
 
-const DEFAULT_COLORS = [
-  '#FF6B6B',
-  '#4ECDC4',
-  '#45B7D1',
-  '#96CEB4',
-  '#FFEAA7',
-  '#DDA0DD',
-  '#98D8C8',
-  '#F7DC6F',
-  '#FFB6C1',
-  '#87CEEB',
-]
-
 export function CategoriesReport({ period }: CategoriesReportProps) {
-  const { entries, categories } = useFinancialData()
   const { isDark } = useTheme()
   const [chartType, setChartType] = useState<ChartType>('doughnut')
   const [transactionType, setTransactionType] =
     useState<TransactionType>('expense')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  // Filtrar entradas por período
-  const filteredEntries = useMemo(() => {
+  // Configurar filtros para o relatório
+  const reportFilters = useMemo(() => {
     const now = new Date()
     let startDate: Date
 
@@ -87,68 +84,34 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
-    return entries.filter((entry) => {
-      const entryDate = new Date(entry.date)
-      const category = categories.find((c) => c.id === entry.categoryId)
+    return {
+      startDate: Math.floor(startDate.getTime() / 1000), // timestamp em segundos
+      endDate: Math.floor(now.getTime() / 1000), // timestamp em segundos
+      type: transactionType as 'income' | 'expense',
+    }
+  }, [period, transactionType])
 
-      // Se uma categoria específica foi selecionada, incluir ela e suas subcategorias
-      const matchesCategory =
-        selectedCategory === 'all' ||
-        entry.categoryId === selectedCategory ||
-        category?.parentId === selectedCategory
+  const {
+    data: categoriesData,
+    loading,
+    error,
+  } = useReports('categories', reportFilters)
 
-      return (
-        entryDate >= startDate &&
-        entryDate <= now &&
-        entry.type === transactionType &&
-        matchesCategory
-      )
-    })
-  }, [entries, period, transactionType, selectedCategory])
-
-  // Processar dados das categorias agrupando subcategorias nas categorias pai
+  // Processar dados das categorias vindos da API
   const categoryData = useMemo(() => {
-    const parentCategoryMap = new Map<string, CategoryData>()
-    const totalAmount = filteredEntries.reduce((sum, t) => sum + t.amount, 0)
+    if (!categoriesData?.categories) return []
 
-    filteredEntries.forEach((entry) => {
-      const category = categories.find((c) => c.id === entry.categoryId)
-      if (!category) return
-
-      // Se é uma subcategoria, agregar na categoria pai
-      const parentCategory = category.parentId
-        ? categories.find((c) => c.id === category.parentId)
-        : category
-
-      if (!parentCategory || !parentCategory.id) return
-
-      const existing = parentCategoryMap.get(parentCategory.id)
-      if (existing) {
-        existing.amount += entry.amount
-        existing.transactionCount += 1
-      } else {
-        parentCategoryMap.set(parentCategory.id, {
-          categoryId: parentCategory.id,
-          categoryName: parentCategory.name,
-          amount: entry.amount,
-          percentage: 0,
-          color: parentCategory.color,
-          icon: parentCategory.icon,
-          transactionCount: 1,
-        })
-      }
-    })
-
-    // Calcular percentuais e ordenar
-    const result = Array.from(parentCategoryMap.values())
-      .map((item) => ({
-        ...item,
-        percentage: totalAmount > 0 ? (item.amount / totalAmount) * 100 : 0,
-      }))
-      .sort((a, b) => b.amount - a.amount)
-
-    return result
-  }, [filteredEntries, categories])
+    return categoriesData.categories.map((item: CategoryReportData) => ({
+      categoryId: item.categoryId,
+      categoryName: item.categoryName,
+      amount: item.amount,
+      percentage: item.percentage,
+      color: item.categoryColor,
+      icon: item.categoryIcon,
+      transactionCount: item.transactionCount,
+      subcategories: [], // Por enquanto, subcategorias serão implementadas posteriormente
+    }))
+  }, [categoriesData])
 
   // Configuração do gráfico Doughnut
   const doughnutOptions = useMemo(() => {
@@ -199,20 +162,21 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
           },
           emphasis: {
             label: {
-              show: true,
+              show: false,
               fontSize: 14,
               fontWeight: 'bold',
               color: isDark ? '#f9fafb' : '#111827',
             },
           },
-          data: categoryData.map((item, index) => ({
-            value: item.amount,
-            name: item.categoryName,
-            itemStyle: {
-              color:
-                item.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length],
-            },
-          })),
+          data: categoryData.map(
+            (item: { amount: any; categoryName: any; color: any }) => ({
+              value: item.amount,
+              name: item.categoryName,
+              itemStyle: {
+                color: item.color,
+              },
+            }),
+          ),
         },
       ],
     }
@@ -261,7 +225,9 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
       },
       xAxis: {
         type: 'category',
-        data: categoryData.map((item) => item.categoryName),
+        data: categoryData.map(
+          (item: { categoryName: any }) => item.categoryName,
+        ),
         axisLabel: {
           color: isDark ? '#9ca3af' : '#6b7280',
           rotate: 45,
@@ -292,7 +258,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
       series: [
         {
           type: 'line',
-          data: categoryData.map((item) => item.amount),
+          data: categoryData.map((item: { amount: any }) => item.amount),
           smooth: true,
           lineStyle: {
             width: 3,
@@ -331,11 +297,79 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
     }
   }, [categoryData, isDark, transactionType])
 
-  const totalAmount = categoryData.reduce((sum, item) => sum + item.amount, 0)
-  const totalEntries = categoryData.reduce(
-    (sum, item) => sum + item.transactionCount,
-    0,
-  )
+  // Usar dados do summary da API ao invés de calcular manualmente
+  const totalAmount = useMemo(() => {
+    if (!categoriesData?.summary) {
+      return categoryData.reduce(
+        (sum: any, item: { amount: any }) => sum + item.amount,
+        0,
+      )
+    }
+    // Usar o valor apropriado do summary baseado no tipo de transação
+    return transactionType === 'expense'
+      ? categoriesData.summary.totalExpense
+      : categoriesData.summary.totalIncome
+  }, [categoriesData?.summary, categoryData, transactionType])
+
+  const totalEntries = useMemo(() => {
+    return categoryData.reduce(
+      (sum: any, item: { transactionCount: any }) =>
+        sum + item.transactionCount,
+      0,
+    )
+  }, [categoryData])
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <Skeleton className="h-10 w-40" />
+              <Skeleton className="h-10 w-48" />
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-96 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-red-600">
+            <p className="mb-2 text-lg font-medium">Erro ao carregar dados</p>
+            <p className="text-sm">
+              {error.message || 'Ocorreu um erro inesperado'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -363,39 +397,6 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                 <SelectContent>
                   <SelectItem value="expense">Despesas</SelectItem>
                   <SelectItem value="income">Receitas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Categoria:</span>
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Todas as categorias" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories
-                    .filter(
-                      (cat) => cat.type === transactionType && !cat.parentId,
-                    )
-                    .map((category) => (
-                      <SelectItem
-                        key={category.id || 'temp'}
-                        value={category.id || ''}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          {category.name}
-                        </div>
-                      </SelectItem>
-                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -539,108 +540,87 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {categoryData.map((item) => {
-                const category = categories.find(
-                  (c) => c.id === item.categoryId,
-                )
-
-                // Buscar subcategorias que pertencem a esta categoria pai
-                const subcategoriesData = filteredEntries
-                  .filter((entry) => {
-                    const entryCategory = categories.find(
-                      (c) => c.id === entry.categoryId,
-                    )
-                    return entryCategory?.parentId === item.categoryId
-                  })
-                  .reduce((acc, entry) => {
-                    const subCategory = categories.find(
-                      (c) => c.id === entry.categoryId,
-                    )
-                    if (!subCategory) return acc
-
-                    const existing = acc.find(
-                      (sub: CategoryData) => sub.categoryId === subCategory.id,
-                    )
-                    if (existing) {
-                      existing.amount += entry.amount
-                      existing.transactionCount += 1
-                    } else {
-                      if (subCategory.id) {
-                        acc.push({
-                          categoryId: subCategory.id,
-                          categoryName: subCategory.name,
-                          amount: entry.amount,
-                          percentage: 0,
-                          color: subCategory.color,
-                          icon: subCategory.icon,
-                          transactionCount: 1,
-                        })
-                      }
-                    }
-                    return acc
-                  }, [] as CategoryData[])
-                  .map((sub: CategoryData) => ({
-                    ...sub,
-                    percentage:
-                      item.amount > 0 ? (sub.amount / item.amount) * 100 : 0,
-                  }))
-                  .sort(
-                    (a: CategoryData, b: CategoryData) => b.amount - a.amount,
-                  )
-
-                return (
-                  <div key={item.categoryId} className="space-y-2">
-                    {/* Categoria Principal */}
-                    <DetailItem>
-                      <DetailItem.Content>
-                        <div
-                          className="flex h-10 w-10 items-center justify-center rounded-full"
-                          style={{ backgroundColor: item.color }}
-                        >
-                          {category?.icon && (
+              {categoryData.map(
+                (item: {
+                  categoryId: Key | null | undefined
+                  color: any
+                  icon: string
+                  categoryName:
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | ReactElement<any, string | JSXElementConstructor<any>>
+                    | Iterable<ReactNode>
+                    | ReactPortal
+                    | Promise<AwaitedReactNode>
+                    | null
+                    | undefined
+                  transactionCount:
+                    | string
+                    | number
+                    | bigint
+                    | boolean
+                    | ReactElement<any, string | JSXElementConstructor<any>>
+                    | Iterable<ReactNode>
+                    | Promise<AwaitedReactNode>
+                    | null
+                    | undefined
+                  subcategories: CategoryData[]
+                  percentage: number
+                  amount: number | null | undefined
+                }) => {
+                  return (
+                    <div key={item.categoryId} className="space-y-2">
+                      {/* Categoria Principal */}
+                      <DetailItem>
+                        <DetailItem.Content>
+                          <div
+                            className="flex h-10 w-10 items-center justify-center rounded-full"
+                            style={{ backgroundColor: item.color }}
+                          >
                             <CategoryIcon
-                              iconName={category.icon}
+                              iconName={item.icon}
                               className="h-5 w-5 text-white"
                             />
-                          )}
-                        </div>
-                        <DetailItem.Info>
-                          <p className="font-medium">{item.categoryName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {item.transactionCount} entrada
-                            {item.transactionCount === 1 ? '' : 's'}
-                            {subcategoriesData.length > 0 && (
-                              <span className="ml-1">
-                                • {subcategoriesData.length} subcategoria
-                                {subcategoriesData.length === 1 ? '' : 's'}
-                              </span>
-                            )}
-                          </p>
-                        </DetailItem.Info>
-                      </DetailItem.Content>
-                      <DetailItem.Values>
-                        <DetailItem.Value
-                          label={`${item.percentage.toFixed(1)}%`}
-                          value={formatCurrency(item.amount)}
-                          valueClassName={`font-bold ${
-                            transactionType === 'expense'
-                              ? 'text-red-600'
-                              : transactionType === 'income'
-                                ? 'text-green-600'
-                                : 'text-blue-600'
-                          }`}
-                        />
-                      </DetailItem.Values>
-                    </DetailItem>
+                          </div>
+                          <DetailItem.Info>
+                            <p className="font-medium">{item.categoryName}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {item.transactionCount} entrada
+                              {item.transactionCount === 1 ? '' : 's'}
+                              {item.subcategories &&
+                                item.subcategories.length > 0 && (
+                                  <span className="ml-1">
+                                    • {item.subcategories?.length || 0}{' '}
+                                    subcategoria
+                                    {(item.subcategories?.length || 0) === 1
+                                      ? ''
+                                      : 's'}
+                                  </span>
+                                )}
+                            </p>
+                          </DetailItem.Info>
+                        </DetailItem.Content>
+                        <DetailItem.Values>
+                          <DetailItem.Value
+                            label={`${item.percentage.toFixed(1)}%`}
+                            value={formatCurrency(item.amount)}
+                            valueClassName={`font-bold ${
+                              transactionType === 'expense'
+                                ? 'text-red-600'
+                                : transactionType === 'income'
+                                  ? 'text-green-600'
+                                  : 'text-blue-600'
+                            }`}
+                          />
+                        </DetailItem.Values>
+                      </DetailItem>
 
-                    {/* Subcategorias */}
-                    {subcategoriesData.length > 0 && (
-                      <div className="space-y-2">
-                        {subcategoriesData.map((subItem: CategoryData) => {
-                          const subCategory = categories.find(
-                            (c) => c.id === subItem.categoryId,
-                          )
-                          return (
+                      {/* Subcategorias */}
+                      {item.subcategories && item.subcategories.length > 0 && (
+                        <div className="space-y-2">
+                          {item.subcategories.map((subItem: CategoryData) => (
                             <DetailItem
                               key={subItem.categoryId}
                               className="ml-6 border-dashed bg-muted/30"
@@ -650,12 +630,10 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                                   className="flex h-8 w-8 items-center justify-center rounded-full"
                                   style={{ backgroundColor: subItem.color }}
                                 >
-                                  {subCategory?.icon && (
-                                    <CategoryIcon
-                                      iconName={subCategory.icon}
-                                      className="h-4 w-4 text-white"
-                                    />
-                                  )}
+                                  <CategoryIcon
+                                    iconName={subItem.icon}
+                                    className="h-4 w-4 text-white"
+                                  />
                                 </div>
                                 <DetailItem.Info>
                                   <p className="text-sm font-medium">
@@ -681,13 +659,13 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
                                 />
                               </DetailItem.Values>
                             </DetailItem>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                },
+              )}
             </div>
           </CardContent>
         </Card>

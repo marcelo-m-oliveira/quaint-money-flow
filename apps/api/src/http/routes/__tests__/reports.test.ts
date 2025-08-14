@@ -27,7 +27,7 @@ const createTestApp = (): FastifyInstance => {
     fastify.get('/reports/categories', async (request, reply) => {
       try {
         const userId = (request.user as { sub: string }).sub
-        
+
         // Retornar dados mock para teste
         const mockData = {
           data: [
@@ -36,22 +36,22 @@ const createTestApp = (): FastifyInstance => {
               name: 'Alimentação',
               icon: 'utensils',
               color: '#FF6B6B',
-              total: 1500.00,
+              total: 1500.0,
               percentage: 45.5,
-              entries: 12
+              entries: 12,
             },
             {
-              id: 'category-2', 
+              id: 'category-2',
               name: 'Transporte',
               icon: 'car',
               color: '#4ECDC4',
-              total: 800.00,
+              total: 800.0,
               percentage: 24.2,
-              entries: 8
-            }
+              entries: 8,
+            },
           ],
-          totalAmount: 3300.00,
-          totalEntries: 20
+          totalAmount: 3300.0,
+          totalEntries: 20,
         }
 
         return reply.send(mockData)
@@ -65,28 +65,28 @@ const createTestApp = (): FastifyInstance => {
     fastify.get('/reports/cashflow', async (request, reply) => {
       try {
         const userId = (request.user as { sub: string }).sub
-        
+
         // Retornar dados mock para teste
         const mockData = {
           data: [
             {
               period: '2024-01-01',
-              income: 5000.00,
-              expense: 3300.00,
-              balance: 1700.00
+              income: 5000.0,
+              expense: 3300.0,
+              balance: 1700.0,
             },
             {
               period: '2024-01-02',
-              income: 2500.00,
-              expense: 1800.00,
-              balance: 700.00
-            }
+              income: 2500.0,
+              expense: 1800.0,
+              balance: 700.0,
+            },
           ],
           summary: {
-            totalIncome: 7500.00,
-            totalExpense: 5100.00,
-            netBalance: 2400.00
-          }
+            totalIncome: 7500.0,
+            totalExpense: 5100.0,
+            netBalance: 2400.0,
+          },
         }
 
         return reply.send(mockData)
@@ -100,7 +100,7 @@ const createTestApp = (): FastifyInstance => {
     fastify.get('/reports/accounts', async (request, reply) => {
       try {
         const userId = (request.user as { sub: string }).sub
-        
+
         // Retornar dados mock para teste
         const mockData = {
           data: [
@@ -109,27 +109,27 @@ const createTestApp = (): FastifyInstance => {
               name: 'Conta Corrente',
               type: 'bank',
               icon: 'bank',
-              balance: 2500.00,
-              income: 5000.00,
-              expense: 2500.00,
-              entries: 15
+              balance: 2500.0,
+              income: 5000.0,
+              expense: 2500.0,
+              entries: 15,
             },
             {
               id: 'creditcard-1',
               name: 'Cartão Visa',
               type: 'credit_card',
               icon: 'credit-card',
-              balance: -800.00,
-              income: 0.00,
-              expense: 800.00,
-              entries: 5
-            }
+              balance: -800.0,
+              income: 0.0,
+              expense: 800.0,
+              entries: 5,
+            },
           ],
           summary: {
-            totalBalance: 1700.00,
-            totalIncome: 5000.00,
-            totalExpense: 3300.00
-          }
+            totalBalance: 1700.0,
+            totalIncome: 5000.0,
+            totalExpense: 3300.0,
+          },
         }
 
         return reply.send(mockData)

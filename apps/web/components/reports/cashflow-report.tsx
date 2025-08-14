@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { formatCurrency } from '@saas/utils'
@@ -9,7 +10,17 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import {
+  AwaitedReactNode,
+  JSXElementConstructor,
+  Key,
+  ReactElement,
+  ReactNode,
+  ReactPortal,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 import { ReportPeriod } from '@/app/relatorios/page'
 import { Button } from '@/components/ui/button'
@@ -23,8 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
 import { useInfiniteScroll } from '@/lib/hooks/use-infinite-scroll'
+import { useReports } from '@/lib/hooks/use-reports'
 import { useTheme } from '@/lib/hooks/use-theme'
 
 interface CashflowReportProps {
@@ -33,21 +44,12 @@ interface CashflowReportProps {
 
 type ViewMode = 'daily' | 'weekly' | 'monthly'
 
-interface CashflowData {
-  date: string
-  income: number
-  expense: number
-  balance: number
-  period: string
-}
-
 export function CashflowReport({ period }: CashflowReportProps) {
   const { isDark } = useTheme()
-  const { entries } = useFinancialData()
   const [viewMode, setViewMode] = useState<ViewMode>('monthly')
 
-  // Filtrar transações por período
-  const filteredEntries = useMemo(() => {
+  // Configurar filtros para o relatório
+  const reportFilters = useMemo(() => {
     const now = new Date()
     let startDate: Date
 
@@ -61,95 +63,45 @@ export function CashflowReport({ period }: CashflowReportProps) {
       case 'month':
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
         break
-      case '3months': {
+      case '3months':
         startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
         break
-      }
-      case '6months': {
+      case '6months':
         startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
         break
-      }
-      case '1year': {
+      case '1year':
         startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1)
         break
-      }
-      default: {
+      default:
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        break
-      }
     }
 
-    return entries.filter((entry) => {
-      const entryDate = new Date(entry.date)
-      return entryDate >= startDate && entryDate <= now
-    })
-  }, [entries, period])
+    return {
+      startDate: Math.floor(startDate.getTime() / 1000), // timestamp em segundos
+      endDate: Math.floor(now.getTime() / 1000), // timestamp em segundos
+      viewMode,
+    }
+  }, [period, viewMode])
 
-  // Processar dados do fluxo de caixa
+  const {
+    data: cashflowReportData,
+    loading,
+    error,
+  } = useReports('cashflow', reportFilters)
+
+  // Processar dados do fluxo de caixa vindos da API
   const cashflowData = useMemo(() => {
-    const dataMap = new Map<string, CashflowData>()
-
-    filteredEntries.forEach((entry) => {
-      const date = new Date(entry.date)
-      let key: string
-      let periodLabel: string
-
-      switch (viewMode) {
-        case 'daily':
-          key = date.toISOString().split('T')[0]
-          periodLabel = date.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: 'short',
-          })
-          break
-        case 'weekly': {
-          const weekStart = new Date(date)
-          weekStart.setDate(date.getDate() - date.getDay())
-          const weekEnd = new Date(weekStart)
-          weekEnd.setDate(weekStart.getDate() + 6)
-          key = weekStart.toISOString().split('T')[0]
-          periodLabel = `${weekStart.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: 'short',
-          })} à ${weekEnd.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: 'short',
-          })}`
-          break
-        }
-        case 'monthly':
-        default:
-          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-          periodLabel = date.toLocaleDateString('pt-BR', {
-            month: 'short',
-            year: 'numeric',
-          })
-          break
-      }
-
-      const existing = dataMap.get(key)
-      if (existing) {
-        if (entry.type === 'income') {
-          existing.income += entry.amount
-        } else {
-          existing.expense += entry.amount
-        }
-        existing.balance = existing.income - existing.expense
-      } else {
-        dataMap.set(key, {
-          date: key,
-          income: entry.type === 'income' ? entry.amount : 0,
-          expense: entry.type === 'expense' ? entry.amount : 0,
-          balance: entry.type === 'income' ? entry.amount : -entry.amount,
-          period: periodLabel,
-        })
-      }
-    })
-
-    return Array.from(dataMap.values()).sort((a, b) =>
-      a.date.localeCompare(b.date),
+    if (!cashflowReportData?.data) return []
+    return cashflowReportData.data.map(
+      (periodData: { date: any; income: any; expense: any; balance: any }) => ({
+        date: periodData.date,
+        income: periodData.income,
+        expense: periodData.expense,
+        balance: periodData.balance,
+        period: periodData.date,
+      }),
     )
-  }, [filteredEntries, viewMode])
+  }, [cashflowReportData])
 
   // Hook de scroll infinito
   const {
@@ -222,7 +174,7 @@ export function CashflowReport({ period }: CashflowReportProps) {
       },
       xAxis: {
         type: 'category',
-        data: cashflowData.map((item) => item.period),
+        data: cashflowData.map((item: { period: any }) => item.period),
         axisLabel: {
           color: isDark ? '#9ca3af' : '#6b7280',
           rotate: cashflowData.length > 10 ? 45 : 0,
@@ -254,7 +206,7 @@ export function CashflowReport({ period }: CashflowReportProps) {
         {
           name: 'Receitas',
           type: 'bar',
-          data: cashflowData.map((item) => item.income),
+          data: cashflowData.map((item: { income: any }) => item.income),
           itemStyle: {
             color: '#22c55e',
             borderRadius: [4, 4, 0, 0],
@@ -263,7 +215,7 @@ export function CashflowReport({ period }: CashflowReportProps) {
         {
           name: 'Despesas',
           type: 'bar',
-          data: cashflowData.map((item) => item.expense),
+          data: cashflowData.map((item: { expense: any }) => item.expense),
           itemStyle: {
             color: '#ef4444',
             borderRadius: [4, 4, 0, 0],
@@ -275,9 +227,12 @@ export function CashflowReport({ period }: CashflowReportProps) {
 
   // Calcular totais
   const totals = useMemo(() => {
-    const totalIncome = cashflowData.reduce((sum, item) => sum + item.income, 0)
+    const totalIncome = cashflowData.reduce(
+      (sum: any, item: { income: any }) => sum + item.income,
+      0,
+    )
     const totalExpense = cashflowData.reduce(
-      (sum, item) => sum + item.expense,
+      (sum: any, item: { expense: any }) => sum + item.expense,
       0,
     )
     const totalBalance = totalIncome - totalExpense
@@ -294,6 +249,62 @@ export function CashflowReport({ period }: CashflowReportProps) {
       averageExpense,
     }
   }, [cashflowData])
+
+  // Estados de loading e error
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Visualização
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-10 w-[140px]" />
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Comparativo de Receitas vs Despesas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[400px] w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-red-600">
+              <p className="mb-2 text-lg font-medium">Erro ao carregar dados</p>
+              <p className="text-sm text-muted-foreground">
+                Ocorreu um erro ao carregar os dados do fluxo de caixa. Tente
+                novamente.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -506,34 +517,56 @@ export function CashflowReport({ period }: CashflowReportProps) {
               ref={scrollContainerRef}
               className="max-h-[600px] space-y-2 overflow-y-auto"
             >
-              {cashflowData.slice(0, visibleItems).map((item, index) => (
-                <DetailItem key={index}>
-                  <DetailItem.Content>
-                    <DetailItem.Info>
-                      <p className="font-medium">{item.period}</p>
-                    </DetailItem.Info>
-                  </DetailItem.Content>
-                  <DetailItem.Values>
-                    <DetailItem.Value
-                      label="Receitas"
-                      value={`+${formatCurrency(item.income)}`}
-                      valueClassName="text-green-600"
-                    />
-                    <DetailItem.Value
-                      label="Despesas"
-                      value={`-${formatCurrency(item.expense)}`}
-                      valueClassName="text-red-600"
-                    />
-                    <DetailItem.Value
-                      label="Saldo"
-                      value={`${item.balance >= 0 ? '+' : ''}${formatCurrency(item.balance)}`}
-                      valueClassName={`font-bold ${
-                        item.balance >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    />
-                  </DetailItem.Values>
-                </DetailItem>
-              ))}
+              {cashflowData.slice(0, visibleItems).map(
+                (
+                  item: {
+                    period:
+                      | string
+                      | number
+                      | bigint
+                      | boolean
+                      | ReactElement<any, string | JSXElementConstructor<any>>
+                      | Iterable<ReactNode>
+                      | ReactPortal
+                      | Promise<AwaitedReactNode>
+                      | null
+                      | undefined
+                    income: number | null | undefined
+                    expense: number | null | undefined
+                    balance: number | null | undefined
+                  },
+                  index: Key | null | undefined,
+                ) => (
+                  <DetailItem key={index}>
+                    <DetailItem.Content>
+                      <DetailItem.Info>
+                        <p className="font-medium">{item.period}</p>
+                      </DetailItem.Info>
+                    </DetailItem.Content>
+                    <DetailItem.Values>
+                      <DetailItem.Value
+                        label="Receitas"
+                        value={`+${formatCurrency(item.income)}`}
+                        valueClassName="text-green-600"
+                      />
+                      <DetailItem.Value
+                        label="Despesas"
+                        value={`-${formatCurrency(item.expense)}`}
+                        valueClassName="text-red-600"
+                      />
+                      <DetailItem.Value
+                        label="Saldo"
+                        value={`${item.balance && item.balance >= 0 ? '+' : ''}${formatCurrency(item.balance)}`}
+                        valueClassName={`font-bold ${
+                          item.balance && item.balance >= 0
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                        }`}
+                      />
+                    </DetailItem.Values>
+                  </DetailItem>
+                ),
+              )}
 
               {/* Skeleton durante carregamento */}
               {isLoadingMore && (
