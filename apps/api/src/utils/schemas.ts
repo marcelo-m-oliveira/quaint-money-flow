@@ -252,10 +252,141 @@ export const paginationResponseSchema = z.object({
   hasPrev: z.boolean(),
 })
 
+// ============================================================================
+// SCHEMAS ESPECÍFICOS DE RELATÓRIOS
+// ============================================================================
+
+// Schema para filtros de relatório de categorias
+export const categoriesReportFiltersSchema = z.object({
+  startDate: z.coerce.number().optional(), // timestamp em segundos
+  endDate: z.coerce.number().optional(), // timestamp em segundos
+  type: z.enum(['income', 'expense']).optional(),
+  categoryId: z.string().optional(),
+})
+
+// Schema para dados de categoria no relatório
+export const categoryReportDataSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  icon: z.string(),
+  color: z.string(),
+  amount: z.number(),
+  percentage: z.number(),
+  subcategories: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        icon: z.string(),
+        color: z.string(),
+        amount: z.number(),
+        percentage: z.number(),
+      }),
+    )
+    .optional(),
+})
+
+// Schema para resposta do relatório de categorias
+export const categoriesReportResponseSchema = z.object({
+  data: z.array(categoryReportDataSchema),
+  totalAmount: z.number(),
+  period: z.object({
+    startDate: z.number(),
+    endDate: z.number(),
+  }),
+})
+
+// Schema para filtros de relatório de fluxo de caixa
+export const cashflowReportFiltersSchema = z.object({
+  startDate: z.coerce.number().optional(), // timestamp em segundos
+  endDate: z.coerce.number().optional(), // timestamp em segundos
+  viewType: z.enum(['daily', 'weekly', 'monthly']).default('monthly'),
+})
+
+// Schema para dados de fluxo de caixa no relatório
+export const cashflowReportDataSchema = z.object({
+  date: z.string(),
+  income: z.number(),
+  expense: z.number(),
+  balance: z.number(),
+})
+
+// Schema para resposta do relatório de fluxo de caixa
+export const cashflowReportResponseSchema = z.object({
+  data: z.array(cashflowReportDataSchema),
+  summary: z.object({
+    totalIncome: z.number(),
+    totalExpense: z.number(),
+    totalBalance: z.number(),
+    averageIncome: z.number(),
+    averageExpense: z.number(),
+  }),
+  period: z.object({
+    startDate: z.number(),
+    endDate: z.number(),
+  }),
+})
+
+// Schema para filtros de relatório de contas
+export const accountsReportFiltersSchema = z.object({
+  startDate: z.coerce.number().optional(), // timestamp em segundos
+  endDate: z.coerce.number().optional(), // timestamp em segundos
+  accountType: z.enum(['all', 'bank', 'credit_card']).default('all'),
+})
+
+// Schema para dados de conta no relatório
+export const accountReportDataSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  icon: z.string(),
+  iconType: z.string(),
+  income: z.number(),
+  expense: z.number(),
+  balance: z.number(),
+})
+
+// Schema para resposta do relatório de contas
+export const accountsReportResponseSchema = z.object({
+  data: z.array(accountReportDataSchema),
+  summary: z.object({
+    totalIncome: z.number(),
+    totalExpense: z.number(),
+    totalBalance: z.number(),
+  }),
+  period: z.object({
+    startDate: z.number(),
+    endDate: z.number(),
+  }),
+})
+
 // Tipos inferidos dos schemas específicos da API
 export type ErrorResponseSchema = z.infer<typeof errorResponseSchema>
 export type SuccessResponseSchema = z.infer<typeof successResponseSchema>
 export type PaginationResponseSchema = z.infer<typeof paginationResponseSchema>
+
+// Tipos inferidos dos schemas de relatórios
+export type CategoriesReportFiltersSchema = z.infer<
+  typeof categoriesReportFiltersSchema
+>
+export type CategoryReportDataSchema = z.infer<typeof categoryReportDataSchema>
+export type CategoriesReportResponseSchema = z.infer<
+  typeof categoriesReportResponseSchema
+>
+export type CashflowReportFiltersSchema = z.infer<
+  typeof cashflowReportFiltersSchema
+>
+export type CashflowReportDataSchema = z.infer<typeof cashflowReportDataSchema>
+export type CashflowReportResponseSchema = z.infer<
+  typeof cashflowReportResponseSchema
+>
+export type AccountsReportFiltersSchema = z.infer<
+  typeof accountsReportFiltersSchema
+>
+export type AccountReportDataSchema = z.infer<typeof accountReportDataSchema>
+export type AccountsReportResponseSchema = z.infer<
+  typeof accountsReportResponseSchema
+>
 
 // ============================================================================
 // SCHEMAS ESPECÍFICOS DO OVERVIEW

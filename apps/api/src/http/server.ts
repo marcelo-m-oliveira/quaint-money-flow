@@ -15,6 +15,7 @@ import { categoryRoutes } from '@/http/routes/categories'
 import { creditCardRoutes } from '@/http/routes/credit-cards'
 import { entryRoutes } from '@/http/routes/entries'
 import { overviewRoutes } from '@/http/routes/overview'
+import { reportRoutes } from '@/http/routes/reports'
 import { userPreferencesRoutes } from '@/http/routes/user-preferences'
 import { setupSwagger } from '@/lib/swagger'
 import { errorHandler } from '@/utils/errors'
@@ -88,6 +89,10 @@ export async function createApp() {
   })
 
   app.register(overviewRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
+
+  app.register(reportRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 
