@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from '@/lib/prisma'
 
 import { ReportsController } from '../controllers/reports.controller'
@@ -10,7 +11,18 @@ export class ReportsFactory {
   private static reportsService: ReportsService
   private static reportsController: ReportsController
 
+  // Método para limpar o cache das instâncias (útil para desenvolvimento)
+  static clearCache(): void {
+    this.reportsRepository = null as any
+    this.reportsService = null as any
+    this.reportsController = null as any
+  }
+
   static getRepository(): ReportsRepository {
+    // Em desenvolvimento, sempre criar nova instância para evitar cache
+    if (process.env.NODE_ENV === 'development') {
+      return new ReportsRepository(prisma)
+    }
     if (!this.reportsRepository) {
       this.reportsRepository = new ReportsRepository(prisma)
     }
@@ -18,6 +30,11 @@ export class ReportsFactory {
   }
 
   static getService(): ReportsService {
+    // Em desenvolvimento, sempre criar nova instância para evitar cache
+    if (process.env.NODE_ENV === 'development') {
+      const repository = this.getRepository()
+      return new ReportsService(repository)
+    }
     if (!this.reportsService) {
       const repository = this.getRepository()
       this.reportsService = new ReportsService(repository)
@@ -26,6 +43,11 @@ export class ReportsFactory {
   }
 
   static getController(): ReportsController {
+    // Em desenvolvimento, sempre criar nova instância para evitar cache
+    if (process.env.NODE_ENV === 'development') {
+      const service = this.getService()
+      return new ReportsController(service)
+    }
     if (!this.reportsController) {
       const service = this.getService()
       this.reportsController = new ReportsController(service)

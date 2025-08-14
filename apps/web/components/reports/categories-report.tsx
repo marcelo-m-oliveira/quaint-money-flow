@@ -297,19 +297,16 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
     }
   }, [categoryData, isDark, transactionType])
 
-  // Usar dados do summary da API ao invés de calcular manualmente
   const totalAmount = useMemo(() => {
-    if (!categoriesData?.summary) {
-      return categoryData.reduce(
-        (sum: any, item: { amount: any }) => sum + item.amount,
-        0,
-      )
+    if (categoriesData?.summary) {
+      return transactionType === 'expense'
+        ? categoriesData.summary.totalExpense
+        : categoriesData.summary.totalIncome
     }
-    // Usar o valor apropriado do summary baseado no tipo de transação
-    return transactionType === 'expense'
-      ? categoriesData.summary.totalExpense
-      : categoriesData.summary.totalIncome
-  }, [categoriesData?.summary, categoryData, transactionType])
+
+    // Fallback: calcular manualmente a partir dos dados das categorias
+    return categoryData.reduce((sum, category) => sum + category.amount, 0)
+  }, [categoriesData, transactionType, categoryData])
 
   const totalEntries = useMemo(() => {
     return categoryData.reduce(

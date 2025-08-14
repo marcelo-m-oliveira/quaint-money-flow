@@ -57,16 +57,21 @@ export class ReportsService {
       const categories =
         await this.reportsRepository.getCategoriesReport(repositoryFilters)
 
-      // Calculate totals - need to get income/expense from entries since categories don't have type
-      const totalIncome = 0 // Will be calculated from entries
-      const totalExpense = categories.reduce((sum, cat) => sum + cat.amount, 0)
+      // Usar o método do repositório para calcular totais
+      const totals =
+        await this.reportsRepository.getCategoriesReportTotals(
+          repositoryFilters,
+        )
+      const totalIncome = totals.totalIncome
+      const totalExpense = totals.totalExpense
 
       const totalBalance = totalIncome - totalExpense
 
       // Calculate percentages for each category
+      const totalAmount = totalIncome + totalExpense
       const categoriesWithPercentage = categories.map((category) => {
         const percentage =
-          totalExpense > 0 ? (category.amount / totalExpense) * 100 : 0
+          totalAmount > 0 ? (category.amount / totalAmount) * 100 : 0
 
         return {
           ...category,

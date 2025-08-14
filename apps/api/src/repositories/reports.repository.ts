@@ -141,6 +141,49 @@ export class ReportsRepository extends BaseRepository<'entry'> {
     })
   }
 
+  // Método para calcular totais de receita e despesa no período
+  async getCategoriesReportTotals(
+    filters: CategoriesReportFilters,
+  ): Promise<{ totalIncome: number; totalExpense: number }> {
+    console.log('getCategoriesReportTotals chamado com filtros:', filters)
+    const { userId, startDate, endDate } = filters
+
+    const whereConditions: Prisma.EntryWhereInput = {
+      userId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    }
+
+    // Calcular total de receitas
+    const incomeResult = await this.prisma.entry.aggregate({
+      where: {
+        ...whereConditions,
+        type: 'income',
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    // Calcular total de despesas
+    const expenseResult = await this.prisma.entry.aggregate({
+      where: {
+        ...whereConditions,
+        type: 'expense',
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    return {
+      totalIncome: Number(incomeResult._sum.amount) || 0,
+      totalExpense: Number(expenseResult._sum.amount) || 0,
+    }
+  }
+
   async getCashflowReport(
     filters: CashflowReportFilters,
   ): Promise<CashflowReportData[]> {
