@@ -34,6 +34,7 @@ import { CategoryReportData } from '@/lib/services/reports'
 
 interface CategoriesReportProps {
   period: ReportPeriod
+  isActive: boolean
 }
 
 type ChartType = 'doughnut' | 'line'
@@ -50,7 +51,7 @@ interface CategoryData {
   subcategories?: CategoryData[]
 }
 
-export function CategoriesReport({ period }: CategoriesReportProps) {
+export function CategoriesReport({ period, isActive }: CategoriesReportProps) {
   const { isDark } = useTheme()
   const [chartType, setChartType] = useState<ChartType>('doughnut')
   const [transactionType, setTransactionType] =
@@ -95,7 +96,7 @@ export function CategoriesReport({ period }: CategoriesReportProps) {
     data: categoriesData,
     loading,
     error,
-  } = useReports('categories', reportFilters)
+  } = useReports('categories', reportFilters, { enabled: isActive })
 
   // Processar dados das categorias vindos da API
   const categoryData = useMemo(() => {

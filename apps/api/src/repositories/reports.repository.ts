@@ -219,15 +219,35 @@ export class ReportsRepository extends BaseRepository<'entry'> {
       switch (viewMode) {
         case 'daily':
           key = entryDate.toISOString().split('T')[0]
-          periodLabel = entryDate.toLocaleDateString('pt-BR')
+          periodLabel = entryDate.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
           break
         case 'weekly': {
+          // Calcular início da semana (domingo)
           const weekStart = new Date(entryDate)
-          weekStart.setDate(entryDate.getDate() - entryDate.getDay())
+          const dayOfWeek = entryDate.getDay()
+          weekStart.setDate(entryDate.getDate() - dayOfWeek)
+          
+          // Calcular fim da semana (sábado)
           const weekEnd = new Date(weekStart)
           weekEnd.setDate(weekStart.getDate() + 6)
+          
           key = weekStart.toISOString().split('T')[0]
-          periodLabel = `Semana de ${weekStart.toLocaleDateString('pt-BR')}`
+          
+          // Formatar período semanal no formato "28 Jun à 14 Ago"
+          const startDay = weekStart.getDate().toString().padStart(2, '0')
+          const startMonth = weekStart.toLocaleDateString('pt-BR', { month: 'short' })
+          const endDay = weekEnd.getDate().toString().padStart(2, '0')
+          const endMonth = weekEnd.toLocaleDateString('pt-BR', { month: 'short' })
+          
+          if (startMonth === endMonth) {
+            periodLabel = `${startDay} à ${endDay} ${startMonth}`
+          } else {
+            periodLabel = `${startDay} ${startMonth} à ${endDay} ${endMonth}`
+          }
           break
         }
         case 'monthly':
@@ -239,7 +259,11 @@ export class ReportsRepository extends BaseRepository<'entry'> {
           break
         default:
           key = entryDate.toISOString().split('T')[0]
-          periodLabel = entryDate.toLocaleDateString('pt-BR')
+          periodLabel = entryDate.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
       }
 
       const existing = dataMap.get(key)

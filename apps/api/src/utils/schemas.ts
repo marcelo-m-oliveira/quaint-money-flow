@@ -300,7 +300,7 @@ export const categoriesReportResponseSchema = z.object({
 export const cashflowReportFiltersSchema = z.object({
   startDate: z.coerce.number().optional(), // timestamp em segundos
   endDate: z.coerce.number().optional(), // timestamp em segundos
-  viewType: z.enum(['daily', 'weekly', 'monthly']).default('monthly'),
+  viewMode: z.enum(['daily', 'weekly', 'monthly']).default('monthly'),
 })
 
 // Schema para dados de fluxo de caixa no relatório

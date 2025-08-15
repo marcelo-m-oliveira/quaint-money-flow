@@ -221,13 +221,14 @@ export function useReportsLegacy() {
   )
 
   const getCashflowReport = useCallback(
-    async (period: ReportPeriod) => {
+    async (period: ReportPeriod, viewMode?: 'daily' | 'weekly' | 'monthly') => {
       try {
         setIsLoading(true)
         const { startDate, endDate } = getPeriodDates(period)
         const filters: CashflowReportFilters = {
           startDate,
           endDate,
+          viewMode: viewMode || 'monthly',
         }
         const data = await reportsService.getCashflowReport(filters)
         setCashflowData(data)

@@ -12,7 +12,7 @@ export interface CategoriesReportFilters extends ReportFilters {
 }
 
 export interface CashflowReportFilters extends ReportFilters {
-  // Sem filtros adicionais por enquanto
+  viewMode?: 'daily' | 'weekly' | 'monthly'
 }
 
 export interface AccountsReportFilters extends ReportFilters {
@@ -107,6 +107,9 @@ export const reportsService = {
     }
     if (filters?.endDate) {
       params.append('endDate', filters.endDate.toString())
+    }
+    if (filters?.viewMode) {
+      params.append('viewMode', filters.viewMode)
     }
 
     const queryString = params.toString()

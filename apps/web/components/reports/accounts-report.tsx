@@ -22,11 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useReports } from '@/lib/hooks/use-reports'
+import { useReportsLegacy } from '@/lib/hooks/use-reports'
 import { useTheme } from '@/lib/hooks/use-theme'
 
 interface AccountsReportProps {
   period: ReportPeriod
+  isActive: boolean
 }
 
 type ChartType = 'doughnut' | 'bar'
@@ -65,15 +66,17 @@ const DEFAULT_COLORS = [
   '#6366f1',
 ]
 
-export function AccountsReport({ period }: AccountsReportProps) {
-  const { getAccountsReport } = useReports()
+export function AccountsReport({ period, isActive }: AccountsReportProps) {
+  const { getAccountsReport } = useReportsLegacy()
   const { isDark } = useTheme()
   const [chartType, setChartType] = useState<ChartType>('doughnut')
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('all')
   const [accountsData, setAccountsData] = useState<AccountData[]>([])
 
-  // Carregar dados do relatório de contas
+  // Carregar dados do relatório de contas apenas quando a aba estiver ativa
   useEffect(() => {
+    if (!isActive) return
+
     const loadAccountsData = async () => {
       try {
         const data = await getAccountsReport(
@@ -106,7 +109,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
     }
 
     loadAccountsData()
-  }, [period, accountFilter, getAccountsReport])
+  }, [period, accountFilter, isActive]) // Removido getAccountsReport das dependências
 
   // Configuração do gráfico Doughnut
   const doughnutOptions = useMemo(() => {

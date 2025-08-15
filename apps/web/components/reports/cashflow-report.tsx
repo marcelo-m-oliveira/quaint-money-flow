@@ -35,70 +35,61 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useInfiniteScroll } from '@/lib/hooks/use-infinite-scroll'
-import { useReports } from '@/lib/hooks/use-reports'
+import { useReportsLegacy } from '@/lib/hooks/use-reports'
 import { useTheme } from '@/lib/hooks/use-theme'
 
 interface CashflowReportProps {
   period: ReportPeriod
+  isActive: boolean
 }
 
 type ViewMode = 'daily' | 'weekly' | 'monthly'
 
-export function CashflowReport({ period }: CashflowReportProps) {
+export function CashflowReport({ period, isActive }: CashflowReportProps) {
   const { isDark } = useTheme()
   const [viewMode, setViewMode] = useState<ViewMode>('monthly')
+  const { getCashflowReport } = useReportsLegacy()
+  const [cashflowReportData, setCashflowReportData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
 
-  // Configurar filtros para o relatório
-  const reportFilters = useMemo(() => {
-    const now = new Date()
-    let startDate: Date
+  // Carregar dados do relatório apenas quando a aba estiver ativa
+  useEffect(() => {
+    if (!isActive) return
 
-    switch (period) {
-      case 'day':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        break
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        break
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        break
-      case '3months':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
-        break
-      case '6months':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
-        break
-      case '1year':
-        startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1)
-        break
-      default:
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    const loadCashflowData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await getCashflowReport(period, viewMode)
+        setCashflowReportData(data)
+      } catch (err) {
+        console.error('Erro ao carregar dados do fluxo de caixa:', err)
+        setError(err as Error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    return {
-      startDate: Math.floor(startDate.getTime() / 1000), // timestamp em segundos
-      endDate: Math.floor(now.getTime() / 1000), // timestamp em segundos
-      viewMode,
-    }
-  }, [period, viewMode])
-
-  const {
-    data: cashflowReportData,
-    loading,
-    error,
-  } = useReports('cashflow', reportFilters)
+    loadCashflowData()
+  }, [period, viewMode, isActive]) // Removido getCashflowReport das dependências
 
   // Processar dados do fluxo de caixa vindos da API
   const cashflowData = useMemo(() => {
     if (!cashflowReportData?.data) return []
     return cashflowReportData.data.map(
-      (periodData: { date: any; income: any; expense: any; balance: any }) => ({
+      (periodData: {
+        date: any
+        income: any
+        expense: any
+        balance: any
+        period: any
+      }) => ({
         date: periodData.date,
         income: periodData.income,
         expense: periodData.expense,
         balance: periodData.balance,
-        period: periodData.date,
+        period: periodData.period || periodData.date,
       }),
     )
   }, [cashflowReportData])
@@ -227,6 +218,18 @@ export function CashflowReport({ period }: CashflowReportProps) {
 
   // Calcular totais
   const totals = useMemo(() => {
+    // Usar dados do summary da API quando disponíveis, senão calcular localmente
+    if (cashflowReportData?.summary) {
+      return {
+        totalIncome: cashflowReportData.summary.totalIncome,
+        totalExpense: cashflowReportData.summary.totalExpense,
+        totalBalance: cashflowReportData.summary.totalBalance,
+        averageIncome: cashflowReportData.summary.averageIncome,
+        averageExpense: cashflowReportData.summary.averageExpense,
+      }
+    }
+
+    // Fallback: calcular localmente
     const totalIncome = cashflowData.reduce(
       (sum: any, item: { income: any }) => sum + item.income,
       0,
@@ -248,7 +251,7 @@ export function CashflowReport({ period }: CashflowReportProps) {
       averageIncome,
       averageExpense,
     }
-  }, [cashflowData])
+  }, [cashflowData, cashflowReportData])
 
   // Estados de loading e error
   if (loading) {

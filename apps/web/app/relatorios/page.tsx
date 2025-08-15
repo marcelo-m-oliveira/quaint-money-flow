@@ -35,6 +35,7 @@ const PERIOD_OPTIONS = [
 
 export default function RelatoriosPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod>('month')
+  const [activeTab, setActiveTab] = useState<string>('categories')
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,7 +72,11 @@ export default function RelatoriosPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="categories" className="space-y-6">
+        <Tabs
+          defaultValue="categories"
+          className="space-y-6"
+          onValueChange={setActiveTab}
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="categories" className="flex items-center gap-2">
               <PieChart className="h-4 w-4" />
@@ -88,15 +93,24 @@ export default function RelatoriosPage() {
           </TabsList>
 
           <TabsContent value="categories">
-            <CategoriesReport period={selectedPeriod} />
+            <CategoriesReport
+              period={selectedPeriod}
+              isActive={activeTab === 'categories'}
+            />
           </TabsContent>
 
           <TabsContent value="cashflow">
-            <CashflowReport period={selectedPeriod} />
+            <CashflowReport
+              period={selectedPeriod}
+              isActive={activeTab === 'cashflow'}
+            />
           </TabsContent>
 
           <TabsContent value="accounts">
-            <AccountsReport period={selectedPeriod} />
+            <AccountsReport
+              period={selectedPeriod}
+              isActive={activeTab === 'accounts'}
+            />
           </TabsContent>
         </Tabs>
       </div>
