@@ -3,9 +3,6 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-// Configurar Faker para português brasileiro
-faker.locale = 'pt_BR'
-
 async function main() {
   console.log('🌱 Starting database seed...')
 
@@ -35,7 +32,7 @@ async function main() {
   ]
 
   // Criar categorias de receita
-  const createdIncomeCategories = []
+  const createdIncomeCategories: any[] = []
   for (const category of incomeCategories) {
     const createdCategory = await prisma.category.create({
       data: {
@@ -70,7 +67,7 @@ async function main() {
   ]
 
   // Criar categorias de despesa
-  const createdExpenseCategories = []
+  const createdExpenseCategories: any[] = []
   for (const category of expenseCategories) {
     const createdCategory = await prisma.category.create({
       data: {
@@ -125,14 +122,14 @@ async function main() {
     },
   ]
 
-  const createdAccounts = []
+  const createdAccounts: any[] = []
   for (const accountData of bankAccounts) {
     const account = await prisma.account.create({
       data: {
         name: accountData.name,
-        type: accountData.type,
+        type: accountData.type as any,
         icon: accountData.icon,
-        iconType: accountData.iconType,
+        iconType: accountData.iconType as any,
         includeInGeneralBalance: accountData.includeInGeneralBalance,
         userId: user.id,
       },
@@ -170,13 +167,13 @@ async function main() {
     },
   ]
 
-  const createdCreditCards = []
+  const createdCreditCards: any[] = []
   for (const cardData of creditCards) {
     const creditCard = await prisma.creditCard.create({
       data: {
         name: cardData.name,
         icon: cardData.icon,
-        iconType: cardData.iconType,
+        iconType: cardData.iconType as any,
         limit: cardData.limit,
         closingDay: cardData.closingDay,
         dueDay: cardData.dueDay,
@@ -196,7 +193,7 @@ async function main() {
 
   // Gerar transações realistas dos últimos 6 meses
   const allAccounts = [...createdAccounts, ...createdCreditCards]
-  const transactions = []
+  const transactions: any[] = []
 
   // Definir descrições realistas por categoria
   const categoryDescriptions = {
@@ -361,7 +358,7 @@ async function main() {
       description,
       amount,
       date: transactionDate,
-      type: isIncome ? 'income' : 'expense',
+      type: isIncome ? 'income' : 'expense' as any,
       categoryId: category.id,
       accountId: selectedAccount?.id || null,
       creditCardId: selectedCreditCard?.id || null,
@@ -378,13 +375,13 @@ async function main() {
   console.log('💰 Transactions created:', transactions.length)
 
   // Criar lançamentos específicos para Janeiro 2025
-  const currentMonthTransactions = [
+  const currentMonthTransactions: any[] = [
     // RECEITAS
     {
       description: 'Salário mensal',
       amount: 5500.0,
       date: new Date('2025-01-05'),
-      type: 'income',
+      type: 'income' as any,
       categoryId: createdIncomeCategories.find((cat) => cat.name === 'Salário')
         ?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('Nubank'))?.id,
@@ -396,7 +393,7 @@ async function main() {
       description: 'Projeto freelance desenvolvimento',
       amount: 1200.0,
       date: new Date('2025-01-15'),
-      type: 'income',
+      type: 'income' as any,
       categoryId: createdIncomeCategories.find(
         (cat) => cat.name === 'Freelance',
       )?.id,
@@ -409,7 +406,7 @@ async function main() {
       description: 'Dividendos ações',
       amount: 85.5,
       date: new Date('2025-01-20'),
-      type: 'income',
+      type: 'income' as any,
       categoryId: createdIncomeCategories.find(
         (cat) => cat.name === 'Dividendos',
       )?.id,
@@ -423,7 +420,7 @@ async function main() {
       description: 'Conta de luz - Janeiro',
       amount: 180.45,
       date: new Date('2025-01-10'),
-      type: 'expense',
+      type: 'expense' as any,
       categoryId: createdExpenseCategories.find((cat) => cat.name === 'Moradia')
         ?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('Nubank'))?.id,
@@ -435,7 +432,7 @@ async function main() {
       description: 'Compras supermercado',
       amount: 320.8,
       date: new Date('2025-01-12'),
-      type: 'expense',
+      type: 'expense' as any,
       categoryId: createdExpenseCategories.find(
         (cat) => cat.name === 'Supermercado',
       )?.id,
@@ -450,7 +447,7 @@ async function main() {
       description: 'Gasolina posto',
       amount: 95.6,
       date: new Date('2025-01-08'),
-      type: 'expense',
+      type: 'expense' as any,
       categoryId: createdExpenseCategories.find(
         (cat) => cat.name === 'Combustível',
       )?.id,
@@ -463,7 +460,7 @@ async function main() {
       description: 'Netflix - Assinatura mensal',
       amount: 45.9,
       date: new Date('2025-01-18'),
-      type: 'expense',
+      type: 'expense' as any,
       categoryId: createdExpenseCategories.find((cat) => cat.name === 'Lazer')
         ?.id,
       accountId: null,
@@ -477,7 +474,7 @@ async function main() {
       description: 'Consulta médica cardiologista',
       amount: 250.0,
       date: new Date('2025-01-22'),
-      type: 'expense',
+      type: 'expense' as any,
       categoryId: createdExpenseCategories.find((cat) => cat.name === 'Saúde')
         ?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('C6'))?.id,
@@ -489,7 +486,7 @@ async function main() {
       description: 'Jantar restaurante italiano',
       amount: 65.5,
       date: new Date('2025-01-25'),
-      type: 'expense',
+      type: 'expense' as any,
       categoryId: createdExpenseCategories.find(
         (cat) => cat.name === 'Restaurantes',
       )?.id,
@@ -503,7 +500,7 @@ async function main() {
       description: 'Academia - Mensalidade',
       amount: 89.9,
       date: new Date('2025-01-28'),
-      type: 'expense',
+      type: 'expense' as any,
       categoryId: createdExpenseCategories.find(
         (cat) => cat.name === 'Academia',
       )?.id,
