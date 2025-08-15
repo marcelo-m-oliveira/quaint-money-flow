@@ -32,6 +32,7 @@ export interface CategoryReportData {
   parentId: string | null
   amount: number
   transactionCount: number
+  subcategories?: CategoryReportData[]
 }
 
 export interface CashflowReportData {
@@ -107,7 +108,7 @@ export class ReportsRepository extends BaseRepository<'entry'> {
       },
     })
 
-    // Buscar informações das categorias
+    // Buscar informações das categorias com hierarquia
     const categoryIds = result
       .map((item) => item.categoryId)
       .filter(Boolean) as string[]
@@ -123,22 +124,107 @@ export class ReportsRepository extends BaseRepository<'entry'> {
         color: true,
         icon: true,
         parentId: true,
+        children: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
       },
     })
 
-    // Mapear resultados
-    return result.map((item) => {
-      const category = categories.find((cat) => cat.id === item.categoryId)
-      return {
-        categoryId: item.categoryId || '',
-        categoryName: category?.name || 'Sem categoria',
-        categoryColor: category?.color || '#6b7280',
-        categoryIcon: category?.icon || 'folder',
-        parentId: category?.parentId || null,
-        amount: Number(item._sum.amount) || 0,
-        transactionCount: item._count.id || 0,
-      }
+    // Separar categorias pai e subcategorias
+    const parentCategories = categories.filter((cat) => !cat.parentId)
+    const subCategories = categories.filter((cat) => cat.parentId)
+
+    console.log('Debug - Categorias encontradas:', {
+      total: categories.length,
+      parentCategories: parentCategories.length,
+      subCategories: subCategories.length,
+      parentIds: parentCategories.map(c => ({ id: c.id, name: c.name })),
+      subIds: subCategories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId }))
     })
+
+    // Mapear resultados agrupados por categoria pai
+    const groupedResults: CategoryReportData[] = []
+
+    for (const parentCategory of parentCategories) {
+      // Buscar dados da categoria pai
+      const parentData = result.find((item) => item.categoryId === parentCategory.id)
+      
+      // Buscar subcategorias desta categoria pai
+      const childCategories = subCategories.filter((cat) => cat.parentId === parentCategory.id)
+      
+      console.log(`Debug - Categoria pai "${parentCategory.name}" (${parentCategory.id}):`, {
+        childCategories: childCategories.length,
+        children: childCategories.map(c => ({ id: c.id, name: c.name }))
+      })
+      
+      // Buscar dados das subcategorias
+      const childData = childCategories.map((child) => {
+        const childResult = result.find((item) => item.categoryId === child.id)
+        return {
+          categoryId: child.id,
+          categoryName: child.name,
+          categoryColor: child.color,
+          categoryIcon: child.icon,
+          parentId: child.parentId,
+          amount: Number(childResult?._sum.amount) || 0,
+          transactionCount: childResult?._count.id || 0,
+        }
+      }).filter((child) => child.amount > 0 || child.transactionCount > 0)
+
+      // Calcular totais da categoria pai (incluindo subcategorias)
+      const totalAmount = childData.reduce((sum, child) => sum + child.amount, 0)
+      const totalTransactions = childData.reduce((sum, child) => sum + child.transactionCount, 0)
+
+      // Adicionar categoria pai se tiver dados ou subcategorias
+      if (parentData || childData.length > 0) {
+        const parentAmount = Number(parentData?._sum.amount) || 0
+        const parentTransactions = parentData?._count.id || 0
+
+        console.log(`Debug - Adicionando categoria "${parentCategory.name}" com ${childData.length} subcategorias:`, {
+          subcategories: childData.map(c => ({ name: c.categoryName, amount: c.amount }))
+        })
+        
+        groupedResults.push({
+          categoryId: parentCategory.id,
+          categoryName: parentCategory.name,
+          categoryColor: parentCategory.color,
+          categoryIcon: parentCategory.icon,
+          parentId: null,
+          amount: parentAmount + totalAmount,
+          transactionCount: parentTransactions + totalTransactions,
+          subcategories: childData,
+        })
+      }
+    }
+
+    // Adicionar subcategorias órfãs (que não têm categoria pai)
+    const orphanSubCategories = subCategories.filter((cat) => {
+      const parentExists = parentCategories.some((parent) => parent.id === cat.parentId)
+      return !parentExists
+    })
+
+    for (const orphan of orphanSubCategories) {
+      const orphanData = result.find((item) => item.categoryId === orphan.id)
+      if (orphanData) {
+        groupedResults.push({
+          categoryId: orphan.id,
+          categoryName: orphan.name,
+          categoryColor: orphan.color,
+          categoryIcon: orphan.icon,
+          parentId: orphan.parentId,
+          amount: Number(orphanData._sum.amount) || 0,
+          transactionCount: orphanData._count.id || 0,
+          subcategories: [],
+        })
+      }
+    }
+
+    return groupedResults
   }
 
   // Método para calcular totais de receita e despesa no período

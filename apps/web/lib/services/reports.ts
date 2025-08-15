@@ -27,6 +27,7 @@ export interface CategoryReportData {
   categoryColor: string
   categoryIcon: string
   transactionCount: number
+  subcategories?: CategoryReportData[]
 }
 
 export interface CashflowReportData {

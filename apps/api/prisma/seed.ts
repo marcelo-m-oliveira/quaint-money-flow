@@ -316,7 +316,7 @@ async function main() {
     const isIncome = createdIncomeCategories.some(
       (cat) => cat.id === category.id,
     )
-
+ 
     // Verificar se a categoria foi criada corretamente
     if (!category || !category.id) {
       console.warn('Categoria inválida encontrada, pulando transação')

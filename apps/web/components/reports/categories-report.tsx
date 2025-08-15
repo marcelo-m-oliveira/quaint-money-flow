@@ -102,16 +102,33 @@ export function CategoriesReport({ period, isActive }: CategoriesReportProps) {
   const categoryData = useMemo(() => {
     if (!categoriesData?.categories) return []
 
-    return categoriesData.categories.map((item: CategoryReportData) => ({
-      categoryId: item.categoryId,
-      categoryName: item.categoryName,
-      amount: item.amount,
-      percentage: item.percentage,
-      color: item.categoryColor,
-      icon: item.categoryIcon,
-      transactionCount: item.transactionCount,
-      subcategories: [], // Por enquanto, subcategorias serão implementadas posteriormente
-    }))
+    return categoriesData.categories.map((item: CategoryReportData) => {
+      // Processar subcategorias com porcentagem calculada
+      const processedSubcategories = (item.subcategories || []).map(
+        (subItem) => ({
+          categoryId: subItem.categoryId,
+          categoryName: subItem.categoryName,
+          amount: subItem.amount,
+          percentage:
+            item.amount > 0 ? (subItem.amount / item.amount) * 100 : 0,
+          color: subItem.categoryColor,
+          icon: subItem.categoryIcon,
+          transactionCount: subItem.transactionCount,
+          subcategories: [],
+        }),
+      )
+
+      return {
+        categoryId: item.categoryId,
+        categoryName: item.categoryName,
+        amount: item.amount,
+        percentage: item.percentage,
+        color: item.categoryColor,
+        icon: item.categoryIcon,
+        transactionCount: item.transactionCount,
+        subcategories: processedSubcategories,
+      }
+    })
   }, [categoriesData])
 
   // Configuração do gráfico Doughnut
