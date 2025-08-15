@@ -1,71 +1,76 @@
 'use client'
 
+import { dateToSeconds } from '@saas/utils'
 import { useEffect, useState } from 'react'
 
-import { dateStringToTimestamp } from '../format'
 import {
   Category,
   CategoryFormData,
-  Transaction,
-  TransactionFormData,
-} from '../types'
-import { useCrudToast } from './use-crud-toast'
+  Entry,
+  EntryFormData,
+  useCrudToast,
+} from '@/lib'
 
-const STORAGE_KEYS = {
-  TRANSACTIONS: 'quaint-money-transactions',
-  CATEGORIES: 'quaint-money-categories',
-}
-
-// Removido DEFAULT_CATEGORIES - agora só carrega dados do localStorage ou mock
+import { dateStringToTimestamp } from '../format'
 
 export function useFinancialData() {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [entries, setEntries] = useState<Entry[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { success, error, warning } = useCrudToast()
 
-  // Carregar dados do localStorage
+  // Carregar dados da API
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        const storedTransactions = localStorage.getItem(
-          STORAGE_KEYS.TRANSACTIONS,
-        )
-        const storedCategories = localStorage.getItem(STORAGE_KEYS.CATEGORIES)
+        setIsLoading(true)
 
-        if (storedTransactions) {
-          const parsedTransactions = JSON.parse(storedTransactions).map(
-            (
-              t: Omit<Transaction, 'date' | 'createdAt' | 'updatedAt'> & {
-                date: string
-                createdAt: string
-                updatedAt: string
-                paid?: boolean
-              },
-            ) => ({
-              ...t,
-              date: new Date(t.date),
-              createdAt: new Date(t.createdAt),
-              updatedAt: new Date(t.updatedAt),
-              paid: t.paid ?? false, // Garantir compatibilidade com transações existentes
+        // Carregar entries da API usando o apiClient
+        const entriesResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/entries`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer dev-token-123',
+            },
+          }
+        )
+        if (entriesResponse.ok) {
+          const entriesData = await entriesResponse.json()
+          const parsedEntries = entriesData.entries?.map(
+            (entry: Record<string, unknown>) => ({
+              ...entry,
+              date: new Date(entry.date as string),
+              createdAt: new Date(entry.createdAt as string),
+              updatedAt: new Date(entry.updatedAt as string),
+              paid: entry.paid ?? false,
             }),
-          )
-          setTransactions(parsedTransactions)
+          ) || []
+          setEntries(parsedEntries)
         }
 
-        if (storedCategories) {
-          const parsedCategories = JSON.parse(storedCategories).map(
-            (c: Omit<Category, 'createdAt'> & { createdAt: string }) => ({
-              ...c,
-              createdAt: new Date(c.createdAt),
+        // Carregar categories da API usando o apiClient
+        const categoriesResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer dev-token-123',
+            },
+          }
+        )
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json()
+          const parsedCategories = categoriesData.categories?.map(
+            (category: Record<string, unknown>) => ({
+              ...category,
+              createdAt: new Date(category.createdAt as string),
             }),
-          )
+          ) || []
           setCategories(parsedCategories)
         }
-        // Não criar categorias padrão - deixar vazio até que dados sejam inseridos
       } catch (error) {
-        console.error('Erro ao carregar dados:', error)
-        // Não definir categorias padrão em caso de erro
+        console.error('Erro ao carregar dados da API:', error)
       } finally {
         setIsLoading(false)
       }
@@ -74,26 +79,20 @@ export function useFinancialData() {
     loadData()
   }, [])
 
-  // Salvar transações no localStorage
-  const saveTransactions = (newTransactions: Transaction[]) => {
-    localStorage.setItem(
-      STORAGE_KEYS.TRANSACTIONS,
-      JSON.stringify(newTransactions),
-    )
-    setTransactions(newTransactions)
+  // Atualizar entries no estado
+  const updateEntriesState = (newEntries: Entry[]) => {
+    setEntries(newEntries)
   }
 
-  // Salvar categorias no localStorage
-  const saveCategories = (newCategories: Category[]) => {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(newCategories))
+  // Atualizar categories no estado
+  const updateCategoriesState = (newCategories: Category[]) => {
     setCategories(newCategories)
   }
 
-  // Adicionar transação
-  const addTransaction = (data: TransactionFormData) => {
+  // Adicionar entry
+  const addEntry = async (data: EntryFormData) => {
     try {
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
+      const newEntry: Omit<Entry, 'id' | 'createdAt' | 'updatedAt'> = {
         description: data.description,
         amount: parseFloat(data.amount),
         type: data.type,
@@ -102,86 +101,154 @@ export function useFinancialData() {
         creditCardId: data.creditCardId || undefined,
         date: dateStringToTimestamp(data.date),
         paid: data.paid,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
       }
 
-      const updatedTransactions = [...transactions, newTransaction]
-      saveTransactions(updatedTransactions)
-
-      const transactionType = data.type === 'income' ? 'Receita' : 'Despesa'
-      success.create(transactionType)
-    } catch (err) {
-      const transactionType = data.type === 'income' ? 'receita' : 'despesa'
-      error.create(transactionType)
-    }
-  }
-
-  // Editar transação
-  const updateTransaction = (id: string, data: TransactionFormData) => {
-    try {
-      const updatedTransactions = transactions.map((transaction) => {
-        if (transaction.id === id) {
-          const updatedTransaction = {
-            ...transaction,
-            description: data.description,
-            amount: parseFloat(data.amount),
-            type: data.type,
-            categoryId: data.categoryId,
-            accountId: data.accountId || undefined,
-            creditCardId: data.creditCardId || undefined,
-            date: dateStringToTimestamp(data.date),
-            paid: data.paid,
-            updatedAt: Date.now(),
-          }
-          return updatedTransaction
-        }
-        return transaction
-      })
-
-      saveTransactions(updatedTransactions)
-
-      const transactionType = data.type === 'income' ? 'Receita' : 'Despesa'
-      success.update(transactionType)
-    } catch (err) {
-      const transactionType = data.type === 'income' ? 'receita' : 'despesa'
-      error.update(transactionType)
-    }
-  }
-
-  // Atualizar campos específicos da transação
-  const updateTransactionStatus = (
-    id: string,
-    updates: Partial<Transaction>,
-  ) => {
-    const updatedTransactions = transactions.map((transaction) => {
-      if (transaction.id === id) {
-        return {
-          ...transaction,
-          ...updates,
-          updatedAt: Date.now(),
-        }
-      }
-      return transaction
-    })
-
-    saveTransactions(updatedTransactions)
-  }
-
-  // Deletar transação
-  const deleteTransaction = (id: string) => {
-    try {
-      const transactionToDelete = transactions.find((t) => t.id === id)
-      const updatedTransactions = transactions.filter(
-        (transaction) => transaction.id !== id,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/entries`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
+          },
+          body: JSON.stringify(newEntry),
+        },
       )
-      saveTransactions(updatedTransactions)
 
-      const transactionType =
-        transactionToDelete?.type === 'income' ? 'Receita' : 'Despesa'
-      success.delete(transactionType)
+      if (response.ok) {
+        const createdEntry = await response.json()
+        const parsedEntry = {
+          ...createdEntry,
+          date: new Date(createdEntry.date),
+          createdAt: new Date(createdEntry.createdAt),
+          updatedAt: new Date(createdEntry.updatedAt),
+        }
+        const updatedEntries = [...entries, parsedEntry]
+        updateEntriesState(updatedEntries)
+
+        const entryType = data.type === 'income' ? 'Receita' : 'Despesa'
+        success.create(entryType)
+      } else {
+        throw new Error('Falha ao criar entry')
+      }
     } catch (err) {
-      error.delete('transação')
+      const entryType = data.type === 'income' ? 'receita' : 'despesa'
+      error.create(entryType)
+    }
+  }
+
+  // Editar entry
+  const updateEntry = async (id: string, data: EntryFormData) => {
+    try {
+      const updatedEntryData = {
+        description: data.description,
+        amount: parseFloat(data.amount),
+        type: data.type,
+        categoryId: data.categoryId,
+        accountId: data.accountId || undefined,
+        creditCardId: data.creditCardId || undefined,
+        date: dateStringToTimestamp(data.date),
+        paid: data.paid,
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/entries/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
+          },
+          body: JSON.stringify(updatedEntryData),
+        },
+      )
+
+      if (response.ok) {
+        const updatedEntry = await response.json()
+        const parsedEntry = {
+          ...updatedEntry,
+          date: new Date(updatedEntry.date),
+          createdAt: new Date(updatedEntry.createdAt),
+          updatedAt: new Date(updatedEntry.updatedAt),
+        }
+
+        const updatedEntries = entries.map((entry) =>
+          entry.id === id ? parsedEntry : entry,
+        )
+        updateEntriesState(updatedEntries)
+
+        const entryType = data.type === 'income' ? 'Receita' : 'Despesa'
+        success.update(entryType)
+      } else {
+        throw new Error('Falha ao atualizar entry')
+      }
+    } catch (err) {
+      const entryType = data.type === 'income' ? 'receita' : 'despesa'
+      error.update(entryType)
+    }
+  }
+
+  // Atualizar campos específicos da entry
+  const updateEntryStatus = async (id: string, updates: Partial<Entry>) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/entries/${id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
+          },
+          body: JSON.stringify(updates),
+        },
+      )
+
+      if (response.ok) {
+        const updatedEntry = await response.json()
+        const parsedEntry = {
+          ...updatedEntry,
+          date: new Date(updatedEntry.date),
+          createdAt: new Date(updatedEntry.createdAt),
+          updatedAt: new Date(updatedEntry.updatedAt),
+        }
+
+        const updatedEntries = entries.map((entry) =>
+          entry.id === id ? parsedEntry : entry,
+        )
+        updateEntriesState(updatedEntries)
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar status da entry:', err)
+    }
+  }
+
+  // Deletar entry
+  const deleteEntry = async (id: string) => {
+    try {
+      const entryToDelete = entries.find((e) => e.id === id)
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/entries/${id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: 'Bearer dev-token-123',
+          },
+        },
+      )
+
+      if (response.ok) {
+        const updatedEntries = entries.filter((entry) => entry.id !== id)
+        updateEntriesState(updatedEntries)
+
+        const entryType =
+          entryToDelete?.type === 'income' ? 'Receita' : 'Despesa'
+        success.delete(entryType)
+      } else {
+        throw new Error('Falha ao deletar entry')
+      }
+    } catch (err) {
+      error.delete('entrada')
     }
   }
 
@@ -204,7 +271,7 @@ export function useFinancialData() {
   }
 
   // Adicionar categoria
-  const addCategory = (data: CategoryFormData) => {
+  const addCategory = async (data: CategoryFormData) => {
     try {
       // Para subcategorias, se não foi fornecido ícone, herdar da categoria pai
       let icon = data.icon
@@ -215,130 +282,185 @@ export function useFinancialData() {
         icon = parentCategory?.icon || 'FileText'
       }
 
-      const newCategory: Category = {
-        id: Date.now().toString(),
+      const newCategoryData = {
         name: data.name,
         color: data.color,
         type: data.type,
         icon: icon || 'FileText',
         parentId: data.parentId,
-        createdAt: new Date(),
       }
 
-      const updatedCategories = [...categories, newCategory]
-      saveCategories(updatedCategories)
-      success.create('Categoria')
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
+          },
+          body: JSON.stringify(newCategoryData),
+        },
+      )
+
+      if (response.ok) {
+        const createdCategory = await response.json()
+        const parsedCategory = {
+          ...createdCategory,
+          createdAt: new Date(createdCategory.createdAt),
+        }
+        const updatedCategories = [...categories, parsedCategory]
+        updateCategoriesState(updatedCategories)
+        success.create('Categoria')
+      } else {
+        throw new Error('Falha ao criar categoria')
+      }
     } catch (err) {
       error.create('categoria')
     }
   }
 
   // Editar categoria
-  const updateCategory = (id: string, data: CategoryFormData) => {
+  const updateCategory = async (id: string, data: CategoryFormData) => {
     try {
       // Encontrar a categoria que está sendo editada
       const categoryBeingUpdated = categories.find((cat) => cat.id === id)
 
-      const updatedCategories = categories.map((category) => {
-        if (category.id === id) {
-          let icon = data.icon
+      let icon = data.icon
 
-          // Se é uma subcategoria
-          if (data.parentId) {
-            const newParentCategory = categories.find(
-              (cat) => cat.id === data.parentId,
-            )
+      // Se é uma subcategoria
+      if (data.parentId) {
+        const newParentCategory = categories.find(
+          (cat) => cat.id === data.parentId,
+        )
 
-            // Se não foi fornecido ícone específico ou ícone está vazio (movida para nova categoria pai)
-            if (!icon || icon === '') {
-              icon = newParentCategory?.icon || 'FileText'
-            }
-            // Se a subcategoria foi movida para uma nova categoria pai e ainda tem o ícone da categoria pai anterior
-            else if (category.parentId !== data.parentId) {
-              const oldParentCategory = categories.find(
-                (cat) => cat.id === category.parentId,
-              )
-              // Se o ícone atual é igual ao da categoria pai anterior, herdar da nova categoria pai
-              if (icon === oldParentCategory?.icon) {
-                icon = newParentCategory?.icon || 'FileText'
+        // Se não foi fornecido ícone específico ou ícone está vazio (movida para nova categoria pai)
+        if (!icon || icon === '') {
+          icon = newParentCategory?.icon || 'FileText'
+        }
+        // Se a subcategoria foi movida para uma nova categoria pai e ainda tem o ícone da categoria pai anterior
+        else if (
+          categoryBeingUpdated &&
+          categoryBeingUpdated.parentId !== data.parentId
+        ) {
+          const oldParentCategory = categories.find(
+            (cat) => cat.id === categoryBeingUpdated.parentId,
+          )
+          // Se o ícone atual é igual ao da categoria pai anterior, herdar da nova categoria pai
+          if (icon === oldParentCategory?.icon) {
+            icon = newParentCategory?.icon || 'FileText'
+          }
+        }
+      }
+
+      const updatedCategoryData = {
+        name: data.name,
+        color: data.color,
+        type: data.type,
+        icon: icon || categoryBeingUpdated?.icon || 'FileText',
+        parentId: data.parentId,
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
+          },
+          body: JSON.stringify(updatedCategoryData),
+        },
+      )
+
+      if (response.ok) {
+        const updatedCategory = await response.json()
+        const parsedCategory = {
+          ...updatedCategory,
+          createdAt: new Date(updatedCategory.createdAt),
+        }
+
+        const updatedCategories = categories.map((category) => {
+          if (category.id === id) {
+            return parsedCategory
+          }
+
+          // Se esta categoria é uma subcategoria da categoria que está sendo editada
+          // e ela herdou o ícone da categoria pai, atualizar o ícone
+          if (category.parentId === id && categoryBeingUpdated) {
+            // Verificar se a subcategoria está usando o ícone da categoria pai
+            if (category.icon === categoryBeingUpdated.icon || !category.icon) {
+              return {
+                ...category,
+                icon: data.icon || 'FileText',
               }
             }
           }
 
-          return {
-            ...category,
-            name: data.name,
-            color: data.color,
-            type: data.type,
-            icon: icon || category.icon || 'FileText',
-            parentId: data.parentId,
-          }
-        }
+          return category
+        })
 
-        // Se esta categoria é uma subcategoria da categoria que está sendo editada
-        // e ela herdou o ícone da categoria pai, atualizar o ícone
-        if (category.parentId === id && categoryBeingUpdated) {
-          // Verificar se a subcategoria está usando o ícone da categoria pai
-          if (category.icon === categoryBeingUpdated.icon || !category.icon) {
-            return {
-              ...category,
-              icon: data.icon || 'FileText',
-            }
-          }
-        }
-
-        return category
-      })
-
-      saveCategories(updatedCategories)
-      success.update('Categoria')
+        updateCategoriesState(updatedCategories)
+        success.update('Categoria')
+      } else {
+        throw new Error('Falha ao atualizar categoria')
+      }
     } catch (err) {
       error.update('categoria')
     }
   }
 
   // Deletar categoria
-  const deleteCategory = (id: string) => {
+  const deleteCategory = async (id: string) => {
     try {
-      // Verificar se há transações usando esta categoria
-      const hasTransactions = transactions.some(
-        (transaction) => transaction.categoryId === id,
-      )
+      // Verificar se há entries usando esta categoria
+      const hasEntries = entries.some((entry) => entry.categoryId === id)
 
-      if (hasTransactions) {
-        warning(
-          'Não é possível deletar uma categoria que possui transações associadas.',
+      if (hasEntries) {
+        warning.constraint(
+          'Não é possível deletar uma categoria que possui entradas associadas.',
         )
         return
       }
 
-      const updatedCategories = categories.filter(
-        (category) => category.id !== id,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: 'Bearer dev-token-123',
+          },
+        },
       )
-      saveCategories(updatedCategories)
-      success.delete('Categoria')
+
+      if (response.ok) {
+        const updatedCategories = categories.filter(
+          (category) => category.id !== id,
+        )
+        updateCategoriesState(updatedCategories)
+        success.delete('Categoria')
+      } else {
+        throw new Error('Falha ao deletar categoria')
+      }
     } catch (err) {
       error.delete('categoria')
     }
   }
 
-  // Obter transações com categorias
-  const getTransactionsWithCategories = (): (Transaction & {
+  // Obter entries com categorias
+  const getEntriesWithCategories = (): (Entry & {
     category: Category
   })[] => {
-    return transactions.map((transaction) => {
-      const category = categories.find(
-        (cat) => cat.id === transaction.categoryId,
-      )
+    return entries.map((entry) => {
+      const category = categories.find((cat) => cat.id === entry.categoryId)
       return {
-        ...transaction,
+        ...entry,
         category: category || {
           id: '',
           name: 'Categoria não encontrada',
           color: '#6B7280',
           type: 'expense' as const,
           icon: 'FileText',
-          createdAt: new Date(),
+          createdAt: dateToSeconds(new Date()),
         },
       }
     })
@@ -346,13 +468,13 @@ export function useFinancialData() {
 
   // Calcular totais
   const getTotals = () => {
-    const income = transactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0)
+    const income = entries
+      .filter((e) => e.type === 'income')
+      .reduce((sum, e) => sum + e.amount, 0)
 
-    const expenses = transactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
+    const expenses = entries
+      .filter((e) => e.type === 'expense')
+      .reduce((sum, e) => sum + e.amount, 0)
 
     return {
       income,
@@ -362,17 +484,17 @@ export function useFinancialData() {
   }
 
   return {
-    transactions,
+    entries,
     categories,
     isLoading,
-    addTransaction,
-    updateTransaction,
-    updateTransactionStatus,
-    deleteTransaction,
+    addEntry,
+    updateEntry,
+    updateEntryStatus,
+    deleteEntry,
     addCategory,
     updateCategory,
     deleteCategory,
-    getTransactionsWithCategories,
+    getEntriesWithCategories,
     getTotals,
     getCategoryIcon,
   }

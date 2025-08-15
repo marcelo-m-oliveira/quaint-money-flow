@@ -123,7 +123,7 @@ quaint-money-flow/
 │       ├── components/         # Componentes React
 │       │   ├── ui/            # Componentes de UI base (shadcn/ui)
 │       │   ├── financial-dashboard.tsx # Dashboard principal
-│       │   └── transaction-form-modal.tsx # Modal de transações
+│       │   └── entry-form-modal.tsx # Modal de transações
 │       ├── lib/               # Utilitários e configurações
 │       │   ├── hooks/         # Custom hooks
 │       │   ├── types.ts       # Definições de tipos TypeScript

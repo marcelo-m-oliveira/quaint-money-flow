@@ -26,19 +26,20 @@ import {
 } from '@/components/ui/tooltip'
 import { getBankIcon } from '@/lib/data/banks'
 import { formatCurrency } from '@/lib/format'
-import { useAccounts } from '@/lib/hooks/use-accounts'
+import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
 import { Account, AccountFormData } from '@/lib/types'
 
 const ACCOUNT_TYPE_LABELS = {
   bank: 'Conta Bancária',
-  credit_card: 'Cartão de Crédito',
+
   investment: 'Investimento',
   cash: 'Dinheiro',
   other: 'Outros',
 } as const
 
-export default function ContasPage() {
-  const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts()
+export default function AccountsPage() {
+  const { accounts, addAccount, updateAccount, deleteAccount } =
+    useAccountsWithAutoInit()
   const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | undefined>()
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -71,9 +72,13 @@ export default function ContasPage() {
   }
 
   const handleSubmitAccount = (accountData: AccountFormData) => {
+    console.log('handleSubmitAccount called with data:', accountData)
+    console.log('editingAccount:', editingAccount)
     if (editingAccount) {
+      console.log('Calling updateAccount')
       updateAccount(editingAccount.id, accountData)
     } else {
+      console.log('Calling addAccount')
       addAccount(accountData)
     }
     setIsAccountFormOpen(false)
@@ -85,7 +90,7 @@ export default function ContasPage() {
     setEditingAccount(undefined)
   }
 
-  // Calcular totais
+  // Calculate totals
   const totalBalance = accounts.reduce(
     (sum, account) => sum + account.balance,
     0,
@@ -131,7 +136,7 @@ export default function ContasPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Resumo */}
+              {/* Summary */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Card>
                   <CardContent className="p-4">
@@ -155,7 +160,7 @@ export default function ContasPage() {
                 </Card>
               </div>
 
-              {/* Lista de contas */}
+              {/* Accounts list */}
               <div className="space-y-3">
                 {accounts.map((account) => (
                   <Card key={account.id}>
@@ -263,7 +268,7 @@ export default function ContasPage() {
         </CardContent>
       </Card>
 
-      {/* Modal de formulário */}
+      {/* Form modal */}
       <AccountFormModal
         isOpen={isAccountFormOpen}
         onClose={handleCloseModal}
@@ -271,7 +276,7 @@ export default function ContasPage() {
         account={editingAccount}
       />
 
-      {/* Dialog de confirmação */}
+      {/* Confirmation dialog */}
       <ConfirmationDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}

@@ -47,6 +47,7 @@ import {
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
+import { CategoryIcon } from '@/lib/components/category-icon'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
 import { CategoryFormSchema, categorySchema } from '@/lib/schemas'
 import { Category } from '@/lib/types'
@@ -70,6 +71,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip'
 
 interface CategoryFormModalProps {
   isOpen: boolean
@@ -267,7 +274,7 @@ export function CategoryFormModal({
   }
 
   const confirmDelete = () => {
-    if (category && onDelete) {
+    if (category && category.id && onDelete) {
       onDelete(category.id)
       handleClose()
     }
@@ -388,13 +395,25 @@ export function CategoryFormModal({
                     </SelectTrigger>
                     <SelectContent>
                       {mainCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
+                        <SelectItem
+                          key={category.id || 'temp'}
+                          value={category.id || ''}
+                        >
                           <div className="flex items-center gap-2">
-                            <div
-                              className="h-4 w-4 rounded-full transition-all duration-200"
-                              style={{ backgroundColor: category.color }}
-                            />
-                            {category.name}
+                            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border">
+                              <div
+                                className="flex h-full w-full items-center justify-center rounded-full"
+                                style={{ backgroundColor: category.color }}
+                              >
+                                {category.icon && (
+                                  <CategoryIcon
+                                    iconName={category.icon}
+                                    className="h-3 w-3 text-white"
+                                  />
+                                )}
+                              </div>
+                            </div>
+                            <span>{category.name}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -431,26 +450,33 @@ export function CategoryFormModal({
                       Escolha um ícone
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="grid grid-cols-10 gap-2 rounded-lg bg-muted p-4">
-                        {PRESET_ICONS.map((icon, index) => {
-                          const IconComponent = icon.icon
-                          return (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => setSelectedIcon(icon)}
-                              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 hover:bg-background ${
-                                selectedIcon === icon
-                                  ? 'scale-105 bg-background shadow-md'
-                                  : 'bg-muted-foreground/10'
-                              }`}
-                              title={icon.name}
-                            >
-                              <IconComponent className="h-5 w-5 text-muted-foreground transition-all duration-200" />
-                            </button>
-                          )
-                        })}
-                      </div>
+                      <TooltipProvider>
+                        <div className="grid grid-cols-10 gap-2 rounded-lg bg-muted p-4">
+                          {PRESET_ICONS.map((icon, index) => {
+                            const IconComponent = icon.icon
+                            return (
+                              <Tooltip key={index}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedIcon(icon)}
+                                    className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 hover:bg-background ${
+                                      selectedIcon === icon
+                                        ? 'scale-105 bg-background shadow-md'
+                                        : 'bg-muted-foreground/10'
+                                    }`}
+                                  >
+                                    <IconComponent className="h-5 w-5 text-muted-foreground transition-all duration-200" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{icon.name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )
+                          })}
+                        </div>
+                      </TooltipProvider>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -521,13 +547,25 @@ export function CategoryFormModal({
                   </SelectTrigger>
                   <SelectContent>
                     {mainCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                      <SelectItem
+                        key={category.id || 'temp'}
+                        value={category.id || ''}
+                      >
                         <div className="flex items-center gap-2">
-                          <div
-                            className="h-4 w-4 rounded-full transition-all duration-200"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          {category.name}
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border">
+                            <div
+                              className="flex h-full w-full items-center justify-center rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            >
+                              {category.icon && (
+                                <CategoryIcon
+                                  iconName={category.icon}
+                                  className="h-3 w-3 text-white"
+                                />
+                              )}
+                            </div>
+                          </div>
+                          <span>{category.name}</span>
                         </div>
                       </SelectItem>
                     ))}

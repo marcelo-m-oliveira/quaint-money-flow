@@ -9,7 +9,7 @@ import {
   PieChart,
   Wallet,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { ReportPeriod } from '@/app/relatorios/page'
 import { Button } from '@/components/ui/button'
@@ -22,14 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useAccounts } from '@/lib/hooks/use-accounts'
-import { useCreditCards } from '@/lib/hooks/use-credit-cards'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { useReportsLegacy } from '@/lib/hooks/use-reports'
 import { useTheme } from '@/lib/hooks/use-theme'
-import { Account, CreditCard } from '@/lib/types'
 
 interface AccountsReportProps {
   period: ReportPeriod
+  isActive: boolean
 }
 
 type ChartType = 'doughnut' | 'bar'
@@ -68,120 +66,51 @@ const DEFAULT_COLORS = [
   '#6366f1',
 ]
 
-export function AccountsReport({ period }: AccountsReportProps) {
-  const { transactions } = useFinancialData()
-  const { accounts } = useAccounts()
-  const { creditCards } = useCreditCards()
+export function AccountsReport({ period, isActive }: AccountsReportProps) {
+  const { getAccountsReport } = useReportsLegacy()
   const { isDark } = useTheme()
   const [chartType, setChartType] = useState<ChartType>('doughnut')
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('all')
+  const [accountsData, setAccountsData] = useState<AccountData[]>([])
 
-  // Filtrar transações por período
-  const filteredTransactions = useMemo(() => {
-    const now = new Date()
-    let startDate: Date
+  // Carregar dados do relatório de contas apenas quando a aba estiver ativa
+  useEffect(() => {
+    if (!isActive) return
 
-    switch (period) {
-      case 'day':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        break
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        break
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        break
-      case '3months':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
-        break
-      case '6months':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1)
-        break
-      case '1year':
-        startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1)
-        break
-      default:
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-    }
+    const loadAccountsData = async () => {
+      try {
+        const data = await getAccountsReport(period, accountFilter)
 
-    return transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.date)
-      return (
-        transactionDate >= startDate &&
-        transactionDate <= now &&
-        (transaction.accountId || transaction.creditCardId)
-      )
-    })
-  }, [transactions, period])
+        // Converter os dados da API para o formato esperado pelo componente
+        if (!data) return
 
-  // Processar dados das contas
-  const accountData = useMemo(() => {
-    const accountMap = new Map<string, AccountData>()
+        const formattedData: AccountData[] = data.accounts.map(
+          (accountData) => ({
+            accountId: accountData.accountId,
+            accountName: accountData.accountName,
+            accountType: accountData.accountType,
+            totalIncome: accountData.totalIncome,
+            totalExpense: accountData.totalExpense,
+            balance: accountData.balance,
+            transactionCount: accountData.transactionCount,
+            icon: accountData.icon || 'wallet',
+            iconType: accountData.iconType || 'generic',
+          }),
+        )
 
-    // Combinar contas e cartões de crédito baseado no filtro
-    let allAccounts: Array<Account | (CreditCard & { type: 'credit_card' })> =
-      []
-
-    if (accountFilter === 'all') {
-      allAccounts = [
-        ...accounts,
-        ...creditCards.map((card) => ({
-          ...card,
-          type: 'credit_card' as const,
-        })),
-      ]
-    } else if (accountFilter === 'bank_accounts') {
-      allAccounts = accounts
-    } else if (accountFilter === 'credit_cards') {
-      allAccounts = creditCards.map((card) => ({
-        ...card,
-        type: 'credit_card' as const,
-      }))
-    }
-
-    // Primeiro, inicializar todas as contas com valores zerados
-    allAccounts.forEach((account) => {
-      accountMap.set(account.id, {
-        accountId: account.id,
-        accountName: account.name,
-        accountType: account.type,
-        totalIncome: 0,
-        totalExpense: 0,
-        balance: 0,
-        transactionCount: 0,
-        icon: account.icon,
-        iconType: account.iconType,
-      })
-    })
-
-    // Depois, processar as transações para atualizar os valores
-    filteredTransactions.forEach((transaction) => {
-      const accountId = transaction.accountId || transaction.creditCardId
-      if (!accountId) return
-
-      const account = allAccounts.find((a) => a.id === accountId)
-      if (!account) return
-
-      const existing = accountMap.get(account.id)
-      if (existing) {
-        if (transaction.type === 'income') {
-          existing.totalIncome += transaction.amount
-        } else {
-          existing.totalExpense += transaction.amount
-        }
-        existing.balance = existing.totalIncome - existing.totalExpense
-        existing.transactionCount += 1
+        setAccountsData(formattedData)
+      } catch (error) {
+        console.error('Erro ao carregar dados das contas:', error)
+        setAccountsData([])
       }
-    })
+    }
 
-    return Array.from(accountMap.values()).sort(
-      (a, b) => Math.abs(b.balance) - Math.abs(a.balance),
-    )
-  }, [filteredTransactions, accounts, creditCards, accountFilter])
+    loadAccountsData()
+  }, [period, accountFilter, isActive]) // Removido getAccountsReport das dependências
 
   // Configuração do gráfico Doughnut
   const doughnutOptions = useMemo(() => {
-    const data = accountData.map((item, index) => ({
+    const data = accountsData.map((item, index) => ({
       value: Math.abs(item.balance),
       name: item.accountName,
       itemStyle: {
@@ -203,7 +132,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
           value: number
           percent: number
         }) => {
-          const accountInfo = accountData.find(
+          const accountInfo = accountsData.find(
             (a) => a.accountName === params.name,
           )
           if (!accountInfo) return ''
@@ -256,7 +185,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
         },
       ],
     }
-  }, [accountData, isDark])
+  }, [accountsData, isDark])
 
   // Configuração do gráfico de barras
   const barOptions = useMemo(() => {
@@ -273,7 +202,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
           params: { name: string; dataIndex: number; seriesName: string }[],
         ) => {
           const data = params[0]
-          const accountInfo = accountData[data.dataIndex]
+          const accountInfo = accountsData[data.dataIndex]
 
           return `
             <div style="padding: 8px;">
@@ -307,10 +236,10 @@ export function AccountsReport({ period }: AccountsReportProps) {
       },
       xAxis: {
         type: 'category',
-        data: accountData.map((item) => item.accountName),
+        data: accountsData.map((item) => item.accountName),
         axisLabel: {
           color: isDark ? '#9ca3af' : '#6b7280',
-          rotate: accountData.length > 5 ? 45 : 0,
+          rotate: accountsData.length > 5 ? 45 : 0,
         },
         axisLine: {
           lineStyle: {
@@ -339,7 +268,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
         {
           name: 'Receitas',
           type: 'bar',
-          data: accountData.map((item) => item.totalIncome),
+          data: accountsData.map((item) => item.totalIncome),
           itemStyle: {
             color: '#22c55e',
             borderRadius: [4, 4, 0, 0],
@@ -348,7 +277,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
         {
           name: 'Despesas',
           type: 'bar',
-          data: accountData.map((item) => item.totalExpense),
+          data: accountsData.map((item) => item.totalExpense),
           itemStyle: {
             color: '#ef4444',
             borderRadius: [4, 4, 0, 0],
@@ -356,20 +285,20 @@ export function AccountsReport({ period }: AccountsReportProps) {
         },
       ],
     }
-  }, [accountData, isDark])
+  }, [accountsData, isDark])
 
   // Calcular totais
   const totals = useMemo(() => {
-    const totalIncome = accountData.reduce(
+    const totalIncome = accountsData.reduce(
       (sum, item) => sum + item.totalIncome,
       0,
     )
-    const totalExpense = accountData.reduce(
+    const totalExpense = accountsData.reduce(
       (sum, item) => sum + item.totalExpense,
       0,
     )
     const totalBalance = totalIncome - totalExpense
-    const totalTransactions = accountData.reduce(
+    const totalEntries = accountsData.reduce(
       (sum, item) => sum + item.transactionCount,
       0,
     )
@@ -378,16 +307,16 @@ export function AccountsReport({ period }: AccountsReportProps) {
       totalIncome,
       totalExpense,
       totalBalance,
-      totalTransactions,
+      totalEntries,
     }
-  }, [accountData])
+  }, [accountsData])
 
   // Agrupar por tipo de conta
   // Agrupar dados por tipo de conta
   const accountsByType = useMemo(() => {
     const typeMap = new Map<string, { count: number; balance: number }>()
 
-    accountData.forEach((account) => {
+    accountsData.forEach((account) => {
       const type = account.accountType
       const existing = typeMap.get(type) || { count: 0, balance: 0 }
       typeMap.set(type, {
@@ -403,7 +332,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
       count: data.count,
       balance: data.balance,
     }))
-  }, [accountData])
+  }, [accountsData])
 
   return (
     <div className="space-y-6">
@@ -518,9 +447,9 @@ export function AccountsReport({ period }: AccountsReportProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Transações
+                  Entradas
                 </p>
-                <p className="text-2xl font-bold">{totals.totalTransactions}</p>
+                <p className="text-2xl font-bold">{totals.totalEntries}</p>
               </div>
               <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900">
                 <BarChart3 className="h-6 w-6 text-blue-600" />
@@ -593,7 +522,7 @@ export function AccountsReport({ period }: AccountsReportProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {accountData.length > 0 ? (
+          {accountsData.length > 0 ? (
             <div className="h-[400px] w-full">
               <ReactECharts
                 key={`${chartType}-${accountFilter}`}
@@ -618,14 +547,14 @@ export function AccountsReport({ period }: AccountsReportProps) {
       </Card>
 
       {/* Lista detalhada */}
-      {accountData.length > 0 && (
+      {accountsData.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Detalhamento por Conta</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {accountData.map((item) => {
+              {accountsData.map((item) => {
                 return (
                   <DetailItem key={item.accountId}>
                     <DetailItem.Content>

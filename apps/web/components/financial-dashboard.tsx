@@ -1,41 +1,60 @@
 'use client'
 
+import { timestampToDateInputString } from '@saas/utils'
+import { EntryFormSchema } from '@saas/validations'
 import { CircleMinus, CirclePlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { formatCurrency, getDayPeriod } from '@/lib/format'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import { Transaction, TransactionFormData } from '@/lib/types'
+import { useCategories } from '@/lib/hooks/use-categories'
+import { useEntries } from '@/lib/hooks/use-entries'
+import { Entry, EntryFormData, PendingAccount } from '@/lib/types'
 
 import {
   BillsToPayCard,
   BillsToReceiveCard,
   ExpenseSummaryCard,
 } from './dashboard'
+import { EntryFormModal } from './entry-form-modal'
 import { PageLayout } from './layouts/page-layout'
-import { TransactionFormModal } from './transaction-form-modal'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { ConfirmationDialog } from './ui/confirmation-dialog'
 
 export function FinancialDashboard() {
+  // Usar hooks existentes sem carregar dados (shouldFetch=false)
+  const { addEntry, updateEntry, patchEntry, deleteEntry } = useEntries(
+    undefined,
+    false,
+  )
+
+  const { deleteCategory } = useCategories(false)
+
   const {
-    categories,
-    addTransaction,
-    updateTransaction,
-    updateTransactionStatus,
-    deleteTransaction,
-    deleteCategory,
-    getTotals,
-    getTransactionsWithCategories,
+    generalOverview,
     isLoading,
-  } = useFinancialData()
+    refreshGeneralOverview,
+    refreshTopExpenses,
+  } = useOverviewContext()
+
+  // Função customizada para patch que também atualiza o overview
+  const handlePatchEntry = async (id: string, data: Partial<EntryFormData>) => {
+    try {
+      await patchEntry(id, data)
+      // Atualizar o overview em tempo real após a alteração
+      await refreshGeneralOverview()
+      // Atualizar também os maiores gastos para refletir mudanças nas categorias
+      // Forçar atualização ignorando cache para garantir que mudanças sejam refletidas
+      await refreshTopExpenses({ period: 'current-month' }, true)
+    } catch (error) {
+      console.error('Erro ao atualizar lançamento:', error)
+    }
+  }
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = useState(false)
-  const [editingTransaction, setEditingTransaction] = useState<
-    Transaction | undefined
-  >()
+  const [editingEntry, setEditingEntry] = useState<Entry | undefined>()
 
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
@@ -61,16 +80,20 @@ export function FinancialDashboard() {
     return () => clearInterval(intervalId)
   }, [])
 
-  const totals = getTotals()
+  // Usar dados do overview
+  const displayTotals = {
+    income: generalOverview?.monthlyIncome ?? 0,
+    expenses: generalOverview?.monthlyExpenses ?? 0,
+  }
 
   // TODO: Estas funções serão utilizadas quando implementarmos a lista de transações e categorias
-  const handleDeleteTransaction = (id: string) => {
+  const handleDeleteEntry = (id: string) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Excluir Transação',
       description:
         'Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.',
-      onConfirm: () => deleteTransaction(id),
+      onConfirm: () => deleteEntry(id),
     })
   }
 
@@ -91,46 +114,85 @@ export function FinancialDashboard() {
     })
   }
 
+  // Função para editar entrada a partir dos cards de contas
+  const handleEditEntry = (account: PendingAccount) => {
+    // Converter PendingAccount para Entry para compatibilidade com o modal
+    const entry: Entry = {
+      id: account.id,
+      description: account.description,
+      amount: account.amount,
+      date: account.date,
+      type: account.type || 'expense', // Assumir expense se não especificado
+      categoryId: account.categoryId || '',
+      accountId: account.accountId,
+      creditCardId: account.creditCardId,
+      paid: false,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    }
+
+    setEditingEntry(entry)
+    if (entry.type === 'expense') {
+      setIsExpenseDialogOpen(true)
+    } else {
+      setIsIncomeDialogOpen(true)
+    }
+  }
+
   // Evita warning do ESLint sobre variáveis não utilizadas
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _unusedFunctions = { handleDeleteTransaction, handleDeleteCategory }
+  const _unusedFunctions = { handleDeleteEntry, handleDeleteCategory }
 
   const closeExpenseDialog = () => {
     setIsExpenseDialogOpen(false)
-    setEditingTransaction(undefined)
+    setEditingEntry(undefined)
+    refreshGeneralOverview()
   }
 
   const closeIncomeDialog = () => {
     setIsIncomeDialogOpen(false)
-    setEditingTransaction(undefined)
+    setEditingEntry(undefined)
+    refreshGeneralOverview()
   }
 
-  const handleExpenseSubmit = (
-    data: TransactionFormData,
+  const handleExpenseSubmit = async (
+    data: EntryFormSchema,
     shouldClose = true,
   ) => {
-    const expenseData = { ...data, type: 'expense' as const }
-    if (editingTransaction) {
-      updateTransaction(editingTransaction.id, expenseData)
-      setEditingTransaction(undefined)
+    // Convert EntryFormSchema to EntryFormData
+    const expenseData: EntryFormData = {
+      ...data,
+      type: 'expense' as const,
+      date: timestampToDateInputString(data.date),
+    }
+    if (editingEntry) {
+      await updateEntry(editingEntry.id, expenseData)
+      setEditingEntry(undefined)
+      // Atualizar maiores gastos após editar despesa
+      await refreshTopExpenses({ period: 'current-month' }, true)
     } else {
-      addTransaction(expenseData)
+      await addEntry(expenseData)
     }
     if (shouldClose) {
       closeExpenseDialog()
     }
   }
 
-  const handleIncomeSubmit = (
-    data: TransactionFormData,
+  const handleIncomeSubmit = async (
+    data: EntryFormSchema,
     shouldClose = true,
   ) => {
-    const incomeData = { ...data, type: 'income' as const }
-    if (editingTransaction) {
-      updateTransaction(editingTransaction.id, incomeData)
-      setEditingTransaction(undefined)
+    // Convert EntryFormSchema to EntryFormData
+    const incomeData: EntryFormData = {
+      ...data,
+      type: 'income' as const,
+      date: timestampToDateInputString(data.date),
+    }
+    if (editingEntry) {
+      await updateEntry(editingEntry.id, incomeData)
+      setEditingEntry(undefined)
     } else {
-      addTransaction(incomeData)
+      await addEntry(incomeData)
     }
     if (shouldClose) {
       closeIncomeDialog()
@@ -148,7 +210,7 @@ export function FinancialDashboard() {
     )
   }
 
-  const transactionsWithCategories = getTransactionsWithCategories()
+  // Os dados de entries e categories virão do OverviewContext quando necessário
 
   return (
     <PageLayout>
@@ -176,7 +238,7 @@ export function FinancialDashboard() {
                     Receitas no mês atual
                   </p>
                   <p className="text-xl font-bold text-green-600 lg:text-2xl">
-                    {formatCurrency(totals.income)}
+                    {formatCurrency(displayTotals.income)}
                   </p>
                 </div>
                 <div className="flex flex-col space-y-1">
@@ -184,7 +246,7 @@ export function FinancialDashboard() {
                     Despesas no mês atual
                   </p>
                   <p className="text-xl font-bold text-red-600 lg:text-2xl">
-                    {formatCurrency(totals.expenses)}
+                    {formatCurrency(displayTotals.expenses)}
                   </p>
                 </div>
               </div>
@@ -221,28 +283,30 @@ export function FinancialDashboard() {
                   </Button>
                 </div>
 
-                {/* Modais reformulados */}
-                <TransactionFormModal
-                  isOpen={isExpenseDialogOpen}
-                  onClose={closeExpenseDialog}
-                  transaction={editingTransaction}
-                  onSubmit={handleExpenseSubmit}
-                  categories={categories}
-                  type="expense"
-                  title={editingTransaction ? 'Editar despesa' : 'Nova despesa'}
-                  showCreateAnotherButton={!editingTransaction}
-                />
+                {/* Modais reformulados - Renderização condicional para evitar carregamento desnecessário */}
+                {isExpenseDialogOpen && (
+                  <EntryFormModal
+                    isOpen={isExpenseDialogOpen}
+                    onClose={closeExpenseDialog}
+                    entry={editingEntry}
+                    onSubmit={handleExpenseSubmit}
+                    type="expense"
+                    title={editingEntry ? 'Editar despesa' : 'Nova despesa'}
+                    showCreateAnotherButton={!editingEntry}
+                  />
+                )}
 
-                <TransactionFormModal
-                  isOpen={isIncomeDialogOpen}
-                  onClose={closeIncomeDialog}
-                  transaction={editingTransaction}
-                  onSubmit={handleIncomeSubmit}
-                  categories={categories}
-                  type="income"
-                  title={editingTransaction ? 'Editar receita' : 'Nova receita'}
-                  showCreateAnotherButton={!editingTransaction}
-                />
+                {isIncomeDialogOpen && (
+                  <EntryFormModal
+                    isOpen={isIncomeDialogOpen}
+                    onClose={closeIncomeDialog}
+                    entry={editingEntry}
+                    onSubmit={handleIncomeSubmit}
+                    type="income"
+                    title={editingEntry ? 'Editar receita' : 'Nova receita'}
+                    showCreateAnotherButton={!editingEntry}
+                  />
+                )}
               </div>
             </div>
           </CardContent>
@@ -251,36 +315,23 @@ export function FinancialDashboard() {
         {/* Cards de Informações Adicionais */}
         <div className="space-y-6">
           {/* Card de Maiores Despesas - Largura total */}
-          <ExpenseSummaryCard
-            transactions={transactionsWithCategories}
-            categories={categories}
-          />
+          <ExpenseSummaryCard />
 
           {/* Cards de Contas - Flexbox com 50% cada */}
           <div className="flex flex-col gap-6 lg:flex-row">
             {/* Card de Contas a Pagar */}
             <div className="flex-1">
               <BillsToPayCard
-                transactions={transactionsWithCategories}
-                categories={categories}
-                onUpdateTransaction={updateTransactionStatus}
-                onEditTransaction={(transaction) => {
-                  setEditingTransaction(transaction)
-                  setIsExpenseDialogOpen(true)
-                }}
+                onUpdateEntry={handlePatchEntry}
+                onEditEntry={handleEditEntry}
               />
             </div>
 
             {/* Card de Contas a Receber */}
             <div className="flex-1">
               <BillsToReceiveCard
-                transactions={transactionsWithCategories}
-                categories={categories}
-                onUpdateTransaction={updateTransactionStatus}
-                onEditTransaction={(transaction) => {
-                  setEditingTransaction(transaction)
-                  setIsIncomeDialogOpen(true)
-                }}
+                onUpdateEntry={handlePatchEntry}
+                onEditEntry={handleEditEntry}
               />
             </div>
           </div>

@@ -1,0 +1,191 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["auth", "finance"]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String // Campo para autenticação
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  accounts    Account[]
+  creditCards CreditCard[]
+  categories  Category[]
+  entries     Entry[]
+  preferences UserPreferences?
+
+  @@map("users")
+  @@schema("auth")
+}
+
+model Account {
+  id                      String      @id @default(cuid())
+  name                    String
+  type                    AccountType
+  icon                    String
+  iconType                IconType    @default(generic)
+  includeInGeneralBalance Boolean     @default(true)
+  userId                  String
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  // Relacionamentos
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries            Entry[]
+  creditCardPayments CreditCard[] @relation("DefaultPaymentAccount")
+
+  @@map("accounts")
+  @@schema("finance")
+}
+
+model CreditCard {
+  id                      String   @id @default(cuid())
+  name                    String
+  icon                    String
+  iconType                IconType @default(generic)
+  limit                   Decimal  @db.Decimal(18, 2)
+  closingDay              Int
+  dueDay                  Int
+  defaultPaymentAccountId String?
+  userId                  String
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relacionamentos
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultPaymentAccount Account? @relation("DefaultPaymentAccount", fields: [defaultPaymentAccountId], references: [id])
+  entries               Entry[]
+
+  @@map("credit_cards")
+  @@schema("finance")
+}
+
+model Category {
+  id        String          @id @default(cuid())
+  name      String
+  color     String
+  type      EntryType
+  icon      String
+  parentId  String?
+  userId    String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  // Relacionamentos
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  entries  Entry[]
+
+  @@map("categories")
+  @@schema("finance")
+}
+
+model Entry {
+  id           String          @id @default(cuid())
+  description  String
+  amount       Decimal         @db.Decimal(18, 2)
+  type         EntryType
+  date         DateTime
+  paid         Boolean         @default(false)
+  categoryId   String
+  accountId    String?
+  creditCardId String?
+  userId       String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relacionamentos
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category    @relation(fields: [categoryId], references: [id])
+  account    Account?    @relation(fields: [accountId], references: [id])
+  creditCard CreditCard? @relation(fields: [creditCardId], references: [id])
+
+  @@map("entries")
+  @@schema("finance")
+}
+
+model UserPreferences {
+  id                         String           @id @default(cuid())
+  entryOrder                EntryOrder       @default(descending)
+  defaultNavigationPeriod    NavigationPeriod @default(monthly)
+  showDailyBalance           Boolean          @default(false)
+  viewMode                   ViewMode         @default(all)
+  isFinancialSummaryExpanded Boolean          @default(false)
+  userId                     String           @unique
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+
+  // Relacionamentos
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+  @@schema("auth")
+}
+
+// Enums
+enum AccountType {
+  bank
+  investment
+  cash
+  other
+
+  @@map("account_type")
+  @@schema("finance")
+}
+
+enum IconType {
+  bank
+  generic
+
+  @@map("icon_type")
+  @@schema("finance")
+}
+
+enum EntryType {
+  income
+  expense
+
+  @@map("entry_type")
+  @@schema("finance")
+}
+
+enum EntryOrder {
+  ascending
+  descending
+
+  @@map("entry_order")
+  @@schema("auth")
+}
+
+enum NavigationPeriod {
+  daily
+  weekly
+  monthly
+  quarterly
+  yearly
+
+  @@map("navigation_period")
+  @@schema("auth")
+}
+
+enum ViewMode {
+  all
+  cashflow
+
+  @@map("view_mode")
+  @@schema("auth")
+}

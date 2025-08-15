@@ -1,0 +1,575 @@
+import { Prisma, PrismaClient } from '@prisma/client'
+
+import { BaseRepository } from './base.repository'
+
+export interface CategoriesReportFilters {
+  userId: string
+  startDate: Date
+  endDate: Date
+  type?: 'income' | 'expense'
+  categoryId?: string
+}
+
+export interface CashflowReportFilters {
+  userId: string
+  startDate: Date
+  endDate: Date
+  viewMode: 'daily' | 'weekly' | 'monthly'
+}
+
+export interface AccountsReportFilters {
+  userId: string
+  startDate: Date
+  endDate: Date
+  accountFilter: 'all' | 'bank_accounts' | 'credit_cards'
+}
+
+export interface CategoryReportData {
+  categoryId: string
+  categoryName: string
+  categoryColor: string
+  categoryIcon: string
+  parentId: string | null
+  amount: number
+  transactionCount: number
+  subcategories?: CategoryReportData[]
+}
+
+export interface CashflowReportData {
+  date: string
+  income: number
+  expense: number
+  balance: number
+  period: string
+}
+
+export interface AccountReportData {
+  accountId: string
+  accountName: string
+  accountType: string
+  totalIncome: number
+  totalExpense: number
+  balance: number
+  transactionCount: number
+  icon: string
+  iconType: 'bank' | 'generic'
+}
+
+export class ReportsRepository extends BaseRepository<'entry'> {
+  constructor(prisma: PrismaClient) {
+    super(prisma, 'entry')
+  }
+
+  async getCategoriesReport(
+    filters: CategoriesReportFilters,
+  ): Promise<CategoryReportData[]> {
+    const { userId, startDate, endDate, type, categoryId } = filters
+
+    // Construir condições WHERE
+    const whereConditions: Prisma.EntryWhereInput = {
+      userId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    }
+
+    if (type) {
+      whereConditions.type = type
+    }
+
+    if (categoryId && categoryId !== 'all') {
+      // Se uma categoria específica foi selecionada, incluir ela e suas subcategorias
+      const category = await this.prisma.category.findUnique({
+        where: { id: categoryId },
+        include: { children: true },
+      })
+
+      if (category) {
+        const categoryIds = [categoryId]
+        if (category.children) {
+          categoryIds.push(...category.children.map((child) => child.id))
+        }
+        whereConditions.categoryId = {
+          in: categoryIds,
+        }
+      }
+    }
+
+    // Query agregada para obter dados por categoria
+    const result = await this.prisma.entry.groupBy({
+      by: ['categoryId'],
+      where: whereConditions,
+      _sum: {
+        amount: true,
+      },
+      _count: {
+        id: true,
+      },
+    })
+
+    // Buscar informações das categorias com hierarquia
+    const categoryIds = result
+      .map((item) => item.categoryId)
+      .filter(Boolean) as string[]
+    const categories = await this.prisma.category.findMany({
+      where: {
+        id: {
+          in: categoryIds,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        icon: true,
+        parentId: true,
+        children: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
+      },
+    })
+
+    // Separar categorias pai e subcategorias
+    const parentCategories = categories.filter((cat) => !cat.parentId)
+    const subCategories = categories.filter((cat) => cat.parentId)
+
+    console.log('Debug - Categorias encontradas:', {
+      total: categories.length,
+      parentCategories: parentCategories.length,
+      subCategories: subCategories.length,
+      parentIds: parentCategories.map(c => ({ id: c.id, name: c.name })),
+      subIds: subCategories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId }))
+    })
+
+    // Mapear resultados agrupados por categoria pai
+    const groupedResults: CategoryReportData[] = []
+
+    for (const parentCategory of parentCategories) {
+      // Buscar dados da categoria pai
+      const parentData = result.find((item) => item.categoryId === parentCategory.id)
+      
+      // Buscar subcategorias desta categoria pai
+      const childCategories = subCategories.filter((cat) => cat.parentId === parentCategory.id)
+      
+      console.log(`Debug - Categoria pai "${parentCategory.name}" (${parentCategory.id}):`, {
+        childCategories: childCategories.length,
+        children: childCategories.map(c => ({ id: c.id, name: c.name }))
+      })
+      
+      // Buscar dados das subcategorias
+      const childData = childCategories.map((child) => {
+        const childResult = result.find((item) => item.categoryId === child.id)
+        return {
+          categoryId: child.id,
+          categoryName: child.name,
+          categoryColor: child.color,
+          categoryIcon: child.icon,
+          parentId: child.parentId,
+          amount: Number(childResult?._sum.amount) || 0,
+          transactionCount: childResult?._count.id || 0,
+        }
+      }).filter((child) => child.amount > 0 || child.transactionCount > 0)
+
+      // Calcular totais da categoria pai (incluindo subcategorias)
+      const totalAmount = childData.reduce((sum, child) => sum + child.amount, 0)
+      const totalTransactions = childData.reduce((sum, child) => sum + child.transactionCount, 0)
+
+      // Adicionar categoria pai se tiver dados ou subcategorias
+      if (parentData || childData.length > 0) {
+        const parentAmount = Number(parentData?._sum.amount) || 0
+        const parentTransactions = parentData?._count.id || 0
+
+        console.log(`Debug - Adicionando categoria "${parentCategory.name}" com ${childData.length} subcategorias:`, {
+          subcategories: childData.map(c => ({ name: c.categoryName, amount: c.amount }))
+        })
+        
+        groupedResults.push({
+          categoryId: parentCategory.id,
+          categoryName: parentCategory.name,
+          categoryColor: parentCategory.color,
+          categoryIcon: parentCategory.icon,
+          parentId: null,
+          amount: parentAmount + totalAmount,
+          transactionCount: parentTransactions + totalTransactions,
+          subcategories: childData,
+        })
+      }
+    }
+
+    // Adicionar subcategorias órfãs (que não têm categoria pai)
+    const orphanSubCategories = subCategories.filter((cat) => {
+      const parentExists = parentCategories.some((parent) => parent.id === cat.parentId)
+      return !parentExists
+    })
+
+    for (const orphan of orphanSubCategories) {
+      const orphanData = result.find((item) => item.categoryId === orphan.id)
+      if (orphanData) {
+        groupedResults.push({
+          categoryId: orphan.id,
+          categoryName: orphan.name,
+          categoryColor: orphan.color,
+          categoryIcon: orphan.icon,
+          parentId: orphan.parentId,
+          amount: Number(orphanData._sum.amount) || 0,
+          transactionCount: orphanData._count.id || 0,
+          subcategories: [],
+        })
+      }
+    }
+
+    return groupedResults
+  }
+
+  // Método para calcular totais de receita e despesa no período
+  async getCategoriesReportTotals(
+    filters: CategoriesReportFilters,
+  ): Promise<{ totalIncome: number; totalExpense: number }> {
+    console.log('getCategoriesReportTotals chamado com filtros:', filters)
+    const { userId, startDate, endDate } = filters
+
+    const whereConditions: Prisma.EntryWhereInput = {
+      userId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    }
+
+    // Calcular total de receitas
+    const incomeResult = await this.prisma.entry.aggregate({
+      where: {
+        ...whereConditions,
+        type: 'income',
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    // Calcular total de despesas
+    const expenseResult = await this.prisma.entry.aggregate({
+      where: {
+        ...whereConditions,
+        type: 'expense',
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    return {
+      totalIncome: Number(incomeResult._sum.amount) || 0,
+      totalExpense: Number(expenseResult._sum.amount) || 0,
+    }
+  }
+
+  async getCashflowReport(
+    filters: CashflowReportFilters,
+  ): Promise<CashflowReportData[]> {
+    const { userId, startDate, endDate, viewMode } = filters
+
+    // Buscar todas as entradas no período
+    const entries = await this.prisma.entry.findMany({
+      where: {
+        userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        date: true,
+        amount: true,
+        type: true,
+      },
+      orderBy: {
+        date: 'asc',
+      },
+    })
+
+    // Agrupar dados por período
+    const dataMap = new Map<string, CashflowReportData>()
+
+    entries.forEach((entry) => {
+      const entryDate = new Date(entry.date)
+      let key: string
+      let periodLabel: string
+
+      switch (viewMode) {
+        case 'daily':
+          key = entryDate.toISOString().split('T')[0]
+          periodLabel = entryDate.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+          break
+        case 'weekly': {
+          // Calcular início da semana (domingo)
+          const weekStart = new Date(entryDate)
+          const dayOfWeek = entryDate.getDay()
+          weekStart.setDate(entryDate.getDate() - dayOfWeek)
+          
+          // Calcular fim da semana (sábado)
+          const weekEnd = new Date(weekStart)
+          weekEnd.setDate(weekStart.getDate() + 6)
+          
+          key = weekStart.toISOString().split('T')[0]
+          
+          // Formatar período semanal no formato "28 Jun à 14 Ago"
+          const startDay = weekStart.getDate().toString().padStart(2, '0')
+          const startMonth = weekStart.toLocaleDateString('pt-BR', { month: 'short' })
+          const endDay = weekEnd.getDate().toString().padStart(2, '0')
+          const endMonth = weekEnd.toLocaleDateString('pt-BR', { month: 'short' })
+          
+          if (startMonth === endMonth) {
+            periodLabel = `${startDay} à ${endDay} ${startMonth}`
+          } else {
+            periodLabel = `${startDay} ${startMonth} à ${endDay} ${endMonth}`
+          }
+          break
+        }
+        case 'monthly':
+          key = `${entryDate.getFullYear()}-${String(entryDate.getMonth() + 1).padStart(2, '0')}`
+          periodLabel = entryDate.toLocaleDateString('pt-BR', {
+            year: 'numeric',
+            month: 'long',
+          })
+          break
+        default:
+          key = entryDate.toISOString().split('T')[0]
+          periodLabel = entryDate.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+      }
+
+      const existing = dataMap.get(key)
+      const amount = Number(entry.amount)
+      if (existing) {
+        if (entry.type === 'income') {
+          existing.income += amount
+          existing.balance += amount
+        } else {
+          existing.expense += amount
+          existing.balance -= amount
+        }
+      } else {
+        dataMap.set(key, {
+          date: key,
+          income: entry.type === 'income' ? amount : 0,
+          expense: entry.type === 'expense' ? amount : 0,
+          balance: entry.type === 'income' ? amount : -amount,
+          period: periodLabel,
+        })
+      }
+    })
+
+    return Array.from(dataMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date),
+    )
+  }
+
+  async getAccountsReport(
+    filters: AccountsReportFilters,
+  ): Promise<AccountReportData[]> {
+    const { userId, startDate, endDate, accountFilter } = filters
+
+    // Construir condições WHERE baseadas no filtro de conta
+    const whereConditions: Prisma.EntryWhereInput = {
+      userId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    }
+
+    // Aplicar filtro por tipo de conta
+    if (accountFilter === 'bank_accounts') {
+      whereConditions.accountId = { not: null }
+      whereConditions.creditCardId = null
+    } else if (accountFilter === 'credit_cards') {
+      whereConditions.creditCardId = { not: null }
+      whereConditions.accountId = null
+    }
+
+    // Query agregada por conta bancária (apenas se o filtro permitir)
+    let accountEntries: any[] = []
+    
+    if (accountFilter === 'all' || accountFilter === 'bank_accounts') {
+      accountEntries = await this.prisma.entry.groupBy({
+        by: ['accountId'],
+        where: {
+          ...whereConditions,
+          accountId: { not: null },
+        },
+        _sum: {
+          amount: true,
+        },
+        _count: {
+          id: true,
+        },
+      }) as any
+    }
+
+    // Query agregada por cartão de crédito (apenas se o filtro permitir)
+    let creditCardEntries: any[] = []
+    
+    if (accountFilter === 'all' || accountFilter === 'credit_cards') {
+      creditCardEntries = await this.prisma.entry.groupBy({
+        by: ['creditCardId'],
+        where: {
+          ...whereConditions,
+          creditCardId: { not: null },
+        },
+        _sum: {
+          amount: true,
+        },
+        _count: {
+          id: true,
+        },
+      }) as any
+    }
+
+    const results: AccountReportData[] = []
+
+    // Processar contas bancárias
+    if (accountFilter === 'all' || accountFilter === 'bank_accounts') {
+      const accountIds = accountEntries
+        .map((item) => item.accountId)
+        .filter(Boolean) as string[]
+      const accounts = await this.prisma.account.findMany({
+        where: {
+          id: { in: accountIds },
+        },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          icon: true,
+        },
+      })
+
+      for (const accountEntry of accountEntries) {
+        if (!accountEntry.accountId) continue
+
+        const account = accounts.find(
+          (acc) => acc.id === accountEntry.accountId,
+        )
+        if (!account) continue
+
+        // Calcular receitas e despesas separadamente
+        const incomeEntries = await this.prisma.entry.aggregate({
+          where: {
+            ...whereConditions,
+            accountId: accountEntry.accountId,
+            type: 'income',
+          },
+          _sum: {
+            amount: true,
+          },
+        })
+
+        const expenseEntries = await this.prisma.entry.aggregate({
+          where: {
+            ...whereConditions,
+            accountId: accountEntry.accountId,
+            type: 'expense',
+          },
+          _sum: {
+            amount: true,
+          },
+        })
+
+        const totalIncome = Number(incomeEntries._sum.amount) || 0
+        const totalExpense = Number(expenseEntries._sum.amount) || 0
+
+        results.push({
+          accountId: account.id,
+          accountName: account.name,
+          accountType: account.type,
+          totalIncome,
+          totalExpense,
+          balance: totalIncome - totalExpense,
+          transactionCount: accountEntry._count.id || 0,
+          icon: account.icon || 'wallet',
+          iconType: 'bank',
+        })
+      }
+    }
+
+    // Processar cartões de crédito
+    if (accountFilter === 'all' || accountFilter === 'credit_cards') {
+      const creditCardIds = creditCardEntries
+        .map((item) => item.creditCardId)
+        .filter(Boolean) as string[]
+      const creditCards = await this.prisma.creditCard.findMany({
+        where: {
+          id: { in: creditCardIds },
+        },
+        select: {
+          id: true,
+          name: true,
+          icon: true,
+        },
+      })
+
+      for (const creditCardEntry of creditCardEntries) {
+        if (!creditCardEntry.creditCardId) continue
+
+        const creditCard = creditCards.find(
+          (cc) => cc.id === creditCardEntry.creditCardId,
+        )
+        if (!creditCard) continue
+
+        // Calcular receitas e despesas separadamente
+        const incomeEntries = await this.prisma.entry.aggregate({
+          where: {
+            ...whereConditions,
+            creditCardId: creditCardEntry.creditCardId,
+            type: 'income',
+          },
+          _sum: {
+            amount: true,
+          },
+        })
+
+        const expenseEntries = await this.prisma.entry.aggregate({
+          where: {
+            ...whereConditions,
+            creditCardId: creditCardEntry.creditCardId,
+            type: 'expense',
+          },
+          _sum: {
+            amount: true,
+          },
+        })
+
+        const totalIncome = Number(incomeEntries._sum.amount) || 0
+        const totalExpense = Number(expenseEntries._sum.amount) || 0
+
+        results.push({
+          accountId: creditCard.id,
+          accountName: creditCard.name,
+          accountType: 'credit_card',
+          totalIncome,
+          totalExpense,
+          balance: totalIncome - totalExpense,
+          transactionCount: creditCardEntry._count.id || 0,
+          icon: creditCard.icon || 'credit-card',
+          iconType: 'generic',
+        })
+      }
+    }
+
+    return results
+  }
+}

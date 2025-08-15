@@ -5,7 +5,10 @@ import { Inter } from 'next/font/google'
 
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { AccountsProvider } from '@/lib/contexts/accounts-context'
 import { BankIconsProvider } from '@/lib/contexts/bank-icons-context'
+import { CreditCardsProvider } from '@/lib/contexts/credit-cards-context'
+import { UserPreferencesProvider } from '@/lib/contexts/user-preferences-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -28,7 +31,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <BankIconsProvider>{children}</BankIconsProvider>
+          <AccountsProvider>
+            <CreditCardsProvider>
+              <BankIconsProvider>
+                <UserPreferencesProvider>{children}</UserPreferencesProvider>
+              </BankIconsProvider>
+            </CreditCardsProvider>
+          </AccountsProvider>
           <Toaster />
         </ThemeProvider>
       </body>

@@ -2,19 +2,13 @@
 
 import { formatCurrency } from '@saas/utils'
 import ReactECharts from 'echarts-for-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { CategoryIcon } from '@/lib/components/category-icon'
+import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { useTheme } from '@/lib/hooks/use-theme'
-import { CategoryIcon } from '@/lib/icon-map'
-import { Category, Transaction } from '@/lib/types'
-
-interface ExpenseSummaryCardProps {
-  transactions: Transaction[]
-  categories: Category[]
-}
 
 type PeriodType = '15days' | '30days' | 'current_month' | '3months' | '6months'
 
@@ -26,136 +20,90 @@ const PERIOD_OPTIONS = [
   { value: '6months' as PeriodType, label: 'Últimos 6 meses' },
 ]
 
-interface ExpenseData {
-  categoryId: string
-  categoryName: string
-  amount: number
-  percentage: number
-  color: string
-  icon: string
-}
-
-// Cores padrão para o gráfico ECharts
-const DEFAULT_COLORS = [
-  '#FF6B6B', // Coral
-  '#4ECDC4', // Turquesa
-  '#45B7D1', // Azul claro
-  '#96CEB4', // Verde menta
-  '#FFEAA7', // Amarelo claro
-  '#DDA0DD', // Ameixa
-  '#98D8C8', // Verde água
-  '#F7DC6F', // Dourado
-]
-
-export function ExpenseSummaryCard({
-  transactions,
-  categories,
-}: ExpenseSummaryCardProps) {
+export function ExpenseSummaryCard() {
   const [selectedPeriod, setSelectedPeriod] =
     useState<PeriodType>('current_month')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   )
   const { isDark } = useTheme()
-  const { getCategoryIcon } = useFinancialData()
+  const { topExpenses, refreshTopExpenses } = useOverviewContext()
 
-  const getDateFilter = (period: PeriodType) => {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-
-    switch (period) {
-      case '15days': {
-        const fifteenDaysAgo = new Date(today)
-        fifteenDaysAgo.setDate(today.getDate() - 15)
-        return (date: Date) => date >= fifteenDaysAgo && date <= today
-      }
-
-      case '30days': {
-        const thirtyDaysAgo = new Date(today)
-        thirtyDaysAgo.setDate(today.getDate() - 30)
-        return (date: Date) => date >= thirtyDaysAgo && date <= today
-      }
-
-      case 'current_month':
-        return (date: Date) =>
-          date.getMonth() === now.getMonth() &&
-          date.getFullYear() === now.getFullYear()
-
-      case '3months': {
-        const threeMonthsAgo = new Date(today)
-        threeMonthsAgo.setMonth(today.getMonth() - 3)
-        return (date: Date) => date >= threeMonthsAgo && date <= today
-      }
-
-      case '6months': {
-        const sixMonthsAgo = new Date(today)
-        sixMonthsAgo.setMonth(today.getMonth() - 6)
-        return (date: Date) => date >= sixMonthsAgo && date <= today
-      }
-
-      default:
-        return () => true
+  // Mapear períodos do frontend para parâmetros da API
+  const mapPeriodToApiParam = (
+    period: PeriodType,
+  ):
+    | 'current-month'
+    | 'last-15-days'
+    | 'last-30-days'
+    | 'last-3-months'
+    | 'last-6-months' => {
+    const periodMap: Record<
+      PeriodType,
+      | 'current-month'
+      | 'last-15-days'
+      | 'last-30-days'
+      | 'last-3-months'
+      | 'last-6-months'
+    > = {
+      current_month: 'current-month',
+      '15days': 'last-15-days',
+      '30days': 'last-30-days',
+      '3months': 'last-3-months',
+      '6months': 'last-6-months',
     }
+    return periodMap[period]
   }
 
+  // Dados vêm do OverviewContext - não precisamos mais processar entries localmente
   const expenseData = useMemo(() => {
-    const dateFilter = getDateFilter(selectedPeriod)
-
-    const filteredExpenses = transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.date)
-      return transaction.type === 'expense' && dateFilter(transactionDate)
-    })
-
-    // Agrupar por categoria principal (somar subcategorias na categoria pai)
-    const categoryTotals = new Map<string, number>()
-
-    filteredExpenses.forEach((transaction) => {
-      const category = categories.find(
-        (cat) => cat.id === transaction.categoryId,
-      )
-
-      // Se a categoria tem parentId, somar na categoria pai
-      const targetCategoryId = category?.parentId || transaction.categoryId
-
-      const current = categoryTotals.get(targetCategoryId) || 0
-      categoryTotals.set(targetCategoryId, current + transaction.amount)
-    })
-
-    // Calcular total geral
-    const totalExpenses = Array.from(categoryTotals.values()).reduce(
-      (sum, amount) => sum + amount,
-      0,
-    )
-
-    if (totalExpenses === 0) {
+    if (!topExpenses?.expenses.length) {
       return []
     }
 
-    // Converter para array e calcular percentuais
-    const expenseArray: ExpenseData[] = Array.from(categoryTotals.entries())
-      .map(([categoryId, amount], index) => {
-        // Buscar sempre pela categoria principal (não subcategoria)
-        const category = categories.find(
-          (cat) => cat.id === categoryId && !cat.parentId,
-        )
-        const categoryName = category?.name || 'Categoria não encontrada'
-        const percentage = (amount / totalExpenses) * 100
+    // Calcular o total de todas as despesas
+    const totalAmount = topExpenses.expenses.reduce(
+      (sum, expense) => sum + expense.totalAmount,
+      0,
+    )
 
-        return {
-          categoryId,
-          categoryName,
-          amount,
-          percentage,
-          color:
-            category?.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length],
-          icon: getCategoryIcon(category),
+    return topExpenses.expenses.map((expense) => ({
+      categoryId: expense.id,
+      categoryName: expense.categoryName,
+      amount: expense.totalAmount,
+      percentage:
+        totalAmount > 0 ? (expense.totalAmount / totalAmount) * 100 : 0,
+      color: expense.color,
+      icon: expense.icon,
+    }))
+  }, [topExpenses])
+
+  // Usar dados do OverviewContext
+  const displayExpenses = expenseData
+
+  // Debounce para evitar múltiplas chamadas da API
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handlePeriodChange = useCallback(
+    async (period: PeriodType) => {
+      setSelectedPeriod(period)
+
+      // Cancelar chamada anterior se existir
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+
+      // Debounce de 300ms para evitar múltiplas chamadas rápidas
+      debounceTimeoutRef.current = setTimeout(async () => {
+        try {
+          await refreshTopExpenses({ period: mapPeriodToApiParam(period) })
+        } catch (error) {
+          console.error('Erro ao atualizar dados do overview:', error)
         }
-      })
-      .sort((a, b) => b.amount - a.amount) // Ordenar por valor decrescente
-      .slice(0, 5) // Pegar apenas os 5 maiores
-
-    return expenseArray
-  }, [transactions, categories, selectedPeriod])
+      }, 300)
+    },
+    [refreshTopExpenses],
+  )
 
   // Configuração do ECharts
   const chartOptions = useMemo(() => {
@@ -231,7 +179,7 @@ export function ExpenseSummaryCard({
           labelLine: {
             show: false,
           },
-          data: expenseData.map((item) => ({
+          data: displayExpenses.slice(0, 5).map((item) => ({
             value: item.amount,
             name: item.categoryName,
             itemStyle: {
@@ -267,7 +215,7 @@ export function ExpenseSummaryCard({
           </CardTitle>
           <Tabs
             value={selectedPeriod}
-            onValueChange={(value) => setSelectedPeriod(value as PeriodType)}
+            onValueChange={(value) => handlePeriodChange(value as PeriodType)}
           >
             <TabsList className="grid w-full grid-cols-5">
               {PERIOD_OPTIONS.map((option) => (
@@ -299,7 +247,7 @@ export function ExpenseSummaryCard({
         </CardTitle>
         <Tabs
           value={selectedPeriod}
-          onValueChange={(value) => setSelectedPeriod(value as PeriodType)}
+          onValueChange={(value) => handlePeriodChange(value as PeriodType)}
         >
           <TabsList className="grid w-full grid-cols-5">
             {PERIOD_OPTIONS.map((option) => (
@@ -318,7 +266,7 @@ export function ExpenseSummaryCard({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Lista de categorias */}
           <div className="flex min-h-[300px] flex-col justify-center space-y-3">
-            {expenseData.map((item) => (
+            {displayExpenses.slice(0, 5).map((item) => (
               <div
                 key={item.categoryId}
                 className={`flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-all duration-200 hover:bg-muted/50 ${

@@ -44,6 +44,31 @@ export function timestampToDate(timestamp: number): Date {
 }
 
 /**
+ * Converte uma string de tempo (HH:MM) para minutos
+ * Exemplo: "14:30" -> 870 minutos
+ */
+export function convertTimeStringToMinutes(timeString: string): number {
+  const [hours, minutes] = timeString.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+/**
+ * Converte uma data para segundos desde epoch
+ * Padrão para envio de datas entre frontend e backend
+ */
+export function dateToSeconds(date: Date): number {
+  return Math.floor(date.getTime() / 1000)
+}
+
+/**
+ * Converte segundos desde epoch para Date
+ * Padrão para recebimento de datas do backend
+ */
+export function secondsToDate(seconds: number): Date {
+  return new Date(seconds * 1000)
+}
+
+/**
  * Converte uma string de data (YYYY-MM-DD) para timestamp
  * Garante que a data seja interpretada como local, não UTC
  */
@@ -57,6 +82,49 @@ export function dateStringToTimestamp(dateString: string): number {
  */
 export function timestampToDateString(timestamp: number): string {
   const date = new Date(timestamp)
+  return formatDateForInput(date)
+}
+
+/**
+ * Converte timestamp (em segundos) para Date local com meio-dia
+ * Evita problemas de fuso horário usando componentes UTC
+ */
+export function createLocalDateFromTimestamp(timestamp: number): Date {
+  const date = new Date(timestamp * 1000)
+  // Usar componentes UTC para evitar problemas de fuso horário
+  return new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    12,
+    0,
+    0,
+  )
+}
+
+/**
+ * Converte Date para timestamp (em segundos) com meio-dia
+ * Evita problemas de fuso horário definindo a hora como 12:00
+ */
+export function dateToLocalTimestamp(date: Date): number {
+  // Criar uma nova data com meio-dia para evitar problemas de fuso horário
+  const localDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    12,
+    0,
+    0,
+  )
+  return Math.floor(localDate.getTime() / 1000)
+}
+
+/**
+ * Converte timestamp (em segundos) para string de data (YYYY-MM-DD)
+ * Usa conversão local para evitar problemas de fuso horário
+ */
+export function timestampToDateInputString(timestamp: number): string {
+  const date = createLocalDateFromTimestamp(timestamp)
   return formatDateForInput(date)
 }
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+// Tipos específicos para este hook (diferentes dos tipos gerais)
 interface UseInfiniteScrollOptions {
   initialItems?: number
   itemsPerLoad?: number

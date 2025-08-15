@@ -3,31 +3,15 @@
 import { useEffect, useState } from 'react'
 
 import { preferencesSchema } from '@/lib/schemas'
+import type { UserPreferences } from '@/lib/types'
 
 import { useCrudToast } from './use-crud-toast'
-
-// Definir tipo específico para as preferências do usuário
-export type UserPreferences = {
-  transactionOrder: 'crescente' | 'decrescente'
-  defaultNavigationPeriod:
-    | 'diario'
-    | 'semanal'
-    | 'mensal'
-    | 'trimestral'
-    | 'anual'
-  showDailyBalance: boolean
-  viewMode: 'all' | 'cashflow'
-  isFinancialSummaryExpanded: boolean
-}
-
-// Tipo para o formulário (campos opcionais)
-export type PreferencesFormData = Partial<UserPreferences>
 
 const PREFERENCES_STORAGE_KEY = 'quaint-money-preferences'
 
 const DEFAULT_PREFERENCES: UserPreferences = {
-  transactionOrder: 'decrescente',
-  defaultNavigationPeriod: 'mensal',
+  entryOrder: 'descending',
+  defaultNavigationPeriod: 'monthly',
   showDailyBalance: false,
   viewMode: 'all',
   isFinancialSummaryExpanded: false,
@@ -128,9 +112,29 @@ export function usePreferences() {
   }
 
   // Excluir todas as transações (função especial)
-  const clearAllTransactions = () => {
+  const clearAllEntries = async () => {
     try {
-      localStorage.removeItem('quaint-money-transactions')
+      let token = localStorage.getItem('quaint-money-token')
+      if (!token) {
+        // Para desenvolvimento, criar um token fictício
+        token = 'dev-token-' + Date.now()
+        localStorage.setItem('quaint-money-token', token)
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/entries`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir transações')
+      }
+
       console.log('🗑️ Todas as transações foram excluídas')
       success.delete('Todas as transações')
       // Recarregar a página para atualizar os dados
@@ -142,14 +146,38 @@ export function usePreferences() {
   }
 
   // Excluir conta completamente (função especial)
-  const deleteAccount = () => {
+  const deleteAccount = async () => {
     try {
+      let token = localStorage.getItem('quaint-money-token')
+      if (!token) {
+        // Para desenvolvimento, criar um token fictício
+        token = 'dev-token-' + Date.now()
+        localStorage.setItem('quaint-money-token', token)
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/user-preferences`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir conta')
+      }
+
+      // Limpar dados locais após sucesso da API
+      localStorage.removeItem('quaint-money-token')
       localStorage.removeItem('quaint-money-transactions')
       localStorage.removeItem('quaint-money-categories')
       localStorage.removeItem('quaint-money-accounts')
       localStorage.removeItem('quaint-money-credit-cards')
       localStorage.removeItem(PREFERENCES_STORAGE_KEY)
       localStorage.removeItem('quaint-money-theme')
+
       console.log('🗑️ Conta excluída completamente')
       success.delete('Conta completa')
       // Recarregar a página para atualizar os dados
@@ -166,7 +194,7 @@ export function usePreferences() {
     updatePreference,
     savePreferences,
     resetPreferences,
-    clearAllTransactions,
+    clearAllEntries,
     deleteAccount,
   }
 }

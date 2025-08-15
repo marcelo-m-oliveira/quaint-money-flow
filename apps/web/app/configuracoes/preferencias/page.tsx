@@ -11,15 +11,14 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import {
-  PreferencesFormData,
-  usePreferences,
-} from '@/lib/hooks/use-preferences'
+import { usePreferences } from '@/lib/hooks/use-preferences'
+import { useUserPreferencesWithAutoInit } from '@/lib/hooks/use-user-preferences'
 import { preferencesSchema } from '@/lib/schemas'
+import { UserPreferencesFormData } from '@/lib/types'
 
 export default function PreferenciasPage() {
-  const { preferences, clearAllTransactions, deleteAccount, savePreferences } =
-    usePreferences()
+  const { preferences, updatePreferences } = useUserPreferencesWithAutoInit()
+  const { clearAllEntries, deleteAccount } = usePreferences()
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -33,44 +32,45 @@ export default function PreferenciasPage() {
     handleSubmit,
     reset,
     formState: { errors, isDirty },
-  } = useForm<PreferencesFormData>({
+  } = useForm<UserPreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
-    defaultValues: preferences,
+    defaultValues: {
+      entryOrder: preferences?.entryOrder || 'descending',
+      defaultNavigationPeriod:
+        preferences?.defaultNavigationPeriod || 'monthly',
+      showDailyBalance: preferences?.showDailyBalance ?? true,
+      viewMode: preferences?.viewMode || 'all',
+      isFinancialSummaryExpanded:
+        preferences?.isFinancialSummaryExpanded ?? true,
+    },
   })
 
   // Resetar formulário quando as preferências mudarem
   useEffect(() => {
-    reset(preferences)
+    if (preferences) {
+      reset(preferences)
+    }
   }, [preferences, reset])
 
-  const onSubmit = (data: PreferencesFormData) => {
+  const onSubmit = async (data: UserPreferencesFormData) => {
     try {
-      // Salvar todas as preferências de uma vez usando o hook
-      const updatedPreferences = {
-        ...preferences,
-        ...data,
-      }
-
-      savePreferences(updatedPreferences)
-
+      await updatePreferences(data)
       // Resetar o formulário para remover o estado isDirty
-      reset(updatedPreferences)
-
-      console.log('✅ Preferências salvas com sucesso!')
+      reset(data)
     } catch (error) {
       console.error('❌ Erro ao salvar preferências:', error)
     }
   }
 
-  const handleClearTransactions = () => {
+  const handleClearEntries = () => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Excluir minhas transações',
+      title: 'Excluir minhas entradas',
       description:
-        'Tem certeza que deseja excluir todas as suas transações? Esta ação não pode ser desfeita.',
+        'Tem certeza que deseja excluir todas as suas entradas? Esta ação não pode ser desfeita.',
       variant: 'destructive',
       onConfirm: () => {
-        clearAllTransactions()
+        clearAllEntries()
         setConfirmDialog({
           isOpen: false,
           title: '',
@@ -118,13 +118,13 @@ export default function PreferenciasPage() {
                   Ordenação dos seus Lançamentos
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Ordem (baseado na data) que suas transações serão listadas na
+                  Ordem (baseado na data) que suas entradas serão listadas na
                   tela de Lançamentos
                 </p>
               </div>
               <div className="w-32">
                 <Controller
-                  name="transactionOrder"
+                  name="entryOrder"
                   control={control}
                   render={({ field }) => (
                     <RadioGroup
@@ -133,18 +133,18 @@ export default function PreferenciasPage() {
                       className="flex flex-col space-y-3"
                     >
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="crescente" id="crescente" />
+                        <RadioGroupItem value="ascending" id="ascending" />
                         <Label
-                          htmlFor="crescente"
+                          htmlFor="ascending"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Crescente
                         </Label>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="decrescente" id="decrescente" />
+                        <RadioGroupItem value="descending" id="descending" />
                         <Label
-                          htmlFor="decrescente"
+                          htmlFor="descending"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Decrescente
@@ -155,9 +155,9 @@ export default function PreferenciasPage() {
                 />
               </div>
             </div>
-            {errors.transactionOrder && (
+            {errors.entryOrder && (
               <p className="text-sm text-red-500">
-                {errors.transactionOrder.message}
+                {errors.entryOrder.message}
               </p>
             )}
           </div>
@@ -187,27 +187,27 @@ export default function PreferenciasPage() {
                       className="flex flex-col space-y-3"
                     >
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="diario" id="diario" />
+                        <RadioGroupItem value="daily" id="daily" />
                         <Label
-                          htmlFor="diario"
+                          htmlFor="daily"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Diário
                         </Label>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="semanal" id="semanal" />
+                        <RadioGroupItem value="weekly" id="weekly" />
                         <Label
-                          htmlFor="semanal"
+                          htmlFor="weekly"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Semanal
                         </Label>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="mensal" id="mensal" />
+                        <RadioGroupItem value="monthly" id="monthly" />
                         <Label
-                          htmlFor="mensal"
+                          htmlFor="monthly"
                           className="cursor-pointer text-sm font-normal"
                         >
                           Mensal
@@ -233,7 +233,7 @@ export default function PreferenciasPage() {
               <div className="flex-1">
                 <h3 className="text-base font-medium">Modo de Visualização</h3>
                 <p className="text-sm text-muted-foreground">
-                  Escolha como você deseja visualizar suas transações por padrão
+                  Escolha como você deseja visualizar suas entradas por padrão
                 </p>
               </div>
               <div className="w-32">
@@ -342,9 +342,9 @@ export default function PreferenciasPage() {
               <Button
                 variant="outline"
                 className="whitespace-nowrap border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950"
-                onClick={handleClearTransactions}
+                onClick={handleClearEntries}
               >
-                Excluir minhas transações
+                Excluir minhas entradas
               </Button>
             </div>
           </div>
@@ -401,6 +401,8 @@ export default function PreferenciasPage() {
         title={confirmDialog.title}
         description={confirmDialog.description}
         variant={confirmDialog.variant}
+        requiresTimer={confirmDialog.title === 'Excluir conta por completo'}
+        timerSeconds={10}
       />
     </>
   )

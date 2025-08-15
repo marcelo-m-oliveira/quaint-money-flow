@@ -16,18 +16,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import { CategoryIcon } from '@/lib/icon-map'
+import { CategoryIcon } from '@/lib/components/category-icon'
+import { useCategories } from '@/lib/hooks/use-categories'
 import { Category, CategoryFormData } from '@/lib/types'
 
 export default function CategoriasPage() {
-  const {
-    categories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    getCategoryIcon,
-  } = useFinancialData()
+  const { categories, addCategory, updateCategory, deleteCategory, isLoading } =
+    useCategories()
 
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense')
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false)
@@ -93,8 +88,10 @@ export default function CategoriasPage() {
           const subcategories = categories.filter(
             (cat) => cat.parentId === category.id,
           )
-          subcategories.forEach((sub) => deleteCategory(sub.id))
-          deleteCategory(category.id)
+          subcategories.forEach((sub) => {
+            if (sub.id) deleteCategory(sub.id)
+          })
+          deleteCategory(category.id as string)
           setConfirmDialog({ ...confirmDialog, isOpen: false })
         },
       })
@@ -105,7 +102,7 @@ export default function CategoriasPage() {
         description:
           'Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.',
         onConfirm: () => {
-          deleteCategory(category.id)
+          deleteCategory(category.id as string)
           setConfirmDialog({ ...confirmDialog, isOpen: false })
         },
       })
@@ -124,7 +121,7 @@ export default function CategoriasPage() {
     }
 
     if (editingCategory) {
-      updateCategory(editingCategory.id, categoryData)
+      updateCategory(editingCategory.id as string, categoryData)
     } else {
       addCategory(categoryData)
     }
@@ -140,7 +137,10 @@ export default function CategoriasPage() {
     return (
       <div className="space-y-4">
         {mainCategories.map((category) => {
-          const subcategories = getSubCategories(categoryList, category.id)
+          const subcategories = getSubCategories(
+            categoryList,
+            category.id as string,
+          )
 
           return (
             <Card key={category.id} className="border border-border">
@@ -239,7 +239,7 @@ export default function CategoriasPage() {
                               style={{ backgroundColor: subcategory.color }}
                             >
                               <CategoryIcon
-                                iconName={getCategoryIcon(subcategory)}
+                                iconName={subcategory.icon}
                                 className="h-3 w-3 text-white"
                               />
                             </div>
@@ -336,6 +336,7 @@ export default function CategoriasPage() {
             onClick={() => handleAddCategory(activeTab)}
             className="flex shrink-0 items-center gap-2"
             size="sm"
+            disabled={isLoading}
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nova Categoria</span>

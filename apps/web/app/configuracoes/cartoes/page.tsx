@@ -26,14 +26,13 @@ import {
 } from '@/components/ui/tooltip'
 import { getBankIcon } from '@/lib/data/banks'
 import { formatCurrency } from '@/lib/format'
-import { useAccounts } from '@/lib/hooks/use-accounts'
-import { useCreditCards } from '@/lib/hooks/use-credit-cards'
-import { CreditCard, CreditCardFormData } from '@/lib/types'
+import { useCreditCardsWithAutoInit } from '@/lib/hooks/use-credit-cards'
+import { CreditCardFormSchema } from '@/lib/schemas'
+import { CreditCard } from '@/lib/types'
 
 export default function CartoesPage() {
-  const { accounts } = useAccounts()
   const { creditCards, addCreditCard, updateCreditCard, deleteCreditCard } =
-    useCreditCards()
+    useCreditCardsWithAutoInit()
   const [isCreditCardFormOpen, setIsCreditCardFormOpen] = useState(false)
   const [editingCreditCard, setEditingCreditCard] = useState<
     CreditCard | undefined
@@ -67,7 +66,7 @@ export default function CartoesPage() {
     })
   }
 
-  const handleSubmitCreditCard = (data: CreditCardFormData) => {
+  const handleSubmitCreditCard = (data: CreditCardFormSchema) => {
     if (editingCreditCard) {
       updateCreditCard(editingCreditCard.id, data)
     } else {
@@ -173,13 +172,12 @@ export default function CartoesPage() {
                                 Limite: {formatCurrency(creditCard.limit)}
                               </span>
                               <span className="truncate">
-                                Usado:{' '}
-                                {formatCurrency(creditCard.currentBalance)}
+                                Usado: {formatCurrency(creditCard.usage)}
                               </span>
                               <span className="truncate">
                                 Disponível:{' '}
                                 {formatCurrency(
-                                  creditCard.limit - creditCard.currentBalance,
+                                  creditCard.limit - creditCard.usage,
                                 )}
                               </span>
                             </div>
@@ -193,11 +191,8 @@ export default function CartoesPage() {
                               {creditCard.defaultPaymentAccountId && (
                                 <span className="truncate">
                                   Conta:{' '}
-                                  {accounts.find(
-                                    (acc) =>
-                                      acc.id ===
-                                      creditCard.defaultPaymentAccountId,
-                                  )?.name || 'Não encontrada'}
+                                  {creditCard.defaultPaymentAccount?.name ||
+                                    'Não encontrada'}
                                 </span>
                               )}
                             </div>

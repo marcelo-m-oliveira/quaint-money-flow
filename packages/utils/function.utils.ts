@@ -5,6 +5,8 @@ export function convertToDate(date: string): Date {
   return new Date(date)
 }
 
+// Funções de tempo e data foram movidas para date.utils.ts
+
 // formatDate foi movida para date.utils.ts
 
 /**

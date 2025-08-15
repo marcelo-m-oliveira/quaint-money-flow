@@ -12,9 +12,9 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
-import { AccountFormSchema, accountSchema } from '@/lib/schemas'
 import { Account } from '@/lib/types'
 
 import { IconSelector } from './icon-selector'
@@ -37,10 +37,21 @@ import {
   TooltipTrigger,
 } from './ui/tooltip'
 
+// Schema local para teste
+const localAccountCreateSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  type: z.enum(['bank', 'investment', 'cash', 'other']),
+  icon: z.string().min(1, 'Ícone é obrigatório'),
+  iconType: z.enum(['bank', 'generic']),
+  includeInGeneralBalance: z.boolean(),
+})
+
+type AccountCreateSchema = z.infer<typeof localAccountCreateSchema>
+
 interface AccountFormModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: AccountFormSchema) => void
+  onSubmit: (data: AccountCreateSchema) => void
   account?: Account
   title?: string
 }
@@ -83,8 +94,8 @@ export function AccountFormModal({
     setValue,
     watch,
     formState: { errors },
-  } = useForm<AccountFormSchema>({
-    resolver: zodResolver(accountSchema),
+  } = useForm<AccountCreateSchema>({
+    resolver: zodResolver(localAccountCreateSchema),
     defaultValues: {
       name: '',
       type: 'bank',
@@ -95,7 +106,7 @@ export function AccountFormModal({
   })
   const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false)
 
-  // Resetar formulário quando o modal abrir/fechar
+  // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       if (account) {
@@ -118,7 +129,7 @@ export function AccountFormModal({
     }
   }, [isOpen, account, reset])
 
-  // Auto-seleção de ícone baseado no nome
+  // Auto-select icon based on name
   const watchedName = watch('name')
   useEffect(() => {
     if (watchedName && !account) {
@@ -130,7 +141,8 @@ export function AccountFormModal({
     }
   }, [watchedName, account, setValue])
 
-  const onSubmitForm = (data: AccountFormSchema) => {
+  const onSubmitForm = (data: AccountCreateSchema) => {
+    console.log('AccountFormModal: onSubmitForm called with data:', data)
     onSubmit(data)
     handleClose()
   }
@@ -163,7 +175,7 @@ export function AccountFormModal({
           </div>
         )
       } else {
-        // Fallback para ícone genérico se não encontrar o banco
+        // Fallback to generic icon if bank not found
         const bankName = icon
           ?.split('-')
           .map((word) => word.charAt(0).toUpperCase())
@@ -176,7 +188,7 @@ export function AccountFormModal({
         )
       }
     } else {
-      // Para ícones genéricos, mostrar o ícone do Lucide
+      // For generic icons, show Lucide icon
       const IconComponent =
         GENERIC_ICON_MAP[icon as keyof typeof GENERIC_ICON_MAP] || Wallet
       return (
@@ -196,7 +208,7 @@ export function AccountFormModal({
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
-            {/* Seletor de Ícone */}
+            {/* Icon Selector */}
             <div className="flex flex-col items-center space-y-4">
               <button
                 type="button"
@@ -215,7 +227,7 @@ export function AccountFormModal({
               </p>
             </div>
 
-            {/* Nome da Conta */}
+            {/* Account Name */}
             <div className="space-y-2">
               <Label htmlFor="name">Nome da conta</Label>
               <Input
@@ -229,7 +241,7 @@ export function AccountFormModal({
               )}
             </div>
 
-            {/* Tipo de Conta */}
+            {/* Account Type */}
             <div className="space-y-2">
               <Label htmlFor="type">Tipo de conta</Label>
               <Select
@@ -237,12 +249,7 @@ export function AccountFormModal({
                 onValueChange={(value) =>
                   setValue(
                     'type',
-                    value as
-                      | 'bank'
-                      | 'credit_card'
-                      | 'investment'
-                      | 'cash'
-                      | 'other',
+                    value as 'bank' | 'investment' | 'cash' | 'other',
                   )
                 }
               >
@@ -262,7 +269,7 @@ export function AccountFormModal({
               )}
             </div>
 
-            {/* Checkbox - Não somar no Saldo Geral */}
+            {/* Checkbox - Don't include in General Balance */}
             <div className="flex items-center space-x-3">
               <Checkbox
                 id="includeInGeneralBalance"
@@ -306,7 +313,7 @@ export function AccountFormModal({
               </div>
             </div>
 
-            {/* Botão de Ação */}
+            {/* Action Button */}
             <Button
               type="submit"
               className="w-full"
@@ -318,7 +325,7 @@ export function AccountFormModal({
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Seleção de Ícone */}
+      {/* Icon Selection Modal */}
       <IconSelector
         isOpen={isIconSelectorOpen}
         onClose={() => setIsIconSelectorOpen(false)}

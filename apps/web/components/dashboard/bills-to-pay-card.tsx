@@ -1,6 +1,10 @@
 'use client'
 
-import { formatCurrency, formatDate } from '@saas/utils'
+import {
+  createLocalDateFromTimestamp,
+  formatCurrency,
+  formatDate,
+} from '@saas/utils'
 import { AlertTriangle, Calendar, Clock, ThumbsDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -13,19 +17,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { CategoryIcon } from '@/lib/components/category-icon'
+import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
-import { useFinancialData } from '@/lib/hooks/use-financial-data'
-import { CategoryIcon } from '@/lib/icon-map'
-import { Category, Transaction } from '@/lib/types'
+import { PendingAccount } from '@/lib/types'
 
 interface BillsToPayCardProps {
-  transactions: Transaction[]
-  categories: Category[]
-  onUpdateTransaction?: (
-    transactionId: string,
-    updatedData: Partial<Transaction>,
+  onUpdateEntry?: (
+    entryId: string,
+    updatedData: Partial<{ paid: boolean }>,
   ) => void
-  onEditTransaction?: (transaction: Transaction) => void
+  onEditEntry?: (account: PendingAccount) => void
 }
 
 interface BillData {
@@ -41,58 +43,67 @@ interface BillData {
 }
 
 export function BillsToPayCard({
-  transactions,
-  categories,
-  onUpdateTransaction,
-  onEditTransaction,
+  onUpdateEntry,
+  onEditEntry,
 }: BillsToPayCardProps) {
-  const { getCategoryIcon } = useFinancialData()
-  const { success, error } = useCrudToast()
+  const { generalOverview, isLoading } = useOverviewContext()
+  const { error } = useCrudToast()
   const [visibleOverdueBills, setVisibleOverdueBills] = useState(5)
   const [visibleUpcomingBills, setVisibleUpcomingBills] = useState(5)
+  const [paidEntries, setPaidEntries] = useState<Set<string>>(new Set())
 
-  const handleTogglePaidStatus = (transactionId: string) => {
+  const handleTogglePaidStatus = async (entryId: string) => {
     try {
-      if (onUpdateTransaction) {
-        onUpdateTransaction(transactionId, { paid: true })
-        success.update('Pagamento')
+      // Adicionar ao estado local imediatamente para feedback visual
+      setPaidEntries((prev) => new Set(prev).add(entryId))
+
+      if (onUpdateEntry) {
+        await onUpdateEntry(entryId, { paid: true })
       }
     } catch (err) {
+      // Remover do estado local se houver erro
+      setPaidEntries((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(entryId)
+        return newSet
+      })
       error.update('Pagamento', 'Não foi possível marcar como pago.')
     }
   }
 
   const { overdueBills, upcomingBills } = useMemo(() => {
+    if (!generalOverview?.accountsPayable) {
+      return { overdueBills: [], upcomingBills: [] }
+    }
+
     const currentDate = new Date()
     currentDate.setHours(0, 0, 0, 0) // Zerar horas para comparação precisa
 
-    // Filtrar apenas despesas não pagas
-    const unpaidExpenses = transactions.filter(
-      (transaction) => transaction.type === 'expense' && !transaction.paid,
-    )
+    const billsData: BillData[] = generalOverview.accountsPayable
+      .filter((account) => !paidEntries.has(account.id)) // Filtrar itens pagos localmente
+      .map((account) => {
+        // Converter timestamp em segundos para Date
+        const dueDate = createLocalDateFromTimestamp(account.date)
+        dueDate.setHours(0, 0, 0, 0)
 
-    const billsData: BillData[] = unpaidExpenses.map((transaction) => {
-      const category = categories.find(
-        (cat) => cat.id === transaction.categoryId,
-      )
-      const dueDate = new Date(transaction.date)
-      dueDate.setHours(0, 0, 0, 0)
+        const timeDiff = dueDate.getTime() - currentDate.getTime()
+        const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
 
-      const timeDiff = dueDate.getTime() - currentDate.getTime()
-      const daysUntilDue = Math.ceil(timeDiff / (1000 * 3600 * 24))
-
-      return {
-        id: transaction.id,
-        description: transaction.description,
-        amount: transaction.amount,
-        dueDate,
-        categoryName: category?.name || 'Categoria não encontrada',
-        categoryColor: category?.color || '#6B7280',
-        icon: getCategoryIcon(category),
-        isOverdue: daysUntilDue < 0,
-        daysUntilDue,
-      }
-    })
+        return {
+          id: account.id,
+          description: account.description,
+          amount: account.amount,
+          dueDate,
+          accountId: account.accountId,
+          creditCardId: account.creditCardId,
+          categoryId: account.categoryId,
+          categoryName: account.categoryName,
+          categoryColor: account.color,
+          icon: account.icon,
+          isOverdue: account.isOverdue,
+          daysUntilDue,
+        }
+      })
 
     // Separar em atrasadas e próximas
     const overdue = billsData
@@ -107,9 +118,28 @@ export function BillsToPayCard({
       overdueBills: overdue,
       upcomingBills: upcoming,
     }
-  }, [transactions, categories])
+  }, [generalOverview?.accountsPayable, paidEntries])
 
   const totalBills = overdueBills.length + upcomingBills.length
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Contas a pagar
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="py-8 text-center text-muted-foreground">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+            <p className="text-sm">Carregando contas...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (totalBills === 0) {
     return (
@@ -160,7 +190,9 @@ export function BillsToPayCard({
 
             <div className="space-y-3">
               {overdueBills.slice(0, visibleOverdueBills).map((bill) => {
-                const transaction = transactions.find((t) => t.id === bill.id)
+                const account = generalOverview?.accountsPayable.find(
+                  (acc) => acc.id === bill.id,
+                )
                 return (
                   <div
                     key={bill.id}
@@ -169,8 +201,8 @@ export function BillsToPayCard({
                     <div
                       className="flex cursor-pointer items-center gap-3"
                       onClick={() => {
-                        if (onEditTransaction && transaction) {
-                          onEditTransaction(transaction)
+                        if (onEditEntry && account) {
+                          onEditEntry(account)
                         }
                       }}
                     >
@@ -199,7 +231,7 @@ export function BillsToPayCard({
                       <p className="font-semibold text-red-600 dark:text-red-400">
                         {formatCurrency(bill.amount)}
                       </p>
-                      {onUpdateTransaction && (
+                      {onUpdateEntry && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -270,7 +302,9 @@ export function BillsToPayCard({
             <div className="space-y-3">
               {upcomingBills.slice(0, visibleUpcomingBills).map((bill) => {
                 const isNearDue = bill.daysUntilDue <= 7
-                const transaction = transactions.find((t) => t.id === bill.id)
+                const account = generalOverview?.accountsPayable.find(
+                  (acc) => acc.id === bill.id,
+                )
 
                 return (
                   <div
@@ -280,8 +314,8 @@ export function BillsToPayCard({
                     <div
                       className="flex cursor-pointer items-center gap-3"
                       onClick={() => {
-                        if (onEditTransaction && transaction) {
-                          onEditTransaction(transaction)
+                        if (onEditEntry && account) {
+                          onEditEntry(account)
                         }
                       }}
                     >
@@ -321,7 +355,7 @@ export function BillsToPayCard({
                       <p className="font-semibold">
                         {formatCurrency(bill.amount)}
                       </p>
-                      {onUpdateTransaction && (
+                      {onUpdateEntry && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
