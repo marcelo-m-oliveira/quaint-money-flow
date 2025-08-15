@@ -21,7 +21,7 @@ interface CashflowReportQueryFilters {
 interface AccountsReportQueryFilters {
   startDate?: number
   endDate?: number
-  accountType?: 'all' | 'bank' | 'credit_card'
+  accountFilter?: 'all' | 'bank_accounts' | 'credit_cards'
 }
 
 // Extend FastifyRequest to include user property
@@ -142,7 +142,7 @@ export class ReportsController {
           ? new Date(filters.startDate * 1000)
           : undefined,
         endDate: filters.endDate ? new Date(filters.endDate * 1000) : undefined,
-        accountType: filters.accountType || 'all',
+        accountFilter: filters.accountFilter || 'all',
       }
 
       const result = await this.reportsService.getAccountsReport(
@@ -156,7 +156,7 @@ export class ReportsController {
           accountsCount: result.accounts.length,
           totalIncome: result.summary.totalIncome,
           totalExpense: result.summary.totalExpense,
-          accountType: filters.accountType,
+          accountFilter: filters.accountFilter,
         },
         'Relatório de contas gerado com sucesso',
       )

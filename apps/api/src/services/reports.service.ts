@@ -27,7 +27,7 @@ interface ServiceCashflowReportFilters {
 interface ServiceAccountsReportFilters {
   startDate?: Date
   endDate?: Date
-  accountType?: 'all' | 'bank' | 'credit_card'
+  accountFilter?: 'all' | 'bank_accounts' | 'credit_cards'
 }
 
 export class ReportsService {
@@ -163,17 +163,10 @@ export class ReportsService {
     }
   }> {
     try {
-      // Mapear accountType para accountFilter do repositório
-      let accountFilter: 'all' | 'bank_accounts' | 'credit_cards' = 'all'
-      if (filters.accountType === 'bank') {
-        accountFilter = 'bank_accounts'
-      } else if (filters.accountType === 'credit_card') {
-        accountFilter = 'credit_cards'
-      }
-
+      // Usar accountFilter diretamente do filtro recebido
       const repositoryFilters: AccountsReportFilters = {
         userId,
-        accountFilter,
+        accountFilter: filters.accountFilter || 'all',
         startDate: filters.startDate || new Date(0),
         endDate: filters.endDate || new Date(),
       }

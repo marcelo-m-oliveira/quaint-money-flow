@@ -16,7 +16,7 @@ export interface CashflowReportFilters extends ReportFilters {
 }
 
 export interface AccountsReportFilters extends ReportFilters {
-  accountType?: 'all' | 'bank_accounts' | 'credit_cards'
+  accountFilter?: 'all' | 'bank_accounts' | 'credit_cards'
 }
 
 export interface CategoryReportData {
@@ -130,8 +130,8 @@ export const reportsService = {
     if (filters?.endDate) {
       params.append('endDate', filters.endDate.toString())
     }
-    if (filters?.accountType) {
-      params.append('accountType', filters.accountType)
+    if (filters?.accountFilter) {
+      params.append('accountFilter', filters.accountFilter)
     }
 
     const queryString = params.toString()

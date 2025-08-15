@@ -331,7 +331,7 @@ export const cashflowReportResponseSchema = z.object({
 export const accountsReportFiltersSchema = z.object({
   startDate: z.coerce.number().optional(), // timestamp em segundos
   endDate: z.coerce.number().optional(), // timestamp em segundos
-  accountType: z.enum(['all', 'bank', 'credit_card']).default('all'),
+  accountFilter: z.enum(['all', 'bank_accounts', 'credit_cards']).default('all'),
 })
 
 // Schema para dados de conta no relatório

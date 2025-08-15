@@ -47,7 +47,7 @@ interface AccountData {
 
 const ACCOUNT_TYPE_LABELS = {
   bank: 'Conta Bancária',
-
+  credit_card: 'Cartão de Crédito',
   investment: 'Investimento',
   cash: 'Dinheiro',
   other: 'Outros',
@@ -79,10 +79,7 @@ export function AccountsReport({ period, isActive }: AccountsReportProps) {
 
     const loadAccountsData = async () => {
       try {
-        const data = await getAccountsReport(
-          period,
-          accountFilter === 'all' ? undefined : accountFilter,
-        )
+        const data = await getAccountsReport(period, accountFilter)
 
         // Converter os dados da API para o formato esperado pelo componente
         if (!data) return

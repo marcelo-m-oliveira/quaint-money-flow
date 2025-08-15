@@ -247,7 +247,7 @@ export function useReportsLegacy() {
   const getAccountsReport = useCallback(
     async (
       period: ReportPeriod,
-      accountType?: 'all' | 'bank_accounts' | 'credit_cards',
+      accountFilter?: 'all' | 'bank_accounts' | 'credit_cards',
     ) => {
       try {
         setIsLoading(true)
@@ -255,7 +255,7 @@ export function useReportsLegacy() {
         const filters: AccountsReportFilters = {
           startDate,
           endDate,
-          accountType,
+          accountFilter,
         }
         const data = await reportsService.getAccountsReport(filters)
         setAccountsData(data)

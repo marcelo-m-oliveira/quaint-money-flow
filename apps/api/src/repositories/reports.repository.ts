@@ -401,35 +401,43 @@ export class ReportsRepository extends BaseRepository<'entry'> {
       whereConditions.accountId = null
     }
 
-    // Query agregada por conta bancária
-    const accountEntries = await this.prisma.entry.groupBy({
-      by: ['accountId'],
-      where: {
-        ...whereConditions,
-        accountId: { not: null },
-      },
-      _sum: {
-        amount: true,
-      },
-      _count: {
-        id: true,
-      },
-    })
+    // Query agregada por conta bancária (apenas se o filtro permitir)
+    let accountEntries: any[] = []
+    
+    if (accountFilter === 'all' || accountFilter === 'bank_accounts') {
+      accountEntries = await this.prisma.entry.groupBy({
+        by: ['accountId'],
+        where: {
+          ...whereConditions,
+          accountId: { not: null },
+        },
+        _sum: {
+          amount: true,
+        },
+        _count: {
+          id: true,
+        },
+      }) as any
+    }
 
-    // Query agregada por cartão de crédito
-    const creditCardEntries = await this.prisma.entry.groupBy({
-      by: ['creditCardId'],
-      where: {
-        ...whereConditions,
-        creditCardId: { not: null },
-      },
-      _sum: {
-        amount: true,
-      },
-      _count: {
-        id: true,
-      },
-    })
+    // Query agregada por cartão de crédito (apenas se o filtro permitir)
+    let creditCardEntries: any[] = []
+    
+    if (accountFilter === 'all' || accountFilter === 'credit_cards') {
+      creditCardEntries = await this.prisma.entry.groupBy({
+        by: ['creditCardId'],
+        where: {
+          ...whereConditions,
+          creditCardId: { not: null },
+        },
+        _sum: {
+          amount: true,
+        },
+        _count: {
+          id: true,
+        },
+      }) as any
+    }
 
     const results: AccountReportData[] = []
 
