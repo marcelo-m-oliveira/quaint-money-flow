@@ -17,7 +17,7 @@ export class ValidationException extends Error {
 }
 
 export function formatZodError(error: ZodError): ValidationError[] {
-  return error.errors.map((err) => ({
+  return (error as any).errors.map((err: any) => ({
     field: err.path.join('.'),
     message: err.message,
   }))

@@ -23,6 +23,26 @@ export async function categoryRoutes(app: FastifyInstance) {
     '/categories',
     {
       schema: {
+        tags: ['📂 Categorias'],
+        summary: 'Listar Categorias',
+        description: `
+Lista todas as categorias do usuário com suporte a hierarquia.
+
+**Filtros disponíveis:**
+- **Tipo**: type (income/expense) - filtra por tipo de transação
+- **Pai**: parentId - mostra apenas subcategorias de uma categoria específica
+- **Ativo**: active (true/false) - status da categoria
+- **Busca**: search - busca por nome da categoria
+
+**Hierarquia:**
+- Categorias pai (parentId = null)
+- Subcategorias (parentId = ID da categoria pai)
+- Suporte a múltiplos níveis
+
+**Paginação:**
+- page: número da página (padrão: 1)
+- limit: itens por página (padrão: 20)
+        `,
         querystring: categoryFiltersSchema,
         response: {
           200: z.object({
@@ -36,26 +56,39 @@ export async function categoryRoutes(app: FastifyInstance) {
               hasPrev: z.boolean(),
             }),
           }),
-          401: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          500: z.object({ error: z.string() }),
         },
+        security: [{ bearerAuth: [] }],
       },
       preHandler: [authMiddleware],
     },
     categoryController.index.bind(categoryController),
   )
 
-  // GET /categories/select - Opções para selects
+  // GET /categories/select-options - Opções para selects
   app.get(
     '/categories/select-options',
     {
       schema: {
+        tags: ['📂 Categorias'],
+        summary: 'Opções de Categorias para Select',
+        description: `
+Retorna lista de categorias formatada para componentes de seleção.
+
+**Filtros:**
+- **type**: income/expense - filtra por tipo de transação
+- Retorna apenas categorias ativas
+        `,
         querystring: z.object({
           type: z.enum(['income', 'expense']).optional(),
         }),
         response: {
           200: z.array(selectOptionSchema),
-          401: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          500: z.object({ error: z.string() }),
         },
+        security: [{ bearerAuth: [] }],
       },
       preHandler: [authMiddleware],
     },
@@ -67,10 +100,23 @@ export async function categoryRoutes(app: FastifyInstance) {
     '/categories/usage',
     {
       schema: {
+        tags: ['📂 Categorias'],
+        summary: 'Indicadores de Uso das Categorias',
+        description: `
+Retorna estatísticas de uso das categorias.
+
+**Informações retornadas:**
+- Número de transações por categoria
+- Valor total movimentado
+- Percentual de uso
+- Ranking de utilização
+        `,
         response: {
           200: z.array(categoryUsageSchema),
-          401: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          500: z.object({ error: z.string() }),
         },
+        security: [{ bearerAuth: [] }],
       },
       preHandler: [authMiddleware],
     },
@@ -82,11 +128,17 @@ export async function categoryRoutes(app: FastifyInstance) {
     '/categories/:id',
     {
       schema: {
+        tags: ['📂 Categorias'],
+        summary: 'Buscar Categoria',
+        description: 'Recupera uma categoria específica pelo ID.',
         params: idParamSchema,
         response: {
           200: categoryResponseSchema,
-          401: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          404: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
         },
+        security: [{ bearerAuth: [] }],
       },
       preHandler: [authMiddleware],
     },
@@ -98,11 +150,34 @@ export async function categoryRoutes(app: FastifyInstance) {
     '/categories',
     {
       schema: {
+        tags: ['📂 Categorias'],
+        summary: 'Criar Categoria',
+        description: `
+Cria uma nova categoria ou subcategoria.
+
+**Campos obrigatórios:**
+- name: nome da categoria
+- type: tipo (income/expense)
+
+**Campos opcionais:**
+- description: descrição da categoria
+- color: cor personalizada
+- icon: ícone da categoria
+- parentId: ID da categoria pai (para subcategorias)
+- active: status ativo (padrão: true)
+
+**Hierarquia:**
+- Para categoria pai: omita parentId ou use null
+- Para subcategoria: use parentId com ID da categoria pai
+        `,
         body: categoryCreateSchema,
         response: {
           201: categoryResponseSchema,
-          401: z.object({ error: z.string() }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          500: z.object({ error: z.string() }),
         },
+        security: [{ bearerAuth: [] }],
       },
       preHandler: [authMiddleware],
     },
@@ -114,12 +189,19 @@ export async function categoryRoutes(app: FastifyInstance) {
     '/categories/:id',
     {
       schema: {
+        tags: ['📂 Categorias'],
+        summary: 'Atualizar Categoria',
+        description: 'Atualiza completamente uma categoria existente.',
         params: idParamSchema,
         body: categoryUpdateSchema,
         response: {
           200: categoryResponseSchema,
-          401: z.object({ error: z.string() }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          404: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
         },
+        security: [{ bearerAuth: [] }],
       },
       preHandler: [authMiddleware],
     },
@@ -131,11 +213,25 @@ export async function categoryRoutes(app: FastifyInstance) {
     '/categories/:id',
     {
       schema: {
+        tags: ['📂 Categorias'],
+        summary: 'Excluir Categoria',
+        description: `
+Remove permanentemente uma categoria.
+
+**Observações:**
+- Categorias com subcategorias não podem ser excluídas
+- Categorias com transações associadas não podem ser excluídas
+- Use desativação (active: false) como alternativa
+        `,
         params: idParamSchema,
         response: {
           204: z.null(),
-          401: z.object({ error: z.string() }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          404: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
         },
+        security: [{ bearerAuth: [] }],
       },
       preHandler: [authMiddleware],
     },

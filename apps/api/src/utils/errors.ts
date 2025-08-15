@@ -37,7 +37,7 @@ export const errorHandler: FastifyErrorHandler = (error, request, reply) => {
 
   // send error to some observability platform
 
-  reply.status(500).send({ message: 'Internal server error' })
+  reply.status(500).send({ error: 'Internal server error' })
 }
 
 // Utility function for handling errors in controllers
@@ -69,5 +69,5 @@ export const handleError = (error: FastifyError, reply: FastifyReply) => {
 
   console.error(error)
 
-  return reply.status(500).send({ message: 'Internal server error' })
+  return reply.status(500).send({ error: 'Internal server error' })
 }
