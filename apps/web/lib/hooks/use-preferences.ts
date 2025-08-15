@@ -122,7 +122,7 @@ export function usePreferences() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/transactions`,
+        `${process.env.NEXT_PUBLIC_API_URL}/entries`,
         {
           method: 'DELETE',
           headers: {
@@ -156,7 +156,7 @@ export function usePreferences() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/transactions/user-data`,
+        `${process.env.NEXT_PUBLIC_API_URL}/user-preferences`,
         {
           method: 'DELETE',
           headers: {

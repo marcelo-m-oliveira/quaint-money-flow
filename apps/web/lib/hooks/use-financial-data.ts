@@ -25,13 +25,19 @@ export function useFinancialData() {
       try {
         setIsLoading(true)
 
-        // Carregar entries da API
+        // Carregar entries da API usando o apiClient
         const entriesResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/entries`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer dev-token-123',
+            },
+          }
         )
         if (entriesResponse.ok) {
           const entriesData = await entriesResponse.json()
-          const parsedEntries = entriesData.map(
+          const parsedEntries = entriesData.entries?.map(
             (entry: Record<string, unknown>) => ({
               ...entry,
               date: new Date(entry.date as string),
@@ -39,22 +45,28 @@ export function useFinancialData() {
               updatedAt: new Date(entry.updatedAt as string),
               paid: entry.paid ?? false,
             }),
-          )
+          ) || []
           setEntries(parsedEntries)
         }
 
-        // Carregar categories da API
+        // Carregar categories da API usando o apiClient
         const categoriesResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer dev-token-123',
+            },
+          }
         )
         if (categoriesResponse.ok) {
           const categoriesData = await categoriesResponse.json()
-          const parsedCategories = categoriesData.map(
+          const parsedCategories = categoriesData.categories?.map(
             (category: Record<string, unknown>) => ({
               ...category,
               createdAt: new Date(category.createdAt as string),
             }),
-          )
+          ) || []
           setCategories(parsedCategories)
         }
       } catch (error) {
@@ -97,6 +109,7 @@ export function useFinancialData() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
           },
           body: JSON.stringify(newEntry),
         },
@@ -144,6 +157,7 @@ export function useFinancialData() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
           },
           body: JSON.stringify(updatedEntryData),
         },
@@ -183,6 +197,7 @@ export function useFinancialData() {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
           },
           body: JSON.stringify(updates),
         },
@@ -216,6 +231,9 @@ export function useFinancialData() {
         `${process.env.NEXT_PUBLIC_API_URL}/entries/${id}`,
         {
           method: 'DELETE',
+          headers: {
+            Authorization: 'Bearer dev-token-123',
+          },
         },
       )
 
@@ -278,6 +296,7 @@ export function useFinancialData() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
           },
           body: JSON.stringify(newCategoryData),
         },
@@ -347,6 +366,7 @@ export function useFinancialData() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer dev-token-123',
           },
           body: JSON.stringify(updatedCategoryData),
         },
@@ -406,6 +426,9 @@ export function useFinancialData() {
         `${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`,
         {
           method: 'DELETE',
+          headers: {
+            Authorization: 'Bearer dev-token-123',
+          },
         },
       )
 
