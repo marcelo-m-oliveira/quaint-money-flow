@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
-import { NotFoundError } from '@/http/routes/_errors/not-found-error'
 import { BaseRepository } from '@/repositories/base.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { NotFoundError } from '@/routes/_errors/not-found-error'
 
 export interface PaginationOptions {
   page: number

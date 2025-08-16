@@ -1,8 +1,8 @@
 import { PrismaClient, UserPreferences } from '@prisma/client'
 import { UserPreferencesSchema } from '@saas/validations'
 
-import { NotFoundError } from '@/http/routes/_errors/not-found-error'
 import { UserPreferencesRepository } from '@/repositories/user-preferences.repository'
+import { NotFoundError } from '@/routes/_errors/not-found-error'
 
 export class UserPreferencesService {
   constructor(

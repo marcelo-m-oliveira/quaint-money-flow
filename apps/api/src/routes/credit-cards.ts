@@ -14,7 +14,7 @@ import {
   selectOptionSchema,
 } from '@/utils/schemas'
 
-import { authMiddleware } from '../middlewares/auth'
+import { authMiddleware } from '../middleware/auth'
 
 export async function creditCardRoutes(app: FastifyInstance) {
   const creditCardController = CreditCardFactory.getController()

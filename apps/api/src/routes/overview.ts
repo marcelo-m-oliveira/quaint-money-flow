@@ -10,7 +10,7 @@ import {
   topExpensesQuerySchema,
 } from '@/utils/schemas'
 
-import { authMiddleware } from '../middlewares/auth'
+import { authMiddleware } from '../middleware/auth'
 
 export async function overviewRoutes(app: FastifyInstance) {
   const overviewController = OverviewFactory.getController()

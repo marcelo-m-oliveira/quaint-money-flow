@@ -1,9 +1,9 @@
 import type { FastifyError, FastifyInstance, FastifyReply } from 'fastify'
 import { ZodError } from 'zod'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
-import { NotFoundError } from '@/http/routes/_errors/not-found-error'
-import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { NotFoundError } from '@/routes/_errors/not-found-error'
+import { UnauthorizedError } from '@/routes/_errors/unauthorized-error'
 
 type FastifyErrorHandler = FastifyInstance['errorHandler']
 

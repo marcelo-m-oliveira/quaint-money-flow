@@ -1,3 +1,4 @@
+import { beforeAll, afterAll, jest } from '@jest/globals'
 import { prisma } from './prisma'
 
 // Configuração global para testes

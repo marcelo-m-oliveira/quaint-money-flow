@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Category, Prisma, PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { CategoryRepository } from '@/repositories/category.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import {
   CategoryCreateSchema,
   CategoryUsageSchema,

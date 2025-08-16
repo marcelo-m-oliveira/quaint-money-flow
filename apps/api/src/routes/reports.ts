@@ -11,7 +11,7 @@ import {
   categoriesReportResponseSchema,
 } from '@/utils/schemas'
 
-import { authMiddleware } from '../middlewares/auth'
+import { authMiddleware } from '../middleware/auth'
 
 export async function reportRoutes(app: FastifyInstance) {
   const reportsController = ReportsFactory.getController()

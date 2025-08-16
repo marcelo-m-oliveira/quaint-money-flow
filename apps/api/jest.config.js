@@ -8,18 +8,16 @@ module.exports = {
     '**/?(*.)+(spec|test).ts',
   ],
   transform: {
-    '^.+\.ts$': 'ts-jest',
-    '^.+\.js$': 'babel-jest',
+    '^.+\\.ts$': ['ts-jest', {
+      useESM: true,
+      tsconfig: 'tsconfig.test.json',
+    }],
+    '^.+\\.js$': 'babel-jest',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(@t3-oss|@saas)/)',
   ],
   extensionsToTreatAsEsm: ['.ts'],
-  globals: {
-    'ts-jest': {
-      useESM: true,
-    },
-  },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

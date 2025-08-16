@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { CreditCardRepository } from '@/repositories/credit-card.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { type CreditCardCreateSchema } from '@/utils/schemas'
 
 export class CreditCardService {

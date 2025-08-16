@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma, PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { EntryRepository } from '@/repositories/entry.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { EntryCreateSchema, EntryUpdateSchema } from '@/utils/schemas'
 
 export class EntryService {

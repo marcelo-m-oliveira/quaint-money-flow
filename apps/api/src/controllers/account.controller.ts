@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 
-import { BaseController } from '@/http/controllers/base.controller'
+import { BaseController } from '@/controllers/base.controller'
 import { AccountService } from '@/services/account.service'
 import {
   convertArrayDatesToSeconds,

@@ -2,11 +2,9 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
-import { 
-  redisCacheMiddlewares 
-} from '@/middleware/redis-cache.middleware'
 import { performanceMiddleware } from '@/middleware/performance.middleware'
 import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
+import { redisCacheMiddlewares } from '@/middleware/redis-cache.middleware'
 import {
   validateBody,
   validateParams,
@@ -22,7 +20,7 @@ import {
   selectOptionSchema,
 } from '@/utils/schemas'
 
-import { authMiddleware } from '../middlewares/auth'
+import { authMiddleware } from '../middleware/auth'
 
 export async function accountRoutes(app: FastifyInstance) {
   const accountController = AccountFactory.getController()

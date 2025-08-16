@@ -1,0 +1,329 @@
+import { PrismaClient } from '@prisma/client'
+import { FastifyInstance } from 'fastify'
+
+import { createApp } from '@/server'
+
+/**
+ * Utilitários para testes de integração
+ */
+export class TestUtils {
+  private static app: FastifyInstance | null = null
+  private static prisma: PrismaClient | null = null
+
+  /**
+   * Inicializa o app para testes
+   */
+  static async initApp(): Promise<FastifyInstance> {
+    if (!this.app) {
+      this.app = await createApp()
+    }
+    return this.app
+  }
+
+  /**
+   * Obtém instância do Prisma para testes
+   */
+  static getPrisma(): PrismaClient {
+    if (!this.prisma) {
+      this.prisma = new PrismaClient({
+        datasources: {
+          db: {
+            url: process.env.DATABASE_URL_TEST || process.env.DATABASE_URL,
+          },
+        },
+      })
+    }
+    return this.prisma
+  }
+
+  /**
+   * Limpa todos os dados de teste
+   */
+  static async cleanDatabase(): Promise<void> {
+    const prisma = this.getPrisma()
+
+    // Limpar em ordem para evitar problemas de foreign key
+    await prisma.entry.deleteMany()
+    await prisma.creditCard.deleteMany()
+    await prisma.category.deleteMany()
+    await prisma.account.deleteMany()
+    await prisma.userPreferences.deleteMany()
+  }
+
+  /**
+   * Cria dados de teste básicos
+   */
+  static async createTestData(userId: string = 'test-user-id') {
+    const prisma = this.getPrisma()
+
+    // Criar categoria de teste
+    const category = await prisma.category.create({
+      data: {
+        name: 'Categoria Teste',
+        type: 'expense',
+        userId,
+        active: true,
+      },
+    })
+
+    // Criar conta de teste
+    const account = await prisma.account.create({
+      data: {
+        name: 'Conta Teste',
+        type: 'bank',
+        balance: 1000,
+        userId,
+        includeInGeneralBalance: true,
+        active: true,
+      },
+    })
+
+    return {
+      category,
+      account,
+    }
+  }
+
+  /**
+   * Gera token de autenticação para testes
+   */
+  static generateAuthToken(userId: string = 'test-user-id'): string {
+    // Em um ambiente real, você geraria um JWT válido
+    // Para testes, usamos um token mock
+    return `test-token-${userId}`
+  }
+
+  /**
+   * Headers padrão para requisições autenticadas
+   */
+  static getAuthHeaders(userId: string = 'test-user-id') {
+    return {
+      authorization: `Bearer ${this.generateAuthToken(userId)}`,
+      'content-type': 'application/json',
+    }
+  }
+
+  /**
+   * Fecha conexões de teste
+   */
+  static async cleanup(): Promise<void> {
+    if (this.app) {
+      await this.app.close()
+      this.app = null
+    }
+
+    if (this.prisma) {
+      await this.prisma.$disconnect()
+      this.prisma = null
+    }
+  }
+
+  /**
+   * Aguarda um tempo específico (útil para testes assíncronos)
+   */
+  static async wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  /**
+   * Retry para operações que podem falhar temporariamente
+   */
+  static async retry<T>(
+    operation: () => Promise<T>,
+    maxAttempts: number = 3,
+    delay: number = 100,
+  ): Promise<T> {
+    let lastError: Error
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await operation()
+      } catch (error) {
+        lastError = error as Error
+
+        if (attempt === maxAttempts) {
+          throw lastError
+        }
+
+        await this.wait(delay * attempt)
+      }
+    }
+
+    throw lastError!
+  }
+
+  /**
+   * Valida se uma resposta da API está no formato correto
+   */
+  static validateApiResponse(response: any): void {
+    expect(response).toHaveProperty('success')
+    expect(typeof response.success).toBe('boolean')
+
+    if (response.success) {
+      expect(response).toHaveProperty('data')
+      expect(response).toHaveProperty('meta')
+      expect(response.meta).toHaveProperty('timestamp')
+      expect(response.meta).toHaveProperty('version')
+    } else {
+      expect(response).toHaveProperty('message')
+      expect(typeof response.message).toBe('string')
+    }
+  }
+
+  /**
+   * Valida se uma resposta paginada está no formato correto
+   */
+  static validatePaginatedResponse(response: any): void {
+    this.validateApiResponse(response)
+
+    if (response.success) {
+      expect(response).toHaveProperty('pagination')
+      expect(response.pagination).toHaveProperty('page')
+      expect(response.pagination).toHaveProperty('limit')
+      expect(response.pagination).toHaveProperty('total')
+      expect(response.pagination).toHaveProperty('totalPages')
+      expect(response.pagination).toHaveProperty('hasNext')
+      expect(response.pagination).toHaveProperty('hasPrev')
+    }
+  }
+
+  /**
+   * Cria um mock de usuário para testes
+   */
+  static createMockUser(userId: string = 'test-user-id') {
+    return {
+      sub: userId,
+      email: 'test@example.com',
+      name: 'Test User',
+    }
+  }
+
+  /**
+   * Cria um mock de request para testes
+   */
+  static createMockRequest(overrides: any = {}) {
+    return {
+      user: this.createMockUser(),
+      method: 'GET',
+      url: '/test',
+      query: {},
+      params: {},
+      body: {},
+      headers: {},
+      log: {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+      },
+      ...overrides,
+    }
+  }
+
+  /**
+   * Cria um mock de reply para testes
+   */
+  static createMockReply() {
+    const reply = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+      header: jest.fn().mockReturnThis(),
+      headers: jest.fn().mockReturnThis(),
+    }
+
+    return reply
+  }
+}
+
+/**
+ * Fixtures para dados de teste
+ */
+export const testFixtures = {
+  accounts: {
+    valid: {
+      name: 'Conta Bancária',
+      type: 'bank' as const,
+      balance: 1000,
+      description: 'Conta principal',
+      icon: 'bank-icon',
+      color: '#000000',
+      active: true,
+      includeInGeneralBalance: true,
+    },
+    invalid: {
+      name: '', // Nome vazio
+      type: 'invalid-type' as any, // Tipo inválido
+      balance: -100, // Saldo negativo
+    },
+  },
+  categories: {
+    valid: {
+      name: 'Alimentação',
+      type: 'expense' as const,
+      icon: 'food-icon',
+      color: '#ff0000',
+      active: true,
+    },
+  },
+  entries: {
+    valid: {
+      amount: 100,
+      type: 'expense' as const,
+      description: 'Compras',
+      date: new Date(),
+    },
+  },
+}
+
+/**
+ * Helpers para assertions específicas
+ */
+export const testAssertions = {
+  /**
+   * Verifica se uma resposta de erro está no formato correto
+   */
+  expectErrorResponse: (
+    response: any,
+    statusCode: number,
+    message?: string,
+  ) => {
+    expect(response.statusCode).toBe(statusCode)
+
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(false)
+    expect(body.message).toBeDefined()
+
+    if (message) {
+      expect(body.message).toContain(message)
+    }
+  },
+
+  /**
+   * Verifica se uma resposta de sucesso está no formato correto
+   */
+  expectSuccessResponse: (response: any, statusCode: number = 200) => {
+    expect(response.statusCode).toBe(statusCode)
+
+    const body = JSON.parse(response.body)
+    expect(body.success).toBe(true)
+    expect(body.data).toBeDefined()
+    expect(body.meta).toBeDefined()
+  },
+
+  /**
+   * Verifica se os headers de cache estão presentes
+   */
+  expectCacheHeaders: (response: any) => {
+    expect(response.headers['x-cache']).toBeDefined()
+    expect(response.headers['x-cache-key']).toBeDefined()
+  },
+
+  /**
+   * Verifica se os headers de rate limiting estão presentes
+   */
+  expectRateLimitHeaders: (response: any) => {
+    expect(response.headers['x-ratelimit-limit']).toBeDefined()
+    expect(response.headers['x-ratelimit-remaining']).toBeDefined()
+    expect(response.headers['x-ratelimit-reset']).toBeDefined()
+  },
+}
