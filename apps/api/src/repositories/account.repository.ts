@@ -1,62 +1,10 @@
 import { AccountType, Prisma, PrismaClient } from '@prisma/client'
 
-export class AccountRepository {
-  constructor(private prisma: PrismaClient) {}
+import { BaseRepository } from '@/repositories/base.repository'
 
-  async findMany(params: {
-    where?: Prisma.AccountWhereInput
-    skip?: number
-    take?: number
-    orderBy?: Prisma.AccountOrderByWithRelationInput
-    include?: Prisma.AccountInclude
-  }) {
-    return this.prisma.account.findMany(params)
-  }
-
-  async findUnique(params: {
-    where: Prisma.AccountWhereUniqueInput
-    include?: Prisma.AccountInclude
-  }) {
-    return this.prisma.account.findUnique(params)
-  }
-
-  async findFirst(params: {
-    where?: Prisma.AccountWhereInput
-    include?: Prisma.AccountInclude
-  }) {
-    return this.prisma.account.findFirst(params)
-  }
-
-  async create(params: {
-    data: Prisma.AccountCreateInput
-    include?: Prisma.AccountInclude
-  }) {
-    return this.prisma.account.create(params)
-  }
-
-  async update(params: {
-    where: Prisma.AccountWhereUniqueInput
-    data: Prisma.AccountUpdateInput
-    include?: Prisma.AccountInclude
-  }) {
-    return this.prisma.account.update(params)
-  }
-
-  async delete(params: { where: Prisma.AccountWhereUniqueInput }) {
-    return this.prisma.account.delete(params)
-  }
-
-  async count(params: { where?: Prisma.AccountWhereInput }) {
-    return this.prisma.account.count(params)
-  }
-
-  async upsert(params: {
-    where: Prisma.AccountWhereUniqueInput
-    create: Prisma.AccountCreateInput
-    update: Prisma.AccountUpdateInput
-    include?: Prisma.AccountInclude
-  }) {
-    return this.prisma.account.upsert(params)
+export class AccountRepository extends BaseRepository<'account'> {
+  constructor(prisma: PrismaClient) {
+    super(prisma, 'account')
   }
 
   // Métodos específicos de negócio
@@ -99,18 +47,18 @@ export class AccountRepository {
     name: string,
     userId: string,
     excludeId?: string,
-  ) {
+  ): Promise<boolean> {
     const where: Prisma.AccountWhereInput = {
       name,
       userId,
     }
 
     if (excludeId) {
-      where.NOT = { id: excludeId }
+      where.id = { not: excludeId }
     }
 
-    const account = await this.prisma.account.findFirst({ where })
-    return !!account
+    const count = await this.prisma.account.count({ where })
+    return count > 0
   }
 
   async getAccountsWithBalance(userId: string) {
@@ -125,6 +73,52 @@ export class AccountRepository {
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     })
+  }
+
+  async getAccountBalance(accountId: string, userId: string) {
+    const entries = await this.prisma.entry.findMany({
+      where: {
+        accountId,
+        userId,
+        paid: true,
+      },
+      select: {
+        amount: true,
+        type: true,
+      },
+    })
+
+    return entries.reduce((acc, entry) => {
+      const amount = Number(entry.amount)
+      return entry.type === 'income' ? acc + amount : acc - amount
+    }, 0)
+  }
+
+  async getAccountsSummary(userId: string) {
+    const accounts = await this.prisma.account.findMany({
+      where: { userId },
+      include: {
+        _count: {
+          select: {
+            entries: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return accounts.map((account) => ({
+      id: account.id,
+      name: account.name,
+      type: account.type,
+      icon: account.icon,
+      iconType: account.iconType,
+      includeInGeneralBalance: account.includeInGeneralBalance,
+      entriesCount: account._count.entries,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    }))
   }
 }

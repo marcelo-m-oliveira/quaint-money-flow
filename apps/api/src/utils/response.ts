@@ -2,7 +2,6 @@ import { dateToSeconds } from '@saas/utils'
 import { FastifyReply } from 'fastify'
 
 export interface ApiResponse<T = any> {
-  success: boolean
   data?: T
   message?: string
   errors?: Record<string, string[]>
@@ -13,10 +12,6 @@ export interface ApiResponse<T = any> {
     totalPages: number
     hasNext: boolean
     hasPrev: boolean
-  }
-  meta?: {
-    timestamp: number
-    version: string
   }
 }
 
@@ -40,13 +35,8 @@ export class ResponseFormatter {
     statusCode: number = 200,
   ) {
     const response: ApiResponse<T> = {
-      success: true,
       data,
       message,
-      meta: {
-        timestamp: Date.now(),
-        version: process.env.API_VERSION || '1.0.0',
-      },
     }
 
     return reply.status(statusCode).send(response)
@@ -58,14 +48,9 @@ export class ResponseFormatter {
     message?: string,
   ) {
     const response: ApiResponse<T[]> = {
-      success: true,
       data: data.items,
       message,
       pagination: data.pagination,
-      meta: {
-        timestamp: Date.now(),
-        version: process.env.API_VERSION || '1.0.0',
-      },
     }
 
     return reply.status(200).send(response)
@@ -78,13 +63,8 @@ export class ResponseFormatter {
     statusCode: number = 400,
   ) {
     const response: ApiResponse = {
-      success: false,
       message,
       errors,
-      meta: {
-        timestamp: Date.now(),
-        version: process.env.API_VERSION || '1.0.0',
-      },
     }
 
     return reply.status(statusCode).send(response)

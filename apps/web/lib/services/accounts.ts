@@ -2,13 +2,15 @@ import type {
   Account,
   AccountFormData,
   AccountsQueryParams,
-  AccountsResponse,
+  PaginatedResponse,
   SelectOption,
 } from '@/lib'
 import { apiClient } from '@/lib'
 
 export const accountsService = {
-  async getAll(params?: AccountsQueryParams): Promise<AccountsResponse> {
+  async getAll(
+    params?: AccountsQueryParams,
+  ): Promise<PaginatedResponse<Account>> {
     const searchParams = new URLSearchParams()
 
     if (params?.page) searchParams.append('page', params.page.toString())
@@ -19,7 +21,7 @@ export const accountsService = {
     const queryString = searchParams.toString()
     const endpoint = `/accounts${queryString ? `?${queryString}` : ''}`
 
-    return apiClient.get<AccountsResponse>(endpoint)
+    return apiClient.get<PaginatedResponse<Account>>(endpoint)
   },
 
   async getSelectOptions(): Promise<SelectOption[]> {

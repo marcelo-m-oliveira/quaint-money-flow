@@ -36,28 +36,13 @@ export async function accountRoutes(app: FastifyInstance) {
           'Retorna lista de contas formatada para componentes de seleção.',
         response: {
           200: z.object({
-            success: z.boolean(),
             data: z.array(selectOptionSchema),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           401: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           500: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
         },
         security: [{ bearerAuth: [] }],
@@ -98,7 +83,6 @@ Lista todas as contas bancárias do usuário.
         querystring: accountFiltersSchema,
         response: {
           200: z.object({
-            success: z.boolean(),
             data: z.array(accountResponseSchema),
             pagination: z.object({
               page: z.number(),
@@ -108,26 +92,12 @@ Lista todas as contas bancárias do usuário.
               hasNext: z.boolean(),
               hasPrev: z.boolean(),
             }),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           401: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           500: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
         },
         security: [{ bearerAuth: [] }],
@@ -136,7 +106,7 @@ Lista todas as contas bancárias do usuário.
         authMiddleware,
         performanceMiddleware(),
         validateQuery(accountFiltersSchema),
-        redisCacheMiddlewares.list(), // Cache por 5 minutos
+        // redisCacheMiddlewares.list(), // Cache por 5 minutos - DESABILITADO TEMPORARIAMENTE
         rateLimitMiddlewares.authenticated(),
       ],
     },
@@ -154,36 +124,16 @@ Lista todas as contas bancárias do usuário.
         params: idParamSchema,
         response: {
           200: z.object({
-            success: z.boolean(),
             data: accountResponseSchema,
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           401: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           404: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           500: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
         },
         security: [{ bearerAuth: [] }],
@@ -192,7 +142,7 @@ Lista todas as contas bancárias do usuário.
         authMiddleware,
         performanceMiddleware(),
         validateParams(idParamSchema),
-        redisCacheMiddlewares.detail(), // Cache por 10 minutos
+        // redisCacheMiddlewares.detail(), // Cache por 10 minutos - DESABILITADO TEMPORARIAMENTE
         rateLimitMiddlewares.authenticated(),
       ],
     },
@@ -223,38 +173,18 @@ Cria uma nova conta bancária.
         body: accountCreateSchema,
         response: {
           201: z.object({
-            success: z.boolean(),
             data: accountResponseSchema,
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           400: z.object({
-            success: z.boolean(),
             message: z.string(),
             errors: z.record(z.string(), z.array(z.string())).optional(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           401: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           500: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
         },
         security: [{ bearerAuth: [] }],
@@ -281,46 +211,21 @@ Cria uma nova conta bancária.
         body: accountUpdateSchema,
         response: {
           200: z.object({
-            success: z.boolean(),
             data: accountResponseSchema,
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           400: z.object({
-            success: z.boolean(),
             message: z.string(),
             errors: z.record(z.string(), z.array(z.string())).optional(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           401: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           404: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           500: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
         },
         security: [{ bearerAuth: [] }],
@@ -348,28 +253,13 @@ Cria uma nova conta bancária.
         response: {
           204: z.null(),
           401: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           404: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           500: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
         },
         security: [{ bearerAuth: [] }],
@@ -395,36 +285,16 @@ Cria uma nova conta bancária.
         params: idParamSchema,
         response: {
           200: z.object({
-            success: z.boolean(),
             data: accountBalanceSchema,
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           401: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           404: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
           500: z.object({
-            success: z.boolean(),
             message: z.string(),
-            meta: z.object({
-              timestamp: z.number(),
-              version: z.string(),
-            }),
           }),
         },
         security: [{ bearerAuth: [] }],
