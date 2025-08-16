@@ -83,17 +83,14 @@ export function UserPreferencesProvider({
 
   // Atualizar preferências
   const updatePreferences = useCallback(
-    async (id: string, data: UserPreferencesFormData) => {
+    async (data: UserPreferencesFormData) => {
       try {
         setIsLoading(true)
 
         // Enviar apenas os campos que estão sendo alterados
         const apiData: Partial<UserPreferencesFormData> = { ...data }
 
-        const updatedPreferences = await userPreferencesService.update(
-          id,
-          apiData,
-        )
+        const updatedPreferences = await userPreferencesService.update(apiData)
 
         // Mapear campos da API para o frontend
         setPreferences(updatedPreferences)

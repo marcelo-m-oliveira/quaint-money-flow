@@ -10,11 +10,8 @@ export const userPreferencesService = {
     return apiClient.get<ApiResponse<UserPreferences>>('/user-preferences')
   },
 
-  async update(
-    id: string,
-    data: UserPreferencesFormData,
-  ): Promise<UserPreferences> {
-    return apiClient.patch<UserPreferences>(`/user-preferences/${id}`, data)
+  async update(data: UserPreferencesFormData): Promise<UserPreferences> {
+    return apiClient.patch<UserPreferences>('/user-preferences', data)
   },
 
   async upsert(data: UserPreferencesFormData): Promise<UserPreferences> {

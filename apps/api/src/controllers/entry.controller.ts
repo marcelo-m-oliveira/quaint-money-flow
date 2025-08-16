@@ -367,4 +367,33 @@ export class EntryController {
       return handleError(error as FastifyError, reply)
     }
   }
+
+  async deleteAll(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user.sub
+
+      request.log.info({ userId }, 'Excluindo todas as entradas do usuário')
+
+      const result = await this.entryService.deleteAllByUserId(userId)
+
+      request.log.info(
+        { userId, deletedCount: result.deletedCount },
+        'Todas as entradas excluídas com sucesso',
+      )
+
+      return reply.status(200).send({
+        message: result.message,
+        deletedCount: result.deletedCount,
+      })
+    } catch (error: any) {
+      request.log.error(
+        {
+          userId: request.user.sub,
+          error: error.message,
+        },
+        'Erro ao excluir todas as entradas',
+      )
+      return handleError(error as FastifyError, reply)
+    }
+  }
 }

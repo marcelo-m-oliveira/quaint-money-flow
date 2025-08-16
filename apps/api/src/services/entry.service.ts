@@ -537,4 +537,34 @@ export class EntryService {
       where: { id, userId },
     })
   }
+
+  async deleteAllByUserId(userId: string) {
+    // Verificar se o usuário existe
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      throw new BadRequestError('Usuário não encontrado')
+    }
+
+    // Contar quantas entradas o usuário tem antes de deletar
+    const entryCount = await this.prisma.entry.count({
+      where: { userId },
+    })
+
+    if (entryCount === 0) {
+      throw new BadRequestError('Nenhuma entrada encontrada para excluir')
+    }
+
+    // Deletar todas as entradas do usuário
+    const deleteResult = await this.prisma.entry.deleteMany({
+      where: { userId },
+    })
+
+    return {
+      deletedCount: deleteResult.count,
+      message: `${deleteResult.count} entrada(s) excluída(s) com sucesso`,
+    }
+  }
 }

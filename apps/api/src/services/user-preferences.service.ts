@@ -84,6 +84,27 @@ export class UserPreferencesService extends BaseService<'userPreferences'> {
     return preferences
   }
 
+  async updateByUserId(userId: string, data: PreferencesUpdateSchema) {
+    // Buscar as preferências do usuário
+    const existingPreferences =
+      await this.userPreferencesRepository.findByUserId(userId)
+
+    if (!existingPreferences) {
+      throw new BadRequestError('Preferências não encontradas')
+    }
+
+    // Atualizar as preferências
+    const preferences = await this.userPreferencesRepository.update(
+      existingPreferences.id,
+      data,
+    )
+
+    this.logOperation('UPDATE_USER_PREFERENCES', userId, {
+      preferencesId: preferences.id,
+    })
+    return preferences
+  }
+
   async delete(id: string, userId: string) {
     // Verificar se as preferências existem e pertencem ao usuário
     const existingPreferences =

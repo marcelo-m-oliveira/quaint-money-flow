@@ -123,4 +123,9 @@ export const entriesService = {
   async delete(id: string): Promise<void> {
     await apiClient.delete<void>(`/entries/${id}`)
   },
+
+  // Deletar todas as entradas do usuário
+  async deleteAll(): Promise<{ message: string; deletedCount: number }> {
+    return apiClient.delete<{ message: string; deletedCount: number }>('/entries/all')
+  },
 }

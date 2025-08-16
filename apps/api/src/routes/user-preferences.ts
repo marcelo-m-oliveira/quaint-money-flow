@@ -162,15 +162,65 @@ Só permite criar se não existirem preferências para o usuário.
     userPreferencesController.store.bind(userPreferencesController),
   )
 
-  // PUT /user-preferences/:id - Atualizar preferências
+  // PATCH /user-preferences - Atualizar preferências do usuário atual
   app.patch(
-    '/user-preferences/:id',
+    '/user-preferences',
     {
       schema: {
         tags: ['⚙️ Configurações'],
         summary: 'Atualizar Preferências',
         description: `
-Atualiza completamente as preferências do usuário.
+Atualiza as preferências do usuário autenticado.
+Não é necessário fornecer o ID das preferências, pois cada usuário só pode ter uma.
+
+**Body:**
+- entryOrder: Ordem de exibição dos lançamentos (opcional)
+- defaultNavigationPeriod: Período de navegação padrão (opcional)
+- showDailyBalance: Exibir saldo diário (opcional)
+- viewMode: Modo de visualização (opcional)
+- isFinancialSummaryExpanded: Resumo financeiro expandido (opcional)
+
+**Resposta:**
+- 200: Preferências atualizadas
+- 400: Preferências não encontradas
+- 401: Não autenticado
+- 500: Erro interno
+        `,
+        body: preferencesUpdateSchema,
+        response: {
+          200: preferencesResponseSchema,
+          400: z.object({
+            message: z.string(),
+            errors: z.record(z.string(), z.array(z.string())).optional(),
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
+        },
+        security: [{ bearerAuth: [] }],
+      },
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateBody(preferencesUpdateSchema),
+        rateLimitMiddlewares.authenticated(),
+      ],
+    },
+    userPreferencesController.updateByUserId.bind(userPreferencesController),
+  )
+
+  // PUT /user-preferences/:id - Atualizar preferências por ID (método alternativo)
+  app.put(
+    '/user-preferences/:id',
+    {
+      schema: {
+        tags: ['⚙️ Configurações'],
+        summary: 'Atualizar Preferências por ID',
+        description: `
+Atualiza completamente as preferências do usuário por ID.
 Valida se as preferências pertencem ao usuário autenticado.
 
 **Parâmetros:**

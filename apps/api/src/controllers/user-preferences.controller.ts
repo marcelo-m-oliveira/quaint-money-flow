@@ -88,6 +88,24 @@ export class UserPreferencesController extends BaseController {
     )
   }
 
+  async updateByUserId(request: FastifyRequest, reply: FastifyReply) {
+    return this.handleUpdateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const data = this.getBodyParams<PreferencesUpdateSchema>(request)
+
+        const preferences = await this.userPreferencesService.updateByUserId(
+          userId,
+          data,
+        )
+        return convertDatesToSeconds(preferences)
+      },
+      `Atualização de ${this.entityName} do usuário`,
+    )
+  }
+
   async destroy(request: FastifyRequest, reply: FastifyReply) {
     return this.handleDeleteRequest(
       request,

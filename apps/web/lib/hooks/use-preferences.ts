@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { useCrudToast } from '@/lib'
+import { entriesService } from '@/lib/services/entries'
 import { preferencesSchema } from '@/lib/schemas'
 import type { UserPreferences } from '@/lib/types'
 
@@ -113,28 +114,8 @@ export function usePreferences() {
   // Excluir todas as transações (função especial)
   const clearAllEntries = async () => {
     try {
-      let token = localStorage.getItem('quaint-money-token')
-      if (!token) {
-        // Para desenvolvimento, criar um token fictício
-        token = 'dev-token-' + Date.now()
-        localStorage.setItem('quaint-money-token', token)
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/entries`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-
-      if (!response.ok) {
-        throw new Error('Erro ao excluir transações')
-      }
-
-      console.log('🗑️ Todas as transações foram excluídas')
+      const result = await entriesService.deleteAll()
+      console.log('🗑️ Todas as transações foram excluídas:', result.message)
       success.delete('Todas as transações')
       // Recarregar a página para atualizar os dados
       setTimeout(() => window.location.reload(), 1000)

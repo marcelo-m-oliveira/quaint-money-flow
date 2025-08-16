@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { EntryFactory } from '@/factories/entry.factory'
+import { performanceMiddleware } from '@/middleware/performance.middleware'
+import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
 import {
   entryCreateSchema,
   entryFiltersSchema,
@@ -51,7 +53,11 @@ Lista todas as transações do usuário com filtros avançados.
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     entryController.index.bind(entryController),
   )
@@ -73,7 +79,11 @@ Lista todas as transações do usuário com filtros avançados.
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     entryController.show.bind(entryController),
   )
@@ -108,7 +118,11 @@ Cria uma nova transação financeira.
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.create(),
+      ],
     },
     entryController.store.bind(entryController),
   )
@@ -132,7 +146,11 @@ Cria uma nova transação financeira.
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     entryController.update.bind(entryController),
   )
@@ -156,7 +174,11 @@ Cria uma nova transação financeira.
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     entryController.patch.bind(entryController),
   )
@@ -178,8 +200,51 @@ Cria uma nova transação financeira.
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     entryController.destroy.bind(entryController),
+  )
+
+  // DELETE /entries/all - Excluir todas as entradas do usuário
+  app.delete(
+    '/entries/all',
+    {
+      schema: {
+        tags: ['💰 Transações'],
+        summary: 'Excluir Todas as Entradas',
+        description: `
+Remove permanentemente todas as transações do usuário autenticado.
+
+**⚠️ ATENÇÃO:** Esta operação é irreversível e excluirá TODAS as transações do usuário.
+Use com cuidado e certifique-se de que o usuário realmente deseja limpar todos os seus dados.
+
+**Resposta:**
+- 200: Entradas excluídas com sucesso (inclui contagem)
+- 400: Nenhuma entrada encontrada para excluir
+- 401: Não autenticado
+- 500: Erro interno
+        `,
+        response: {
+          200: z.object({
+            message: z.string(),
+            deletedCount: z.number(),
+          }),
+          400: z.object({ error: z.string() }),
+          401: z.object({ message: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+        security: [{ bearerAuth: [] }],
+      },
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
+    },
+    entryController.deleteAll.bind(entryController),
   )
 }
