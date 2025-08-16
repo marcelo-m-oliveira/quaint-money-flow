@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { UserPreferencesFactory } from '@/factories/user-preferences.factory'
-import { authMiddleware } from '@/middleware/auth'
+import { authMiddleware } from '@/middleware/auth.middleware'
 import {
   preferencesCreateSchema,
   preferencesResponseSchema,

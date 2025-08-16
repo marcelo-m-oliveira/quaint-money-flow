@@ -12,7 +12,7 @@ import {
   idParamSchema,
 } from '@/utils/schemas'
 
-import { authMiddleware } from '../middleware/auth'
+import { authMiddleware } from '../middleware/auth.middleware'
 
 export async function entryRoutes(app: FastifyInstance) {
   const entryController = EntryFactory.getController()

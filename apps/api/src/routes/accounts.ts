@@ -20,7 +20,7 @@ import {
   selectOptionSchema,
 } from '@/utils/schemas'
 
-import { authMiddleware } from '../middleware/auth'
+import { authMiddleware } from '../middleware/auth.middleware'
 
 export async function accountRoutes(app: FastifyInstance) {
   const accountController = AccountFactory.getController()

@@ -1,9 +1,9 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { ZodError } from 'zod'
 
+import { setCacheData } from '@/middleware/redis-cache.middleware'
 import { handleError } from '@/utils/errors'
 import { ResponseFormatter } from '@/utils/response'
-import { setCacheData } from '@/middleware/redis-cache.middleware'
 
 export interface BaseControllerOptions {
   entityName: string

@@ -13,7 +13,7 @@ import {
   selectOptionSchema,
 } from '@/utils/schemas'
 
-import { authMiddleware } from '../middleware/auth'
+import { authMiddleware } from '../middleware/auth.middleware'
 
 export async function categoryRoutes(app: FastifyInstance) {
   const categoryController = CategoryFactory.getController()
