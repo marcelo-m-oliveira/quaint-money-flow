@@ -26,7 +26,7 @@ export abstract class BaseController {
     operationName: string,
   ): Promise<FastifyReply> {
     try {
-      const userId = request.user?.sub
+      const userId = (request.user as any)?.sub
       request.log.info(
         { userId, operation: operationName },
         `Iniciando ${operationName}`,
@@ -60,7 +60,7 @@ export abstract class BaseController {
     operationName: string,
   ): Promise<FastifyReply> {
     try {
-      const userId = request.user?.sub
+      const userId = (request.user as any)?.sub
       request.log.info(
         { userId, operation: operationName },
         `Iniciando ${operationName}`,
@@ -100,7 +100,7 @@ export abstract class BaseController {
     operationName: string,
   ): Promise<FastifyReply> {
     try {
-      const userId = request.user?.sub
+      const userId = (request.user as any)?.sub
       request.log.info(
         { userId, operation: operationName },
         `Iniciando ${operationName}`,
@@ -133,7 +133,7 @@ export abstract class BaseController {
     operationName: string,
   ): Promise<FastifyReply> {
     try {
-      const userId = request.user?.sub
+      const userId = (request.user as any)?.sub
       request.log.info(
         { userId, operation: operationName },
         `Iniciando ${operationName}`,
@@ -166,7 +166,7 @@ export abstract class BaseController {
     operationName: string,
   ): Promise<FastifyReply> {
     try {
-      const userId = request.user?.sub
+      const userId = (request.user as any)?.sub
       request.log.info(
         { userId, operation: operationName },
         `Iniciando ${operationName}`,
@@ -202,7 +202,15 @@ export abstract class BaseController {
   }
 
   protected getUserId(request: FastifyRequest): string {
-    return request.user?.sub
+    const user = request.user as any
+    if (!user?.sub) {
+      throw new Error('Usuário não autenticado')
+    }
+    return user.sub
+  }
+
+  private getUserIdSafe(request: FastifyRequest): string | undefined {
+    return (request.user as any)?.sub
   }
 
   protected getQueryParams<T>(request: FastifyRequest): T {
