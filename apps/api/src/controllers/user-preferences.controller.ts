@@ -1,123 +1,151 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { dateToSeconds } from '@saas/utils'
-import { UserPreferencesSchema } from '@saas/validations'
-import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 
+import { BaseController } from '@/controllers/base.controller'
 import { UserPreferencesService } from '@/services/user-preferences.service'
-import { handleError } from '@/utils/errors'
+import { convertDatesToSeconds } from '@/utils/response'
+import type {
+  IdParamSchema,
+  PreferencesCreateSchema,
+  PreferencesUpdateSchema,
+} from '@/utils/schemas'
 
-export class UserPreferencesController {
-  constructor(private userPreferencesService: UserPreferencesService) {}
+export class UserPreferencesController extends BaseController {
+  constructor(private userPreferencesService: UserPreferencesService) {
+    super({
+      entityName: 'preferência',
+      entityNamePlural: 'preferências',
+    })
+  }
+
+  async index(request: FastifyRequest, reply: FastifyReply) {
+    return this.handleRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const preferences =
+          await this.userPreferencesService.findByUserId(userId)
+        return convertDatesToSeconds(preferences)
+      },
+      `Busca de ${this.entityName} do usuário`,
+    )
+  }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
+    return this.handleRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      request.log.info({ userId }, 'Buscando preferencias do usuario')
-      const preferences = await this.userPreferencesService.findByUserId(userId)
+        const preferences = await this.userPreferencesService.findById(
+          id,
+          userId,
+        )
+        return convertDatesToSeconds(preferences)
+      },
+      `Busca de ${this.entityName} específica`,
+    )
+  }
 
-      request.log.info(
-        { userId, preferences: preferences.id },
-        'Preferencias encontradas com sucesso',
-      )
+  async store(request: FastifyRequest, reply: FastifyReply) {
+    return this.handleCreateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const data = this.getBodyParams<PreferencesCreateSchema>(request)
 
-      return reply.status(200).send({
-        ...preferences,
-        createdAt: dateToSeconds(preferences.createdAt),
-        updatedAt: dateToSeconds(preferences.updatedAt),
-      })
-    } catch (error: any) {
-      request.log.error(
-        { error: error.message },
-        'Erro ao buscar preferencias do usuario',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        const preferences = await this.userPreferencesService.create(
+          data,
+          userId,
+        )
+        return convertDatesToSeconds(preferences)
+      },
+      `Criação de ${this.entityName}`,
+    )
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const data = request.body as Partial<UserPreferencesSchema>
+    return this.handleUpdateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
+        const data = this.getBodyParams<PreferencesUpdateSchema>(request)
 
-      request.log.info({ userId, data }, 'Atualizando preferencias do usuario')
-
-      const preferences = await this.userPreferencesService.update(userId, data)
-
-      request.log.info(
-        { userId, preferences: preferences.id },
-        'Preferencias atualizadas com sucesso',
-      )
-
-      return reply.status(200).send({
-        ...preferences,
-        createdAt: dateToSeconds(preferences.createdAt),
-        updatedAt: dateToSeconds(preferences.updatedAt),
-      })
-    } catch (error: any) {
-      request.log.error(
-        { error: error.message },
-        'Erro ao atualizar preferencias do usuario',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        const preferences = await this.userPreferencesService.update(
+          id,
+          data,
+          userId,
+        )
+        return convertDatesToSeconds(preferences)
+      },
+      `Atualização de ${this.entityName}`,
+    )
   }
 
+  async destroy(request: FastifyRequest, reply: FastifyReply) {
+    return this.handleDeleteRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
+
+        await this.userPreferencesService.delete(id, userId)
+      },
+      `Exclusão de ${this.entityName}`,
+    )
+  }
+
+  // Métodos customizados específicos para user preferences
   async upsert(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const data = request.body as Partial<UserPreferencesSchema>
+    return this.handleUpdateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const data =
+          this.getBodyParams<Partial<PreferencesCreateSchema>>(request)
 
-      request.log.info(
-        { userId, data },
-        'Criando/atualizando preferencias do usuario',
-      )
-
-      const preferences = await this.userPreferencesService.upsert(userId, data)
-
-      request.log.info(
-        { userId, preferences: preferences.id },
-        'Preferencias criadas/atualizadas com sucesso',
-      )
-
-      return reply.status(200).send({
-        ...preferences,
-        createdAt: dateToSeconds(preferences.createdAt),
-        updatedAt: dateToSeconds(preferences.updatedAt),
-      })
-    } catch (error: any) {
-      request.log.error(
-        { error: error.message },
-        'Erro ao criar/atualizar preferencias do usuario',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        const preferences = await this.userPreferencesService.upsert(
+          userId,
+          data,
+        )
+        return convertDatesToSeconds(preferences)
+      },
+      `Upsert de ${this.entityName}`,
+    )
   }
 
   async reset(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
+    return this.handleUpdateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const preferences = await this.userPreferencesService.reset(userId)
+        return convertDatesToSeconds(preferences)
+      },
+      `Reset de ${this.entityName} para padrão`,
+    )
+  }
 
-      request.log.info({ userId }, 'Resetando preferencias do usuario')
-
-      const preferences = await this.userPreferencesService.reset(userId)
-
-      request.log.info(
-        { userId, preferences: preferences.id },
-        'Preferencias resetadas com sucesso',
-      )
-
-      return reply.status(200).send({
-        ...preferences,
-        createdAt: preferences.createdAt.toISOString(),
-        updatedAt: preferences.updatedAt.toISOString(),
-      })
-    } catch (error: any) {
-      request.log.error(
-        { error: error.message },
-        'Erro ao resetar preferencias do usuario',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+  async createDefault(request: FastifyRequest, reply: FastifyReply) {
+    return this.handleCreateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const preferences =
+          await this.userPreferencesService.createDefault(userId)
+        return convertDatesToSeconds(preferences)
+      },
+      `Criação de ${this.entityName} padrão`,
+    )
   }
 }

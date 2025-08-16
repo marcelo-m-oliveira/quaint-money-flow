@@ -21,7 +21,6 @@ export class UserPreferencesService extends BaseService<'userPreferences'> {
       await this.userPreferencesRepository.findByUserId(userId)
 
     if (!preferences) {
-      // Se não existir, criar com valores padrão
       return this.createDefault(userId)
     }
 
@@ -63,43 +62,48 @@ export class UserPreferencesService extends BaseService<'userPreferences'> {
     return preferences
   }
 
-  async update(userId: string, data: Partial<PreferencesUpdateSchema>) {
-    // Verificar se as preferências existem
+  async update(id: string, data: PreferencesUpdateSchema, userId: string) {
+    // Verificar se as preferências existem e pertencem ao usuário
     const existingPreferences =
-      await this.userPreferencesRepository.findByUserId(userId)
+      await this.userPreferencesRepository.findById(id)
 
     if (!existingPreferences) {
-      // Se não existir, criar com valores padrão + dados fornecidos
-      const defaultPreferences = {
-        entryOrder: 'descending' as const,
-        defaultNavigationPeriod: 'monthly' as const,
-        showDailyBalance: false,
-        viewMode: 'all' as const,
-        isFinancialSummaryExpanded: false,
-      }
+      throw new BadRequestError('Preferências não encontradas')
+    }
 
-      const preferences = await this.userPreferencesRepository.create({
-        ...defaultPreferences,
-        ...data,
-        user: { connect: { id: userId } },
-      })
-
-      this.logOperation('CREATE_USER_PREFERENCES', userId, {
-        preferencesId: preferences.id,
-      })
-      return preferences
+    if (existingPreferences.userId !== userId) {
+      throw new BadRequestError('Preferências não pertencem ao usuário')
     }
 
     // Se existir, apenas atualizar os campos fornecidos
-    const preferences = await this.userPreferencesRepository.update(
-      existingPreferences.id,
-      data,
-    )
+    const preferences = await this.userPreferencesRepository.update(id, data)
 
     this.logOperation('UPDATE_USER_PREFERENCES', userId, {
       preferencesId: preferences.id,
     })
     return preferences
+  }
+
+  async delete(id: string, userId: string) {
+    // Verificar se as preferências existem e pertencem ao usuário
+    const existingPreferences =
+      await this.userPreferencesRepository.findById(id)
+
+    if (!existingPreferences) {
+      throw new BadRequestError('Preferências não encontradas')
+    }
+
+    if (existingPreferences.userId !== userId) {
+      throw new BadRequestError('Preferências não pertencem ao usuário')
+    }
+
+    await this.userPreferencesRepository.delete(id)
+
+    this.logOperation('DELETE_USER_PREFERENCES', userId, {
+      preferencesId: existingPreferences.id,
+    })
+
+    return existingPreferences
   }
 
   async upsert(userId: string, data: Partial<PreferencesCreateSchema>) {
@@ -123,24 +127,6 @@ export class UserPreferencesService extends BaseService<'userPreferences'> {
     return preferences
   }
 
-  async delete(userId: string) {
-    // Verificar se as preferências existem
-    const existingPreferences =
-      await this.userPreferencesRepository.findByUserId(userId)
-
-    if (!existingPreferences) {
-      throw new BadRequestError('Preferências não encontradas')
-    }
-
-    await this.userPreferencesRepository.delete(existingPreferences.id)
-
-    this.logOperation('DELETE_USER_PREFERENCES', userId, {
-      preferencesId: existingPreferences.id,
-    })
-
-    return existingPreferences
-  }
-
   async reset(userId: string) {
     const preferences =
       await this.userPreferencesRepository.resetToDefault(userId)
@@ -159,6 +145,14 @@ export class UserPreferencesService extends BaseService<'userPreferences'> {
 
     if (!user) {
       throw new BadRequestError('Usuário não encontrado')
+    }
+
+    // Verificar se já existem preferências para o usuário
+    const existingPreferences =
+      await this.userPreferencesRepository.existsByUserId(userId)
+
+    if (existingPreferences) {
+      throw new BadRequestError('Já existem preferências para este usuário')
     }
 
     const preferences =

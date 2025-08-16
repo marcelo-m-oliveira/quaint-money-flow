@@ -74,46 +74,12 @@ describe('User Preferences Service', () => {
       expect(result).toEqual(mockPreferences)
     })
 
-    it('should create default preferences when not found', async () => {
-      const mockDefaultPreferences = {
-        id: '1',
-        userId: 'user-1',
-        entryOrder: 'descending',
-        defaultNavigationPeriod: 'monthly',
-        showDailyBalance: false,
-        viewMode: 'all',
-        isFinancialSummaryExpanded: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
+    it('should throw error when preferences not found', async () => {
       mockUserPreferencesRepository.findByUserId.mockResolvedValue(null)
-      mockPrismaClient.user.findUnique.mockResolvedValue({ id: 'user-1' })
-      mockUserPreferencesRepository.createDefault.mockResolvedValue(
-        mockDefaultPreferences,
-      )
-
-      const result = await userPreferencesService.findByUserId('user-1')
-
-      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith(
-        'user-1',
-      )
-      expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-      })
-      expect(mockUserPreferencesRepository.createDefault).toHaveBeenCalledWith(
-        'user-1',
-      )
-      expect(result).toEqual(mockDefaultPreferences)
-    })
-
-    it('should throw error when user not found', async () => {
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(null)
-      mockPrismaClient.user.findUnique.mockResolvedValue(null)
 
       await expect(
         userPreferencesService.findByUserId('user-1'),
-      ).rejects.toThrow(new BadRequestError('Usuário não encontrado'))
+      ).rejects.toThrow(new BadRequestError('Preferências não encontradas'))
     })
   })
 
@@ -250,16 +216,14 @@ describe('User Preferences Service', () => {
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(
+      mockUserPreferencesRepository.findById.mockResolvedValue(
         existingPreferences,
       )
       mockUserPreferencesRepository.update.mockResolvedValue(updatedPreferences)
 
-      const result = await userPreferencesService.update('user-1', updateData)
+      const result = await userPreferencesService.update('1', updateData, 'user-1')
 
-      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith(
-        'user-1',
-      )
+      expect(mockUserPreferencesRepository.findById).toHaveBeenCalledWith('1')
       expect(mockUserPreferencesRepository.update).toHaveBeenCalledWith(
         '1',
         updateData,
@@ -267,42 +231,107 @@ describe('User Preferences Service', () => {
       expect(result).toEqual(updatedPreferences)
     })
 
-    it('should create preferences with defaults when not found', async () => {
+    it('should throw error when preferences not found', async () => {
       const updateData = {
         entryOrder: 'ascending' as const,
         showDailyBalance: true,
       }
 
-      const createdPreferences = {
-        id: '1',
-        userId: 'user-1',
-        entryOrder: 'ascending',
-        defaultNavigationPeriod: 'monthly',
+      mockUserPreferencesRepository.findById.mockResolvedValue(null)
+
+      await expect(
+        userPreferencesService.update('1', updateData, 'user-1'),
+      ).rejects.toThrow(new BadRequestError('Preferências não encontradas'))
+    })
+
+    it('should throw error when preferences do not belong to user', async () => {
+      const updateData = {
+        entryOrder: 'ascending' as const,
         showDailyBalance: true,
+      }
+
+      const existingPreferences = {
+        id: '1',
+        userId: 'user-2', // Different user
+        entryOrder: 'descending',
+        defaultNavigationPeriod: 'monthly',
+        showDailyBalance: false,
         viewMode: 'all',
         isFinancialSummaryExpanded: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(null)
-      mockUserPreferencesRepository.create.mockResolvedValue(createdPreferences)
-
-      const result = await userPreferencesService.update('user-1', updateData)
-
-      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith(
-        'user-1',
+      mockUserPreferencesRepository.findById.mockResolvedValue(
+        existingPreferences,
       )
-      expect(mockUserPreferencesRepository.create).toHaveBeenCalledWith({
+
+      await expect(
+        userPreferencesService.update('1', updateData, 'user-1'),
+      ).rejects.toThrow(
+        new BadRequestError('Preferências não pertencem ao usuário'),
+      )
+    })
+  })
+
+  describe('delete', () => {
+    it('should delete preferences', async () => {
+      const existingPreferences = {
+        id: '1',
+        userId: 'user-1',
         entryOrder: 'descending',
         defaultNavigationPeriod: 'monthly',
         showDailyBalance: false,
         viewMode: 'all',
         isFinancialSummaryExpanded: false,
-        ...updateData,
-        user: { connect: { id: 'user-1' } },
-      })
-      expect(result).toEqual(createdPreferences)
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockUserPreferencesRepository.findById.mockResolvedValue(
+        existingPreferences,
+      )
+      mockUserPreferencesRepository.delete.mockResolvedValue(
+        existingPreferences,
+      )
+
+      const result = await userPreferencesService.delete('1', 'user-1')
+
+      expect(mockUserPreferencesRepository.findById).toHaveBeenCalledWith('1')
+      expect(mockUserPreferencesRepository.delete).toHaveBeenCalledWith('1')
+      expect(result).toEqual(existingPreferences)
+    })
+
+    it('should throw error when preferences not found', async () => {
+      mockUserPreferencesRepository.findById.mockResolvedValue(null)
+
+      await expect(userPreferencesService.delete('1', 'user-1')).rejects.toThrow(
+        new BadRequestError('Preferências não encontradas'),
+      )
+    })
+
+    it('should throw error when preferences do not belong to user', async () => {
+      const existingPreferences = {
+        id: '1',
+        userId: 'user-2', // Different user
+        entryOrder: 'descending',
+        defaultNavigationPeriod: 'monthly',
+        showDailyBalance: false,
+        viewMode: 'all',
+        isFinancialSummaryExpanded: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockUserPreferencesRepository.findById.mockResolvedValue(
+        existingPreferences,
+      )
+
+      await expect(
+        userPreferencesService.delete('1', 'user-1'),
+      ).rejects.toThrow(
+        new BadRequestError('Preferências não pertencem ao usuário'),
+      )
     })
   })
 
@@ -343,45 +372,6 @@ describe('User Preferences Service', () => {
         upsertData,
       )
       expect(result).toEqual(upsertedPreferences)
-    })
-  })
-
-  describe('delete', () => {
-    it('should delete preferences', async () => {
-      const existingPreferences = {
-        id: '1',
-        userId: 'user-1',
-        entryOrder: 'descending',
-        defaultNavigationPeriod: 'monthly',
-        showDailyBalance: false,
-        viewMode: 'all',
-        isFinancialSummaryExpanded: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(
-        existingPreferences,
-      )
-      mockUserPreferencesRepository.delete.mockResolvedValue(
-        existingPreferences,
-      )
-
-      const result = await userPreferencesService.delete('user-1')
-
-      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith(
-        'user-1',
-      )
-      expect(mockUserPreferencesRepository.delete).toHaveBeenCalledWith('1')
-      expect(result).toEqual(existingPreferences)
-    })
-
-    it('should throw error when preferences not found', async () => {
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(null)
-
-      await expect(userPreferencesService.delete('user-1')).rejects.toThrow(
-        new BadRequestError('Preferências não encontradas'),
-      )
     })
   })
 
@@ -427,6 +417,7 @@ describe('User Preferences Service', () => {
       }
 
       mockPrismaClient.user.findUnique.mockResolvedValue({ id: 'user-1' })
+      mockUserPreferencesRepository.existsByUserId.mockResolvedValue(false)
       mockUserPreferencesRepository.createDefault.mockResolvedValue(
         defaultPreferences,
       )
@@ -436,6 +427,9 @@ describe('User Preferences Service', () => {
       expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-1' },
       })
+      expect(mockUserPreferencesRepository.existsByUserId).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(mockUserPreferencesRepository.createDefault).toHaveBeenCalledWith(
         'user-1',
       )
@@ -449,6 +443,17 @@ describe('User Preferences Service', () => {
         userPreferencesService.createDefault('user-1'),
       ).rejects.toThrow(new BadRequestError('Usuário não encontrado'))
     })
+
+    it('should throw error when preferences already exist', async () => {
+      mockPrismaClient.user.findUnique.mockResolvedValue({ id: 'user-1' })
+      mockUserPreferencesRepository.existsByUserId.mockResolvedValue(true)
+
+      await expect(
+        userPreferencesService.createDefault('user-1'),
+      ).rejects.toThrow(
+        new BadRequestError('Já existem preferências para este usuário'),
+      )
+    })
   })
 
   describe('error handling', () => {
@@ -459,17 +464,6 @@ describe('User Preferences Service', () => {
       await expect(
         userPreferencesService.findByUserId('user-1'),
       ).rejects.toThrow('Database error')
-    })
-
-    it('should handle Prisma errors gracefully', async () => {
-      const error = new Error('Prisma error')
-      mockPrismaClient.user.findUnique.mockRejectedValue(error)
-
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(null)
-
-      await expect(
-        userPreferencesService.findByUserId('user-1'),
-      ).rejects.toThrow('Prisma error')
     })
   })
 })

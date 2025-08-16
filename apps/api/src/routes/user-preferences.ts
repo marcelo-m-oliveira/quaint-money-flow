@@ -3,7 +3,14 @@ import { z } from 'zod'
 
 import { UserPreferencesFactory } from '@/factories/user-preferences.factory'
 import { authMiddleware } from '@/middleware/auth.middleware'
+import { performanceMiddleware } from '@/middleware/performance.middleware'
+import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
 import {
+  validateBody,
+  validateParams,
+} from '@/middleware/validation.middleware'
+import {
+  idParamSchema,
   preferencesCreateSchema,
   preferencesResponseSchema,
   preferencesUpdateSchema,
@@ -21,28 +28,37 @@ export async function userPreferencesRoutes(app: FastifyInstance) {
         summary: 'Buscar Preferências do Usuário',
         description: `
 Recupera as preferências de configuração do usuário autenticado.
+Se não existirem preferências, retorna erro 404.
 
-**Preferências incluídas:**
-- Configurações de ordenação de transações
-- Período de navegação padrão
-- Configurações de visualização
-- Preferências de dashboard
-- Configurações de resumo financeiro
-
-**Comportamento:**
-- Se preferências não existem: cria com valores padrão
-- Retorna preferências existentes ou recém-criadas
+**Resposta:**
+- 200: Preferências encontradas
+- 401: Não autenticado
+- 404: Preferências não encontradas
+- 500: Erro interno
         `,
         response: {
-          200: preferencesResponseSchema,
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            data: preferencesResponseSchema,
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          404: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
-    userPreferencesController.show.bind(userPreferencesController),
+    userPreferencesController.index.bind(userPreferencesController),
   )
 
   // GET /user-preferences/:id - Buscar preferências por ID
@@ -53,28 +69,47 @@ Recupera as preferências de configuração do usuário autenticado.
         tags: ['⚙️ Configurações'],
         summary: 'Buscar Preferências por ID',
         description: `
-Recupera as preferências de configuração por ID específico.
+Recupera preferências específicas por ID.
+Valida se as preferências pertencem ao usuário autenticado.
 
-**Validações:**
-- Verifica se as preferências existem
-- Verifica se pertencem ao usuário autenticado
-- Retorna erro se não encontradas ou não autorizadas
+**Parâmetros:**
+- id: ID das preferências
+
+**Resposta:**
+- 200: Preferências encontradas
+- 400: Preferências não pertencem ao usuário
+- 401: Não autenticado
+- 404: Preferências não encontradas
+- 500: Erro interno
         `,
-        params: z.object({
-          id: z.string().min(1, 'ID é obrigatório'),
-        }),
+        params: idParamSchema,
         response: {
-          200: preferencesResponseSchema,
-          400: z.object({ error: z.string() }),
-          401: z.object({ message: z.string() }),
-          404: z.object({ error: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            data: preferencesResponseSchema,
+          }),
+          400: z.object({
+            message: z.string(),
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          404: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateParams(idParamSchema),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
-    userPreferencesController.showById.bind(userPreferencesController),
+    userPreferencesController.show.bind(userPreferencesController),
   )
 
   // POST /user-preferences - Criar novas preferências
@@ -85,165 +120,279 @@ Recupera as preferências de configuração por ID específico.
         tags: ['⚙️ Configurações'],
         summary: 'Criar Preferências',
         description: `
-Cria novas preferências de configuração para o usuário.
+Cria novas preferências para o usuário autenticado.
+Só permite criar se não existirem preferências para o usuário.
 
-**Campos obrigatórios:**
-- entryOrder: ordem de exibição das transações
-- defaultNavigationPeriod: período de navegação padrão
-- showDailyBalance: exibir saldo diário
-- viewMode: modo de visualização
-- isFinancialSummaryExpanded: resumo financeiro expandido
+**Body:**
+- entryOrder: Ordem de exibição dos lançamentos
+- defaultNavigationPeriod: Período de navegação padrão
+- showDailyBalance: Exibir saldo diário
+- viewMode: Modo de visualização
+- isFinancialSummaryExpanded: Resumo financeiro expandido
 
-**Validações:**
-- Verifica se já existem preferências para o usuário
-- Retorna erro se preferências já existem
+**Resposta:**
+- 201: Preferências criadas
+- 400: Já existem preferências para este usuário
+- 401: Não autenticado
+- 500: Erro interno
         `,
         body: preferencesCreateSchema,
         response: {
           201: preferencesResponseSchema,
-          400: z.object({ error: z.string() }),
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          400: z.object({
+            message: z.string(),
+            errors: z.record(z.string(), z.array(z.string())).optional(),
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateBody(preferencesCreateSchema),
+        rateLimitMiddlewares.create(),
+      ],
     },
-    userPreferencesController.create.bind(userPreferencesController),
+    userPreferencesController.store.bind(userPreferencesController),
   )
 
-  // PATCH /user-preferences - Atualizar preferências (parcial)
+  // PUT /user-preferences/:id - Atualizar preferências
   app.patch(
-    '/user-preferences',
+    '/user-preferences/:id',
     {
       schema: {
         tags: ['⚙️ Configurações'],
-        summary: 'Atualizar Preferências (Parcial)',
+        summary: 'Atualizar Preferências',
         description: `
-Atualiza apenas os campos fornecidos das preferências do usuário.
+Atualiza completamente as preferências do usuário.
+Valida se as preferências pertencem ao usuário autenticado.
 
-**Campos atualizáveis:**
-- entryOrder: ordem de exibição das transações
-- defaultNavigationPeriod: período de navegação padrão
-- showDailyBalance: exibir saldo diário
-- viewMode: modo de visualização
-- isFinancialSummaryExpanded: resumo financeiro expandido
+**Parâmetros:**
+- id: ID das preferências
 
-**Comportamento:**
-- Apenas os campos enviados são atualizados
-- Campos não enviados mantêm valores atuais
-- Se preferências não existem: cria com valores padrão + dados fornecidos
+**Body:**
+- entryOrder: Ordem de exibição dos lançamentos
+- defaultNavigationPeriod: Período de navegação padrão
+- showDailyBalance: Exibir saldo diário
+- viewMode: Modo de visualização
+- isFinancialSummaryExpanded: Resumo financeiro expandido
+
+**Resposta:**
+- 200: Preferências atualizadas
+- 400: Preferências não pertencem ao usuário
+- 401: Não autenticado
+- 404: Preferências não encontradas
+- 500: Erro interno
         `,
+        params: idParamSchema,
         body: preferencesUpdateSchema,
         response: {
           200: preferencesResponseSchema,
-          400: z.object({ error: z.string() }),
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          400: z.object({
+            message: z.string(),
+            errors: z.record(z.string(), z.array(z.string())).optional(),
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          404: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateParams(idParamSchema),
+        validateBody(preferencesUpdateSchema),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     userPreferencesController.update.bind(userPreferencesController),
   )
 
-  // PUT /user-preferences - Criar/atualizar preferências (upsert)
-  app.put(
-    '/user-preferences',
-    {
-      schema: {
-        tags: ['⚙️ Configurações'],
-        summary: 'Criar/Atualizar Preferências (Upsert)',
-        description: `
-Cria ou atualiza completamente as preferências do usuário.
-
-**Comportamento:**
-- Se preferências existem: atualiza completamente
-- Se preferências não existem: cria novas
-- Substitui todos os valores pelos fornecidos
-
-**Campos obrigatórios:**
-- entryOrder: ordem de exibição das transações
-- defaultNavigationPeriod: período de navegação padrão
-- showDailyBalance: exibir saldo diário
-- viewMode: modo de visualização
-- isFinancialSummaryExpanded: resumo financeiro expandido
-        `,
-        body: preferencesCreateSchema,
-        response: {
-          200: preferencesResponseSchema,
-          400: z.object({ error: z.string() }),
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
-        },
-        security: [{ bearerAuth: [] }],
-      },
-      preHandler: [authMiddleware],
-    },
-    userPreferencesController.upsert.bind(userPreferencesController),
-  )
-
-  // DELETE /user-preferences - Excluir preferências
+  // DELETE /user-preferences/:id - Excluir preferências
   app.delete(
-    '/user-preferences',
+    '/user-preferences/:id',
     {
       schema: {
         tags: ['⚙️ Configurações'],
         summary: 'Excluir Preferências',
         description: `
-Exclui as preferências de configuração do usuário.
+Exclui as preferências do usuário.
+Valida se as preferências pertencem ao usuário autenticado.
 
-**Comportamento:**
-- Remove completamente as preferências do usuário
-- Retorna as preferências excluídas
-- Após exclusão, novas consultas criarão preferências padrão
+**Parâmetros:**
+- id: ID das preferências
 
-**Ação irreversível:** Todas as configurações serão perdidas.
+**Resposta:**
+- 204: Preferências excluídas
+- 400: Preferências não pertencem ao usuário
+- 401: Não autenticado
+- 404: Preferências não encontradas
+- 500: Erro interno
         `,
+        params: idParamSchema,
         response: {
-          200: preferencesResponseSchema,
-          400: z.object({ error: z.string() }),
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          204: z.null(),
+          400: z.object({
+            message: z.string(),
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          404: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateParams(idParamSchema),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
-    userPreferencesController.delete.bind(userPreferencesController),
+    userPreferencesController.destroy.bind(userPreferencesController),
   )
 
-  // POST /user-preferences/reset - Resetar preferências para valores padrão
+  // POST /user-preferences/upsert - Upsert preferências (método customizado)
+  app.post(
+    '/user-preferences/upsert',
+    {
+      schema: {
+        tags: ['⚙️ Configurações'],
+        summary: 'Upsert Preferências',
+        description: `
+Cria ou atualiza preferências do usuário autenticado.
+Se existirem, atualiza; se não existirem, cria com valores padrão + dados fornecidos.
+
+**Body:**
+- entryOrder: Ordem de exibição dos lançamentos (opcional)
+- defaultNavigationPeriod: Período de navegação padrão (opcional)
+- showDailyBalance: Exibir saldo diário (opcional)
+- viewMode: Modo de visualização (opcional)
+- isFinancialSummaryExpanded: Resumo financeiro expandido (opcional)
+
+**Resposta:**
+- 200: Preferências criadas/atualizadas
+- 401: Não autenticado
+- 500: Erro interno
+        `,
+        body: preferencesCreateSchema.partial(),
+        response: {
+          200: z.object({
+            data: preferencesResponseSchema,
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
+        },
+        security: [{ bearerAuth: [] }],
+      },
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateBody(preferencesCreateSchema.partial()),
+        rateLimitMiddlewares.authenticated(),
+      ],
+    },
+    userPreferencesController.upsert.bind(userPreferencesController),
+  )
+
+  // POST /user-preferences/reset - Reset para valores padrão (método customizado)
   app.post(
     '/user-preferences/reset',
     {
       schema: {
         tags: ['⚙️ Configurações'],
-        summary: 'Resetar Preferências',
+        summary: 'Reset Preferências',
         description: `
-Restaura as preferências do usuário para os valores padrão do sistema.
+Reseta as preferências do usuário para valores padrão.
+Se não existirem preferências, cria com valores padrão.
 
-**Valores padrão:**
-- entryOrder: descending (mais recentes primeiro)
-- defaultNavigationPeriod: monthly (mensal)
-- showDailyBalance: false (não exibir saldo diário)
-- viewMode: all (visualizar todas as transações)
-- isFinancialSummaryExpanded: false (resumo recolhido)
-
-**Comportamento:**
-- Substitui todas as configurações pelos valores padrão
-- Mantém o registro existente, apenas atualiza os valores
+**Resposta:**
+- 200: Preferências resetadas/criadas
+- 401: Não autenticado
+- 500: Erro interno
         `,
         response: {
-          200: preferencesResponseSchema,
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            data: preferencesResponseSchema,
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     userPreferencesController.reset.bind(userPreferencesController),
+  )
+
+  // POST /user-preferences/default - Criar preferências padrão (método customizado)
+  app.post(
+    '/user-preferences/default',
+    {
+      schema: {
+        tags: ['⚙️ Configurações'],
+        summary: 'Criar Preferências Padrão',
+        description: `
+Cria preferências com valores padrão para o usuário autenticado.
+Só permite criar se não existirem preferências para o usuário.
+
+**Resposta:**
+- 201: Preferências padrão criadas
+- 400: Já existem preferências para este usuário
+- 401: Não autenticado
+- 500: Erro interno
+        `,
+        response: {
+          201: preferencesResponseSchema,
+          400: z.object({
+            message: z.string(),
+            errors: z.record(z.string(), z.array(z.string())).optional(),
+          }),
+          401: z.object({
+            message: z.string(),
+          }),
+          500: z.object({
+            message: z.string(),
+          }),
+        },
+        security: [{ bearerAuth: [] }],
+      },
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.create(),
+      ],
+    },
+    userPreferencesController.createDefault.bind(userPreferencesController),
   )
 }

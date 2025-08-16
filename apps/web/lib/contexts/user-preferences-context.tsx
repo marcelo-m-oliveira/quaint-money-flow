@@ -10,7 +10,10 @@ interface UserPreferencesContextType {
   preferences: UserPreferences | null
   isLoading: boolean
   isInitialized: boolean
-  updatePreferences: (data: UserPreferencesFormData) => Promise<UserPreferences>
+  updatePreferences: (
+    id: string,
+    data: UserPreferencesFormData,
+  ) => Promise<UserPreferences>
   upsertPreferences: (data: UserPreferencesFormData) => Promise<UserPreferences>
   resetPreferences: () => Promise<UserPreferences>
   refetch: () => Promise<void>
@@ -39,11 +42,11 @@ export function UserPreferencesProvider({
 
       // Mapear campos da API para o frontend
       const preferencesWithDates = {
-        ...response,
+        ...response.data,
         // Mapear entryOrder para entryOrder
-        entryOrder: response.entryOrder,
-        createdAt: response.createdAt,
-        updatedAt: response.updatedAt,
+        entryOrder: response.data.entryOrder,
+        createdAt: response.data.createdAt,
+        updatedAt: response.data.updatedAt,
       }
       setPreferences(preferencesWithDates)
       setIsInitialized(true)
@@ -51,7 +54,7 @@ export function UserPreferencesProvider({
       console.error('Erro ao carregar preferências:', err)
       // Se não encontrar preferências, criar com valores padrão
       try {
-        const defaultPreferences = await userPreferencesService.upsert({})
+        const defaultPreferences = await userPreferencesService.createDefault()
 
         // Mapear campos da API para o frontend
         const preferencesWithDates = {
@@ -80,14 +83,17 @@ export function UserPreferencesProvider({
 
   // Atualizar preferências
   const updatePreferences = useCallback(
-    async (data: UserPreferencesFormData) => {
+    async (id: string, data: UserPreferencesFormData) => {
       try {
         setIsLoading(true)
 
         // Enviar apenas os campos que estão sendo alterados
         const apiData: Partial<UserPreferencesFormData> = { ...data }
 
-        const updatedPreferences = await userPreferencesService.update(apiData)
+        const updatedPreferences = await userPreferencesService.update(
+          id,
+          apiData,
+        )
 
         // Mapear campos da API para o frontend
         setPreferences(updatedPreferences)

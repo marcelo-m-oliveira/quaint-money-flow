@@ -54,7 +54,7 @@ export default function PreferenciasPage() {
 
   const onSubmit = async (data: UserPreferencesFormData) => {
     try {
-      await updatePreferences(data)
+      await updatePreferences(preferences?.id as string, data)
       // Resetar o formulário para remover o estado isDirty
       reset(data)
     } catch (error) {

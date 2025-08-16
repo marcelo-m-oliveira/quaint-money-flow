@@ -56,7 +56,7 @@ describe('User Preferences Controller', () => {
     mockReply = createMockReply()
   })
 
-  describe('show', () => {
+  describe('index', () => {
     it('should return user preferences', async () => {
       const mockPreferences = {
         id: '1',
@@ -72,22 +72,22 @@ describe('User Preferences Controller', () => {
 
       mockUserPreferencesService.findByUserId.mockResolvedValue(mockPreferences)
 
-      await userPreferencesController.show(mockRequest, mockReply)
+      await userPreferencesController.index(mockRequest, mockReply)
 
       expect(mockUserPreferencesService.findByUserId).toHaveBeenCalledWith(
         'user-1',
       )
       expect(mockRequest.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1' },
-        'Buscando preferências do usuário',
+        { userId: 'user-1', operation: 'Busca de preferência do usuário' },
+        'Iniciando Busca de preferência do usuário',
       )
       expect(mockRequest.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferences: '1' },
-        'Preferências encontradas com sucesso',
+        { userId: 'user-1', operation: 'Busca de preferência do usuário' },
+        'Busca de preferência do usuário concluído com sucesso',
       )
       expect(mockReply.status).toHaveBeenCalledWith(200)
-      expect(mockReply.send).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(mockReply.send).toHaveBeenCalledWith({
+        data: expect.objectContaining({
           id: '1',
           userId: 'user-1',
           entryOrder: 'descending',
@@ -98,27 +98,30 @@ describe('User Preferences Controller', () => {
           createdAt: expect.any(Number),
           updatedAt: expect.any(Number),
         }),
-      )
+      })
     })
 
     it('should handle service errors', async () => {
-      const error = new BadRequestError('Usuário não encontrado')
+      const error = new BadRequestError('Preferências não encontradas')
       mockUserPreferencesService.findByUserId.mockRejectedValue(error)
 
-      await userPreferencesController.show(mockRequest, mockReply)
+      await userPreferencesController.index(mockRequest, mockReply)
 
       expect(mockRequest.log.error).toHaveBeenCalledWith(
-        { error: 'Usuário não encontrado' },
-        'Erro ao buscar preferências do usuário',
+        {
+          error: 'Preferências não encontradas',
+          operation: 'Busca de preferência do usuário',
+        },
+        'Erro em Busca de preferência do usuário',
       )
       expect(mockReply.status).toHaveBeenCalledWith(400)
       expect(mockReply.send).toHaveBeenCalledWith({
-        message: 'Usuário não encontrado',
+        message: 'Preferências não encontradas',
       })
     })
   })
 
-  describe('showById', () => {
+  describe('show', () => {
     it('should return preferences by ID', async () => {
       const mockPreferences = {
         id: '1',
@@ -136,23 +139,23 @@ describe('User Preferences Controller', () => {
 
       const request = createMockRequest({ id: '1' })
 
-      await userPreferencesController.showById(request, mockReply)
+      await userPreferencesController.show(request as any, mockReply)
 
       expect(mockUserPreferencesService.findById).toHaveBeenCalledWith(
         '1',
         'user-1',
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferencesId: '1' },
-        'Buscando preferências por ID',
+        { userId: 'user-1', operation: 'Busca de preferência específica' },
+        'Iniciando Busca de preferência específica',
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferences: '1' },
-        'Preferências encontradas com sucesso',
+        { userId: 'user-1', operation: 'Busca de preferência específica' },
+        'Busca de preferência específica concluído com sucesso',
       )
       expect(mockReply.status).toHaveBeenCalledWith(200)
-      expect(mockReply.send).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(mockReply.send).toHaveBeenCalledWith({
+        data: expect.objectContaining({
           id: '1',
           userId: 'user-1',
           entryOrder: 'descending',
@@ -163,7 +166,7 @@ describe('User Preferences Controller', () => {
           createdAt: expect.any(Number),
           updatedAt: expect.any(Number),
         }),
-      )
+      })
     })
 
     it('should handle service errors', async () => {
@@ -172,11 +175,14 @@ describe('User Preferences Controller', () => {
 
       const request = createMockRequest({ id: '1' })
 
-      await userPreferencesController.showById(request, mockReply)
+      await userPreferencesController.show(request as any, mockReply)
 
       expect(request.log.error).toHaveBeenCalledWith(
-        { error: 'Preferências não encontradas' },
-        'Erro ao buscar preferências por ID',
+        {
+          error: 'Preferências não encontradas',
+          operation: 'Busca de preferência específica',
+        },
+        'Erro em Busca de preferência específica',
       )
       expect(mockReply.status).toHaveBeenCalledWith(400)
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -185,7 +191,7 @@ describe('User Preferences Controller', () => {
     })
   })
 
-  describe('create', () => {
+  describe('store', () => {
     it('should create new preferences', async () => {
       const preferencesData = {
         entryOrder: 'ascending' as const,
@@ -207,19 +213,19 @@ describe('User Preferences Controller', () => {
 
       const request = createMockRequest({}, preferencesData)
 
-      await userPreferencesController.create(request, mockReply)
+      await userPreferencesController.store(request as any, mockReply)
 
       expect(mockUserPreferencesService.create).toHaveBeenCalledWith(
         preferencesData,
         'user-1',
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', data: preferencesData },
-        'Criando preferências do usuário',
+        { userId: 'user-1', operation: 'Criação de preferência' },
+        'Iniciando Criação de preferência',
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferences: '1' },
-        'Preferências criadas com sucesso',
+        { userId: 'user-1', operation: 'Criação de preferência' },
+        'Criação de preferência concluído com sucesso',
       )
       expect(mockReply.status).toHaveBeenCalledWith(201)
       expect(mockReply.send).toHaveBeenCalledWith(
@@ -241,11 +247,14 @@ describe('User Preferences Controller', () => {
 
       const request = createMockRequest({}, { entryOrder: 'ascending' })
 
-      await userPreferencesController.create(request, mockReply)
+      await userPreferencesController.store(request as any, mockReply)
 
       expect(request.log.error).toHaveBeenCalledWith(
-        { error: 'Já existem preferências para este usuário' },
-        'Erro ao criar preferências do usuário',
+        {
+          error: 'Já existem preferências para este usuário',
+          operation: 'Criação de preferência',
+        },
+        'Erro em Criação de preferência',
       )
       expect(mockReply.status).toHaveBeenCalledWith(400)
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -275,21 +284,22 @@ describe('User Preferences Controller', () => {
 
       mockUserPreferencesService.update.mockResolvedValue(updatedPreferences)
 
-      const request = createMockRequest({}, updateData)
+      const request = createMockRequest({ id: '1' }, updateData)
 
-      await userPreferencesController.update(request, mockReply)
+      await userPreferencesController.update(request as any, mockReply)
 
       expect(mockUserPreferencesService.update).toHaveBeenCalledWith(
-        'user-1',
+        '1',
         updateData,
+        'user-1',
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', data: updateData },
-        'Atualizando preferências do usuário',
+        { userId: 'user-1', operation: 'Atualização de preferência' },
+        'Iniciando Atualização de preferência',
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferences: '1' },
-        'Preferências atualizadas com sucesso',
+        { userId: 'user-1', operation: 'Atualização de preferência' },
+        'Atualização de preferência concluído com sucesso',
       )
       expect(mockReply.status).toHaveBeenCalledWith(200)
       expect(mockReply.send).toHaveBeenCalledWith(
@@ -311,13 +321,65 @@ describe('User Preferences Controller', () => {
       const error = new BadRequestError('Preferências não encontradas')
       mockUserPreferencesService.update.mockRejectedValue(error)
 
-      const request = createMockRequest({}, { entryOrder: 'ascending' })
+      const request = createMockRequest(
+        { id: '1' },
+        { entryOrder: 'ascending' },
+      )
 
-      await userPreferencesController.update(request, mockReply)
+      await userPreferencesController.update(request as any, mockReply)
 
       expect(request.log.error).toHaveBeenCalledWith(
-        { error: 'Preferências não encontradas' },
-        'Erro ao atualizar preferências do usuário',
+        {
+          error: 'Preferências não encontradas',
+          operation: 'Atualização de preferência',
+        },
+        'Erro em Atualização de preferência',
+      )
+      expect(mockReply.status).toHaveBeenCalledWith(400)
+      expect(mockReply.send).toHaveBeenCalledWith({
+        message: 'Preferências não encontradas',
+      })
+    })
+  })
+
+  describe('destroy', () => {
+    it('should delete preferences', async () => {
+      mockUserPreferencesService.delete.mockResolvedValue(undefined)
+
+      const request = createMockRequest({ id: '1' })
+
+      await userPreferencesController.destroy(request as any, mockReply)
+
+      expect(mockUserPreferencesService.delete).toHaveBeenCalledWith(
+        '1',
+        'user-1',
+      )
+      expect(request.log.info).toHaveBeenCalledWith(
+        { userId: 'user-1', operation: 'Exclusão de preferência' },
+        'Iniciando Exclusão de preferência',
+      )
+      expect(request.log.info).toHaveBeenCalledWith(
+        { userId: 'user-1', operation: 'Exclusão de preferência' },
+        'Exclusão de preferência concluído com sucesso',
+      )
+      expect(mockReply.status).toHaveBeenCalledWith(204)
+      expect(mockReply.send).toHaveBeenCalledWith()
+    })
+
+    it('should handle service errors', async () => {
+      const error = new BadRequestError('Preferências não encontradas')
+      mockUserPreferencesService.delete.mockRejectedValue(error)
+
+      const request = createMockRequest({ id: '1' })
+
+      await userPreferencesController.destroy(request as any, mockReply)
+
+      expect(request.log.error).toHaveBeenCalledWith(
+        {
+          error: 'Preferências não encontradas',
+          operation: 'Exclusão de preferência',
+        },
+        'Erro em Exclusão de preferência',
       )
       expect(mockReply.status).toHaveBeenCalledWith(400)
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -348,19 +410,19 @@ describe('User Preferences Controller', () => {
 
       const request = createMockRequest({}, upsertData)
 
-      await userPreferencesController.upsert(request, mockReply)
+      await userPreferencesController.upsert(request as any, mockReply)
 
       expect(mockUserPreferencesService.upsert).toHaveBeenCalledWith(
         'user-1',
         upsertData,
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', data: upsertData },
-        'Criando/atualizando preferências do usuário',
+        { userId: 'user-1', operation: 'Upsert de preferência' },
+        'Iniciando Upsert de preferência',
       )
       expect(request.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferences: '1' },
-        'Preferências criadas/atualizadas com sucesso',
+        { userId: 'user-1', operation: 'Upsert de preferência' },
+        'Upsert de preferência concluído com sucesso',
       )
       expect(mockReply.status).toHaveBeenCalledWith(200)
       expect(mockReply.send).toHaveBeenCalledWith(
@@ -380,75 +442,18 @@ describe('User Preferences Controller', () => {
 
       const request = createMockRequest({}, { entryOrder: 'ascending' })
 
-      await userPreferencesController.upsert(request, mockReply)
+      await userPreferencesController.upsert(request as any, mockReply)
 
       expect(request.log.error).toHaveBeenCalledWith(
-        { error: 'Erro ao salvar preferências' },
-        'Erro ao criar/atualizar preferências do usuário',
+        {
+          error: 'Erro ao salvar preferências',
+          operation: 'Upsert de preferência',
+        },
+        'Erro em Upsert de preferência',
       )
       expect(mockReply.status).toHaveBeenCalledWith(400)
       expect(mockReply.send).toHaveBeenCalledWith({
         message: 'Erro ao salvar preferências',
-      })
-    })
-  })
-
-  describe('delete', () => {
-    it('should delete preferences', async () => {
-      const deletedPreferences = {
-        id: '1',
-        userId: 'user-1',
-        entryOrder: 'descending',
-        defaultNavigationPeriod: 'monthly',
-        showDailyBalance: false,
-        viewMode: 'all',
-        isFinancialSummaryExpanded: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      mockUserPreferencesService.delete.mockResolvedValue(deletedPreferences)
-
-      await userPreferencesController.delete(mockRequest, mockReply)
-
-      expect(mockUserPreferencesService.delete).toHaveBeenCalledWith('user-1')
-      expect(mockRequest.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1' },
-        'Excluindo preferências do usuário',
-      )
-      expect(mockRequest.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferences: '1' },
-        'Preferências excluídas com sucesso',
-      )
-      expect(mockReply.status).toHaveBeenCalledWith(200)
-      expect(mockReply.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: '1',
-          userId: 'user-1',
-          entryOrder: 'descending',
-          defaultNavigationPeriod: 'monthly',
-          showDailyBalance: false,
-          viewMode: 'all',
-          isFinancialSummaryExpanded: false,
-          createdAt: expect.any(Number),
-          updatedAt: expect.any(Number),
-        }),
-      )
-    })
-
-    it('should handle service errors', async () => {
-      const error = new BadRequestError('Preferências não encontradas')
-      mockUserPreferencesService.delete.mockRejectedValue(error)
-
-      await userPreferencesController.delete(mockRequest, mockReply)
-
-      expect(mockRequest.log.error).toHaveBeenCalledWith(
-        { error: 'Preferências não encontradas' },
-        'Erro ao excluir preferências do usuário',
-      )
-      expect(mockReply.status).toHaveBeenCalledWith(400)
-      expect(mockReply.send).toHaveBeenCalledWith({
-        message: 'Preferências não encontradas',
       })
     })
   })
@@ -473,12 +478,12 @@ describe('User Preferences Controller', () => {
 
       expect(mockUserPreferencesService.reset).toHaveBeenCalledWith('user-1')
       expect(mockRequest.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1' },
-        'Resetando preferências do usuário',
+        { userId: 'user-1', operation: 'Reset de preferência para padrão' },
+        'Iniciando Reset de preferência para padrão',
       )
       expect(mockRequest.log.info).toHaveBeenCalledWith(
-        { userId: 'user-1', preferences: '1' },
-        'Preferências resetadas com sucesso',
+        { userId: 'user-1', operation: 'Reset de preferência para padrão' },
+        'Reset de preferência para padrão concluído com sucesso',
       )
       expect(mockReply.status).toHaveBeenCalledWith(200)
       expect(mockReply.send).toHaveBeenCalledWith(
@@ -503,8 +508,11 @@ describe('User Preferences Controller', () => {
       await userPreferencesController.reset(mockRequest, mockReply)
 
       expect(mockRequest.log.error).toHaveBeenCalledWith(
-        { error: 'Erro ao resetar preferências' },
-        'Erro ao resetar preferências do usuário',
+        {
+          error: 'Erro ao resetar preferências',
+          operation: 'Reset de preferência para padrão',
+        },
+        'Erro em Reset de preferência para padrão',
       )
       expect(mockReply.status).toHaveBeenCalledWith(400)
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -513,39 +521,69 @@ describe('User Preferences Controller', () => {
     })
   })
 
-  describe('error handling', () => {
-    it('should handle generic errors', async () => {
-      const error = new Error('Unexpected error')
-      mockUserPreferencesService.findByUserId.mockRejectedValue(error)
+  describe('createDefault', () => {
+    it('should create default preferences', async () => {
+      const defaultPreferences = {
+        id: '1',
+        userId: 'user-1',
+        entryOrder: 'descending',
+        defaultNavigationPeriod: 'monthly',
+        showDailyBalance: false,
+        viewMode: 'all',
+        isFinancialSummaryExpanded: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
 
-      await userPreferencesController.show(mockRequest, mockReply)
-
-      expect(mockRequest.log.error).toHaveBeenCalledWith(
-        { error: 'Unexpected error' },
-        'Erro ao buscar preferências do usuário',
+      mockUserPreferencesService.createDefault.mockResolvedValue(
+        defaultPreferences,
       )
-      expect(mockReply.status).toHaveBeenCalledWith(500)
-      expect(mockReply.send).toHaveBeenCalledWith({
-        message: 'Internal server error',
-      })
+
+      await userPreferencesController.createDefault(mockRequest, mockReply)
+
+      expect(mockUserPreferencesService.createDefault).toHaveBeenCalledWith(
+        'user-1',
+      )
+      expect(mockRequest.log.info).toHaveBeenCalledWith(
+        { userId: 'user-1', operation: 'Criação de preferência padrão' },
+        'Iniciando Criação de preferência padrão',
+      )
+      expect(mockRequest.log.info).toHaveBeenCalledWith(
+        { userId: 'user-1', operation: 'Criação de preferência padrão' },
+        'Criação de preferência padrão concluído com sucesso',
+      )
+      expect(mockReply.status).toHaveBeenCalledWith(201)
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: '1',
+          userId: 'user-1',
+          entryOrder: 'descending',
+          defaultNavigationPeriod: 'monthly',
+          showDailyBalance: false,
+          viewMode: 'all',
+          isFinancialSummaryExpanded: false,
+          createdAt: expect.any(Number),
+          updatedAt: expect.any(Number),
+        }),
+      )
     })
 
-    it('should handle validation errors', async () => {
-      const error = new Error('Validation failed')
-      error.name = 'ValidationError'
-      mockUserPreferencesService.create.mockRejectedValue(error)
+    it('should handle service errors', async () => {
+      const error = new BadRequestError('Usuário não encontrado')
+      mockUserPreferencesService.createDefault.mockRejectedValue(error)
 
-      const request = createMockRequest({}, { invalidField: 'value' })
+      await userPreferencesController.createDefault(mockRequest, mockReply)
 
-      await userPreferencesController.create(request, mockReply)
-
-      expect(request.log.error).toHaveBeenCalledWith(
-        { error: 'Validation failed' },
-        'Erro ao criar preferências do usuário',
+      expect(mockRequest.log.error).toHaveBeenCalledWith(
+        {
+          error: 'Usuário não encontrado',
+          operation: 'Criação de preferência padrão',
+        },
+        'Erro em Criação de preferência padrão',
       )
-      expect(mockReply.status).toHaveBeenCalledWith(500)
+      expect(mockReply.status).toHaveBeenCalledWith(400)
       expect(mockReply.send).toHaveBeenCalledWith({
-        message: 'Internal server error',
+        message: 'Usuário não encontrado',
       })
     })
   })
