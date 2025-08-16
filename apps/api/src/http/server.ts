@@ -14,6 +14,7 @@ import { accountRoutes } from '@/http/routes/accounts'
 import { categoryRoutes } from '@/http/routes/categories'
 import { creditCardRoutes } from '@/http/routes/credit-cards'
 import { entryRoutes } from '@/http/routes/entries'
+import { healthRoutes } from '@/http/routes/health'
 import { overviewRoutes } from '@/http/routes/overview'
 import { reportRoutes } from '@/http/routes/reports'
 import { userPreferencesRoutes } from '@/http/routes/user-preferences'
@@ -97,6 +98,10 @@ export async function createApp() {
   })
 
   app.register(userPreferencesRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
+
+  app.register(healthRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 

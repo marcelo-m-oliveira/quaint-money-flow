@@ -3,6 +3,7 @@ import { ZodError } from 'zod'
 
 import { handleError } from '@/utils/errors'
 import { ResponseFormatter } from '@/utils/response'
+import { setCacheData } from '@/middleware/redis-cache.middleware'
 
 export interface BaseControllerOptions {
   entityName: string
@@ -33,6 +34,11 @@ export abstract class BaseController {
 
       const result = await operation()
 
+      // Salvar no cache Redis se disponível
+      if (request.method === 'GET' && (request as any).cacheKey) {
+        await setCacheData(request, result)
+      }
+
       request.log.info(
         { userId, operation: operationName },
         `${operationName} concluído com sucesso`,
@@ -61,6 +67,11 @@ export abstract class BaseController {
       )
 
       const result = await operation()
+
+      // Salvar no cache Redis se disponível
+      if (request.method === 'GET' && (request as any).cacheKey) {
+        await setCacheData(request, result)
+      }
 
       request.log.info(
         {

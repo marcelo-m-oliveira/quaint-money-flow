@@ -3,10 +3,8 @@ import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
 import { 
-  cacheMiddleware, 
-  accountListCacheMiddleware, 
-  balanceCacheMiddleware 
-} from '@/middleware/cache.middleware'
+  redisCacheMiddlewares 
+} from '@/middleware/redis-cache.middleware'
 import { performanceMiddleware } from '@/middleware/performance.middleware'
 import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
 import {
@@ -69,7 +67,7 @@ export async function accountRoutes(app: FastifyInstance) {
       preHandler: [
         authMiddleware,
         performanceMiddleware(),
-        accountListCacheMiddleware(), // Cache por 5 minutos
+        redisCacheMiddlewares.list(), // Cache por 5 minutos
         rateLimitMiddlewares.authenticated(),
       ],
     },
@@ -140,7 +138,7 @@ Lista todas as contas bancárias do usuário.
         authMiddleware,
         performanceMiddleware(),
         validateQuery(accountFiltersSchema),
-        accountListCacheMiddleware(), // Cache por 5 minutos
+        redisCacheMiddlewares.list(), // Cache por 5 minutos
         rateLimitMiddlewares.authenticated(),
       ],
     },
@@ -196,7 +194,7 @@ Lista todas as contas bancárias do usuário.
         authMiddleware,
         performanceMiddleware(),
         validateParams(idParamSchema),
-        accountListCacheMiddleware(), // Cache por 5 minutos
+        redisCacheMiddlewares.detail(), // Cache por 10 minutos
         rateLimitMiddlewares.authenticated(),
       ],
     },
@@ -437,7 +435,7 @@ Cria uma nova conta bancária.
         authMiddleware,
         performanceMiddleware(),
         validateParams(idParamSchema),
-        balanceCacheMiddleware(), // Cache por 2 minutos (saldo muda frequentemente)
+        redisCacheMiddlewares.balance(), // Cache por 2 minutos (saldo muda frequentemente)
         rateLimitMiddlewares.authenticated(),
       ],
     },
