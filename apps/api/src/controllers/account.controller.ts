@@ -9,6 +9,7 @@ import {
 
 import type {
   AccountCreateSchema,
+  AccountUpdateSchema,
   IdParamSchema,
   PaginationSchema,
 } from '../utils/schemas'
@@ -16,6 +17,7 @@ import type {
 interface AccountFilters extends PaginationSchema {
   type?: string
   includeInGeneralBalance?: boolean
+  search?: string
 }
 
 export class AccountController extends BaseController {
@@ -34,6 +36,7 @@ export class AccountController extends BaseController {
         const result = await this.accountService.findMany(userId, {
           type: filters.type,
           includeInGeneralBalance: filters.includeInGeneralBalance,
+          search: filters.search,
           page: filters.page || 1,
           limit: filters.limit || 20,
         })
@@ -58,8 +61,12 @@ export class AccountController extends BaseController {
       reply,
       async () => {
         const userId = this.getUserId(request)
+        const filters = this.getQueryParams<AccountFilters>(request)
 
         const result = await this.accountService.findMany(userId, {
+          type: filters.type,
+          includeInGeneralBalance: filters.includeInGeneralBalance,
+          search: filters.search,
           page: 1,
           limit: 1000, // Buscar todas as contas para o select
         })
@@ -113,7 +120,7 @@ export class AccountController extends BaseController {
       async () => {
         const userId = this.getUserId(request)
         const { id } = this.getPathParams<IdParamSchema>(request)
-        const data = this.getBodyParams<AccountCreateSchema>(request)
+        const data = this.getBodyParams<AccountUpdateSchema>(request)
 
         const account = await this.accountService.update(id, data, userId)
         return convertDatesToSeconds(account)
@@ -144,8 +151,8 @@ export class AccountController extends BaseController {
         const userId = this.getUserId(request)
         const { id } = this.getPathParams<IdParamSchema>(request)
 
-        const balance = await this.accountService.getBalance(id, userId)
-        return { balance: balance.toString() }
+        const balanceData = await this.accountService.getBalance(id, userId)
+        return { balance: balanceData.balance.toString() }
       },
       'Consulta de saldo da conta',
     )

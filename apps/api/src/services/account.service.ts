@@ -2,7 +2,10 @@ import { Account, AccountType, PrismaClient } from '@prisma/client'
 
 import { AccountRepository } from '@/repositories/account.repository'
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
-import { type AccountCreateSchema } from '@/utils/schemas'
+import {
+  type AccountCreateSchema,
+  type AccountUpdateSchema,
+} from '@/utils/schemas'
 
 export class AccountService {
   constructor(
@@ -15,11 +18,12 @@ export class AccountService {
     filters: {
       type?: string
       includeInGeneralBalance?: boolean
+      search?: string
       page: number
       limit: number
     },
   ) {
-    const { page, limit, type, includeInGeneralBalance } = filters
+    const { page, limit, type, includeInGeneralBalance, search } = filters
     const skip = (page - 1) * limit
 
     const where: Partial<Account> = {
@@ -41,6 +45,8 @@ export class AccountService {
     // Filtrar e paginar as contas
     const filteredAccounts = accountsWithEntries.filter((account) => {
       if (type && account.type !== type) return false
+      if (search && !account.name.toLowerCase().includes(search.toLowerCase()))
+        return false
       return !(
         includeInGeneralBalance !== undefined &&
         account.includeInGeneralBalance !== includeInGeneralBalance
@@ -120,21 +126,23 @@ export class AccountService {
     })
   }
 
-  async update(id: string, data: Partial<AccountCreateSchema>, userId: string) {
+  async update(id: string, data: Partial<AccountUpdateSchema>, userId: string) {
     // Verificar se a conta existe
     await this.findById(id, userId)
 
-    // Verificar se já existe outra conta com o mesmo nome
-    const existingAccount = await this.accountRepository.findFirst({
-      where: {
-        name: data.name,
-        userId,
-        NOT: { id },
-      },
-    })
+    // Verificar se já existe outra conta com o mesmo nome (apenas se o nome foi fornecido)
+    if (data.name) {
+      const existingAccount = await this.accountRepository.findFirst({
+        where: {
+          name: data.name,
+          userId,
+          NOT: { id },
+        },
+      })
 
-    if (existingAccount) {
-      throw new BadRequestError('Já existe uma conta com este nome')
+      if (existingAccount) {
+        throw new BadRequestError('Já existe uma conta com este nome')
+      }
     }
 
     return this.accountRepository.update({
