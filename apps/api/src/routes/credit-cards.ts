@@ -35,9 +35,7 @@ export async function creditCardRoutes(app: FastifyInstance) {
         description:
           'Retorna lista de cartões formatada para componentes de seleção.',
         response: {
-          200: z.object({
-            data: z.array(selectOptionSchema),
-          }),
+          200: z.array(selectOptionSchema),
           401: z.object({
             message: z.string(),
           }),

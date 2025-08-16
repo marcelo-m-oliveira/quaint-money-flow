@@ -77,7 +77,7 @@ describe('Account Service', () => {
         },
       ]
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+      mockAccountRepository.findByUserId.mockResolvedValue(
         mockAccountsWithEntries,
       )
 
@@ -89,8 +89,9 @@ describe('Account Service', () => {
         search: 'principal',
       })
 
-      expect(mockAccountRepository.getAccountsWithBalance).toHaveBeenCalledWith(
+      expect(mockAccountRepository.findByUserId).toHaveBeenCalledWith(
         'user-1',
+        false,
       )
       expect(result.accounts).toHaveLength(1)
       expect(result.accounts[0].name).toBe('Conta Principal')
@@ -119,7 +120,7 @@ describe('Account Service', () => {
         },
       ]
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+      mockAccountRepository.findByUserId.mockResolvedValue(
         mockAccountsWithEntries,
       )
 
@@ -128,8 +129,9 @@ describe('Account Service', () => {
         limit: 20,
       })
 
-      expect(mockAccountRepository.getAccountsWithBalance).toHaveBeenCalledWith(
+      expect(mockAccountRepository.findByUserId).toHaveBeenCalledWith(
         'user-1',
+        false,
       )
       expect(result.accounts).toHaveLength(1)
       expect(result.accounts[0].balance).toBe(0)
@@ -147,7 +149,7 @@ describe('Account Service', () => {
         updatedAt: new Date(`2024-01-${String(i + 1).padStart(2, '0')}`),
       }))
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+      mockAccountRepository.findByUserId.mockResolvedValue(
         mockAccountsWithEntries,
       )
 
@@ -189,7 +191,7 @@ describe('Account Service', () => {
         },
       ]
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+      mockAccountRepository.findByUserId.mockResolvedValue(
         mockAccountsWithEntries,
       )
 

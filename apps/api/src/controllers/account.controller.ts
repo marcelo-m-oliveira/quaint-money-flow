@@ -56,31 +56,49 @@ export class AccountController extends BaseController {
   }
 
   async selectOptions(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleRequest(
-      request,
-      reply,
-      async () => {
-        const userId = this.getUserId(request)
-        const filters = this.getQueryParams<AccountFilters>(request)
+    try {
+      const userId = this.getUserId(request)
+      const filters = this.getQueryParams<AccountFilters>(request)
 
-        const result = await this.accountService.findMany(userId, {
-          type: filters.type,
-          includeInGeneralBalance: filters.includeInGeneralBalance,
-          search: filters.search,
-          page: 1,
-          limit: 1000, // Buscar todas as contas para o select
-        })
+      request.log.info(
+        { userId, operation: 'selectOptions' },
+        'Iniciando busca de opções de select para contas',
+      )
 
-        // Formatar dados para o select
-        return result.accounts.map((account) => ({
-          value: account.id,
-          label: account.name,
-          icon: account.icon,
-          iconType: account.iconType,
-        }))
-      },
-      `Busca de opções de select para ${this.entityNamePlural}`,
-    )
+      const result = await this.accountService.findMany(userId, {
+        type: filters.type,
+        includeInGeneralBalance: filters.includeInGeneralBalance,
+        search: filters.search,
+        page: 1,
+        limit: 1000, // Buscar todas as contas para o select
+      })
+
+      // Formatar dados para o select
+      const selectOptions = result.accounts.map((account) => ({
+        value: account.id,
+        label: account.name,
+        icon: account.icon,
+        iconType: account.iconType,
+      }))
+
+      request.log.info(
+        {
+          userId,
+          operation: 'selectOptions',
+          totalOptions: selectOptions.length,
+        },
+        'Busca de opções de select para contas concluída com sucesso',
+      )
+
+      // Retornar array diretamente, sem envolver em objeto data
+      return reply.status(200).send(selectOptions)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'selectOptions' },
+        'Erro na busca de opções de select para contas',
+      )
+      throw error // Deixar o Fastify tratar o erro
+    }
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {

@@ -9,16 +9,21 @@ export class AccountRepository extends BaseRepository<'account'> {
 
   // Métodos específicos de negócio
   async findByUserId(userId: string, includeEntries = false) {
-    return this.prisma.account.findMany({
-      where: { userId },
-      include: {
-        entries: includeEntries,
-        _count: {
-          select: {
-            entries: true,
-          },
+    const include: any = {
+      _count: {
+        select: {
+          entries: true,
         },
       },
+    }
+
+    if (includeEntries) {
+      include.entries = true
+    }
+
+    return this.prisma.account.findMany({
+      where: { userId },
+      include,
       orderBy: { createdAt: 'desc' },
     })
   }
