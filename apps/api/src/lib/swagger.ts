@@ -68,7 +68,8 @@ Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
-            description: 'Token de autenticação Bearer. Use "dev-token" para testes.',
+            description:
+              'Token de autenticação Bearer. Use "dev-token" para testes.',
           },
         },
         schemas: {
@@ -101,11 +102,13 @@ Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
       tags: [
         {
           name: '📈 Relatórios',
-          description: 'Endpoints para geração de relatórios financeiros detalhados',
+          description:
+            'Endpoints para geração de relatórios financeiros detalhados',
         },
         {
           name: '💰 Transações',
-          description: 'Gerenciamento completo de entradas e saídas financeiras',
+          description:
+            'Gerenciamento completo de entradas e saídas financeiras',
         },
         {
           name: '🏦 Contas',
@@ -117,7 +120,8 @@ Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
         },
         {
           name: '📂 Categorias',
-          description: 'Organização de transações por categorias e subcategorias',
+          description:
+            'Organização de transações por categorias e subcategorias',
         },
         {
           name: '⚙️ Configurações',

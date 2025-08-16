@@ -56,7 +56,8 @@ Lista todos os cartões de crédito do usuário.
       schema: {
         tags: ['💳 Cartões'],
         summary: 'Opções de Cartões para Select',
-        description: 'Retorna lista de cartões formatada para componentes de seleção.',
+        description:
+          'Retorna lista de cartões formatada para componentes de seleção.',
         response: {
           200: z.array(selectOptionSchema),
           401: z.object({ message: z.string() }),
@@ -179,7 +180,8 @@ Cria um novo cartão de crédito.
       schema: {
         tags: ['💳 Cartões'],
         summary: 'Uso do Cartão',
-        description: 'Recupera informações de uso e fatura de um cartão de crédito.',
+        description:
+          'Recupera informações de uso e fatura de um cartão de crédito.',
         params: idParamSchema,
         response: {
           200: creditCardUsageSchema,

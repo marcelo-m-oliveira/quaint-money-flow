@@ -1,8 +1,8 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { ZodError } from 'zod'
 
-import { ResponseFormatter } from '@/utils/response'
 import { handleError } from '@/utils/errors'
+import { ResponseFormatter } from '@/utils/response'
 
 export interface BaseControllerOptions {
   entityName: string
@@ -26,14 +26,23 @@ export abstract class BaseController {
   ): Promise<FastifyReply> {
     try {
       const userId = request.user?.sub
-      request.log.info({ userId, operation: operationName }, `Iniciando ${operationName}`)
+      request.log.info(
+        { userId, operation: operationName },
+        `Iniciando ${operationName}`,
+      )
 
       const result = await operation()
 
-      request.log.info({ userId, operation: operationName }, `${operationName} concluído com sucesso`)
+      request.log.info(
+        { userId, operation: operationName },
+        `${operationName} concluído com sucesso`,
+      )
       return ResponseFormatter.success(reply, result)
     } catch (error: any) {
-      request.log.error({ error: error.message, operation: operationName }, `Erro em ${operationName}`)
+      request.log.error(
+        { error: error.message, operation: operationName },
+        `Erro em ${operationName}`,
+      )
       return this.handleControllerError(error, reply)
     }
   }
@@ -46,23 +55,29 @@ export abstract class BaseController {
   ): Promise<FastifyReply> {
     try {
       const userId = request.user?.sub
-      request.log.info({ userId, operation: operationName }, `Iniciando ${operationName}`)
+      request.log.info(
+        { userId, operation: operationName },
+        `Iniciando ${operationName}`,
+      )
 
       const result = await operation()
 
       request.log.info(
-        { 
-          userId, 
+        {
+          userId,
           operation: operationName,
           totalItems: result.items.length,
-          totalPages: result.pagination.totalPages 
-        }, 
-        `${operationName} concluído com sucesso`
+          totalPages: result.pagination.totalPages,
+        },
+        `${operationName} concluído com sucesso`,
       )
 
       return ResponseFormatter.paginated(reply, result)
     } catch (error: any) {
-      request.log.error({ error: error.message, operation: operationName }, `Erro em ${operationName}`)
+      request.log.error(
+        { error: error.message, operation: operationName },
+        `Erro em ${operationName}`,
+      )
       return this.handleControllerError(error, reply)
     }
   }
@@ -75,14 +90,27 @@ export abstract class BaseController {
   ): Promise<FastifyReply> {
     try {
       const userId = request.user?.sub
-      request.log.info({ userId, operation: operationName }, `Iniciando ${operationName}`)
+      request.log.info(
+        { userId, operation: operationName },
+        `Iniciando ${operationName}`,
+      )
 
       const result = await operation()
 
-      request.log.info({ userId, operation: operationName }, `${operationName} concluído com sucesso`)
-      return ResponseFormatter.created(reply, result, `${this.entityName} criado com sucesso`)
+      request.log.info(
+        { userId, operation: operationName },
+        `${operationName} concluído com sucesso`,
+      )
+      return ResponseFormatter.created(
+        reply,
+        result,
+        `${this.entityName} criado com sucesso`,
+      )
     } catch (error: any) {
-      request.log.error({ error: error.message, operation: operationName }, `Erro em ${operationName}`)
+      request.log.error(
+        { error: error.message, operation: operationName },
+        `Erro em ${operationName}`,
+      )
       return this.handleControllerError(error, reply)
     }
   }
@@ -95,14 +123,27 @@ export abstract class BaseController {
   ): Promise<FastifyReply> {
     try {
       const userId = request.user?.sub
-      request.log.info({ userId, operation: operationName }, `Iniciando ${operationName}`)
+      request.log.info(
+        { userId, operation: operationName },
+        `Iniciando ${operationName}`,
+      )
 
       const result = await operation()
 
-      request.log.info({ userId, operation: operationName }, `${operationName} concluído com sucesso`)
-      return ResponseFormatter.success(reply, result, `${this.entityName} atualizado com sucesso`)
+      request.log.info(
+        { userId, operation: operationName },
+        `${operationName} concluído com sucesso`,
+      )
+      return ResponseFormatter.success(
+        reply,
+        result,
+        `${this.entityName} atualizado com sucesso`,
+      )
     } catch (error: any) {
-      request.log.error({ error: error.message, operation: operationName }, `Erro em ${operationName}`)
+      request.log.error(
+        { error: error.message, operation: operationName },
+        `Erro em ${operationName}`,
+      )
       return this.handleControllerError(error, reply)
     }
   }
@@ -115,14 +156,23 @@ export abstract class BaseController {
   ): Promise<FastifyReply> {
     try {
       const userId = request.user?.sub
-      request.log.info({ userId, operation: operationName }, `Iniciando ${operationName}`)
+      request.log.info(
+        { userId, operation: operationName },
+        `Iniciando ${operationName}`,
+      )
 
       await operation()
 
-      request.log.info({ userId, operation: operationName }, `${operationName} concluído com sucesso`)
+      request.log.info(
+        { userId, operation: operationName },
+        `${operationName} concluído com sucesso`,
+      )
       return ResponseFormatter.noContent(reply)
     } catch (error: any) {
-      request.log.error({ error: error.message, operation: operationName }, `Erro em ${operationName}`)
+      request.log.error(
+        { error: error.message, operation: operationName },
+        `Erro em ${operationName}`,
+      )
       return this.handleControllerError(error, reply)
     }
   }
@@ -133,7 +183,7 @@ export abstract class BaseController {
         reply,
         'Erro de validação',
         error.flatten().fieldErrors,
-        400
+        400,
       )
     }
 

@@ -1,4 +1,5 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
+
 import { ResponseFormatter } from '@/utils/response'
 
 interface RateLimitConfig {
@@ -15,7 +16,7 @@ class RateLimitStore {
 
   get(key: string): { count: number; resetTime: number } | undefined {
     const entry = this.store.get(key)
-    
+
     if (!entry) return undefined
 
     // Se a janela expirou, remover a entrada
@@ -32,9 +33,12 @@ class RateLimitStore {
     this.store.set(key, { count, resetTime })
   }
 
-  increment(key: string, windowMs: number): { count: number; resetTime: number } {
+  increment(
+    key: string,
+    windowMs: number,
+  ): { count: number; resetTime: number } {
     const entry = this.get(key)
-    
+
     if (!entry) {
       this.set(key, 1, windowMs)
       return { count: 1, resetTime: Date.now() + windowMs }
@@ -85,12 +89,7 @@ export const rateLimitMiddleware = (config: RateLimitConfig) => {
 
     // Se excedeu o limite, retornar erro
     if (count > max) {
-      return ResponseFormatter.error(
-        reply,
-        message,
-        undefined,
-        statusCode
-      )
+      return ResponseFormatter.error(reply, message, undefined, statusCode)
     }
   }
 }
@@ -146,12 +145,12 @@ export const rateLimitMiddlewares = {
 export const rateLimitUtils = {
   reset: (key: string) => rateLimitStore.reset(key),
   clear: () => rateLimitStore.clear(),
-  
+
   // Reset rate limit para um usuário específico
   resetForUser: (userId: string) => {
     rateLimitStore.reset(`user:${userId}`)
   },
-  
+
   // Reset rate limit para um IP específico
   resetForIP: (ip: string) => {
     rateLimitStore.reset(ip)

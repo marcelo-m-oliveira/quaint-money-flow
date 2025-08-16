@@ -7,6 +7,6 @@ module.exports = {
     'unused-imports/no-unused-imports': 'error',
     'no-useless-constructor': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': ['warn'],
   },
 }

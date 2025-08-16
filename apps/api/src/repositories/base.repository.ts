@@ -40,7 +40,10 @@ export abstract class BaseRepository<TModel extends keyof PrismaClient> {
     })
   }
 
-  async findFirst(where: any, options?: { include?: any; select?: any; orderBy?: any }) {
+  async findFirst(
+    where: any,
+    options?: { include?: any; select?: any; orderBy?: any },
+  ) {
     return (this.prisma[this.model] as any).findFirst({
       where,
       ...options,
@@ -58,7 +61,11 @@ export abstract class BaseRepository<TModel extends keyof PrismaClient> {
     })
   }
 
-  async update(id: string, data: any, options?: { include?: any; select?: any }) {
+  async update(
+    id: string,
+    data: any,
+    options?: { include?: any; select?: any },
+  ) {
     return (this.prisma[this.model] as any).update({
       where: { id },
       data,
@@ -113,7 +120,7 @@ export abstract class BaseRepository<TModel extends keyof PrismaClient> {
     limit: number,
     orderBy?: any,
     include?: any,
-    select?: any
+    select?: any,
   ) {
     const skip = (page - 1) * limit
 
@@ -144,7 +151,7 @@ export abstract class BaseRepository<TModel extends keyof PrismaClient> {
     where: any,
     createData: any,
     updateData: any,
-    options?: { include?: any; select?: any }
+    options?: { include?: any; select?: any },
   ) {
     return (this.prisma[this.model] as any).upsert({
       where,
@@ -158,7 +165,13 @@ export abstract class BaseRepository<TModel extends keyof PrismaClient> {
     return (this.prisma[this.model] as any).aggregate(aggregate)
   }
 
-  async groupBy(groupBy: any, having?: any, orderBy?: any, take?: number, skip?: number) {
+  async groupBy(
+    groupBy: any,
+    having?: any,
+    orderBy?: any,
+    take?: number,
+    skip?: number,
+  ) {
     return (this.prisma[this.model] as any).groupBy({
       by: groupBy,
       having,

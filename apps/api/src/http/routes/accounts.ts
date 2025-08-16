@@ -1,13 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
+import { 
+  cacheMiddleware, 
+  accountListCacheMiddleware, 
+  balanceCacheMiddleware 
+} from '@/middleware/cache.middleware'
+import { performanceMiddleware } from '@/middleware/performance.middleware'
+import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '@/middleware/validation.middleware'
 import {
   accountBalanceSchema,
   accountCreateSchema,
   accountFiltersSchema,
-  accountListResponseSchema,
   accountResponseSchema,
   accountUpdateSchema,
   idParamSchema,
@@ -26,15 +36,42 @@ export async function accountRoutes(app: FastifyInstance) {
       schema: {
         tags: ['🏦 Contas'],
         summary: 'Opções de Contas para Select',
-        description: 'Retorna lista de contas formatada para componentes de seleção.',
+        description:
+          'Retorna lista de contas formatada para componentes de seleção.',
         response: {
-          200: z.array(selectOptionSchema),
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            success: z.boolean(),
+            data: z.array(selectOptionSchema),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          401: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          500: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        accountListCacheMiddleware(), // Cache por 5 minutos
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     accountController.selectOptions.bind(accountController),
   )
@@ -64,13 +101,48 @@ Lista todas as contas bancárias do usuário.
         `,
         querystring: accountFiltersSchema,
         response: {
-          200: accountListResponseSchema,
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            success: z.boolean(),
+            data: z.array(accountResponseSchema),
+            pagination: z.object({
+              page: z.number(),
+              limit: z.number(),
+              total: z.number(),
+              totalPages: z.number(),
+              hasNext: z.boolean(),
+              hasPrev: z.boolean(),
+            }),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          401: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          500: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateQuery(accountFiltersSchema),
+        accountListCacheMiddleware(), // Cache por 5 minutos
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     accountController.index.bind(accountController),
   )
@@ -85,14 +157,48 @@ Lista todas as contas bancárias do usuário.
         description: 'Recupera uma conta bancária específica pelo ID.',
         params: idParamSchema,
         response: {
-          200: accountResponseSchema,
-          401: z.object({ message: z.string() }),
-          404: z.object({ error: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            success: z.boolean(),
+            data: accountResponseSchema,
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          401: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          404: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          500: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateParams(idParamSchema),
+        accountListCacheMiddleware(), // Cache por 5 minutos
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     accountController.show.bind(accountController),
   )
@@ -120,14 +226,49 @@ Cria uma nova conta bancária.
         `,
         body: accountCreateSchema,
         response: {
-          201: accountResponseSchema,
-          400: z.object({ error: z.string() }),
-          401: z.object({ message: z.string() }),
-          500: z.object({ error: z.string() }),
+          201: z.object({
+            success: z.boolean(),
+            data: accountResponseSchema,
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          400: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            errors: z.record(z.string(), z.array(z.string())).optional(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          401: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          500: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateBody(accountCreateSchema),
+        rateLimitMiddlewares.create(),
+      ],
     },
     accountController.store.bind(accountController),
   )
@@ -143,15 +284,58 @@ Cria uma nova conta bancária.
         params: idParamSchema,
         body: accountUpdateSchema,
         response: {
-          200: accountResponseSchema,
-          400: z.object({ error: z.string() }),
-          401: z.object({ message: z.string() }),
-          404: z.object({ error: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            success: z.boolean(),
+            data: accountResponseSchema,
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          400: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            errors: z.record(z.string(), z.array(z.string())).optional(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          401: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          404: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          500: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateParams(idParamSchema),
+        validateBody(accountUpdateSchema),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     accountController.update.bind(accountController),
   )
@@ -167,13 +351,39 @@ Cria uma nova conta bancária.
         params: idParamSchema,
         response: {
           204: z.null(),
-          401: z.object({ message: z.string() }),
-          404: z.object({ error: z.string() }),
-          500: z.object({ error: z.string() }),
+          401: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          404: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          500: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateParams(idParamSchema),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     accountController.destroy.bind(accountController),
   )
@@ -188,14 +398,48 @@ Cria uma nova conta bancária.
         description: 'Recupera o saldo atual de uma conta bancária.',
         params: idParamSchema,
         response: {
-          200: accountBalanceSchema,
-          401: z.object({ message: z.string() }),
-          404: z.object({ error: z.string() }),
-          500: z.object({ error: z.string() }),
+          200: z.object({
+            success: z.boolean(),
+            data: accountBalanceSchema,
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          401: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          404: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
+          500: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            meta: z.object({
+              timestamp: z.number(),
+              version: z.string(),
+            }),
+          }),
         },
         security: [{ bearerAuth: [] }],
       },
-      preHandler: [authMiddleware],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateParams(idParamSchema),
+        balanceCacheMiddleware(), // Cache por 2 minutos (saldo muda frequentemente)
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     accountController.balance.bind(accountController),
   )

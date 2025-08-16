@@ -1,7 +1,8 @@
 import { PrismaClient } from '@prisma/client'
-import { BaseRepository } from '@/repositories/base.repository'
+
 import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { NotFoundError } from '@/http/routes/_errors/not-found-error'
+import { BaseRepository } from '@/repositories/base.repository'
 
 export interface PaginationOptions {
   page: number
@@ -31,7 +32,11 @@ export abstract class BaseService<TModel extends keyof PrismaClient> {
     this.prisma = prisma
   }
 
-  protected calculatePagination(total: number, page: number, limit: number): PaginationResult {
+  protected calculatePagination(
+    total: number,
+    page: number,
+    limit: number,
+  ): PaginationResult {
     const totalPages = Math.ceil(total / limit)
     return {
       page,
@@ -43,15 +48,23 @@ export abstract class BaseService<TModel extends keyof PrismaClient> {
     }
   }
 
-  protected validateUserOwnership(userId: string, entityUserId: string, entityName: string = 'Entidade') {
+  protected validateUserOwnership(
+    userId: string,
+    entityUserId: string,
+    entityName: string = 'Entidade',
+  ) {
     if (userId !== entityUserId) {
       throw new BadRequestError(`${entityName} não pertence ao usuário`)
     }
   }
 
-  protected async findByIdOrThrow(id: string, userId?: string, entityName: string = 'Entidade') {
+  protected async findByIdOrThrow(
+    id: string,
+    userId?: string,
+    entityName: string = 'Entidade',
+  ) {
     const entity = await this.repository.findById(id)
-    
+
     if (!entity) {
       throw new NotFoundError(`${entityName} não encontrada`)
     }
@@ -68,7 +81,7 @@ export abstract class BaseService<TModel extends keyof PrismaClient> {
     value: any,
     userId: string,
     excludeId?: string,
-    entityName: string = 'Entidade'
+    entityName: string = 'Entidade',
   ) {
     const where: any = {
       [field]: value,
@@ -80,9 +93,11 @@ export abstract class BaseService<TModel extends keyof PrismaClient> {
     }
 
     const existing = await this.repository.findMany({ where })
-    
+
     if (existing.length > 0) {
-      throw new BadRequestError(`${entityName} com ${field} '${value}' já existe`)
+      throw new BadRequestError(
+        `${entityName} com ${field} '${value}' já existe`,
+      )
     }
   }
 
@@ -90,12 +105,14 @@ export abstract class BaseService<TModel extends keyof PrismaClient> {
     repository: BaseRepository<any>,
     id: string,
     fieldName: string,
-    entityName: string = 'Entidade'
+    entityName: string = 'Entidade',
   ) {
     const entity = await repository.findById(id)
-    
+
     if (!entity) {
-      throw new BadRequestError(`${entityName} com ${fieldName} '${id}' não encontrada`)
+      throw new BadRequestError(
+        `${entityName} com ${fieldName} '${id}' não encontrada`,
+      )
     }
 
     return entity
@@ -104,26 +121,29 @@ export abstract class BaseService<TModel extends keyof PrismaClient> {
   protected async validateRequiredFields(
     data: Record<string, any>,
     requiredFields: string[],
-    entityName: string = 'Entidade'
+    entityName: string = 'Entidade',
   ) {
-    const missingFields = requiredFields.filter(field => !data[field])
-    
+    const missingFields = requiredFields.filter((field) => !data[field])
+
     if (missingFields.length > 0) {
       throw new BadRequestError(
-        `Campos obrigatórios não informados: ${missingFields.join(', ')}`
+        `Campos obrigatórios não informados: ${missingFields.join(', ')}`,
       )
     }
   }
 
-  protected sanitizeData(data: Record<string, any>, allowedFields: string[]): Record<string, any> {
+  protected sanitizeData(
+    data: Record<string, any>,
+    allowedFields: string[],
+  ): Record<string, any> {
     const sanitized: Record<string, any> = {}
-    
+
     for (const field of allowedFields) {
       if (data[field] !== undefined) {
         sanitized[field] = data[field]
       }
     }
-    
+
     return sanitized
   }
 
@@ -131,7 +151,11 @@ export abstract class BaseService<TModel extends keyof PrismaClient> {
     return await this.prisma.$transaction(operation)
   }
 
-  protected logOperation(operation: string, userId: string, details?: Record<string, any>) {
+  protected logOperation(
+    operation: string,
+    userId: string,
+    details?: Record<string, any>,
+  ) {
     console.log(`[${operation}] User: ${userId}`, details || '')
   }
 }

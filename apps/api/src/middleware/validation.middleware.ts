@@ -1,5 +1,6 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
-import { ZodSchema, ZodError } from 'zod'
+import { FastifyReply, FastifyRequest } from 'fastify'
+import { ZodError, ZodSchema } from 'zod'
+
 import { ResponseFormatter } from '@/utils/response'
 
 export interface ValidationOptions {
@@ -29,7 +30,7 @@ export const validationMiddleware = (schemas: ValidationOptions) => {
 
       // Validar headers
       if (schemas.headers && request.headers) {
-        request.headers = schemas.headers.parse(request.headers)
+        schemas.headers.parse(request.headers)
       }
     } catch (error) {
       if (error instanceof ZodError) {
@@ -37,7 +38,7 @@ export const validationMiddleware = (schemas: ValidationOptions) => {
           reply,
           'Erro de validação',
           error.flatten().fieldErrors,
-          400
+          400,
         )
       }
       throw error
@@ -46,10 +47,14 @@ export const validationMiddleware = (schemas: ValidationOptions) => {
 }
 
 // Middlewares específicos para diferentes tipos de validação
-export const validateBody = (schema: ZodSchema) => validationMiddleware({ body: schema })
-export const validateQuery = (schema: ZodSchema) => validationMiddleware({ query: schema })
-export const validateParams = (schema: ZodSchema) => validationMiddleware({ params: schema })
-export const validateHeaders = (schema: ZodSchema) => validationMiddleware({ headers: schema })
+export const validateBody = (schema: ZodSchema) =>
+  validationMiddleware({ body: schema })
+export const validateQuery = (schema: ZodSchema) =>
+  validationMiddleware({ query: schema })
+export const validateParams = (schema: ZodSchema) =>
+  validationMiddleware({ params: schema })
+export const validateHeaders = (schema: ZodSchema) =>
+  validationMiddleware({ headers: schema })
 
 // Middleware para validação de paginação
 export const validatePagination = () => {

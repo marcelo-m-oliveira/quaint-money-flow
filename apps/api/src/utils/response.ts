@@ -1,5 +1,5 @@
-import { FastifyReply } from 'fastify'
 import { dateToSeconds } from '@saas/utils'
+import { FastifyReply } from 'fastify'
 
 export interface ApiResponse<T = any> {
   success: boolean
@@ -90,11 +90,7 @@ export class ResponseFormatter {
     return reply.status(statusCode).send(response)
   }
 
-  static created<T>(
-    reply: FastifyReply,
-    data: T,
-    message?: string,
-  ) {
+  static created<T>(reply: FastifyReply, data: T, message?: string) {
     return this.success(reply, data, message, 201)
   }
 
@@ -108,15 +104,15 @@ export const convertDatesToSeconds = <T extends Record<string, any>>(
   obj: T,
   dateFields: (keyof T)[] = ['createdAt', 'updatedAt', 'date'],
 ): T => {
-  const converted = { ...obj }
-  
+  const converted = { ...obj } as any
+
   for (const field of dateFields) {
     if (converted[field] && converted[field] instanceof Date) {
       converted[field] = dateToSeconds(converted[field] as Date)
     }
   }
-  
-  return converted
+
+  return converted as T
 }
 
 // Utilitário para converter arrays de objetos com datas
@@ -124,5 +120,5 @@ export const convertArrayDatesToSeconds = <T extends Record<string, any>>(
   array: T[],
   dateFields: (keyof T)[] = ['createdAt', 'updatedAt', 'date'],
 ): T[] => {
-  return array.map(item => convertDatesToSeconds(item, dateFields))
+  return array.map((item) => convertDatesToSeconds(item, dateFields))
 }
