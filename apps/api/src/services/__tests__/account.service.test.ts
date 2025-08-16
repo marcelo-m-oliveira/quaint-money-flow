@@ -406,7 +406,9 @@ describe('Account Service', () => {
       )
 
       expect(mockAccountRepository.findFirst).not.toHaveBeenCalled()
-      expect(mockAccountRepository.update).toHaveBeenCalledWith('1', { type: 'investment' })
+      expect(mockAccountRepository.update).toHaveBeenCalledWith('1', {
+        type: 'investment',
+      })
       expect(result).toEqual(updatedAccount)
     })
   })

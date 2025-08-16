@@ -76,7 +76,6 @@ export { overviewService } from './services/overview'
 // EXPORTAÇÕES CENTRALIZADAS - HOOKS
 // ============================================================================
 
-export { usePreferences } from './hooks/use-preferences'
 export { useUserPreferencesWithAutoInit } from './hooks/use-user-preferences'
 export { useInfiniteScroll } from './hooks/use-infinite-scroll'
 export { useCrudToast } from './hooks/use-crud-toast'

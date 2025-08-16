@@ -3,15 +3,12 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 
 import { BaseController } from '@/controllers/base.controller'
 import { CreditCardService } from '@/services/credit-card.service'
-import {
-  convertArrayDatesToSeconds,
-  convertDatesToSeconds,
-} from '@/utils/response'
+import { convertDatesToSeconds } from '@/utils/response'
 
 import type {
   CreditCardCreateSchema,
-  CreditCardUpdateSchema,
   CreditCardFiltersSchema,
+  CreditCardUpdateSchema,
   IdParamSchema,
 } from '../utils/schemas'
 
@@ -38,12 +35,14 @@ export class CreditCardController extends BaseController {
         })
 
         // Converter datas para timestamp em segundos e formatar números
-        const creditCardsWithConvertedDates = result.creditCards.map((creditCard) => ({
-          ...convertDatesToSeconds(creditCard),
-          limit: Number(creditCard.limit),
-          usage: Number(creditCard.usage || 0),
-          availableLimit: Number(creditCard.availableLimit || 0),
-        }))
+        const creditCardsWithConvertedDates = result.creditCards.map(
+          (creditCard) => ({
+            ...convertDatesToSeconds(creditCard),
+            limit: Number(creditCard.limit),
+            usage: Number(creditCard.usage || 0),
+            availableLimit: Number(creditCard.availableLimit || 0),
+          }),
+        )
 
         return {
           items: creditCardsWithConvertedDates,

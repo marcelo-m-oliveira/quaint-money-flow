@@ -27,7 +27,9 @@ describe('Credit Card Controller', () => {
     jest.clearAllMocks()
 
     // Criar instância do controller
-    creditCardController = new CreditCardController(mockCreditCardService as any)
+    creditCardController = new CreditCardController(
+      mockCreditCardService as any,
+    )
 
     // Mock de request
     mockRequest = {
@@ -87,7 +89,9 @@ describe('Credit Card Controller', () => {
     jest
       .spyOn(creditCardController as any, 'getUserId')
       .mockReturnValue('test-user-id')
-    jest.spyOn(creditCardController as any, 'getQueryParams').mockReturnValue({})
+    jest
+      .spyOn(creditCardController as any, 'getQueryParams')
+      .mockReturnValue({})
     jest.spyOn(creditCardController as any, 'getBodyParams').mockReturnValue({})
     jest.spyOn(creditCardController as any, 'getPathParams').mockReturnValue({})
   })
@@ -121,11 +125,14 @@ describe('Credit Card Controller', () => {
 
       const result = await creditCardController.index(mockRequest, mockReply)
 
-      expect(mockCreditCardService.findMany).toHaveBeenCalledWith('test-user-id', {
-        search: undefined,
-        page: 1,
-        limit: 20,
-      })
+      expect(mockCreditCardService.findMany).toHaveBeenCalledWith(
+        'test-user-id',
+        {
+          search: undefined,
+          page: 1,
+          limit: 20,
+        },
+      )
 
       expect(result).toBeDefined()
     })
@@ -155,11 +162,14 @@ describe('Credit Card Controller', () => {
 
       await creditCardController.index(mockRequest, mockReply)
 
-      expect(mockCreditCardService.findMany).toHaveBeenCalledWith('test-user-id', {
-        search: 'principal',
-        page: 2,
-        limit: 10,
-      })
+      expect(mockCreditCardService.findMany).toHaveBeenCalledWith(
+        'test-user-id',
+        {
+          search: 'principal',
+          page: 2,
+          limit: 10,
+        },
+      )
     })
   })
 
@@ -192,13 +202,19 @@ describe('Credit Card Controller', () => {
         },
       })
 
-      const result = await creditCardController.selectOptions(mockRequest, mockReply)
+      const result = await creditCardController.selectOptions(
+        mockRequest,
+        mockReply,
+      )
 
-      expect(mockCreditCardService.findMany).toHaveBeenCalledWith('test-user-id', {
-        search: undefined,
-        page: 1,
-        limit: 1000,
-      })
+      expect(mockCreditCardService.findMany).toHaveBeenCalledWith(
+        'test-user-id',
+        {
+          search: undefined,
+          page: 1,
+          limit: 1000,
+        },
+      )
 
       expect(result).toBeDefined()
     })
@@ -221,7 +237,10 @@ describe('Credit Card Controller', () => {
 
       const result = await creditCardController.show(mockRequest, mockReply)
 
-      expect(mockCreditCardService.findById).toHaveBeenCalledWith('1', 'test-user-id')
+      expect(mockCreditCardService.findById).toHaveBeenCalledWith(
+        '1',
+        'test-user-id',
+      )
       expect(result).toBeDefined()
     })
   })
@@ -303,7 +322,10 @@ describe('Credit Card Controller', () => {
 
       const result = await creditCardController.destroy(mockRequest, mockReply)
 
-      expect(mockCreditCardService.delete).toHaveBeenCalledWith('1', 'test-user-id')
+      expect(mockCreditCardService.delete).toHaveBeenCalledWith(
+        '1',
+        'test-user-id',
+      )
       expect(result).toBeDefined()
     })
   })
@@ -311,9 +333,9 @@ describe('Credit Card Controller', () => {
   describe('usage', () => {
     it('should return credit card usage', async () => {
       const usageData = {
-        usage: 1500.50,
+        usage: 1500.5,
         limit: 5000,
-        availableLimit: 3499.50,
+        availableLimit: 3499.5,
         creditCardId: '1',
         lastUpdated: new Date().toISOString(),
       }
@@ -325,7 +347,10 @@ describe('Credit Card Controller', () => {
 
       await creditCardController.usage(mockRequest, mockReply)
 
-      expect(mockCreditCardService.getUsage).toHaveBeenCalledWith('1', 'test-user-id')
+      expect(mockCreditCardService.getUsage).toHaveBeenCalledWith(
+        '1',
+        'test-user-id',
+      )
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
         data: { usage: '1500.5' },
@@ -338,9 +363,9 @@ describe('Credit Card Controller', () => {
       const error = new Error('Service error')
       mockCreditCardService.findMany.mockRejectedValue(error)
 
-      await expect(creditCardController.index(mockRequest, mockReply)).rejects.toThrow(
-        'Service error',
-      )
+      await expect(
+        creditCardController.index(mockRequest, mockReply),
+      ).rejects.toThrow('Service error')
     })
 
     it('should handle invalid user ID', async () => {
@@ -350,9 +375,9 @@ describe('Credit Card Controller', () => {
           throw new Error('Usuário não autenticado')
         })
 
-      await expect(creditCardController.index(mockRequest, mockReply)).rejects.toThrow(
-        'Usuário não autenticado',
-      )
+      await expect(
+        creditCardController.index(mockRequest, mockReply),
+      ).rejects.toThrow('Usuário não autenticado')
     })
   })
 })

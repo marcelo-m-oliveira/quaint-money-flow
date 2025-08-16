@@ -24,7 +24,7 @@ let redisClient: Redis | null = null
 export function getRedisClient(): Redis {
   if (!redisClient) {
     redisClient = new Redis(redisConfig)
-    
+
     // Event listeners para monitoramento
     redisClient.on('connect', () => {
       console.log('✅ Redis conectado')
@@ -92,14 +92,14 @@ export const redisUtils = {
     const info = await client.info('memory')
     const lines = info.split('\r\n')
     const stats: Record<string, string> = {}
-    
-    lines.forEach(line => {
+
+    lines.forEach((line) => {
       if (line.includes(':')) {
         const [key, value] = line.split(':')
         stats[key] = value
       }
     })
-    
+
     return stats
   },
 
@@ -109,14 +109,14 @@ export const redisUtils = {
     const info = await client.info('stats')
     const lines = info.split('\r\n')
     const stats: Record<string, string> = {}
-    
-    lines.forEach(line => {
+
+    lines.forEach((line) => {
       if (line.includes(':')) {
         const [key, value] = line.split(':')
         stats[key] = value
       }
     })
-    
+
     return stats
-  }
+  },
 }

@@ -1,5 +1,4 @@
 import { CreditCardRepository } from '../credit-card.repository'
-import { PrismaClient } from '@prisma/client'
 
 // Declarações para Jest
 declare const jest: any
@@ -115,7 +114,9 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.findUnique.mockResolvedValue(mockCreditCard)
 
-      const result = await creditCardRepository.findById('1', { include: { defaultPaymentAccount: true } })
+      const result = await creditCardRepository.findById('1', {
+        include: { defaultPaymentAccount: true },
+      })
 
       expect(mockPrismaClient.creditCard.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -136,7 +137,10 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.findFirst.mockResolvedValue(mockCreditCard)
 
-      const result = await creditCardRepository.findFirst({ name: 'Cartão Principal', userId: 'user-1' })
+      const result = await creditCardRepository.findFirst({
+        name: 'Cartão Principal',
+        userId: 'user-1',
+      })
 
       expect(mockPrismaClient.creditCard.findFirst).toHaveBeenCalledWith({
         where: { name: 'Cartão Principal', userId: 'user-1' },
@@ -339,9 +343,7 @@ describe('Credit Card Repository', () => {
           id: '1',
           name: 'Cartão Principal',
           userId: 'user-1',
-          entries: [
-            { id: 'entry-1', amount: '100', type: 'expense' },
-          ],
+          entries: [{ id: 'entry-1', amount: '100', type: 'expense' }],
           defaultPaymentAccount: { id: 'account-1', name: 'Conta Principal' },
           _count: { entries: 1 },
         },
@@ -376,7 +378,9 @@ describe('Credit Card Repository', () => {
         userId: 'user-1',
       }
 
-      mockPrismaClient.creditCard.findFirst.mockResolvedValue(existingCreditCard)
+      mockPrismaClient.creditCard.findFirst.mockResolvedValue(
+        existingCreditCard,
+      )
 
       const result = await creditCardRepository.existsByNameAndUserId(
         'Cartão Principal',
@@ -441,7 +445,8 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.findMany.mockResolvedValue(mockCreditCards)
 
-      const result = await creditCardRepository.getCreditCardsWithUsage('user-1')
+      const result =
+        await creditCardRepository.getCreditCardsWithUsage('user-1')
 
       expect(mockPrismaClient.creditCard.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
@@ -477,11 +482,16 @@ describe('Credit Card Repository', () => {
 
     it('should handle unique constraint violations', async () => {
       const uniqueConstraintError = new Error('Unique constraint failed')
-      mockPrismaClient.creditCard.create.mockRejectedValue(uniqueConstraintError)
+      mockPrismaClient.creditCard.create.mockRejectedValue(
+        uniqueConstraintError,
+      )
 
       await expect(
         creditCardRepository.create({
-          data: { name: 'Cartão Duplicado', user: { connect: { id: 'user-1' } } },
+          data: {
+            name: 'Cartão Duplicado',
+            user: { connect: { id: 'user-1' } },
+          },
         }),
       ).rejects.toThrow('Unique constraint failed')
     })

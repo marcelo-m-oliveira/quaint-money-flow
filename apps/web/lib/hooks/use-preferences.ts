@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react'
 
+import { useCrudToast } from '@/lib'
 import { preferencesSchema } from '@/lib/schemas'
 import type { UserPreferences } from '@/lib/types'
-
-import { useCrudToast } from './use-crud-toast'
 
 const PREFERENCES_STORAGE_KEY = 'quaint-money-preferences'
 

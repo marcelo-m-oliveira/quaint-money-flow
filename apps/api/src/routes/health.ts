@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { isRedisConnected, redisUtils } from '@/lib/redis'
-import { redisCacheUtils } from '@/middleware/redis-cache.middleware'
 import { performanceUtils } from '@/middleware/performance.middleware'
+import { redisCacheUtils } from '@/middleware/redis-cache.middleware'
 
 export async function healthRoutes(app: FastifyInstance) {
   // GET /health - Health check básico
@@ -41,10 +41,10 @@ export async function healthRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const startTime = Date.now()
-      
+
       // Verificar conectividade do Redis
       const redisConnected = await isRedisConnected()
-      
+
       const healthData = {
         status: redisConnected ? 'healthy' : 'degraded',
         timestamp: new Date().toISOString(),
@@ -56,7 +56,7 @@ export async function healthRoutes(app: FastifyInstance) {
       }
 
       const statusCode = redisConnected ? 200 : 503
-      
+
       return reply.status(statusCode).send({
         success: redisConnected,
         data: healthData,
@@ -82,11 +82,11 @@ export async function healthRoutes(app: FastifyInstance) {
             data: z.object({
               connected: z.boolean(),
               ping: z.string(),
-              memory: z.record(z.string()),
-              stats: z.record(z.string()),
+              memory: z.record(z.string(), z.any()),
+              stats: z.record(z.string(), z.any()),
               cache: z.object({
                 totalKeys: z.number(),
-                info: z.record(z.string()),
+                info: z.record(z.string(), z.any()),
               }),
             }),
             meta: z.object({
@@ -108,7 +108,7 @@ export async function healthRoutes(app: FastifyInstance) {
     async (request, reply) => {
       try {
         const redisConnected = await isRedisConnected()
-        
+
         if (!redisConnected) {
           return reply.status(503).send({
             success: false,
@@ -169,18 +169,22 @@ export async function healthRoutes(app: FastifyInstance) {
             data: z.object({
               totalRequests: z.number(),
               averageResponseTime: z.string(),
-              slowestEndpoints: z.array(z.object({
-                endpoint: z.string(),
-                count: z.number(),
-                avgDuration: z.string(),
-              })),
-              recentRequests: z.array(z.object({
-                method: z.string(),
-                url: z.string(),
-                duration: z.string(),
-                statusCode: z.number(),
-                timestamp: z.string(),
-              })),
+              slowestEndpoints: z.array(
+                z.object({
+                  endpoint: z.string(),
+                  count: z.number(),
+                  avgDuration: z.string(),
+                }),
+              ),
+              recentRequests: z.array(
+                z.object({
+                  method: z.string(),
+                  url: z.string(),
+                  duration: z.string(),
+                  statusCode: z.number(),
+                  timestamp: z.string(),
+                }),
+              ),
             }),
             meta: z.object({
               timestamp: z.number(),
@@ -235,7 +239,7 @@ export async function healthRoutes(app: FastifyInstance) {
     async (request, reply) => {
       try {
         await redisCacheUtils.clearAll()
-        
+
         return reply.status(200).send({
           success: true,
           message: 'Cache limpo com sucesso',

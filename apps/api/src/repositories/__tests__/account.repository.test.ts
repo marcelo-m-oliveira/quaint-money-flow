@@ -1,5 +1,4 @@
 import { AccountRepository } from '../account.repository'
-import { PrismaClient } from '@prisma/client'
 
 // Declarações para Jest
 declare const jest: any
@@ -147,7 +146,9 @@ describe('Account Repository', () => {
 
       mockPrismaClient.account.create.mockResolvedValue(createdAccount)
 
-      const result = await accountRepository.create(accountData, { include: { entries: true } })
+      const result = await accountRepository.create(accountData, {
+        include: { entries: true },
+      })
 
       expect(mockPrismaClient.account.create).toHaveBeenCalledWith({
         data: accountData,
@@ -177,7 +178,9 @@ describe('Account Repository', () => {
 
       mockPrismaClient.account.update.mockResolvedValue(updatedAccount)
 
-      const result = await accountRepository.update('1', updateData, { include: { entries: true } })
+      const result = await accountRepository.update('1', updateData, {
+        include: { entries: true },
+      })
 
       expect(mockPrismaClient.account.update).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -367,7 +370,10 @@ describe('Account Repository', () => {
 
       mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
 
-      const result = await accountRepository.findByUserIdAndType('user-1', 'bank')
+      const result = await accountRepository.findByUserIdAndType(
+        'user-1',
+        'bank',
+      )
 
       expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({
         where: {
@@ -394,7 +400,11 @@ describe('Account Repository', () => {
 
       mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
 
-      const result = await accountRepository.findByUserIdAndType('user-1', 'bank', true)
+      const result = await accountRepository.findByUserIdAndType(
+        'user-1',
+        'bank',
+        true,
+      )
 
       expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({
         where: {
@@ -421,7 +431,10 @@ describe('Account Repository', () => {
 
       mockPrismaClient.account.findFirst.mockResolvedValue(mockAccount)
 
-      const result = await accountRepository.existsByNameAndUserId('Conta Principal', 'user-1')
+      const result = await accountRepository.existsByNameAndUserId(
+        'Conta Principal',
+        'user-1',
+      )
 
       expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
         where: {
@@ -435,7 +448,10 @@ describe('Account Repository', () => {
     it('should return false when account does not exist', async () => {
       mockPrismaClient.account.findFirst.mockResolvedValue(null)
 
-      const result = await accountRepository.existsByNameAndUserId('Conta Inexistente', 'user-1')
+      const result = await accountRepository.existsByNameAndUserId(
+        'Conta Inexistente',
+        'user-1',
+      )
 
       expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
         where: {
@@ -449,7 +465,11 @@ describe('Account Repository', () => {
     it('should exclude account by ID when provided', async () => {
       mockPrismaClient.account.findFirst.mockResolvedValue(null)
 
-      const result = await accountRepository.existsByNameAndUserId('Conta Principal', 'user-1', '1')
+      const result = await accountRepository.existsByNameAndUserId(
+        'Conta Principal',
+        'user-1',
+        '1',
+      )
 
       expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
         where: {
@@ -505,7 +525,9 @@ describe('Account Repository', () => {
       const error = new Error('Database connection error')
       mockPrismaClient.account.findMany.mockRejectedValue(error)
 
-      await expect(accountRepository.findMany({})).rejects.toThrow('Database connection error')
+      await expect(accountRepository.findMany({})).rejects.toThrow(
+        'Database connection error',
+      )
     })
 
     it('should handle unique constraint violations', async () => {
@@ -522,7 +544,7 @@ describe('Account Repository', () => {
             includeInGeneralBalance: true,
             user: { connect: { id: 'user-1' } },
           },
-        })
+        }),
       ).rejects.toThrow('Unique constraint failed')
     })
   })

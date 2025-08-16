@@ -1,7 +1,5 @@
-import { CreditCardService } from '../credit-card.service'
-import { CreditCardRepository } from '../../repositories/credit-card.repository'
-import { PrismaClient } from '@prisma/client'
 import { BadRequestError } from '../../routes/_errors/bad-request-error'
+import { CreditCardService } from '../credit-card.service'
 
 // Declarações para Jest
 declare const jest: any
@@ -43,7 +41,10 @@ describe('Credit Card Service', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    creditCardService = new CreditCardService(mockCreditCardRepository as any, mockPrismaClient as any)
+    creditCardService = new CreditCardService(
+      mockCreditCardRepository as any,
+      mockPrismaClient as any,
+    )
   })
 
   describe('findMany', () => {
@@ -68,13 +69,13 @@ describe('Credit Card Service', () => {
           userId: 'user-1',
           createdAt: new Date('2024-01-02'),
           updatedAt: new Date('2024-01-02'),
-          entries: [
-            { amount: '150', type: 'expense' },
-          ],
+          entries: [{ amount: '150', type: 'expense' }],
         },
       ]
 
-      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(mockCreditCardsWithUsage)
+      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(
+        mockCreditCardsWithUsage,
+      )
 
       const result = await creditCardService.findMany('user-1', {
         search: 'principal',
@@ -82,7 +83,9 @@ describe('Credit Card Service', () => {
         limit: 10,
       })
 
-      expect(mockCreditCardRepository.getCreditCardsWithUsage).toHaveBeenCalledWith('user-1')
+      expect(
+        mockCreditCardRepository.getCreditCardsWithUsage,
+      ).toHaveBeenCalledWith('user-1')
       expect(result.creditCards).toHaveLength(1)
       expect(result.creditCards[0].name).toBe('Cartão Principal')
       expect(result.creditCards[0].usage).toBe(300)
@@ -105,7 +108,9 @@ describe('Credit Card Service', () => {
         },
       ]
 
-      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(mockCreditCardsWithUsage)
+      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(
+        mockCreditCardsWithUsage,
+      )
 
       const result = await creditCardService.findMany('user-1', {
         search: 'inexistente',
@@ -134,7 +139,9 @@ describe('Credit Card Service', () => {
         },
       ]
 
-      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(mockCreditCardsWithUsage)
+      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(
+        mockCreditCardsWithUsage,
+      )
 
       const result = await creditCardService.findMany('user-1', {
         page: 1,
@@ -156,7 +163,9 @@ describe('Credit Card Service', () => {
         entries: [],
       }))
 
-      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(mockCreditCardsWithUsage)
+      mockCreditCardRepository.getCreditCardsWithUsage.mockResolvedValue(
+        mockCreditCardsWithUsage,
+      )
 
       const result = await creditCardService.findMany('user-1', {
         page: 2,
@@ -223,7 +232,10 @@ describe('Credit Card Service', () => {
       }
 
       mockCreditCardRepository.findFirst.mockResolvedValue(null)
-      mockPrismaClient.account.findUnique.mockResolvedValue({ id: 'account-1', name: 'Conta Principal' })
+      mockPrismaClient.account.findUnique.mockResolvedValue({
+        id: 'account-1',
+        name: 'Conta Principal',
+      })
       mockCreditCardRepository.create.mockResolvedValue(createdCreditCard)
 
       const result = await creditCardService.create(creditCardData, 'user-1')
@@ -258,14 +270,17 @@ describe('Credit Card Service', () => {
         dueDay: 20,
       }
 
-      mockCreditCardRepository.findFirst.mockResolvedValue({ id: '1', name: 'Cartão Existente' })
+      mockCreditCardRepository.findFirst.mockResolvedValue({
+        id: '1',
+        name: 'Cartão Existente',
+      })
 
-      await expect(creditCardService.create(creditCardData, 'user-1')).rejects.toThrow(
-        BadRequestError,
-      )
-      await expect(creditCardService.create(creditCardData, 'user-1')).rejects.toThrow(
-        'Já existe um cartão de crédito com este nome',
-      )
+      await expect(
+        creditCardService.create(creditCardData, 'user-1'),
+      ).rejects.toThrow(BadRequestError)
+      await expect(
+        creditCardService.create(creditCardData, 'user-1'),
+      ).rejects.toThrow('Já existe um cartão de crédito com este nome')
     })
 
     it('should throw error when default payment account not found', async () => {
@@ -278,12 +293,12 @@ describe('Credit Card Service', () => {
       mockCreditCardRepository.findFirst.mockResolvedValue(null)
       mockPrismaClient.account.findUnique.mockResolvedValue(null)
 
-      await expect(creditCardService.create(creditCardData, 'user-1')).rejects.toThrow(
-        BadRequestError,
-      )
-      await expect(creditCardService.create(creditCardData, 'user-1')).rejects.toThrow(
-        'Conta de pagamento padrão não encontrada',
-      )
+      await expect(
+        creditCardService.create(creditCardData, 'user-1'),
+      ).rejects.toThrow(BadRequestError)
+      await expect(
+        creditCardService.create(creditCardData, 'user-1'),
+      ).rejects.toThrow('Conta de pagamento padrão não encontrada')
     })
 
     it('should create credit card without default payment account', async () => {
@@ -367,12 +382,12 @@ describe('Credit Card Service', () => {
 
       mockCreditCardRepository.findById.mockResolvedValue(null)
 
-      await expect(creditCardService.update('999', updateData, 'user-1')).rejects.toThrow(
-        BadRequestError,
-      )
-      await expect(creditCardService.update('999', updateData, 'user-1')).rejects.toThrow(
-        'Cartao de credito nao encontrado',
-      )
+      await expect(
+        creditCardService.update('999', updateData, 'user-1'),
+      ).rejects.toThrow(BadRequestError)
+      await expect(
+        creditCardService.update('999', updateData, 'user-1'),
+      ).rejects.toThrow('Cartao de credito nao encontrado')
     })
 
     it('should throw error when name conflicts with existing credit card', async () => {
@@ -386,14 +401,17 @@ describe('Credit Card Service', () => {
       }
 
       mockCreditCardRepository.findById.mockResolvedValue(existingCreditCard)
-      mockCreditCardRepository.findFirst.mockResolvedValue({ id: '2', name: 'Cartão Conflitante' })
+      mockCreditCardRepository.findFirst.mockResolvedValue({
+        id: '2',
+        name: 'Cartão Conflitante',
+      })
 
-      await expect(creditCardService.update('1', updateData, 'user-1')).rejects.toThrow(
-        BadRequestError,
-      )
-      await expect(creditCardService.update('1', updateData, 'user-1')).rejects.toThrow(
-        'Já existe um cartão de crédito com este nome',
-      )
+      await expect(
+        creditCardService.update('1', updateData, 'user-1'),
+      ).rejects.toThrow(BadRequestError)
+      await expect(
+        creditCardService.update('1', updateData, 'user-1'),
+      ).rejects.toThrow('Já existe um cartão de crédito com este nome')
     })
 
     it('should update without name conflict check when name not provided', async () => {
@@ -419,7 +437,9 @@ describe('Credit Card Service', () => {
       const result = await creditCardService.update('1', updateData, 'user-1')
 
       expect(mockCreditCardRepository.findFirst).not.toHaveBeenCalled()
-      expect(mockCreditCardRepository.update).toHaveBeenCalledWith('1', { limit: 6000 })
+      expect(mockCreditCardRepository.update).toHaveBeenCalledWith('1', {
+        limit: 6000,
+      })
       expect(result).toEqual(updatedCreditCard)
     })
 
@@ -446,7 +466,10 @@ describe('Credit Card Service', () => {
 
       mockCreditCardRepository.findById.mockResolvedValue(existingCreditCard)
       mockCreditCardRepository.findFirst.mockResolvedValue(null)
-      mockPrismaClient.account.findUnique.mockResolvedValue({ id: 'account-1', name: 'Conta Principal' })
+      mockPrismaClient.account.findUnique.mockResolvedValue({
+        id: 'account-1',
+        name: 'Conta Principal',
+      })
       mockCreditCardRepository.update.mockResolvedValue(updatedCreditCard)
 
       const result = await creditCardService.update('1', updateData, 'user-1')
@@ -537,7 +560,10 @@ describe('Credit Card Service', () => {
       const result = await creditCardService.getUsage('1', 'user-1')
 
       expect(mockCreditCardRepository.findById).toHaveBeenCalledWith('1')
-      expect(mockCreditCardRepository.getCreditCardUsage).toHaveBeenCalledWith('1', 'user-1')
+      expect(mockCreditCardRepository.getCreditCardUsage).toHaveBeenCalledWith(
+        '1',
+        'user-1',
+      )
       expect(result.usage).toBe(600)
       expect(result.limit).toBe(5000)
       expect(result.availableLimit).toBe(4400)
@@ -570,9 +596,7 @@ describe('Credit Card Service', () => {
         userId: 'user-1',
       }
 
-      const mockEntries = [
-        { amount: '1500' },
-      ]
+      const mockEntries = [{ amount: '1500' }]
 
       mockCreditCardRepository.findById.mockResolvedValue(existingCreditCard)
       mockCreditCardRepository.getCreditCardUsage.mockResolvedValue(1500)
@@ -598,7 +622,9 @@ describe('Credit Card Service', () => {
   describe('error handling', () => {
     it('should handle repository errors gracefully', async () => {
       const repositoryError = new Error('Repository error')
-      mockCreditCardRepository.getCreditCardsWithUsage.mockRejectedValue(repositoryError)
+      mockCreditCardRepository.getCreditCardsWithUsage.mockRejectedValue(
+        repositoryError,
+      )
 
       await expect(
         creditCardService.findMany('user-1', { page: 1, limit: 10 }),
@@ -618,7 +644,9 @@ describe('Credit Card Service', () => {
 
       mockCreditCardRepository.findById.mockResolvedValue(existingCreditCard)
 
-      await expect(creditCardService.delete('1', 'user-1')).rejects.toThrow('Prisma error')
+      await expect(creditCardService.delete('1', 'user-1')).rejects.toThrow(
+        'Prisma error',
+      )
     })
   })
 })
