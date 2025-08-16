@@ -3,19 +3,19 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
-  testMatch: [
-    '**/__tests__/**/*.ts',
-    '**/?(*.)+(spec|test).ts',
-  ],
+  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      useESM: true,
-      tsconfig: 'tsconfig.test.json',
-    }],
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: 'tsconfig.test.json',
+      },
+    ],
     '^.+\\.js$': 'babel-jest',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(@t3-oss|@saas)/)',
+    'node_modules/(?!(@t3-oss|@saas|@t3-oss/env-nextjs|@t3-oss/env-core)/)',
   ],
   extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [
@@ -26,11 +26,7 @@ module.exports = {
     '!src/index.ts',
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: [
-    'text',
-    'lcov',
-    'html',
-  ],
+  coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
       branches: 80,

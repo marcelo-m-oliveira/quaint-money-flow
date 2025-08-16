@@ -3,6 +3,10 @@ import { FastifyInstance } from 'fastify'
 
 import { createApp } from '@/server'
 
+// Importar Jest para testes
+declare const jest: any
+declare const expect: any
+
 /**
  * Utilitários para testes de integração
  */
@@ -48,40 +52,6 @@ export class TestUtils {
     await prisma.category.deleteMany()
     await prisma.account.deleteMany()
     await prisma.userPreferences.deleteMany()
-  }
-
-  /**
-   * Cria dados de teste básicos
-   */
-  static async createTestData(userId: string = 'test-user-id') {
-    const prisma = this.getPrisma()
-
-    // Criar categoria de teste
-    const category = await prisma.category.create({
-      data: {
-        name: 'Categoria Teste',
-        type: 'expense',
-        userId,
-        active: true,
-      },
-    })
-
-    // Criar conta de teste
-    const account = await prisma.account.create({
-      data: {
-        name: 'Conta Teste',
-        type: 'bank',
-        balance: 1000,
-        userId,
-        includeInGeneralBalance: true,
-        active: true,
-      },
-    })
-
-    return {
-      category,
-      account,
-    }
   }
 
   /**
@@ -149,6 +119,7 @@ export class TestUtils {
       }
     }
 
+    // eslint-disable-next-line no-throw-literal
     throw lastError!
   }
 

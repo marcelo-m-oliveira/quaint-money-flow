@@ -1,7 +1,10 @@
-import { beforeAll, afterAll, jest } from '@jest/globals'
 import { prisma } from './prisma'
 
-// Configuração global para testes
+// Declarações mínimas para resolver erros de tipo
+declare const beforeAll: any
+declare const afterAll: any
+declare const jest: any
+
 beforeAll(async () => {
   // Conectar ao banco de dados de teste
   await prisma.$connect()
