@@ -15,12 +15,7 @@
     "lint:check": "eslint src --ext .ts",
     "start": "node dist/http/server.js",
     "test": "pnpm env:load jest",
-    "test:watch": "pnpm env:load jest --watch",
-    "test:coverage": "pnpm env:load jest --coverage",
-    "test:unit": "pnpm env:load jest --testPathPattern=__tests__ --testNamePattern='(unit|Unit)'",
-    "test:integration": "pnpm env:load jest --testPathPattern=__tests__ --testNamePattern='(integration|Integration)'",
-    "test:accounts": "pnpm env:load jest --testPathPattern=account",
-    "test:ci": "pnpm env:load jest --ci --coverage --watchAll=false"
+    "test:accounts": "pnpm env:load jest --testPathPattern=account"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
