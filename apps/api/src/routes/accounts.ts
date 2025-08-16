@@ -172,10 +172,7 @@ Cria uma nova conta bancária.
         `,
         body: accountCreateSchema,
         response: {
-          201: z.object({
-            data: accountResponseSchema,
-            message: z.string(),
-          }),
+          201: accountResponseSchema,
           400: z.object({
             message: z.string(),
             errors: z.record(z.string(), z.array(z.string())).optional(),
@@ -210,10 +207,7 @@ Cria uma nova conta bancária.
         params: idParamSchema,
         body: accountUpdateSchema,
         response: {
-          200: z.object({
-            data: accountResponseSchema,
-            message: z.string(),
-          }),
+          200: accountResponseSchema,
           400: z.object({
             message: z.string(),
             errors: z.record(z.string(), z.array(z.string())).optional(),

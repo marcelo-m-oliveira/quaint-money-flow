@@ -28,18 +28,22 @@ export interface PaginatedResponse<T> {
 }
 
 export class ResponseFormatter {
-  static success<T>(
-    reply: FastifyReply,
-    data: T,
-    message?: string,
-    statusCode: number = 200,
-  ) {
+  static success<T>(reply: FastifyReply, data: T, statusCode: number = 200) {
     const response: ApiResponse<T> = {
       data,
-      message,
     }
 
     return reply.status(statusCode).send(response)
+  }
+
+  // Novo método para retornar dados diretamente
+  static data<T>(reply: FastifyReply, data: T, statusCode: number = 200) {
+    return reply.status(statusCode).send(data)
+  }
+
+  // Novo método para retornar dados criados diretamente
+  static createdData<T>(reply: FastifyReply, data: T) {
+    return reply.status(201).send(data)
   }
 
   static paginated<T>(
@@ -70,8 +74,8 @@ export class ResponseFormatter {
     return reply.status(statusCode).send(response)
   }
 
-  static created<T>(reply: FastifyReply, data: T, message?: string) {
-    return this.success(reply, data, message, 201)
+  static created<T>(reply: FastifyReply, data: T) {
+    return this.success(reply, data, 201)
   }
 
   static noContent(reply: FastifyReply) {

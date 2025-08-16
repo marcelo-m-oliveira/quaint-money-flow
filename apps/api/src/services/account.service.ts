@@ -68,9 +68,7 @@ export class AccountService extends BaseService<'account'> {
   }
 
   async findById(id: string, userId: string) {
-    const account = await this.accountRepository.findFirst({
-      where: { id, userId },
-    })
+    const account = await this.accountRepository.findFirst({ id, userId })
 
     if (!account) {
       throw new BadRequestError('Conta não encontrada')
@@ -82,21 +80,17 @@ export class AccountService extends BaseService<'account'> {
   async create(data: AccountCreateSchema, userId: string) {
     // Verificar se já existe uma conta com o mesmo nome
     const existingAccount = await this.accountRepository.findFirst({
-      where: {
-        name: data.name,
-        userId,
-      },
+      name: data.name,
+      userId,
     })
 
     if (existingAccount) {
       throw new BadRequestError('Já existe uma conta com este nome')
     }
 
-    const account = await this.prisma.account.create({
-      data: {
-        ...data,
-        user: { connect: { id: userId } },
-      },
+    const account = await this.accountRepository.create({
+      ...data,
+      user: { connect: { id: userId } },
     })
 
     this.logOperation('CREATE_ACCOUNT', userId, {
@@ -112,23 +106,18 @@ export class AccountService extends BaseService<'account'> {
 
     // Verificar se já existe outra conta com o mesmo nome (apenas se o nome foi fornecido)
     if (data.name) {
-      const existingAccount = await this.accountRepository.findFirst({
-        where: {
-          name: data.name,
-          userId,
-          id: { not: id },
-        },
+      const duplicateAccount = await this.accountRepository.findFirst({
+        name: data.name,
+        userId,
+        id: { not: id },
       })
 
-      if (existingAccount) {
+      if (duplicateAccount) {
         throw new BadRequestError('Já existe uma conta com este nome')
       }
     }
 
-    const account = await this.prisma.account.update({
-      where: { id, userId },
-      data,
-    })
+    const account = await this.accountRepository.update(id, data)
 
     this.logOperation('UPDATE_ACCOUNT', userId, {
       accountId: account.id,
@@ -152,9 +141,7 @@ export class AccountService extends BaseService<'account'> {
       )
     }
 
-    await this.prisma.account.delete({
-      where: { id, userId },
-    })
+    await this.accountRepository.delete(id)
 
     this.logOperation('DELETE_ACCOUNT', userId, { accountId: id })
   }

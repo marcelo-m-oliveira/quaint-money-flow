@@ -112,11 +112,7 @@ export abstract class BaseController {
         { userId, operation: operationName },
         `${operationName} concluído com sucesso`,
       )
-      return ResponseFormatter.created(
-        reply,
-        result,
-        `${this.entityName} criado com sucesso`,
-      )
+      return ResponseFormatter.createdData(reply, result)
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: operationName },
@@ -145,11 +141,7 @@ export abstract class BaseController {
         { userId, operation: operationName },
         `${operationName} concluído com sucesso`,
       )
-      return ResponseFormatter.success(
-        reply,
-        result,
-        `${this.entityName} atualizado com sucesso`,
-      )
+      return ResponseFormatter.data(reply, result)
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: operationName },
