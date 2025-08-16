@@ -1,48 +1,41 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { dateToSeconds } from '@saas/utils'
-import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
-import { id } from 'zod/locales'
+import { FastifyReply, FastifyRequest } from 'fastify'
 
 import { CreditCardService } from '@/services/credit-card.service'
-import { handleError } from '@/utils/errors'
 
 import type {
   CreditCardCreateSchema,
+  CreditCardFiltersSchema,
+  CreditCardUpdateSchema,
   IdParamSchema,
-  PaginationSchema,
 } from '../utils/schemas'
+import { BaseController } from './base.controller'
 
-interface CreditCardFilters extends PaginationSchema {}
-
-export class CreditCardController {
-  constructor(private creditCardService: CreditCardService) {}
+export class CreditCardController extends BaseController {
+  constructor(private creditCardService: CreditCardService) {
+    super({
+      entityName: 'cartão de crédito',
+      entityNamePlural: 'cartões de crédito',
+    })
+  }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const filters = request.query as CreditCardFilters
+    return this.handlePaginatedRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const filters = this.getQueryParams<CreditCardFiltersSchema>(request)
 
-      request.log.info(
-        { userId, filters },
-        'Listando cartoes de credito do usuario',
-      )
-      const result = await this.creditCardService.findMany(userId, {
-        page: filters.page || 1,
-        limit: filters.limit || 20,
-      })
-      request.log.info(
-        {
-          userId,
-          totalCreditCards: result.creditCards.length,
-          totalPages: result.pagination.totalPages,
-        },
-        'Cartoes de credito listados com sucesso',
-      )
+        const result = await this.creditCardService.findMany(userId, {
+          search: filters.search,
+          page: filters.page || 1,
+          limit: filters.limit || 20,
+        })
 
-      // Convert dates to seconds and limit/usage to number for frontend
-      const convertedResult = {
-        ...result,
-        creditCards: result.creditCards.map((creditCard) => ({
+        // Convert dates to seconds and limit/usage to number for frontend
+        const formattedCreditCards = result.creditCards.map((creditCard) => ({
           ...creditCard,
           limit: Number(creditCard.limit),
           usage: Number(creditCard.usage || 0),
@@ -52,198 +45,151 @@ export class CreditCardController {
           updatedAt: creditCard.updatedAt
             ? dateToSeconds(creditCard.updatedAt)
             : undefined,
-        })),
-      }
+        }))
 
-      return reply.status(200).send(convertedResult)
-    } catch (error: any) {
-      request.log.error(
-        { error: error.message },
-        'Erro ao listar cartões de crédito',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        return {
+          items: formattedCreditCards,
+          pagination: result.pagination,
+        }
+      },
+      `Listagem de ${this.entityNamePlural}`,
+    )
   }
 
   async selectOptions(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
+    return this.handleRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const filters = this.getQueryParams<CreditCardFiltersSchema>(request)
 
-      request.log.info({ userId }, 'Buscando cartões para select')
-      const result = await this.creditCardService.findMany(userId, {
-        page: 1,
-        limit: 1000, // Buscar todos os cartões para o select
-      })
+        const result = await this.creditCardService.findMany(userId, {
+          search: filters.search,
+          page: 1,
+          limit: 1000,
+        })
 
-      // Formatar dados para o select
-      const selectOptions = result.creditCards.map((creditCard) => ({
-        value: creditCard.id,
-        label: creditCard.name,
-        icon: creditCard.icon,
-        iconType: creditCard.iconType,
-      }))
-
-      request.log.info(
-        { userId, totalOptions: selectOptions.length },
-        'Opcoes de select retornadas com sucesso',
-      )
-
-      return reply.status(200).send(selectOptions)
-    } catch (error: any) {
-      request.log.error(
-        { error: error.message },
-        'Erro ao buscar opções de select',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        // Formatar dados para o select
+        return result.creditCards.map((creditCard) => ({
+          value: creditCard.id,
+          label: creditCard.name,
+          icon: creditCard.icon,
+          iconType: creditCard.iconType,
+        }))
+      },
+      `Busca de opções de select para ${this.entityNamePlural}`,
+    )
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+    return this.handleRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      request.log.info(
-        { userId, creditCardId: id },
-        'Buscando cartao de credito por ID',
-      )
-      const creditCard = await this.creditCardService.findById(id, userId)
+        const creditCard = await this.creditCardService.findById(id, userId)
 
-      // Convert dates to seconds and limit/usage to number for frontend
-      const convertedCreditCard = {
-        ...creditCard,
-        limit: Number(creditCard.limit),
-        usage: 0,
-        createdAt: creditCard.createdAt
-          ? dateToSeconds(creditCard.createdAt)
-          : undefined,
-        updatedAt: creditCard.updatedAt
-          ? dateToSeconds(creditCard.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(200).send(convertedCreditCard)
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, creditCardId: id, error: error.message },
-        'Erro ao buscar cartão de crédito',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        // Convert dates to seconds and limit/usage to number for frontend
+        return {
+          ...creditCard,
+          limit: Number(creditCard.limit),
+          usage: 0,
+          createdAt: creditCard.createdAt
+            ? dateToSeconds(creditCard.createdAt)
+            : undefined,
+          updatedAt: creditCard.updatedAt
+            ? dateToSeconds(creditCard.updatedAt)
+            : undefined,
+        }
+      },
+      `Busca de ${this.entityName} específico`,
+    )
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const data = request.body as CreditCardCreateSchema
+    return this.handleCreateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const data = this.getBodyParams<CreditCardCreateSchema>(request)
 
-      request.log.info(
-        { userId, creditCardData: data },
-        'Criando novo cartao de credito',
-      )
-      const creditCard = await this.creditCardService.create(data, userId)
-      request.log.info(
-        { creditCardId: creditCard.id, name: creditCard.name },
-        'Cartao de credito criado com sucesso',
-      )
+        const creditCard = await this.creditCardService.create(data, userId)
 
-      // Convert dates to seconds and limit to number for frontend
-      const convertedCreditCard = {
-        ...creditCard,
-        limit: Number(creditCard.limit),
-        usage: 0,
-        createdAt: creditCard.createdAt
-          ? dateToSeconds(creditCard.createdAt)
-          : undefined,
-        updatedAt: creditCard.updatedAt
-          ? dateToSeconds(creditCard.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(201).send(convertedCreditCard)
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, error: error.message },
-        'Erro ao criar cartão de crédito',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        // Convert dates to seconds and limit to number for frontend
+        return {
+          ...creditCard,
+          limit: Number(creditCard.limit),
+          usage: 0,
+          createdAt: creditCard.createdAt
+            ? dateToSeconds(creditCard.createdAt)
+            : undefined,
+          updatedAt: creditCard.updatedAt
+            ? dateToSeconds(creditCard.updatedAt)
+            : undefined,
+        }
+      },
+      `Criação de ${this.entityName}`,
+    )
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
-      const data = request.body as CreditCardCreateSchema
+    return this.handleUpdateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
+        const data = this.getBodyParams<CreditCardUpdateSchema>(request)
 
-      request.log.info(
-        { userId, creditCardId: id, updateData: data },
-        'Atualizando cartao de credito',
-      )
-      const creditCard = await this.creditCardService.update(id, data, userId)
-      request.log.info(
-        { creditCardId: creditCard.id, name: creditCard.name },
-        'Cartao de credito atualizado com sucesso',
-      )
+        const creditCard = await this.creditCardService.update(id, data, userId)
 
-      // Convert dates to seconds and limit to number for frontend
-      const convertedCreditCard = {
-        ...creditCard,
-        limit: Number(creditCard.limit),
-        usage: 0,
-        createdAt: creditCard.createdAt
-          ? dateToSeconds(creditCard.createdAt)
-          : undefined,
-        updatedAt: creditCard.updatedAt
-          ? dateToSeconds(creditCard.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(200).send(convertedCreditCard)
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, creditCardId: id, error: error.message },
-        'Erro ao atualizar cartao de credito',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        // Convert dates to seconds and limit to number for frontend
+        return {
+          ...creditCard,
+          limit: Number(creditCard.limit),
+          usage: 0,
+          createdAt: creditCard.createdAt
+            ? dateToSeconds(creditCard.createdAt)
+            : undefined,
+          updatedAt: creditCard.updatedAt
+            ? dateToSeconds(creditCard.updatedAt)
+            : undefined,
+        }
+      },
+      `Atualização de ${this.entityName}`,
+    )
   }
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+    return this.handleDeleteRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      request.log.info(
-        { userId, creditCardId: id },
-        'Deletando cartao de credito',
-      )
-      await this.creditCardService.delete(id, userId)
-      request.log.info(
-        { creditCardId: id },
-        'Cartao de credito deletado com sucesso',
-      )
-
-      return reply.status(204).send()
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, creditCardId: id, error: error.message },
-        'Erro ao deletar cartão de crédito',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        await this.creditCardService.delete(id, userId)
+      },
+      `Exclusão de ${this.entityName}`,
+    )
   }
 
   async usage(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+    return this.handleRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      const usage = await this.creditCardService.getUsage(id, userId)
-
-      return reply.status(200).send(usage)
-    } catch (error) {
-      return handleError(error as FastifyError, reply)
-    }
+        const usageData = await this.creditCardService.getUsage(id, userId)
+        return { usage: usageData.usage.toString() }
+      },
+      `Uso do ${this.entityName}`,
+    )
   }
 }

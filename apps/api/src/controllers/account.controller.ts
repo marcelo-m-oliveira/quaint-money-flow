@@ -51,7 +51,7 @@ export class AccountController extends BaseController {
           pagination: result.pagination,
         }
       },
-      'Listagem de contas',
+      `Listagem de ${this.entityNamePlural}`,
     )
   }
 
@@ -79,7 +79,7 @@ export class AccountController extends BaseController {
           iconType: account.iconType,
         }))
       },
-      'Busca de opções de select',
+      `Busca de opções de select para ${this.entityNamePlural}`,
     )
   }
 
@@ -94,7 +94,7 @@ export class AccountController extends BaseController {
         const account = await this.accountService.findById(id, userId)
         return convertDatesToSeconds(account)
       },
-      'Busca de conta específica',
+      `Busca de ${this.entityName} específica`,
     )
   }
 
@@ -109,7 +109,7 @@ export class AccountController extends BaseController {
         const account = await this.accountService.create(data, userId)
         return convertDatesToSeconds(account)
       },
-      'Criação de conta',
+      `Criação de ${this.entityName}`,
     )
   }
 
@@ -125,7 +125,7 @@ export class AccountController extends BaseController {
         const account = await this.accountService.update(id, data, userId)
         return convertDatesToSeconds(account)
       },
-      'Atualização de conta',
+      `Atualização de ${this.entityName}`,
     )
   }
 
@@ -139,7 +139,7 @@ export class AccountController extends BaseController {
 
         await this.accountService.delete(id, userId)
       },
-      'Exclusão de conta',
+      `Exclusão de ${this.entityName}`,
     )
   }
 
@@ -154,7 +154,7 @@ export class AccountController extends BaseController {
         const balanceData = await this.accountService.getBalance(id, userId)
         return { balance: balanceData.balance.toString() }
       },
-      'Consulta de saldo da conta',
+      `Consulta de saldo da ${this.entityName}`,
     )
   }
 }

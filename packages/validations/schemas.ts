@@ -408,6 +408,13 @@ export const accountFiltersSchema = z
   })
   .merge(paginationSchema)
 
+// Schema para filtros de cartão de crédito
+export const creditCardFiltersSchema = z
+  .object({
+    search: z.string().optional(),
+  })
+  .merge(paginationSchema)
+
 // ============================================================================
 // SCHEMAS DE AUTENTICAÇÃO
 // ============================================================================
@@ -499,6 +506,7 @@ export type PaginationSchema = z.infer<typeof paginationSchema>
 export type EntryFiltersSchema = z.infer<typeof entryFiltersSchema>
 export type CategoryFiltersSchema = z.infer<typeof categoryFiltersSchema>
 export type AccountFiltersSchema = z.infer<typeof accountFiltersSchema>
+export type CreditCardFiltersSchema = z.infer<typeof creditCardFiltersSchema>
 
 // Tipos de autenticação
 export type LoginSchema = z.infer<typeof loginSchema>

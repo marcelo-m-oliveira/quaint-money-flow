@@ -13,28 +13,36 @@ export class CreditCardService {
   async findMany(
     userId: string,
     filters: {
+      search?: string
       page: number
       limit: number
     },
   ) {
-    const { page, limit } = filters
+    const { page, limit, search } = filters
     const skip = (page - 1) * limit
 
     // Buscar cartões com transações para calcular o uso
     const creditCardsWithUsage =
       await this.creditCardRepository.getCreditCardsWithUsage(userId)
 
+    // Filtrar por busca se fornecida
+    const filteredCreditCards = creditCardsWithUsage.filter((creditCard) => {
+      return !(
+        search && !creditCard.name.toLowerCase().includes(search.toLowerCase())
+      )
+    })
+
     // Ordenar por data de criação (mais recentes primeiro)
-    creditCardsWithUsage.sort(
+    filteredCreditCards.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
 
-    const total = creditCardsWithUsage.length
+    const total = filteredCreditCards.length
     const totalPages = Math.ceil(total / limit)
 
     // Aplicar paginação
-    const paginatedCreditCards = creditCardsWithUsage.slice(skip, skip + limit)
+    const paginatedCreditCards = filteredCreditCards.slice(skip, skip + limit)
 
     // Calcular o uso para cada cartão
     const creditCardsWithUsageCalculated = paginatedCreditCards.map(

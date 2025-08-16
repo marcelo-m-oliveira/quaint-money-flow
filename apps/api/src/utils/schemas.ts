@@ -40,6 +40,8 @@ import {
   creditCardResponseSchema,
   type CreditCardUpdateSchema,
   creditCardUpdateSchema,
+  type CreditCardFiltersSchema,
+  creditCardFiltersSchema,
   type CreditCardUsageSchema,
   creditCardUsageSchema,
   // Tipos
@@ -107,6 +109,7 @@ export {
   accountUpdateSchema,
   creditCardCreateSchema,
   creditCardUpdateSchema,
+  creditCardFiltersSchema,
   preferencesCreateSchema,
   preferencesUpdateSchema,
 }
@@ -174,6 +177,7 @@ export type {
   AccountUpdateSchema,
   CreditCardCreateSchema,
   CreditCardUpdateSchema,
+  CreditCardFiltersSchema,
   PreferencesCreateSchema,
   PreferencesUpdateSchema,
 }
