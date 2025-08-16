@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { dateToSeconds } from '@saas/utils'
 import { FastifyReply, FastifyRequest } from 'fastify'
 
+import { BaseController } from '@/controllers/base.controller'
 import { CreditCardService } from '@/services/credit-card.service'
+import {
+  convertArrayDatesToSeconds,
+  convertDatesToSeconds,
+} from '@/utils/response'
 
 import type {
   CreditCardCreateSchema,
-  CreditCardFiltersSchema,
   CreditCardUpdateSchema,
+  CreditCardFiltersSchema,
   IdParamSchema,
 } from '../utils/schemas'
-import { BaseController } from './base.controller'
 
 export class CreditCardController extends BaseController {
   constructor(private creditCardService: CreditCardService) {
@@ -34,21 +37,16 @@ export class CreditCardController extends BaseController {
           limit: filters.limit || 20,
         })
 
-        // Convert dates to seconds and limit/usage to number for frontend
-        const formattedCreditCards = result.creditCards.map((creditCard) => ({
-          ...creditCard,
+        // Converter datas para timestamp em segundos e formatar números
+        const creditCardsWithConvertedDates = result.creditCards.map((creditCard) => ({
+          ...convertDatesToSeconds(creditCard),
           limit: Number(creditCard.limit),
           usage: Number(creditCard.usage || 0),
-          createdAt: creditCard.createdAt
-            ? dateToSeconds(creditCard.createdAt)
-            : undefined,
-          updatedAt: creditCard.updatedAt
-            ? dateToSeconds(creditCard.updatedAt)
-            : undefined,
+          availableLimit: Number(creditCard.availableLimit || 0),
         }))
 
         return {
-          items: formattedCreditCards,
+          items: creditCardsWithConvertedDates,
           pagination: result.pagination,
         }
       },
@@ -67,7 +65,7 @@ export class CreditCardController extends BaseController {
         const result = await this.creditCardService.findMany(userId, {
           search: filters.search,
           page: 1,
-          limit: 1000,
+          limit: 1000, // Buscar todos os cartões para o select
         })
 
         // Formatar dados para o select
@@ -92,17 +90,11 @@ export class CreditCardController extends BaseController {
 
         const creditCard = await this.creditCardService.findById(id, userId)
 
-        // Convert dates to seconds and limit/usage to number for frontend
+        // Converter datas para timestamp em segundos e formatar números
         return {
-          ...creditCard,
+          ...convertDatesToSeconds(creditCard),
           limit: Number(creditCard.limit),
-          usage: 0,
-          createdAt: creditCard.createdAt
-            ? dateToSeconds(creditCard.createdAt)
-            : undefined,
-          updatedAt: creditCard.updatedAt
-            ? dateToSeconds(creditCard.updatedAt)
-            : undefined,
+          usage: 0, // Será calculado separadamente se necessário
         }
       },
       `Busca de ${this.entityName} específico`,
@@ -119,17 +111,11 @@ export class CreditCardController extends BaseController {
 
         const creditCard = await this.creditCardService.create(data, userId)
 
-        // Convert dates to seconds and limit to number for frontend
+        // Converter datas para timestamp em segundos e formatar números
         return {
-          ...creditCard,
+          ...convertDatesToSeconds(creditCard),
           limit: Number(creditCard.limit),
           usage: 0,
-          createdAt: creditCard.createdAt
-            ? dateToSeconds(creditCard.createdAt)
-            : undefined,
-          updatedAt: creditCard.updatedAt
-            ? dateToSeconds(creditCard.updatedAt)
-            : undefined,
         }
       },
       `Criação de ${this.entityName}`,
@@ -147,17 +133,11 @@ export class CreditCardController extends BaseController {
 
         const creditCard = await this.creditCardService.update(id, data, userId)
 
-        // Convert dates to seconds and limit to number for frontend
+        // Converter datas para timestamp em segundos e formatar números
         return {
-          ...creditCard,
+          ...convertDatesToSeconds(creditCard),
           limit: Number(creditCard.limit),
           usage: 0,
-          createdAt: creditCard.createdAt
-            ? dateToSeconds(creditCard.createdAt)
-            : undefined,
-          updatedAt: creditCard.updatedAt
-            ? dateToSeconds(creditCard.updatedAt)
-            : undefined,
         }
       },
       `Atualização de ${this.entityName}`,

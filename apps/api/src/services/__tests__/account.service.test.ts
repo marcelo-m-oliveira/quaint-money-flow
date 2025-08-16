@@ -1,7 +1,6 @@
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+
 import { AccountService } from '../account.service'
-import { AccountRepository } from '../../repositories/account.repository'
-import { PrismaClient } from '@prisma/client'
-import { BadRequestError } from '../../routes/_errors/bad-request-error'
 
 // Declarações para Jest
 declare const jest: any
@@ -15,6 +14,7 @@ const mockAccountRepository = {
   findMany: jest.fn(),
   findUnique: jest.fn(),
   findFirst: jest.fn(),
+  findById: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
@@ -24,6 +24,7 @@ const mockAccountRepository = {
   findByUserIdAndType: jest.fn(),
   existsByNameAndUserId: jest.fn(),
   getAccountsWithBalance: jest.fn(),
+  getAccountBalance: jest.fn(),
 }
 
 // Mock do PrismaClient
@@ -42,7 +43,10 @@ describe('Account Service', () => {
     jest.clearAllMocks()
 
     // Criar instância do service
-    accountService = new AccountService(mockAccountRepository as any, mockPrismaClient as any)
+    accountService = new AccountService(
+      mockAccountRepository as any,
+      mockPrismaClient as any,
+    )
   })
 
   describe('findMany', () => {
@@ -67,15 +71,15 @@ describe('Account Service', () => {
           type: 'bank',
           userId: 'user-1',
           includeInGeneralBalance: true,
-          entries: [
-            { amount: '200', type: 'income' },
-          ],
+          entries: [{ amount: '200', type: 'income' }],
           createdAt: new Date('2024-01-02'),
           updatedAt: new Date('2024-01-02'),
         },
       ]
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(mockAccountsWithEntries)
+      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+        mockAccountsWithEntries,
+      )
 
       const result = await accountService.findMany('user-1', {
         page: 1,
@@ -85,7 +89,9 @@ describe('Account Service', () => {
         search: 'principal',
       })
 
-      expect(mockAccountRepository.getAccountsWithBalance).toHaveBeenCalledWith('user-1')
+      expect(mockAccountRepository.getAccountsWithBalance).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(result.accounts).toHaveLength(1)
       expect(result.accounts[0].name).toBe('Conta Principal')
       expect(result.accounts[0].balance).toBe(50) // 100 - 50
@@ -113,14 +119,18 @@ describe('Account Service', () => {
         },
       ]
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(mockAccountsWithEntries)
+      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+        mockAccountsWithEntries,
+      )
 
       const result = await accountService.findMany('user-1', {
         page: 1,
         limit: 20,
       })
 
-      expect(mockAccountRepository.getAccountsWithBalance).toHaveBeenCalledWith('user-1')
+      expect(mockAccountRepository.getAccountsWithBalance).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(result.accounts).toHaveLength(1)
       expect(result.accounts[0].balance).toBe(0)
     })
@@ -137,7 +147,9 @@ describe('Account Service', () => {
         updatedAt: new Date(`2024-01-${String(i + 1).padStart(2, '0')}`),
       }))
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(mockAccountsWithEntries)
+      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+        mockAccountsWithEntries,
+      )
 
       const result = await accountService.findMany('user-1', {
         page: 2,
@@ -177,7 +189,9 @@ describe('Account Service', () => {
         },
       ]
 
-      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(mockAccountsWithEntries)
+      mockAccountRepository.getAccountsWithBalance.mockResolvedValue(
+        mockAccountsWithEntries,
+      )
 
       const result = await accountService.findMany('user-1', {
         page: 1,
@@ -201,7 +215,7 @@ describe('Account Service', () => {
         updatedAt: new Date(),
       }
 
-      mockAccountRepository.findUnique.mockResolvedValue(mockAccount)
+      mockAccountRepository.findById.mockResolvedValue(mockAccount)
 
       const result = await accountService.findById('1', 'user-1')
 
@@ -215,7 +229,7 @@ describe('Account Service', () => {
       mockAccountRepository.findUnique.mockResolvedValue(null)
 
       await expect(accountService.findById('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Conta não encontrada')
+        new BadRequestError('Conta não encontrada'),
       )
     })
   })
@@ -278,8 +292,10 @@ describe('Account Service', () => {
 
       mockAccountRepository.findFirst.mockResolvedValue(existingAccount)
 
-      await expect(accountService.create(accountData, 'user-1')).rejects.toThrow(
-        new BadRequestError('Já existe uma conta com este nome')
+      await expect(
+        accountService.create(accountData, 'user-1'),
+      ).rejects.toThrow(
+        new BadRequestError('Já existe uma conta com este nome'),
       )
     })
   })
@@ -334,9 +350,9 @@ describe('Account Service', () => {
     it('should throw error when account not found', async () => {
       mockAccountRepository.findUnique.mockResolvedValue(null)
 
-      await expect(accountService.update('1', { name: 'Test' }, 'user-1')).rejects.toThrow(
-        new BadRequestError('Conta não encontrada')
-      )
+      await expect(
+        accountService.update('1', { name: 'Test' }, 'user-1'),
+      ).rejects.toThrow(new BadRequestError('Conta não encontrada'))
     })
 
     it('should throw error when new name conflicts with existing account', async () => {
@@ -361,8 +377,10 @@ describe('Account Service', () => {
       mockAccountRepository.findUnique.mockResolvedValue(existingAccount)
       mockAccountRepository.findFirst.mockResolvedValue(conflictingAccount)
 
-      await expect(accountService.update('1', { name: 'Conta Conflitante' }, 'user-1')).rejects.toThrow(
-        new BadRequestError('Já existe uma conta com este nome')
+      await expect(
+        accountService.update('1', { name: 'Conta Conflitante' }, 'user-1'),
+      ).rejects.toThrow(
+        new BadRequestError('Já existe uma conta com este nome'),
       )
     })
 
@@ -388,7 +406,11 @@ describe('Account Service', () => {
       mockAccountRepository.findUnique.mockResolvedValue(existingAccount)
       mockAccountRepository.update.mockResolvedValue(updatedAccount)
 
-      const result = await accountService.update('1', { type: 'investment' }, 'user-1')
+      const result = await accountService.update(
+        '1',
+        { type: 'investment' },
+        'user-1',
+      )
 
       expect(mockAccountRepository.findFirst).not.toHaveBeenCalled()
       expect(mockAccountRepository.update).toHaveBeenCalledWith({
@@ -441,7 +463,7 @@ describe('Account Service', () => {
       mockAccountRepository.findUnique.mockResolvedValue(null)
 
       await expect(accountService.delete('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Conta não encontrada')
+        new BadRequestError('Conta não encontrada'),
       )
     })
 
@@ -459,7 +481,9 @@ describe('Account Service', () => {
       mockPrismaClient.entry.count.mockResolvedValue(5)
 
       await expect(accountService.delete('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Não é possível excluir uma conta que possui transações')
+        new BadRequestError(
+          'Não é possível excluir uma conta que possui transações',
+        ),
       )
     })
   })
@@ -482,25 +506,16 @@ describe('Account Service', () => {
         { amount: '10', type: 'expense' },
       ]
 
-      mockAccountRepository.findUnique.mockResolvedValue(existingAccount)
-      mockPrismaClient.entry.findMany.mockResolvedValue(mockEntries)
+      mockAccountRepository.findById.mockResolvedValue(existingAccount)
+      mockAccountRepository.getAccountBalance.mockResolvedValue(65)
 
       const result = await accountService.getBalance('1', 'user-1')
 
-      expect(mockAccountRepository.findUnique).toHaveBeenCalledWith({
-        where: { id: '1', userId: 'user-1' },
-      })
-      expect(mockPrismaClient.entry.findMany).toHaveBeenCalledWith({
-        where: {
-          accountId: '1',
-          userId: 'user-1',
-          paid: true,
-        },
-        select: {
-          amount: true,
-          type: true,
-        },
-      })
+      expect(mockAccountRepository.findById).toHaveBeenCalledWith('1')
+      expect(mockAccountRepository.getAccountBalance).toHaveBeenCalledWith(
+        '1',
+        'user-1',
+      )
       expect(result.balance).toBe(65) // 100 + 25 - 50 - 10
       expect(result.accountId).toBe('1')
       expect(result.lastUpdated).toBeDefined()
@@ -517,7 +532,7 @@ describe('Account Service', () => {
       }
 
       mockAccountRepository.findUnique.mockResolvedValue(existingAccount)
-      mockPrismaClient.entry.findMany.mockResolvedValue([])
+      mockAccountRepository.getAccountBalance.mockResolvedValue(0)
 
       const result = await accountService.getBalance('1', 'user-1')
 
@@ -525,10 +540,10 @@ describe('Account Service', () => {
     })
 
     it('should throw error when account not found', async () => {
-      mockAccountRepository.findUnique.mockResolvedValue(null)
+      mockAccountRepository.findById.mockResolvedValue(null)
 
       await expect(accountService.getBalance('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Conta não encontrada')
+        new BadRequestError('Conta nao encontrada'),
       )
     })
 
@@ -549,7 +564,7 @@ describe('Account Service', () => {
       ]
 
       mockAccountRepository.findUnique.mockResolvedValue(existingAccount)
-      mockPrismaClient.entry.findMany.mockResolvedValue(mockEntries)
+      mockAccountRepository.getAccountBalance.mockResolvedValue(-125)
 
       const result = await accountService.getBalance('1', 'user-1')
 
@@ -562,7 +577,9 @@ describe('Account Service', () => {
       const error = new Error('Database error')
       mockAccountRepository.findUnique.mockRejectedValue(error)
 
-      await expect(accountService.findById('1', 'user-1')).rejects.toThrow('Database error')
+      await expect(accountService.findById('1', 'user-1')).rejects.toThrow(
+        'Database error',
+      )
     })
 
     it('should handle Prisma errors gracefully', async () => {
@@ -580,7 +597,9 @@ describe('Account Service', () => {
 
       mockAccountRepository.findUnique.mockResolvedValue(existingAccount)
 
-      await expect(accountService.delete('1', 'user-1')).rejects.toThrow('Prisma error')
+      await expect(accountService.delete('1', 'user-1')).rejects.toThrow(
+        'Prisma error',
+      )
     })
   })
 })

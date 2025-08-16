@@ -42,7 +42,7 @@ export function CreditCardsProvider({
     try {
       setIsLoading(true)
       const response = await creditCardsService.getAll()
-      const creditCardsWithDates = response.creditCards.map((card) => ({
+      const creditCardsWithDates = response.data.map((card) => ({
         ...card,
         createdAt: card.createdAt,
         updatedAt: card.updatedAt,

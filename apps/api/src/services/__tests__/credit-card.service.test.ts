@@ -15,6 +15,7 @@ const mockCreditCardRepository = {
   findMany: jest.fn(),
   findUnique: jest.fn(),
   findFirst: jest.fn(),
+  findById: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
@@ -23,6 +24,7 @@ const mockCreditCardRepository = {
   findByUserId: jest.fn(),
   existsByNameAndUserId: jest.fn(),
   getCreditCardsWithUsage: jest.fn(),
+  getCreditCardUsage: jest.fn(),
 }
 
 // Mock do PrismaClient
@@ -582,26 +584,12 @@ describe('Credit Card Service', () => {
       ]
 
       mockCreditCardRepository.findUnique.mockResolvedValue(existingCreditCard)
-      mockPrismaClient.entry.findMany.mockResolvedValue(mockEntries)
+      mockCreditCardRepository.getCreditCardUsage.mockResolvedValue(600)
 
       const result = await creditCardService.getUsage('1', 'user-1')
 
-      expect(mockCreditCardRepository.findUnique).toHaveBeenCalledWith({
-        where: { id: '1', userId: 'user-1' },
-        include: {
-          defaultPaymentAccount: true,
-        },
-      })
-      expect(mockPrismaClient.entry.findMany).toHaveBeenCalledWith({
-        where: {
-          creditCardId: '1',
-          userId: 'user-1',
-          type: 'expense',
-        },
-        select: {
-          amount: true,
-        },
-      })
+      expect(mockCreditCardRepository.findUnique).toHaveBeenCalledWith('1')
+      expect(mockCreditCardRepository.getCreditCardUsage).toHaveBeenCalledWith('1', 'user-1')
       expect(result.usage).toBe(600)
       expect(result.limit).toBe(5000)
       expect(result.availableLimit).toBe(4400)
@@ -618,7 +606,7 @@ describe('Credit Card Service', () => {
       }
 
       mockCreditCardRepository.findUnique.mockResolvedValue(existingCreditCard)
-      mockPrismaClient.entry.findMany.mockResolvedValue([])
+      mockCreditCardRepository.getCreditCardUsage.mockResolvedValue(0)
 
       const result = await creditCardService.getUsage('1', 'user-1')
 
@@ -639,7 +627,7 @@ describe('Credit Card Service', () => {
       ]
 
       mockCreditCardRepository.findUnique.mockResolvedValue(existingCreditCard)
-      mockPrismaClient.entry.findMany.mockResolvedValue(mockEntries)
+      mockCreditCardRepository.getCreditCardUsage.mockResolvedValue(1500)
 
       const result = await creditCardService.getUsage('1', 'user-1')
 

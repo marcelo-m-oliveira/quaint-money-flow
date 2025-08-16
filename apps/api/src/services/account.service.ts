@@ -68,10 +68,15 @@ export class AccountService extends BaseService<'account'> {
   }
 
   async findById(id: string, userId: string) {
-    const account = await this.accountRepository.findFirst({ id, userId })
+    const account = await this.accountRepository.findById(id)
 
     if (!account) {
-      throw new BadRequestError('Conta não encontrada')
+      throw new BadRequestError('Conta nao encontrada')
+    }
+
+    // Verificar se a conta pertence ao usuário
+    if (account.userId !== userId) {
+      throw new BadRequestError('Conta nao pertence ao usuario')
     }
 
     return account
