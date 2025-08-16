@@ -29,11 +29,12 @@ export class AccountService extends BaseService<'account'> {
     const { page, limit, type, includeInGeneralBalance, search } = filters
     const skip = (page - 1) * limit
 
-    // Buscar contas simples primeiro
-    const accounts = await this.accountRepository.findByUserId(userId, false)
+    // Buscar contas com balance
+    const accountsWithBalance =
+      await this.accountRepository.getAccountsWithBalance(userId)
 
     // Filtrar e paginar as contas
-    const filteredAccounts = accounts.filter((account) => {
+    const filteredAccounts = accountsWithBalance.filter((account) => {
       if (type && account.type !== type) return false
       if (search && !account.name.toLowerCase().includes(search.toLowerCase()))
         return false
@@ -55,14 +56,22 @@ export class AccountService extends BaseService<'account'> {
     // Aplicar paginação
     const paginatedAccounts = filteredAccounts.slice(skip, skip + limit)
 
-    // Por enquanto, não calcular balance para simplificar
-    const accountsWithBalance = paginatedAccounts.map((account) => ({
-      ...account,
-      balance: 0, // Balance será calculado depois
-    }))
+    // Calcular balance para cada conta
+    const accountsWithCalculatedBalance = paginatedAccounts.map((account) => {
+      const balance = account.entries.reduce((acc, entry) => {
+        const amount = Number(entry.amount)
+        return entry.type === 'income' ? acc + amount : acc - amount
+      }, 0)
+
+      return {
+        ...account,
+        balance,
+        entries: undefined, // Remover entries do resultado final
+      }
+    })
 
     return {
-      accounts: accountsWithBalance,
+      accounts: accountsWithCalculatedBalance,
       pagination,
     }
   }
@@ -133,7 +142,7 @@ export class AccountService extends BaseService<'account'> {
 
   async delete(id: string, userId: string) {
     // Verificar se a conta existe e pertence ao usuário
-    await this.findById(id, userId)
+    const account = await this.findById(id, userId)
 
     // Verificar se há transações associadas
     const entryCount = await this.prisma.entry.count({
@@ -149,6 +158,8 @@ export class AccountService extends BaseService<'account'> {
     await this.accountRepository.delete(id)
 
     this.logOperation('DELETE_ACCOUNT', userId, { accountId: id })
+
+    return account
   }
 
   async getBalance(id: string, userId: string) {

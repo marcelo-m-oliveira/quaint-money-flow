@@ -98,9 +98,7 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.findUnique.mockResolvedValue(mockCreditCard)
 
-      const result = await creditCardRepository.findUnique({
-        where: { id: '1' },
-      })
+      const result = await creditCardRepository.findById('1')
 
       expect(mockPrismaClient.creditCard.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -117,10 +115,7 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.findUnique.mockResolvedValue(mockCreditCard)
 
-      const result = await creditCardRepository.findUnique({
-        where: { id: '1' },
-        include: { defaultPaymentAccount: true },
-      })
+      const result = await creditCardRepository.findById('1', { include: { defaultPaymentAccount: true } })
 
       expect(mockPrismaClient.creditCard.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -141,9 +136,7 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.findFirst.mockResolvedValue(mockCreditCard)
 
-      const result = await creditCardRepository.findFirst({
-        where: { name: 'Cartão Principal', userId: 'user-1' },
-      })
+      const result = await creditCardRepository.findFirst({ name: 'Cartão Principal', userId: 'user-1' })
 
       expect(mockPrismaClient.creditCard.findFirst).toHaveBeenCalledWith({
         where: { name: 'Cartão Principal', userId: 'user-1' },
@@ -174,9 +167,7 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.create.mockResolvedValue(createdCreditCard)
 
-      const result = await creditCardRepository.create({
-        data: creditCardData,
-      })
+      const result = await creditCardRepository.create(creditCardData)
 
       expect(mockPrismaClient.creditCard.create).toHaveBeenCalledWith({
         data: creditCardData,
@@ -199,8 +190,7 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.create.mockResolvedValue(createdCreditCard)
 
-      const result = await creditCardRepository.create({
-        data: creditCardData,
+      const result = await creditCardRepository.create(creditCardData, {
         include: { defaultPaymentAccount: true },
       })
 
@@ -229,10 +219,7 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.update.mockResolvedValue(updatedCreditCard)
 
-      const result = await creditCardRepository.update({
-        where: { id: '1' },
-        data: updateData,
-      })
+      const result = await creditCardRepository.update('1', updateData)
 
       expect(mockPrismaClient.creditCard.update).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -252,9 +239,7 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.delete.mockResolvedValue(deletedCreditCard)
 
-      const result = await creditCardRepository.delete({
-        where: { id: '1' },
-      })
+      const result = await creditCardRepository.delete('1')
 
       expect(mockPrismaClient.creditCard.delete).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -267,9 +252,7 @@ describe('Credit Card Repository', () => {
     it('should count credit cards with filters', async () => {
       mockPrismaClient.creditCard.count.mockResolvedValue(5)
 
-      const result = await creditCardRepository.count({
-        where: { userId: 'user-1' },
-      })
+      const result = await creditCardRepository.count({ userId: 'user-1' })
 
       expect(mockPrismaClient.creditCard.count).toHaveBeenCalledWith({
         where: { userId: 'user-1' },
@@ -302,9 +285,17 @@ describe('Credit Card Repository', () => {
 
       mockPrismaClient.creditCard.upsert.mockResolvedValue(upsertedCreditCard)
 
-      const result = await creditCardRepository.upsert(upsertData)
+      const result = await creditCardRepository.upsert(
+        { id: '1' },
+        upsertData.create,
+        upsertData.update,
+      )
 
-      expect(mockPrismaClient.creditCard.upsert).toHaveBeenCalledWith(upsertData)
+      expect(mockPrismaClient.creditCard.upsert).toHaveBeenCalledWith({
+        where: { id: '1' },
+        create: upsertData.create,
+        update: upsertData.update,
+      })
       expect(result).toEqual(upsertedCreditCard)
     })
   })
@@ -468,6 +459,7 @@ describe('Credit Card Repository', () => {
             },
           },
         },
+        orderBy: { createdAt: 'desc' },
       })
       expect(result).toEqual(mockCreditCards)
     })

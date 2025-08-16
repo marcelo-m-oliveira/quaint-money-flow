@@ -91,9 +91,11 @@ describe('Account Repository', () => {
 
       mockPrismaClient.account.findUnique.mockResolvedValue(mockAccount)
 
-      const result = await accountRepository.findUnique(params)
+      const result = await accountRepository.findById('1')
 
-      expect(mockPrismaClient.account.findUnique).toHaveBeenCalledWith(params)
+      expect(mockPrismaClient.account.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+      })
       expect(result).toEqual(mockAccount)
     })
   })
@@ -109,16 +111,17 @@ describe('Account Repository', () => {
         updatedAt: new Date(),
       }
 
-      const params = {
-        where: { name: 'Conta Principal' },
-        include: { entries: true },
-      }
+      const where = { name: 'Conta Principal' }
+      const include = { entries: true }
 
       mockPrismaClient.account.findFirst.mockResolvedValue(mockAccount)
 
-      const result = await accountRepository.findFirst(params)
+      const result = await accountRepository.findFirst(where, { include })
 
-      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith(params)
+      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
+        where,
+        include,
+      })
       expect(result).toEqual(mockAccount)
     })
   })
@@ -142,16 +145,14 @@ describe('Account Repository', () => {
         updatedAt: new Date(),
       }
 
-      const params = {
-        data: accountData,
-        include: { entries: true },
-      }
-
       mockPrismaClient.account.create.mockResolvedValue(createdAccount)
 
-      const result = await accountRepository.create(params)
+      const result = await accountRepository.create(accountData, { include: { entries: true } })
 
-      expect(mockPrismaClient.account.create).toHaveBeenCalledWith(params)
+      expect(mockPrismaClient.account.create).toHaveBeenCalledWith({
+        data: accountData,
+        include: { entries: true },
+      })
       expect(result).toEqual(createdAccount)
     })
   })
@@ -174,17 +175,15 @@ describe('Account Repository', () => {
         updatedAt: new Date(),
       }
 
-      const params = {
+      mockPrismaClient.account.update.mockResolvedValue(updatedAccount)
+
+      const result = await accountRepository.update('1', updateData, { include: { entries: true } })
+
+      expect(mockPrismaClient.account.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: updateData,
         include: { entries: true },
-      }
-
-      mockPrismaClient.account.update.mockResolvedValue(updatedAccount)
-
-      const result = await accountRepository.update(params)
-
-      expect(mockPrismaClient.account.update).toHaveBeenCalledWith(params)
+      })
       expect(result).toEqual(updatedAccount)
     })
   })
@@ -200,37 +199,35 @@ describe('Account Repository', () => {
         updatedAt: new Date(),
       }
 
-      const params = {
-        where: { id: '1' },
-      }
-
       mockPrismaClient.account.delete.mockResolvedValue(deletedAccount)
 
-      const result = await accountRepository.delete(params)
+      const result = await accountRepository.delete('1')
 
-      expect(mockPrismaClient.account.delete).toHaveBeenCalledWith(params)
+      expect(mockPrismaClient.account.delete).toHaveBeenCalledWith({
+        where: { id: '1' },
+      })
       expect(result).toEqual(deletedAccount)
     })
   })
 
   describe('count', () => {
     it('should count accounts with where clause', async () => {
-      const params = {
-        where: { userId: 'user-1' },
-      }
+      const where = { userId: 'user-1' }
 
       mockPrismaClient.account.count.mockResolvedValue(5)
 
-      const result = await accountRepository.count(params)
+      const result = await accountRepository.count(where)
 
-      expect(mockPrismaClient.account.count).toHaveBeenCalledWith(params)
+      expect(mockPrismaClient.account.count).toHaveBeenCalledWith({
+        where,
+      })
       expect(result).toBe(5)
     })
 
     it('should count all accounts without where clause', async () => {
       mockPrismaClient.account.count.mockResolvedValue(10)
 
-      const result = await accountRepository.count({})
+      const result = await accountRepository.count()
 
       expect(mockPrismaClient.account.count).toHaveBeenCalledWith({})
       expect(result).toBe(10)
@@ -269,9 +266,17 @@ describe('Account Repository', () => {
 
       mockPrismaClient.account.upsert.mockResolvedValue(upsertedAccount)
 
-      const result = await accountRepository.upsert(upsertData)
+      const result = await accountRepository.upsert(
+        { id: '1' },
+        upsertData.create,
+        upsertData.update,
+      )
 
-      expect(mockPrismaClient.account.upsert).toHaveBeenCalledWith(upsertData)
+      expect(mockPrismaClient.account.upsert).toHaveBeenCalledWith({
+        where: { id: '1' },
+        create: upsertData.create,
+        update: upsertData.update,
+      })
       expect(result).toEqual(upsertedAccount)
     })
   })
@@ -489,6 +494,7 @@ describe('Account Repository', () => {
             },
           },
         },
+        orderBy: { createdAt: 'desc' },
       })
       expect(result).toEqual(mockAccounts)
     })

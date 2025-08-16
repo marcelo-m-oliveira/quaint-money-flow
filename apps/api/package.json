@@ -15,7 +15,8 @@
     "lint:check": "eslint src --ext .ts",
     "start": "node dist/http/server.js",
     "test": "pnpm env:load jest",
-    "test:accounts": "pnpm env:load jest --testPathPattern=account"
+    "test:accounts": "pnpm env:load jest --testPathPattern=account",
+    "test:credit_cards": "pnpm env:load jest --testPathPattern=credit_cards"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

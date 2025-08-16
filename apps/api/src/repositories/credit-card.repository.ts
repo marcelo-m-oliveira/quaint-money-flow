@@ -35,11 +35,11 @@ export class CreditCardRepository extends BaseRepository<'creditCard'> {
     }
 
     if (excludeId) {
-      where.id = { not: excludeId }
+      where.NOT = { id: excludeId }
     }
 
-    const count = await this.prisma.creditCard.count({ where })
-    return count > 0
+    const creditCard = await this.prisma.creditCard.findFirst({ where })
+    return !!creditCard
   }
 
   async getCreditCardsWithUsage(userId: string) {

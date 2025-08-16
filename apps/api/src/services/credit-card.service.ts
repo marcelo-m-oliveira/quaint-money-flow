@@ -155,7 +155,9 @@ export class CreditCardService extends BaseService<'creditCard'> {
       })
 
       if (duplicateCreditCard) {
-        throw new BadRequestError('Já existe um cartão de crédito com este nome')
+        throw new BadRequestError(
+          'Já existe um cartão de crédito com este nome',
+        )
       }
     }
 
@@ -200,7 +202,7 @@ export class CreditCardService extends BaseService<'creditCard'> {
 
   async delete(id: string, userId: string) {
     // Verificar se o cartão existe e pertence ao usuário
-    await this.findById(id, userId)
+    const creditCard = await this.findById(id, userId)
 
     // Verificar se há transações associadas
     const entryCount = await this.prisma.entry.count({
@@ -216,6 +218,8 @@ export class CreditCardService extends BaseService<'creditCard'> {
     await this.creditCardRepository.delete(id)
 
     this.logOperation('DELETE_CREDIT_CARD', userId, { creditCardId: id })
+
+    return creditCard
   }
 
   async getUsage(id: string, userId: string) {

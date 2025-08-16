@@ -17,9 +17,7 @@ export class AccountRepository extends BaseRepository<'account'> {
       },
     }
 
-    if (includeEntries) {
-      include.entries = true
-    }
+    include.entries = includeEntries
 
     return this.prisma.account.findMany({
       where: { userId },
@@ -59,11 +57,11 @@ export class AccountRepository extends BaseRepository<'account'> {
     }
 
     if (excludeId) {
-      where.id = { not: excludeId }
+      where.NOT = { id: excludeId }
     }
 
-    const count = await this.prisma.account.count({ where })
-    return count > 0
+    const account = await this.prisma.account.findFirst({ where })
+    return !!account
   }
 
   async getAccountsWithBalance(userId: string) {
