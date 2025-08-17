@@ -6,22 +6,20 @@ import type {
   CategoryUsage,
   SelectOption,
 } from '@/lib/types'
+import { buildQuery } from '@/lib/utils'
 
 export const categoriesService = {
   async getAll(
     params?: CategoriesQueryParams,
   ): Promise<PaginatedResponse<Category>> {
-    const searchParams = new URLSearchParams()
-
-    if (params?.page) searchParams.append('page', params.page.toString())
-    if (params?.limit) searchParams.append('limit', params.limit.toString())
-    if (params?.type) searchParams.append('type', params.type)
-    if (params?.search) searchParams.append('search', params.search)
-    if (params?.parentId) searchParams.append('parentId', params.parentId)
-
-    const queryString = searchParams.toString()
-    const endpoint = `/categories${queryString ? `?${queryString}` : ''}`
-
+    const qs = buildQuery({
+      page: params?.page,
+      limit: params?.limit,
+      type: params?.type,
+      search: params?.search,
+      parentId: params?.parentId,
+    })
+    const endpoint = `/categories${qs}`
     return apiClient.get<PaginatedResponse<Category>>(endpoint)
   },
 
@@ -42,12 +40,8 @@ export const categoriesService = {
   },
 
   async getSelectOptions(type?: 'income' | 'expense'): Promise<SelectOption[]> {
-    const searchParams = new URLSearchParams()
-    if (type) searchParams.append('type', type)
-
-    const queryString = searchParams.toString()
-    const endpoint = `/categories/select-options${queryString ? `?${queryString}` : ''}`
-
+    const qs = buildQuery({ type })
+    const endpoint = `/categories/select-options${qs}`
     return apiClient.get<SelectOption[]>(endpoint)
   },
 

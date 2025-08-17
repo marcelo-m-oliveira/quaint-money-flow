@@ -6,19 +6,17 @@ import type {
   SelectOption,
 } from '@/lib'
 import { apiClient } from '@/lib'
+import { buildQuery } from '@/lib/utils'
 
 export const accountsService = {
   async getAll(params?: AccountsQueryParams): Promise<AccountsResponse> {
-    const searchParams = new URLSearchParams()
-
-    if (params?.page) searchParams.append('page', params.page.toString())
-    if (params?.limit) searchParams.append('limit', params.limit.toString())
-    if (params?.search) searchParams.append('search', params.search)
-    if (params?.type) searchParams.append('type', params.type)
-
-    const queryString = searchParams.toString()
-    const endpoint = `/accounts${queryString ? `?${queryString}` : ''}`
-
+    const qs = buildQuery({
+      page: params?.page,
+      limit: params?.limit,
+      search: params?.search,
+      type: params?.type,
+    })
+    const endpoint = `/accounts${qs}`
     return apiClient.get<AccountsResponse>(endpoint)
   },
 

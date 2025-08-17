@@ -5,20 +5,18 @@ import type {
   SelectOption,
 } from '@/lib'
 import { apiClient } from '@/lib'
+import { buildQuery } from '@/lib/utils'
 
 import { CreditCardFormSchema } from '../schemas'
 
 export const creditCardsService = {
   async getAll(params?: CreditCardsQueryParams): Promise<CreditCardsResponse> {
-    const searchParams = new URLSearchParams()
-
-    if (params?.page) searchParams.append('page', params.page.toString())
-    if (params?.limit) searchParams.append('limit', params.limit.toString())
-    if (params?.search) searchParams.append('search', params.search)
-
-    const queryString = searchParams.toString()
-    const endpoint = `/credit-cards${queryString ? `?${queryString}` : ''}`
-
+    const qs = buildQuery({
+      page: params?.page,
+      limit: params?.limit,
+      search: params?.search,
+    })
+    const endpoint = `/credit-cards${qs}`
     return apiClient.get<CreditCardsResponse>(endpoint)
   },
 
