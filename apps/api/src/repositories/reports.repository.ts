@@ -521,6 +521,7 @@ export class ReportsRepository extends BaseRepository<'entry'> {
           id: true,
           name: true,
           icon: true,
+          iconType: true,
         },
       })
 
@@ -567,7 +568,7 @@ export class ReportsRepository extends BaseRepository<'entry'> {
           balance: totalIncome - totalExpense,
           transactionCount: creditCardEntry._count.id || 0,
           icon: creditCard.icon || 'credit-card',
-          iconType: 'generic',
+          iconType: creditCard.iconType || 'generic',
         })
       }
     }
