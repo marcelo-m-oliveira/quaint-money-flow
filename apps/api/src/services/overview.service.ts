@@ -1,12 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 
 import { OverviewRepository } from '@/repositories/overview.repository'
+import { BaseService } from '@/services/base.service'
 
-export class OverviewService {
+export class OverviewService extends BaseService<'entry'> {
   constructor(
     private overviewRepository: OverviewRepository,
-    private prisma: PrismaClient,
-  ) {}
+    prisma: PrismaClient,
+  ) {
+    super((overviewRepository as unknown) as any, prisma)
+  }
 
   async getGeneralOverview(userId: string) {
     const now = new Date()

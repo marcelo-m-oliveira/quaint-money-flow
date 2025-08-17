@@ -139,18 +139,6 @@ export class ReportsRepository extends BaseRepository<'entry'> {
     const parentCategories = categories.filter((cat) => !cat.parentId)
     const subCategories = categories.filter((cat) => cat.parentId)
 
-    console.log('Debug - Categorias encontradas:', {
-      total: categories.length,
-      parentCategories: parentCategories.length,
-      subCategories: subCategories.length,
-      parentIds: parentCategories.map((c) => ({ id: c.id, name: c.name })),
-      subIds: subCategories.map((c) => ({
-        id: c.id,
-        name: c.name,
-        parentId: c.parentId,
-      })),
-    })
-
     // Mapear resultados agrupados por categoria pai
     const groupedResults: CategoryReportData[] = []
 
@@ -163,14 +151,6 @@ export class ReportsRepository extends BaseRepository<'entry'> {
       // Buscar subcategorias desta categoria pai
       const childCategories = subCategories.filter(
         (cat) => cat.parentId === parentCategory.id,
-      )
-
-      console.log(
-        `Debug - Categoria pai "${parentCategory.name}" (${parentCategory.id}):`,
-        {
-          childCategories: childCategories.length,
-          children: childCategories.map((c) => ({ id: c.id, name: c.name })),
-        },
       )
 
       // Buscar dados das subcategorias
@@ -205,16 +185,6 @@ export class ReportsRepository extends BaseRepository<'entry'> {
       if (parentData || childData.length > 0) {
         const parentAmount = Number(parentData?._sum.amount) || 0
         const parentTransactions = parentData?._count.id || 0
-
-        console.log(
-          `Debug - Adicionando categoria "${parentCategory.name}" com ${childData.length} subcategorias:`,
-          {
-            subcategories: childData.map((c) => ({
-              name: c.categoryName,
-              amount: c.amount,
-            })),
-          },
-        )
 
         groupedResults.push({
           categoryId: parentCategory.id,
@@ -260,7 +230,6 @@ export class ReportsRepository extends BaseRepository<'entry'> {
   async getCategoriesReportTotals(
     filters: CategoriesReportFilters,
   ): Promise<{ totalIncome: number; totalExpense: number }> {
-    console.log('getCategoriesReportTotals chamado com filtros:', filters)
     const { userId, startDate, endDate } = filters
 
     const whereConditions: Prisma.EntryWhereInput = {

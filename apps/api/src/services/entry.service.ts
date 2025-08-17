@@ -3,13 +3,16 @@ import { Prisma, PrismaClient } from '@prisma/client'
 
 import { EntryRepository } from '@/repositories/entry.repository'
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { BaseService } from '@/services/base.service'
 import { EntryCreateSchema, EntryUpdateSchema } from '@/utils/schemas'
 
-export class EntryService {
+export class EntryService extends BaseService<'entry'> {
   constructor(
     private entryRepository: EntryRepository,
-    private prisma: PrismaClient,
-  ) {}
+    prisma: PrismaClient,
+  ) {
+    super(entryRepository, prisma)
+  }
 
   async findMany(
     userId: string,
@@ -307,37 +310,39 @@ export class EntryService {
   }
 
   async findById(id: string, userId: string) {
-    const entry = await this.entryRepository.findUnique({
-      where: { id, userId },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
-            type: true,
+    const entry = await this.entryRepository.findFirst(
+      { id, userId } as any,
+      {
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+              type: true,
+            },
           },
-        },
-        account: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            iconType: true,
+          account: {
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              iconType: true,
+            },
           },
-        },
-        creditCard: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            iconType: true,
-            limit: true,
+          creditCard: {
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              iconType: true,
+              limit: true,
+            },
           },
         },
       },
-    })
+    )
 
     if (!entry) {
       throw new BadRequestError('Lançamento não encontrado')
@@ -384,8 +389,8 @@ export class EntryService {
     // Remove ID fields from data to avoid conflicts with Prisma relations
     const { categoryId, accountId, creditCardId, ...entryData } = data
 
-    return this.entryRepository.create({
-      data: {
+    return this.entryRepository.create(
+      {
         ...entryData,
         user: { connect: { id: userId } },
         category: { connect: { id: categoryId } },
@@ -396,35 +401,37 @@ export class EntryService {
           creditCard: { connect: { id: creditCardId } },
         }),
       },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
-            type: true,
+      {
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+              type: true,
+            },
           },
-        },
-        account: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            iconType: true,
+          account: {
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              iconType: true,
+            },
           },
-        },
-        creditCard: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            iconType: true,
-            limit: true,
+          creditCard: {
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              iconType: true,
+              limit: true,
+            },
           },
         },
       },
-    })
+    )
   }
 
   async update(

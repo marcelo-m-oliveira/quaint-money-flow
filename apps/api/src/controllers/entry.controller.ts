@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { dateToSeconds, secondsToDate } from '@saas/utils'
 import {
   EntryCreateSchema,
@@ -7,12 +6,15 @@ import {
 } from '@saas/validations'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
+import { BaseController } from '@/controllers/base.controller'
 import { EntryService } from '@/services/entry.service'
 import { handleError } from '@/utils/errors'
-import { EntryPatchSchema, IdParamSchema, idParamSchema } from '@/utils/schemas'
+import { EntryPatchSchema, IdParamSchema } from '@/utils/schemas'
 
-export class EntryController {
-  constructor(private entryService: EntryService) {}
+export class EntryController extends BaseController {
+  constructor(private entryService: EntryService) {
+    super({ entityName: 'lançamento', entityNamePlural: 'lançamentos' })
+  }
 
   private convertNullToUndefined(obj: any): any {
     if (obj === null) return undefined
@@ -45,10 +47,13 @@ export class EntryController {
 
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
       const filters = request.query as EntryFiltersSchema
 
-      request.log.info({ userId, filters }, 'Listando transações do usuario')
+      request.log.info(
+        { userId, filters },
+        `Listando ${this.entityNamePlural} do usuario`,
+      )
 
       const result = await this.entryService.findMany(userId, {
         page: filters.page || 1,
@@ -73,7 +78,7 @@ export class EntryController {
           totalEntries: result.entries.length,
           totalPages: result.pagination.totalPages,
         },
-        'Transações listadas com sucesso',
+        `${this.entityNamePlural} listadas com sucesso`,
       )
 
       // Convert data to match response schema
@@ -143,7 +148,7 @@ export class EntryController {
     } catch (error: any) {
       request.log.error(
         { error: error.message, stack: error.stack },
-        'Erro ao listar transações',
+        `Erro ao listar ${this.entityNamePlural}`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -151,16 +156,19 @@ export class EntryController {
 
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+      const userId = this.getUserId(request)
+      const { id } = this.getPathParams<IdParamSchema>(request)
 
-      request.log.info({ userId, entryId: id }, 'Buscando transação por ID')
+      request.log.info(
+        { userId, entryId: id },
+        `Buscando ${this.entityName} por ID`,
+      )
 
       const entry = await this.entryService.findById(id, userId)
 
       request.log.info(
         { userId, entryId: entry.id },
-        'Transação encontrada com sucesso',
+        `${this.entityName} encontrada com sucesso`,
       )
 
       // Convert data to match response schema
@@ -177,11 +185,9 @@ export class EntryController {
     } catch (error: any) {
       request.log.error(
         {
-          userId: request.user.sub,
-          entryId: idParamSchema,
           error: error.message,
         },
-        'Erro ao buscar transação',
+        `Erro ao buscar ${this.entityName}`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -189,10 +195,13 @@ export class EntryController {
 
   async store(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
       const data = request.body as EntryCreateSchema
 
-      request.log.info({ userId, entryData: data }, 'Criando nova transação')
+      request.log.info(
+        { userId, entryData: data },
+        `Criando novo ${this.entityName}`,
+      )
 
       // Convert date from seconds to Date and amount from string to number before saving to database
       const processedData = {
@@ -205,7 +214,7 @@ export class EntryController {
 
       request.log.info(
         { entryId: entry.id, description: entry.description },
-        'Transação criada com sucesso',
+        `${this.entityName} criada com sucesso`,
       )
 
       // Convert data to match response schema
@@ -221,8 +230,8 @@ export class EntryController {
       return reply.status(201).send(convertedEntry)
     } catch (error: any) {
       request.log.error(
-        { userId: request.user.sub, error: error.message },
-        'Erro ao criar transação',
+        { error: error.message },
+        `Erro ao criar ${this.entityName}`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -230,13 +239,13 @@ export class EntryController {
 
   async update(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+      const userId = this.getUserId(request)
+      const { id } = this.getPathParams<IdParamSchema>(request)
       const data = request.body as EntryUpdateSchema
 
       request.log.info(
         { userId, entryId: id, updateData: data },
-        'Atualizando transação',
+        `Atualizando ${this.entityName}`,
       )
 
       // Convert date from seconds to Date and amount from string to number before saving to database
@@ -252,7 +261,7 @@ export class EntryController {
 
       request.log.info(
         { entryId: entry.id, description: entry.description },
-        'Transação atualizada com sucesso',
+        `${this.entityName} atualizada com sucesso`,
       )
 
       // Convert data to match response schema
@@ -269,11 +278,9 @@ export class EntryController {
     } catch (error: any) {
       request.log.error(
         {
-          userId: request.user.sub,
-          entryId: idParamSchema,
           error: error.message,
         },
-        'Erro ao atualizar transação',
+        `Erro ao atualizar ${this.entityName}`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -281,13 +288,13 @@ export class EntryController {
 
   async patch(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+      const userId = this.getUserId(request)
+      const { id } = this.getPathParams<IdParamSchema>(request)
       const data = request.body as EntryPatchSchema
 
       request.log.info(
         { userId, entryId: id, patchData: data },
-        'Atualizando transação parcialmente',
+        `Atualizando ${this.entityName} parcialmente`,
       )
 
       // Convert only provided fields
@@ -316,7 +323,7 @@ export class EntryController {
 
       request.log.info(
         { entryId: entry.id, description: entry.description },
-        'Transação atualizada parcialmente com sucesso',
+        `${this.entityName} atualizada parcialmente com sucesso`,
       )
 
       // Convert data to match response schema
@@ -333,11 +340,9 @@ export class EntryController {
     } catch (error: any) {
       request.log.error(
         {
-          userId: request.user.sub,
-          entryId: idParamSchema,
           error: error.message,
         },
-        'Erro ao atualizar transação parcialmente',
+        `Erro ao atualizar ${this.entityName} parcialmente`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -345,24 +350,25 @@ export class EntryController {
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
       const { id } = request.params as IdParamSchema
 
-      request.log.info({ userId, entryId: id }, 'Deletando transação')
+      request.log.info({ userId, entryId: id }, `Deletando ${this.entityName}`)
 
       await this.entryService.delete(id, userId)
 
-      request.log.info({ entryId: id }, 'Transação deletada com sucesso')
+      request.log.info(
+        { entryId: id },
+        `${this.entityName} deletada com sucesso`,
+      )
 
       return reply.status(204).send()
     } catch (error: any) {
       request.log.error(
         {
-          userId: request.user.sub,
-          entryId: idParamSchema,
           error: error.message,
         },
-        'Erro ao deletar transação',
+        `Erro ao deletar ${this.entityName}`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -370,15 +376,18 @@ export class EntryController {
 
   async deleteAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
 
-      request.log.info({ userId }, 'Excluindo todas as entradas do usuário')
+      request.log.info(
+        { userId },
+        `Excluindo todas as ${this.entityNamePlural} do usuário`,
+      )
 
       const result = await this.entryService.deleteAllByUserId(userId)
 
       request.log.info(
         { userId, deletedCount: result.deletedCount },
-        'Todas as entradas excluídas com sucesso',
+        `Todas as ${this.entityNamePlural} excluídas com sucesso`,
       )
 
       return reply.status(200).send({
@@ -388,10 +397,9 @@ export class EntryController {
     } catch (error: any) {
       request.log.error(
         {
-          userId: request.user.sub,
           error: error.message,
         },
-        'Erro ao excluir todas as entradas',
+        `Erro ao excluir todas as ${this.entityNamePlural}`,
       )
       return handleError(error as FastifyError, reply)
     }

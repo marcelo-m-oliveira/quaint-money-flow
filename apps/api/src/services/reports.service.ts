@@ -9,6 +9,7 @@ import type {
   CategoryReportData,
 } from '@/repositories/reports.repository'
 import { ReportsRepository } from '@/repositories/reports.repository'
+import { BaseService } from '@/services/base.service'
 
 // Interface para filtros do serviço (com Date opcional)
 interface ServiceCategoriesReportFilters {
@@ -30,8 +31,11 @@ interface ServiceAccountsReportFilters {
   accountFilter?: 'all' | 'bank_accounts' | 'credit_cards'
 }
 
-export class ReportsService {
-  constructor(private reportsRepository: ReportsRepository) {}
+export class ReportsService extends BaseService<'entry'> {
+  constructor(private reportsRepository: ReportsRepository) {
+    // ReportsRepository herda de BaseRepository<'entry'>, então podemos passar o repositório.
+    super(reportsRepository as any, (reportsRepository as any).prisma)
+  }
 
   async getCategoriesReport(
     userId: string,
