@@ -30,7 +30,9 @@ export const errorHandler: FastifyErrorHandler = (error, request, reply) => {
     return ResponseFormatter.error(reply, error.message, undefined, 404)
   }
 
-  console.error(error)
+  if (process.env.NODE_ENV !== 'test') {
+    console.error(error)
+  }
 
   // send error to some observability platform
 
@@ -60,7 +62,9 @@ export const handleError = (error: FastifyError, reply: FastifyReply) => {
     return ResponseFormatter.error(reply, error.message, undefined, 404)
   }
 
-  console.error(error)
+  if (process.env.NODE_ENV !== 'test') {
+    console.error(error)
+  }
 
   return ResponseFormatter.error(reply, 'Internal server error', undefined, 500)
 }

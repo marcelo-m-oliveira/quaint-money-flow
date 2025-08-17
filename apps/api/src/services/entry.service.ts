@@ -136,7 +136,7 @@ export class EntryService {
       }
 
       // Get total count for pagination
-      const total = await this.entryRepository.count({ where })
+      const total = await this.entryRepository.count(where)
       const totalPages = Math.ceil(total / limit)
 
       // Calculate summary based on viewMode
