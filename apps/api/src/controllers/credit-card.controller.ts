@@ -20,36 +20,26 @@ export class CreditCardController extends BaseController {
   }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    return this.handlePaginatedRequest(
-      request,
-      reply,
-      async () => {
-        const userId = this.getUserId(request)
-        const filters = this.getQueryParams<CreditCardFiltersSchema>(request)
+    const userId = this.getUserId(request)
+    const filters = this.getQueryParams<CreditCardFiltersSchema>(request)
 
-        const result = await this.creditCardService.findMany(userId, {
-          search: filters.search,
-          page: filters.page || 1,
-          limit: filters.limit || 20,
-        })
+    const result = await this.creditCardService.findMany(userId, {
+      search: filters.search,
+      page: filters.page || 1,
+      limit: filters.limit || 20,
+    })
 
-        // Converter datas para timestamp em segundos e formatar números
-        const creditCardsWithConvertedDates = result.creditCards.map(
-          (creditCard) => ({
-            ...convertDatesToSeconds(creditCard),
-            limit: Number(creditCard.limit),
-            usage: Number(creditCard.usage || 0),
-            availableLimit: Number(creditCard.availableLimit || 0),
-          }),
-        )
+    const creditCardsWithConvertedDates = result.creditCards.map((creditCard) => ({
+      ...convertDatesToSeconds(creditCard),
+      limit: Number(creditCard.limit),
+      usage: Number(creditCard.usage || 0),
+      availableLimit: Number(creditCard.availableLimit || 0),
+    }))
 
-        return {
-          items: creditCardsWithConvertedDates,
-          pagination: result.pagination,
-        }
-      },
-      `Listagem de ${this.entityNamePlural}`,
-    )
+    return reply.status(200).send({
+      creditCards: creditCardsWithConvertedDates,
+      pagination: result.pagination,
+    })
   }
 
   async selectOptions(request: FastifyRequest, reply: FastifyReply) {

@@ -37,9 +37,7 @@ Se não existirem preferências, retorna erro 404.
 - 500: Erro interno
         `,
         response: {
-          200: z.object({
-            data: preferencesResponseSchema,
-          }),
+          200: preferencesResponseSchema,
           401: z.object({
             message: z.string(),
           }),
@@ -84,9 +82,7 @@ Valida se as preferências pertencem ao usuário autenticado.
         `,
         params: idParamSchema,
         response: {
-          200: z.object({
-            data: preferencesResponseSchema,
-          }),
+          200: preferencesResponseSchema,
           400: z.object({
             message: z.string(),
           }),
@@ -345,9 +341,7 @@ Se existirem, atualiza; se não existirem, cria com valores padrão + dados forn
         `,
         body: preferencesCreateSchema.partial(),
         response: {
-          200: z.object({
-            data: preferencesResponseSchema,
-          }),
+          200: preferencesResponseSchema,
           401: z.object({
             message: z.string(),
           }),
@@ -384,9 +378,7 @@ Se não existirem preferências, cria com valores padrão.
 - 500: Erro interno
         `,
         response: {
-          200: z.object({
-            data: preferencesResponseSchema,
-          }),
+          200: preferencesResponseSchema,
           401: z.object({
             message: z.string(),
           }),

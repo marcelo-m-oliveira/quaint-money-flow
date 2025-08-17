@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
+import { authMiddleware } from '@/middleware/auth.middleware'
 import { performanceMiddleware } from '@/middleware/performance.middleware'
 import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
 import { redisCacheMiddlewares } from '@/middleware/redis-cache.middleware'
@@ -19,8 +20,6 @@ import {
   idParamSchema,
   selectOptionSchema,
 } from '@/utils/schemas'
-
-import { authMiddleware } from '../middleware/auth.middleware'
 
 export async function accountRoutes(app: FastifyInstance) {
   const accountController = AccountFactory.getController()
@@ -81,7 +80,7 @@ Lista todas as contas bancárias do usuário.
         querystring: accountFiltersSchema,
         response: {
           200: z.object({
-            data: z.array(accountResponseSchema),
+            accounts: z.array(accountResponseSchema),
             pagination: z.object({
               page: z.number(),
               limit: z.number(),

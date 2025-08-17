@@ -1,12 +1,17 @@
-import type { CreditCard, CreditCardsQueryParams, SelectOption } from '@/lib'
-import { apiClient, PaginatedResponse } from '@/lib'
+import type {
+  CreditCard,
+  CreditCardsQueryParams,
+  CreditCardsResponse,
+  SelectOption,
+} from '@/lib'
+import { apiClient } from '@/lib'
 
 import { CreditCardFormSchema } from '../schemas'
 
 export const creditCardsService = {
   async getAll(
     params?: CreditCardsQueryParams,
-  ): Promise<PaginatedResponse<CreditCard>> {
+  ): Promise<CreditCardsResponse> {
     const searchParams = new URLSearchParams()
 
     if (params?.page) searchParams.append('page', params.page.toString())
@@ -16,7 +21,7 @@ export const creditCardsService = {
     const queryString = searchParams.toString()
     const endpoint = `/credit-cards${queryString ? `?${queryString}` : ''}`
 
-    return apiClient.get<PaginatedResponse<CreditCard>>(endpoint)
+    return apiClient.get<CreditCardsResponse>(endpoint)
   },
 
   async getById(id: string): Promise<CreditCard> {

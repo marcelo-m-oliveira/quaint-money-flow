@@ -1,13 +1,8 @@
-import {
-  apiClient,
-  ApiResponse,
-  UserPreferences,
-  UserPreferencesFormData,
-} from '@/lib'
+import { apiClient, UserPreferences, UserPreferencesFormData } from '@/lib'
 
 export const userPreferencesService = {
-  async get(): Promise<ApiResponse<UserPreferences>> {
-    return apiClient.get<ApiResponse<UserPreferences>>('/user-preferences')
+  async get(): Promise<UserPreferences> {
+    return apiClient.get<UserPreferences>('/user-preferences')
   },
 
   async update(data: UserPreferencesFormData): Promise<UserPreferences> {

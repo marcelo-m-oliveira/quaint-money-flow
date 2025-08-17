@@ -40,7 +40,7 @@ export function AccountsProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
       const response = await accountsService.getAll()
-      const accountsWithDates = response.data.map((account) => ({
+      const accountsWithDates = response.accounts.map((account) => ({
         ...account,
         createdAt: account.createdAt,
         updatedAt: account.updatedAt,

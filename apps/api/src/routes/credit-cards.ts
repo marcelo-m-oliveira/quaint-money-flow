@@ -78,7 +78,7 @@ Lista todos os cartões de crédito do usuário.
         querystring: creditCardFiltersSchema,
         response: {
           200: z.object({
-            data: z.array(creditCardResponseSchema),
+            creditCards: z.array(creditCardResponseSchema),
             pagination: z.object({
               page: z.number(),
               limit: z.number(),

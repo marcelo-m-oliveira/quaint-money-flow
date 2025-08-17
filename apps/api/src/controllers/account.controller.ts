@@ -26,33 +26,25 @@ export class AccountController extends BaseController {
   }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    return this.handlePaginatedRequest(
-      request,
-      reply,
-      async () => {
-        const userId = this.getUserId(request)
-        const filters = this.getQueryParams<AccountFilters>(request)
+    const userId = this.getUserId(request)
+    const filters = this.getQueryParams<AccountFilters>(request)
 
-        const result = await this.accountService.findMany(userId, {
-          type: filters.type,
-          includeInGeneralBalance: filters.includeInGeneralBalance,
-          search: filters.search,
-          page: filters.page || 1,
-          limit: filters.limit || 20,
-        })
+    const result = await this.accountService.findMany(userId, {
+      type: filters.type,
+      includeInGeneralBalance: filters.includeInGeneralBalance,
+      search: filters.search,
+      page: filters.page || 1,
+      limit: filters.limit || 20,
+    })
 
-        // Converter datas para timestamp em segundos
-        const accountsWithConvertedDates = convertArrayDatesToSeconds(
-          result.accounts,
-        )
-
-        return {
-          items: accountsWithConvertedDates,
-          pagination: result.pagination,
-        }
-      },
-      `Listagem de ${this.entityNamePlural}`,
+    const accountsWithConvertedDates = convertArrayDatesToSeconds(
+      result.accounts,
     )
+
+    return reply.status(200).send({
+      accounts: accountsWithConvertedDates,
+      pagination: result.pagination,
+    })
   }
 
   async selectOptions(request: FastifyRequest, reply: FastifyReply) {

@@ -42,11 +42,11 @@ export function UserPreferencesProvider({
 
       // Mapear campos da API para o frontend
       const preferencesWithDates = {
-        ...response.data,
+        ...response,
         // Mapear entryOrder para entryOrder
-        entryOrder: response.data.entryOrder,
-        createdAt: response.data.createdAt,
-        updatedAt: response.data.updatedAt,
+        entryOrder: response.entryOrder,
+        createdAt: response.createdAt,
+        updatedAt: response.updatedAt,
       }
       setPreferences(preferencesWithDates)
       setIsInitialized(true)

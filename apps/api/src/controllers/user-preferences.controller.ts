@@ -19,17 +19,9 @@ export class UserPreferencesController extends BaseController {
   }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleRequest(
-      request,
-      reply,
-      async () => {
-        const userId = this.getUserId(request)
-        const preferences =
-          await this.userPreferencesService.findByUserId(userId)
-        return convertDatesToSeconds(preferences)
-      },
-      `Busca de ${this.entityName} do usuário`,
-    )
+    const userId = this.getUserId(request)
+    const preferences = await this.userPreferencesService.findByUserId(userId)
+    return reply.status(200).send(convertDatesToSeconds(preferences))
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
