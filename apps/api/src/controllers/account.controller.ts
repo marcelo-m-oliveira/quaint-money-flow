@@ -62,7 +62,7 @@ export class AccountController extends BaseController {
 
       request.log.info(
         { userId, operation: 'selectOptions' },
-        'Iniciando busca de opções de select para contas',
+        `Iniciando busca de opções de select para ${this.entityNamePlural}`,
       )
 
       const result = await this.accountService.findMany(userId, {
@@ -87,7 +87,7 @@ export class AccountController extends BaseController {
           operation: 'selectOptions',
           totalOptions: selectOptions.length,
         },
-        'Busca de opções de select para contas concluída com sucesso',
+        `Busca de opções de select para ${this.entityNamePlural} concluída com sucesso`,
       )
 
       // Retornar array diretamente, sem envolver em objeto data
@@ -95,7 +95,7 @@ export class AccountController extends BaseController {
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'selectOptions' },
-        'Erro na busca de opções de select para contas',
+        `Erro na busca de opções de select para ${this.entityNamePlural}`,
       )
       throw error // Deixar o Fastify tratar o erro
     }

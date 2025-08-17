@@ -152,7 +152,7 @@ export class CategoryController extends BaseController {
         const category = await this.categoryService.create(data, userId)
 
         // Convert dates to seconds for frontend
-        const convertedCategory = {
+        return {
           ...category,
           createdAt: category.createdAt
             ? dateToSeconds(category.createdAt)
@@ -161,8 +161,6 @@ export class CategoryController extends BaseController {
             ? dateToSeconds(category.updatedAt)
             : undefined,
         }
-
-        return convertedCategory
       },
       `Criação de ${this.entityName}`,
     )

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FastifyReply, FastifyRequest } from 'fastify'
 
 import { BaseController } from '@/controllers/base.controller'
@@ -54,29 +53,47 @@ export class CreditCardController extends BaseController {
   }
 
   async selectOptions(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleRequest(
-      request,
-      reply,
-      async () => {
-        const userId = this.getUserId(request)
-        const filters = this.getQueryParams<CreditCardFiltersSchema>(request)
+    try {
+      const userId = this.getUserId(request)
+      const filters = this.getQueryParams<CreditCardFiltersSchema>(request)
 
-        const result = await this.creditCardService.findMany(userId, {
-          search: filters.search,
-          page: 1,
-          limit: 1000, // Buscar todos os cartões para o select
-        })
+      request.log.info(
+        { userId, operation: 'selectOptions' },
+        `Iniciando busca de opções de select para ${this.entityNamePlural}`,
+      )
 
-        // Formatar dados para o select
-        return result.creditCards.map((creditCard) => ({
-          value: creditCard.id,
-          label: creditCard.name,
-          icon: creditCard.icon,
-          iconType: creditCard.iconType,
-        }))
-      },
-      `Busca de opções de select para ${this.entityNamePlural}`,
-    )
+      const result = await this.creditCardService.findMany(userId, {
+        search: filters.search,
+        page: 1,
+        limit: 1000,
+      })
+
+      // Formatar dados para o select
+      const selectOptions = result.creditCards.map((creditCard) => ({
+        value: creditCard.id,
+        label: creditCard.name,
+        icon: creditCard.icon,
+        iconType: creditCard.iconType,
+      }))
+
+      request.log.info(
+        {
+          userId,
+          operation: 'selectOptions',
+          totalOptions: selectOptions.length,
+        },
+        `Busca de opções de select para ${this.entityNamePlural} concluída com sucesso`,
+      )
+
+      // Retornar array diretamente, sem envolver em objeto data
+      return reply.status(200).send(selectOptions)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'selectOptions' },
+        `Erro na busca de opções de select para ${this.entityNamePlural}`,
+      )
+      throw error // Deixar o Fastify tratar o erro
+    }
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
