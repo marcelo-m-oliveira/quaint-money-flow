@@ -9,9 +9,7 @@ import { apiClient } from '@/lib'
 import { CreditCardFormSchema } from '../schemas'
 
 export const creditCardsService = {
-  async getAll(
-    params?: CreditCardsQueryParams,
-  ): Promise<CreditCardsResponse> {
+  async getAll(params?: CreditCardsQueryParams): Promise<CreditCardsResponse> {
     const searchParams = new URLSearchParams()
 
     if (params?.page) searchParams.append('page', params.page.toString())

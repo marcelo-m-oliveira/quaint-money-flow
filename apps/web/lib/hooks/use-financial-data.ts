@@ -33,19 +33,18 @@ export function useFinancialData() {
               'Content-Type': 'application/json',
               Authorization: 'Bearer dev-token-123',
             },
-          }
+          },
         )
         if (entriesResponse.ok) {
           const entriesData = await entriesResponse.json()
-          const parsedEntries = entriesData.entries?.map(
-            (entry: Record<string, unknown>) => ({
+          const parsedEntries =
+            entriesData.entries?.map((entry: Record<string, unknown>) => ({
               ...entry,
               date: new Date(entry.date as string),
               createdAt: new Date(entry.createdAt as string),
               updatedAt: new Date(entry.updatedAt as string),
               paid: entry.paid ?? false,
-            }),
-          ) || []
+            })) ?? []
           setEntries(parsedEntries)
         }
 
@@ -57,16 +56,17 @@ export function useFinancialData() {
               'Content-Type': 'application/json',
               Authorization: 'Bearer dev-token-123',
             },
-          }
+          },
         )
         if (categoriesResponse.ok) {
           const categoriesData = await categoriesResponse.json()
-          const parsedCategories = categoriesData.categories?.map(
-            (category: Record<string, unknown>) => ({
-              ...category,
-              createdAt: new Date(category.createdAt as string),
-            }),
-          ) || []
+          const parsedCategories =
+            categoriesData.categories?.map(
+              (category: Record<string, unknown>) => ({
+                ...category,
+                createdAt: new Date(category.createdAt as string),
+              }),
+            ) ?? []
           setCategories(parsedCategories)
         }
       } catch (error) {

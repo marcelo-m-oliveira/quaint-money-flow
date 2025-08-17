@@ -2,18 +2,18 @@
 
 import React, { createContext, useCallback, useContext, useState } from 'react'
 
-import { useCrudToast } from '../hooks/use-crud-toast'
-import { userPreferencesService } from '../services/user-preferences'
-import { UserPreferences, UserPreferencesFormData } from '../types'
+import {
+  useCrudToast,
+  UserPreferences,
+  UserPreferencesFormData,
+  userPreferencesService,
+} from '@/lib'
 
 interface UserPreferencesContextType {
   preferences: UserPreferences | null
   isLoading: boolean
   isInitialized: boolean
-  updatePreferences: (
-    id: string,
-    data: UserPreferencesFormData,
-  ) => Promise<UserPreferences>
+  updatePreferences: (data: UserPreferencesFormData) => Promise<UserPreferences>
   upsertPreferences: (data: UserPreferencesFormData) => Promise<UserPreferences>
   resetPreferences: () => Promise<UserPreferences>
   refetch: () => Promise<void>

@@ -126,6 +126,8 @@ export const entriesService = {
 
   // Deletar todas as entradas do usuário
   async deleteAll(): Promise<{ message: string; deletedCount: number }> {
-    return apiClient.delete<{ message: string; deletedCount: number }>('/entries/all')
+    return apiClient.delete<{ message: string; deletedCount: number }>(
+      '/entries/all',
+    )
   },
 }
