@@ -17,7 +17,8 @@
     "test": "pnpm env:load jest",
     "test:accounts": "pnpm env:load jest --testPathPattern=account",
     "test:credit_cards": "pnpm env:load jest --testPathPattern=credit_cards",
-    "test:user_preferences": "pnpm env:load jest --testPathPattern=user_preferences"
+    "test:user_preferences": "pnpm env:load jest --testPathPattern=user_preferences",
+    "test:categories": "pnpm env:load jest --testPathPattern=categories"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
