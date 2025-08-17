@@ -1,15 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Category } from '@prisma/client'
 import { dateToSeconds } from '@saas/utils'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
+import { BaseController } from '@/controllers/base.controller'
 import { CategoryService } from '@/services/category.service'
 import { handleError } from '@/utils/errors'
 import {
   CategoryCreateSchema,
   CategoryUpdateSchema,
   IdParamSchema,
-  idParamSchema,
   PaginationSchema,
 } from '@/utils/schemas'
 
@@ -17,15 +16,15 @@ interface CategoryFilters extends PaginationSchema {
   type?: 'income' | 'expense'
 }
 
-export class CategoryController {
-  constructor(private categoryService: CategoryService) {}
+export class CategoryController extends BaseController {
+  constructor(private categoryService: CategoryService) {
+    super({ entityName: 'Categoria', entityNamePlural: 'Categorias' })
+  }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
-      const filters = request.query as CategoryFilters
-
-      request.log.info({ userId, filters }, 'Listando categorias do usuario')
+      const userId = this.getUserId(request)
+      const filters = this.getQueryParams<CategoryFilters>(request)
 
       const result = await this.categoryService.findMany(userId, {
         page: filters.page || 1,
@@ -33,19 +32,8 @@ export class CategoryController {
         type: filters.type,
       })
 
-      request.log.info(
-        {
-          userId,
-          totalCategories: result.categories.length,
-          totalPages: result.pagination.totalPages,
-        },
-        'Categorias listadas com sucesso',
-      )
-
-      // Convert dates to seconds for frontend
-      const convertedResult = {
-        ...result,
-        categories: result.categories.map((category: Category) => ({
+      const categoriesWithConvertedDates = result.categories.map(
+        (category: Category) => ({
           ...category,
           createdAt: category.createdAt
             ? dateToSeconds(category.createdAt)
@@ -53,10 +41,13 @@ export class CategoryController {
           updatedAt: category.updatedAt
             ? dateToSeconds(category.updatedAt)
             : undefined,
-        })),
-      }
+        }),
+      )
 
-      return reply.status(200).send(convertedResult)
+      return reply.status(200).send({
+        data: categoriesWithConvertedDates,
+        pagination: result.pagination,
+      })
     } catch (error: any) {
       request.log.error(
         { error: error.message, stack: error.stack },
@@ -68,7 +59,7 @@ export class CategoryController {
 
   async select(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
       const { type } = request.query as { type?: 'income' | 'expense' }
 
       request.log.info(
@@ -95,7 +86,7 @@ export class CategoryController {
 
   async usage(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
 
       request.log.info(
         { userId },
@@ -121,16 +112,10 @@ export class CategoryController {
 
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
-
-      request.log.info({ userId, categoryId: id }, 'Buscando categoria por ID')
+      const userId = this.getUserId(request)
+      const { id } = this.getPathParams<IdParamSchema>(request)
 
       const category = await this.categoryService.findById(id, userId)
-
-      if (!category) {
-        return reply.status(404).send({ error: 'Categoria não encontrada' })
-      }
 
       // Convert dates to seconds for frontend
       const convertedCategory = {
@@ -147,9 +132,8 @@ export class CategoryController {
     } catch (error: any) {
       request.log.error(
         {
-          userId: request.user.sub,
-          categoryId: idParamSchema,
           error: error.message,
+          stack: error.stack,
         },
         'Erro ao buscar categoria',
       )
@@ -158,109 +142,69 @@ export class CategoryController {
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const data = request.body as CategoryCreateSchema
+    return this.handleCreateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const data = this.getBodyParams<CategoryCreateSchema>(request)
 
-      request.log.info({ userId, categoryData: data }, 'Criando nova categoria')
+        const category = await this.categoryService.create(data, userId)
 
-      const category = await this.categoryService.create(data, userId)
+        // Convert dates to seconds for frontend
+        const convertedCategory = {
+          ...category,
+          createdAt: category.createdAt
+            ? dateToSeconds(category.createdAt)
+            : undefined,
+          updatedAt: category.updatedAt
+            ? dateToSeconds(category.updatedAt)
+            : undefined,
+        }
 
-      request.log.info(
-        { categoryId: category.id, name: category.name },
-        'Categoria criada com sucesso',
-      )
-
-      // Convert dates to seconds for frontend
-      const convertedCategory = {
-        ...category,
-        createdAt: category.createdAt
-          ? dateToSeconds(category.createdAt)
-          : undefined,
-        updatedAt: category.updatedAt
-          ? dateToSeconds(category.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(201).send(convertedCategory)
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, error: error.message },
-        'Erro ao criar categoria',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        return convertedCategory
+      },
+      `Criação de ${this.entityName}`,
+    )
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
-      const data = request.body as CategoryUpdateSchema
+    return this.handleUpdateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
+        const data = this.getBodyParams<CategoryUpdateSchema>(request)
 
-      request.log.info(
-        { userId, categoryId: id, updateData: data },
-        'Atualizando categoria',
-      )
+        const category = await this.categoryService.update(id, data, userId)
 
-      const category = await this.categoryService.update(id, data, userId)
-
-      if (!category) {
-        return reply.status(404).send({ error: 'Categoria não encontrada' })
-      }
-
-      request.log.info(
-        { categoryId: category.id, name: category.name },
-        'Categoria atualizada com sucesso',
-      )
-
-      // Convert dates to seconds for frontend
-      const convertedCategory = {
-        ...category,
-        createdAt: category.createdAt
-          ? dateToSeconds(category.createdAt)
-          : undefined,
-        updatedAt: category.updatedAt
-          ? dateToSeconds(category.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(200).send(convertedCategory)
-    } catch (error: any) {
-      request.log.error(
-        {
-          userId: request.user.sub,
-          categoryId: idParamSchema,
-          error: error.message,
-        },
-        'Erro ao atualizar categoria',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        // Convert dates to seconds for frontend
+        return {
+          ...category,
+          createdAt: category.createdAt
+            ? dateToSeconds(category.createdAt)
+            : undefined,
+          updatedAt: category.updatedAt
+            ? dateToSeconds(category.updatedAt)
+            : undefined,
+        }
+      },
+      `Atualização de ${this.entityName}`,
+    )
   }
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+    return this.handleDeleteRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      request.log.info({ userId, categoryId: id }, 'Deletando categoria')
-
-      await this.categoryService.delete(id, userId)
-
-      request.log.info({ categoryId: id }, 'Categoria deletada com sucesso')
-
-      return reply.status(204).send()
-    } catch (error: any) {
-      request.log.error(
-        {
-          userId: request.user.sub,
-          categoryId: idParamSchema,
-          error: error.message,
-        },
-        'Erro ao deletar categoria',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        await this.categoryService.delete(id, userId)
+      },
+      `Exclusão de ${this.entityName}`,
+    )
   }
 }

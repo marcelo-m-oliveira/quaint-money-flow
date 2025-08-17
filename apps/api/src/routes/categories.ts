@@ -46,7 +46,7 @@ Lista todas as categorias do usuário com suporte a hierarquia.
         querystring: categoryFiltersSchema,
         response: {
           200: z.object({
-            categories: z.array(categoryResponseSchema),
+            data: z.array(categoryResponseSchema),
             pagination: z.object({
               page: z.number(),
               limit: z.number(),

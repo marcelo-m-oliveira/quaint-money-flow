@@ -1,62 +1,10 @@
 import { Prisma, PrismaClient } from '@prisma/client'
 
-export class CategoryRepository {
-  constructor(private prisma: PrismaClient) {}
+import { BaseRepository } from '@/repositories/base.repository'
 
-  async findMany(params: {
-    where?: Prisma.CategoryWhereInput
-    skip?: number
-    take?: number
-    orderBy?: Prisma.CategoryOrderByWithRelationInput
-    include?: Prisma.CategoryInclude
-  }) {
-    return this.prisma.category.findMany(params)
-  }
-
-  async findUnique(params: {
-    where: Prisma.CategoryWhereUniqueInput
-    include?: Prisma.CategoryInclude
-  }) {
-    return this.prisma.category.findUnique(params)
-  }
-
-  async findFirst(params: {
-    where?: Prisma.CategoryWhereInput
-    include?: Prisma.CategoryInclude
-  }) {
-    return this.prisma.category.findFirst(params)
-  }
-
-  async create(params: {
-    data: Prisma.CategoryCreateInput
-    include?: Prisma.CategoryInclude
-  }) {
-    return this.prisma.category.create(params)
-  }
-
-  async update(params: {
-    where: Prisma.CategoryWhereUniqueInput
-    data: Prisma.CategoryUpdateInput
-    include?: Prisma.CategoryInclude
-  }) {
-    return this.prisma.category.update(params)
-  }
-
-  async delete(params: { where: Prisma.CategoryWhereUniqueInput }) {
-    return this.prisma.category.delete(params)
-  }
-
-  async count(params: { where?: Prisma.CategoryWhereInput }) {
-    return this.prisma.category.count(params)
-  }
-
-  async upsert(params: {
-    where: Prisma.CategoryWhereUniqueInput
-    create: Prisma.CategoryCreateInput
-    update: Prisma.CategoryUpdateInput
-    include?: Prisma.CategoryInclude
-  }) {
-    return this.prisma.category.upsert(params)
+export class CategoryRepository extends BaseRepository<'category'> {
+  constructor(prisma: PrismaClient) {
+    super(prisma, 'category')
   }
 
   // Métodos específicos de negócio
@@ -88,6 +36,7 @@ export class CategoryRepository {
     }
 
     if (excludeId) {
+      // Evitar colisão com a própria categoria durante update
       where.NOT = { id: excludeId }
     }
 

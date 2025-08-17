@@ -1,7 +1,6 @@
-import { apiClient } from '@/lib/api'
+import { apiClient, PaginatedResponse } from '@/lib/api'
 import type {
   CategoriesQueryParams,
-  CategoriesResponse,
   Category,
   CategoryFormData,
   CategoryUsage,
@@ -9,7 +8,9 @@ import type {
 } from '@/lib/types'
 
 export const categoriesService = {
-  async getAll(params?: CategoriesQueryParams): Promise<CategoriesResponse> {
+  async getAll(
+    params?: CategoriesQueryParams,
+  ): Promise<PaginatedResponse<Category>> {
     const searchParams = new URLSearchParams()
 
     if (params?.page) searchParams.append('page', params.page.toString())
@@ -21,7 +22,7 @@ export const categoriesService = {
     const queryString = searchParams.toString()
     const endpoint = `/categories${queryString ? `?${queryString}` : ''}`
 
-    return apiClient.get<CategoriesResponse>(endpoint)
+    return apiClient.get<PaginatedResponse<Category>>(endpoint)
   },
 
   async getById(id: string): Promise<Category> {
