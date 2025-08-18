@@ -1,6 +1,6 @@
+import { env } from '@saas/env'
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { env } from '@saas/env'
 
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
@@ -12,14 +12,6 @@ async function forward(
 ) {
   const session = await getServerSession(authOptions)
   const accessToken = (session as any)?.accessToken as string | undefined
-
-  // Debug log para verificar se o token está sendo obtido
-  console.log('🔍 Debug - Session:', !!session)
-  console.log('🔍 Debug - Session keys:', session ? Object.keys(session) : 'No session')
-  console.log('🔍 Debug - Access Token:', !!accessToken)
-  console.log('🔍 Debug - Access Token (first 20 chars):', accessToken?.substring(0, 20))
-  console.log('🔍 Debug - Path:', context.params.path)
-  console.log('🔍 Debug - Method:', request.method)
 
   const { search } = new URL(request.url)
   const path = (context.params.path || []).join('/')

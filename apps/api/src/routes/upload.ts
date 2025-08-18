@@ -31,15 +31,15 @@ export async function uploadRoutes(app: FastifyInstance) {
           200: uploadResponseSchema,
         },
       },
-      preHandler: [authMiddleware, performanceMiddleware(), validateBody(uploadAvatarSchema), rateLimitMiddlewares.authenticated()],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateBody(uploadAvatarSchema),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     async (request, reply) => {
       try {
-        console.log('🔍 Debug - Upload route hit')
-        console.log('🔍 Debug - User:', request.user)
-        console.log('🔍 Debug - Headers:', request.headers)
-        console.log('🔍 Debug - Authorization header:', request.headers.authorization)
-        
         const { imageData } = request.body as any
 
         // Validar se é um data URL válido
@@ -48,7 +48,7 @@ export async function uploadRoutes(app: FastifyInstance) {
             reply,
             'Formato de imagem inválido',
             undefined,
-            400
+            400,
           )
         }
 
@@ -56,20 +56,20 @@ export async function uploadRoutes(app: FastifyInstance) {
         const base64Data = imageData.split(',')[1]
         const sizeInBytes = Math.ceil((base64Data.length * 3) / 4)
         const maxSize = 5 * 1024 * 1024 // 5MB
-        
+
         if (sizeInBytes > maxSize) {
           return ResponseFormatter.error(
             reply,
             'Arquivo muito grande. Tamanho máximo: 5MB',
             undefined,
-            400
+            400,
           )
         }
 
         // Atualizar o avatar do usuário
         const decoded = request.user as any
         const userId = decoded?.sub as string
-        
+
         await prisma.user.update({
           where: { id: userId },
           data: { avatarUrl: imageData },
@@ -85,7 +85,7 @@ export async function uploadRoutes(app: FastifyInstance) {
           reply,
           'Erro interno do servidor',
           undefined,
-          500
+          500,
         )
       }
     },
