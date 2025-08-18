@@ -146,14 +146,14 @@ export const authOptions: NextAuthOptions = {
       // Expose tokens in session object
       ;(session as any).accessToken = token.accessToken
       ;(session as any).refreshToken = token.refreshToken
-      
+
       // Fetch fresh user data from backend to ensure we have the latest profile info
       try {
         const accessToken = token.accessToken as string | undefined
         if (accessToken) {
           const resp = await fetch(`${API_BASE_URL}/users/me`, {
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
               'content-type': 'application/json',
             },
           })
@@ -171,7 +171,7 @@ export const authOptions: NextAuthOptions = {
       } catch (error) {
         console.error('Failed to fetch fresh user data:', error)
       }
-      
+
       // Fallback to token data if API call fails
       session.user = session.user || ({} as any)
       if (token?.name) (session.user as any).name = token.name

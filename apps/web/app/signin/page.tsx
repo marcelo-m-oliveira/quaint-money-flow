@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LogIn, Mail, MoveRight, Shield, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, LogIn, Mail, MoveRight, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
@@ -87,7 +87,9 @@ export default function SignInPage() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-xs text-destructive">{errors.password.message}</p>
+              <p className="text-xs text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
           <div className="flex items-center justify-between text-sm">

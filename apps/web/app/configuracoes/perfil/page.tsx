@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Shield, User, Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff, Shield, User, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -82,7 +82,7 @@ export default function PerfilPage() {
   return (
     <div className="grid grid-cols-1 gap-6">
       <Card>
-        <CardContent className="p-4 sm:p-6 lg:p-8 space-y-8">
+        <CardContent className="space-y-8 p-4 sm:p-6 lg:p-8">
           {/* Perfil */}
           <div>
             <div className="mb-4 flex items-center gap-2 text-lg font-semibold">
@@ -97,7 +97,10 @@ export default function PerfilPage() {
                   success.update('Perfil')
                   setTimeout(() => window.location.reload(), 600)
                 } catch (e: any) {
-                  error.update('perfil', e?.message || 'Erro ao atualizar perfil')
+                  error.update(
+                    'perfil',
+                    e?.message || 'Erro ao atualizar perfil',
+                  )
                 } finally {
                   setLoading(false)
                 }
@@ -105,14 +108,19 @@ export default function PerfilPage() {
             >
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={avatarUrl || ''} alt={data?.user?.name || ''} />
+                  <AvatarImage
+                    src={avatarUrl || ''}
+                    alt={data?.user?.name || ''}
+                  />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <label className="text-sm text-muted-foreground">Nome</label>
                   <Input placeholder="Seu nome" {...register('name')} />
                   {errors.name && (
-                    <p className="text-xs text-destructive">{errors.name.message}</p>
+                    <p className="text-xs text-destructive">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -122,15 +130,23 @@ export default function PerfilPage() {
                   <Input value={data?.user?.email || ''} disabled />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground">Avatar URL</label>
+                  <label className="text-sm text-muted-foreground">
+                    Avatar URL
+                  </label>
                   <Input placeholder="https://..." {...register('avatarUrl')} />
                   {errors.avatarUrl && (
-                    <p className="text-xs text-destructive">{errors.avatarUrl.message}</p>
+                    <p className="text-xs text-destructive">
+                      {errors.avatarUrl.message}
+                    </p>
                   )}
                 </div>
               </div>
 
-              <Button className="w-full sm:w-auto" disabled={loading} type="submit">
+              <Button
+                className="w-full sm:w-auto"
+                disabled={loading}
+                type="submit"
+              >
                 Salvar alterações
               </Button>
             </form>
@@ -158,7 +174,9 @@ export default function PerfilPage() {
               })}
             >
               <div>
-                <label className="text-sm text-muted-foreground">Senha atual</label>
+                <label className="text-sm text-muted-foreground">
+                  Senha atual
+                </label>
                 <div className="relative">
                   <Input
                     type={showCurrent ? 'text' : 'password'}
@@ -171,15 +189,23 @@ export default function PerfilPage() {
                     onClick={() => setShowCurrent((v) => !v)}
                     aria-label="Mostrar/ocultar senha atual"
                   >
-                    {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showCurrent ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
                 {pwErrors.currentPassword && (
-                  <p className="text-xs text-destructive">{pwErrors.currentPassword.message}</p>
+                  <p className="text-xs text-destructive">
+                    {pwErrors.currentPassword.message}
+                  </p>
                 )}
               </div>
               <div>
-                <label className="text-sm text-muted-foreground">Nova senha</label>
+                <label className="text-sm text-muted-foreground">
+                  Nova senha
+                </label>
                 <div className="relative">
                   <Input
                     type={showNew ? 'text' : 'password'}
@@ -192,11 +218,17 @@ export default function PerfilPage() {
                     onClick={() => setShowNew((v) => !v)}
                     aria-label="Mostrar/ocultar nova senha"
                   >
-                    {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showNew ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
                 {pwErrors.newPassword && (
-                  <p className="text-xs text-destructive">{pwErrors.newPassword.message}</p>
+                  <p className="text-xs text-destructive">
+                    {pwErrors.newPassword.message}
+                  </p>
                 )}
                 {/* Feedback visual de força: mínimo 6 chars (regra atual) */}
                 {showNewPwHint && (
@@ -204,19 +236,28 @@ export default function PerfilPage() {
                     {isNewPwValid ? (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                        <span className="text-emerald-600">Senha atende aos requisitos</span>
+                        <span className="text-emerald-600">
+                          Senha atende aos requisitos
+                        </span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-3.5 w-3.5 text-destructive" />
-                        <span className="text-destructive">Senha inválida (mín. 8, com maiúscula, minúscula, número e símbolo)</span>
+                        <span className="text-destructive">
+                          Senha inválida (mín. 8, com maiúscula, minúscula,
+                          número e símbolo)
+                        </span>
                       </>
                     )}
                   </div>
                 )}
               </div>
               <div className="sm:col-span-2">
-                <Button className="w-full sm:w-auto" disabled={pwLoading} type="submit">
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={pwLoading}
+                  type="submit"
+                >
                   Atualizar senha
                 </Button>
               </div>
@@ -227,5 +268,3 @@ export default function PerfilPage() {
     </div>
   )
 }
-
-

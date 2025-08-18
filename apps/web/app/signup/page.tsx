@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ShieldCheck, UserPlus, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -20,7 +20,10 @@ const signUpSchema = z.object({
     .refine((val) => /[a-z]/.test(val), 'A senha deve conter letra minúscula')
     .refine((val) => /[A-Z]/.test(val), 'A senha deve conter letra maiúscula')
     .refine((val) => /\d/.test(val), 'A senha deve conter número')
-    .refine((val) => /[^\w\s]/.test(val), 'A senha deve conter caractere especial'),
+    .refine(
+      (val) => /[^\w\s]/.test(val),
+      'A senha deve conter caractere especial',
+    ),
 })
 type SignUpSchema = z.infer<typeof signUpSchema>
 
@@ -108,7 +111,8 @@ export default function SignUpPage() {
             </div>
             {errors.password && (
               <p className="text-xs text-destructive">
-                Senha inválida (mín. 8, com maiúscula, minúscula, número e símbolo)
+                Senha inválida (mín. 8, com maiúscula, minúscula, número e
+                símbolo)
               </p>
             )}
           </div>
