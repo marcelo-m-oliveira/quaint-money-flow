@@ -18,6 +18,7 @@ import { entryRoutes } from '@/routes/entries'
 import { healthRoutes } from '@/routes/health'
 import { overviewRoutes } from '@/routes/overview'
 import { reportRoutes } from '@/routes/reports'
+import { uploadRoutes } from '@/routes/upload'
 import { userPreferencesRoutes } from '@/routes/user-preferences'
 import { userRoutes } from '@/routes/users'
 import { errorHandler } from '@/utils/errors'
@@ -111,6 +112,10 @@ export async function createApp() {
   })
 
   app.register(userRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
+
+  app.register(uploadRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 

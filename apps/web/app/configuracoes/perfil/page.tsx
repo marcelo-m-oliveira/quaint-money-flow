@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { FileUpload } from '@/components/ui/file-upload'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { useCrudToast } from '@/lib'
@@ -17,7 +18,7 @@ import { userService } from '@/lib/services/user'
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  avatarUrl: z.string().url('URL inválida').nullable().optional(),
+  avatarUrl: z.string().nullable().optional(),
 })
 type ProfileSchema = z.infer<typeof profileSchema>
 
@@ -39,6 +40,7 @@ export default function PerfilPage() {
   const { data } = useSession()
   const [loading, setLoading] = useState(false)
   const [pwLoading, setPwLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const { success, error } = useCrudToast()
 
   const {
@@ -106,15 +108,8 @@ export default function PerfilPage() {
                 }
               })}
             >
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage
-                    src={avatarUrl || ''}
-                    alt={data?.user?.name || ''}
-                  />
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
                   <label className="text-sm text-muted-foreground">Nome</label>
                   <Input placeholder="Seu nome" {...register('name')} />
                   {errors.name && (
@@ -123,31 +118,53 @@ export default function PerfilPage() {
                     </p>
                   )}
                 </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="text-sm text-muted-foreground">Email</label>
                   <Input value={data?.user?.email || ''} disabled />
                 </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">
-                    Avatar URL
-                  </label>
-                  <Input placeholder="https://..." {...register('avatarUrl')} />
-                  {errors.avatarUrl && (
-                    <p className="text-xs text-destructive">
-                      {errors.avatarUrl.message}
-                    </p>
-                  )}
-                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">
+                  Foto de perfil
+                </label>
+                <FileUpload
+                  value={avatarUrl}
+                  onChange={(value) => {
+                    // Atualizar o valor do formulário
+                    const event = {
+                      target: { name: 'avatarUrl', value }
+                    } as any
+                    register('avatarUrl').onChange(event)
+                  }}
+                  placeholder="Selecionar foto de perfil"
+                  fallbackText={data?.user?.name || 'Usuário'}
+                  maxSize={5}
+                  acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
+                  uploadToServer={true}
+                  onUploadStart={() => setUploading(true)}
+                  onUploadSuccess={(url) => {
+                    setUploading(false)
+                    success.update('Foto de perfil')
+                  }}
+                  onUploadError={(errorMessage) => {
+                    setUploading(false)
+                    error.update('upload', errorMessage)
+                  }}
+                />
+                {errors.avatarUrl && (
+                  <p className="text-xs text-destructive mt-2">
+                    {errors.avatarUrl.message}
+                  </p>
+                )}
               </div>
 
               <Button
                 className="w-full sm:w-auto"
-                disabled={loading}
+                disabled={loading || uploading}
                 type="submit"
               >
-                Salvar alterações
+                {uploading ? 'Fazendo upload...' : 'Salvar alterações'}
               </Button>
             </form>
           </div>
