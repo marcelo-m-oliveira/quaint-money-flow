@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import * as bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -17,6 +17,7 @@ async function main() {
       email: 'user@example.com',
       name: 'Usuário Exemplo',
       password: passwordHash,
+      avatarUrl: this.faker.image.avatar(),
     },
   })
 

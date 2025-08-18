@@ -17,6 +17,7 @@ model User {
   email     String   @unique
   name      String
   password  String // Campo para autenticação
+  avatarUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -26,8 +27,38 @@ model User {
   categories  Category[]
   entries     Entry[]
   preferences UserPreferences?
+  providers   UserProvider[]
+  refreshTokens RefreshToken[]
 
   @@map("users")
+  @@schema("auth")
+}
+
+model UserProvider {
+  id             String   @id @default(cuid())
+  userId         String
+  provider       String
+  providerUserId String
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@map("user_providers")
+  @@schema("auth")
+}
+
+model RefreshToken {
+  jti       String   @id
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
   @@schema("auth")
 }
 

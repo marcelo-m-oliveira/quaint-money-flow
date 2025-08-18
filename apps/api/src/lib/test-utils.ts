@@ -64,6 +64,7 @@ export class TestUtils {
     const secret =
       process.env.JWT_SECRET ||
       'your-super-secret-jwt-key-change-this-in-production'
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const jwt = require('jsonwebtoken') as typeof import('jsonwebtoken')
     return jwt.sign(
       { sub: userId, email: 'test@example.com', name: 'Test User' },

@@ -11,6 +11,8 @@ declare module 'fastify' {
       entry: Entry
       userPreferences: UserPreferences
       user: User
+      userProvider: UserProvider
+      refreshToken: RefreshToken
     }>
   }
 }

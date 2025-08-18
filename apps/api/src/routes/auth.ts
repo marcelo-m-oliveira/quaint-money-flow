@@ -52,6 +52,16 @@ export async function authRoutes(app: FastifyInstance) {
       expiresInSeconds,
     )
 
+    // Registrar no banco para auditoria
+    const expiresAt = new Date(Date.now() + expiresInSeconds * 1000)
+    await prisma.refreshToken.create({
+      data: {
+        jti,
+        userId,
+        expiresAt,
+      },
+    })
+
     return { token, jti, expiresInSeconds }
   }
 
@@ -204,6 +214,8 @@ export async function authRoutes(app: FastifyInstance) {
       const profile = (await profileResp.json()) as any
       const email = profile.email as string
       const name = (profile.name as string) || email
+      const picture = (profile.picture as string) || undefined
+      const providerUserId = profile.sub as string
 
       if (!email) {
         return ResponseFormatter.error(
@@ -219,7 +231,35 @@ export async function authRoutes(app: FastifyInstance) {
       if (!user) {
         const randomPasswordHash = await bcrypt.hash(randomUUID(), 10)
         user = await prisma.user.create({
-          data: { email, name, password: randomPasswordHash },
+          data: {
+            email,
+            name,
+            password: randomPasswordHash,
+            avatarUrl: picture,
+          },
+        })
+      } else if (!user.avatarUrl && picture) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { avatarUrl: picture },
+        })
+      }
+
+      // Vincular/atualizar provedor
+      if (providerUserId) {
+        await prisma.userProvider.upsert({
+          where: {
+            provider_providerUserId: {
+              provider: 'google',
+              providerUserId,
+            },
+          },
+          update: { userId: user.id },
+          create: {
+            userId: user.id,
+            provider: 'google',
+            providerUserId,
+          },
         })
       }
 
@@ -281,6 +321,10 @@ export async function authRoutes(app: FastifyInstance) {
 
         // Rotacionar refresh token: revoga o atual e emite um novo
         await redis.del(key)
+        await prisma.refreshToken.update({
+          where: { jti: decoded.jti as string },
+          data: { revokedAt: new Date() },
+        })
 
         const userId = decoded.sub as string
         const user = await prisma.user.findUnique({ where: { id: userId } })
@@ -348,6 +392,10 @@ export async function authRoutes(app: FastifyInstance) {
         }
 
         await redis.del(`refresh:${decoded.jti}`)
+        await prisma.refreshToken.update({
+          where: { jti: decoded.jti as string },
+          data: { revokedAt: new Date() },
+        })
 
         return ResponseFormatter.noContent(reply)
       } catch (error: any) {
