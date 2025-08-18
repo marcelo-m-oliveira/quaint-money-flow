@@ -61,6 +61,7 @@ export const authOptions: NextAuthOptions = {
             id: data.user?.id,
             name: data.user?.name,
             email: data.user?.email,
+            image: data.user?.avatarUrl ?? undefined,
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
           }
@@ -143,6 +144,8 @@ export const authOptions: NextAuthOptions = {
       session.user = session.user || ({} as any)
       if (token?.name) (session.user as any).name = token.name
       if (token?.email) (session.user as any).email = token.email
+      if ((token as any)?.picture)
+        (session.user as any).image = (token as any).picture
       return session
     },
   },

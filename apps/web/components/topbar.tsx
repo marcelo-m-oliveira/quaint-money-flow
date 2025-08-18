@@ -35,8 +35,9 @@ import {
 export function Topbar() {
   const { setTheme } = useTheme()
   const { data } = useSession()
-  const userName = data?.user?.name || 'Usuário'
+  const userName = data?.user?.name || ''
   const userEmail = data?.user?.email || ''
+  const userImage = (data?.user as any)?.image as string | undefined
   const [userInitials] = useState(
     (userName || '')
       .split(' ')
@@ -182,7 +183,7 @@ export function Topbar() {
                   className="flex h-auto items-center gap-2 px-2 py-2"
                 >
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src="" alt={userName} />
+                    <AvatarImage src={userImage || ''} alt={userName} />
                     <AvatarFallback className="text-xs">
                       {userInitials}
                     </AvatarFallback>
