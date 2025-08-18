@@ -35,9 +35,8 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`,
-        )
+        const message = (errorData && (errorData.message || errorData.error))
+        throw new Error(message || `HTTP error! status: ${response.status}`)
       }
 
       return await response.json()
@@ -59,10 +58,35 @@ class ApiClient {
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
+    const url = `${this.baseURL}${endpoint}`
+
+    const config: RequestInit = {
       method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: data ? JSON.stringify(data) : undefined,
-    })
+    }
+
+    try {
+      const response = await fetch(url, config)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const message = (errorData && (errorData.message || errorData.error))
+        throw new Error(message || `HTTP error! status: ${response.status}`)
+      }
+
+      // Para PUT que retorna 204 No Content, não tentar fazer parse do JSON
+      if (response.status === 204) {
+        return undefined as T
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('API request failed:', error)
+      throw error
+    }
   }
 
   async patch<T>(endpoint: string, data?: unknown): Promise<T> {
@@ -89,9 +113,8 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`,
-        )
+        const message = (errorData && (errorData.message || errorData.error))
+        throw new Error(message || `HTTP error! status: ${response.status}`)
       }
 
       // Para DELETE que retorna 204 No Content, não tentar fazer parse do JSON

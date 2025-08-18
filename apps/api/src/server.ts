@@ -19,6 +19,7 @@ import { healthRoutes } from '@/routes/health'
 import { overviewRoutes } from '@/routes/overview'
 import { reportRoutes } from '@/routes/reports'
 import { userPreferencesRoutes } from '@/routes/user-preferences'
+import { userRoutes } from '@/routes/users'
 import { errorHandler } from '@/utils/errors'
 
 // Configuração do logger e encoding UTF-8 no Windows
@@ -106,6 +107,10 @@ export async function createApp() {
   })
 
   app.register(healthRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
+
+  app.register(userRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 

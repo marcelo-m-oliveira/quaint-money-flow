@@ -146,7 +146,13 @@ export async function authRoutes(app: FastifyInstance) {
           .object({
             name: z.string().min(1),
             email: z.string().email(),
-            password: z.string().min(6),
+            password: z
+              .string()
+              .min(8, 'A senha deve ter pelo menos 8 caracteres')
+              .refine((val) => /[a-z]/.test(val), 'A senha deve conter letra minúscula')
+              .refine((val) => /[A-Z]/.test(val), 'A senha deve conter letra maiúscula')
+              .refine((val) => /\d/.test(val), 'A senha deve conter número')
+              .refine((val) => /[^\w\s]/.test(val), 'A senha deve conter caractere especial'),
           })
           .strict(),
         response: {

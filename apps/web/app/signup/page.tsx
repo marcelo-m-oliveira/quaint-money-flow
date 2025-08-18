@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ShieldCheck, UserPlus } from 'lucide-react'
+import { ShieldCheck, UserPlus, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -14,12 +14,19 @@ import { authService } from '@/lib'
 const signUpSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter ao menos 6 caracteres'),
+  password: z
+    .string()
+    .min(8, 'A senha deve ter pelo menos 8 caracteres')
+    .refine((val) => /[a-z]/.test(val), 'A senha deve conter letra minúscula')
+    .refine((val) => /[A-Z]/.test(val), 'A senha deve conter letra maiúscula')
+    .refine((val) => /\d/.test(val), 'A senha deve conter número')
+    .refine((val) => /[^\w\s]/.test(val), 'A senha deve conter caractere especial'),
 })
 type SignUpSchema = z.infer<typeof signUpSchema>
 
 export default function SignUpPage() {
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const {
@@ -78,14 +85,30 @@ export default function SignUpPage() {
           </div>
           <div className="space-y-1">
             <label className="text-sm">Senha</label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                {...register('password')}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                aria-label="Mostrar/ocultar senha"
+                title="Mostrar/ocultar senha"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-xs text-destructive">
-                {errors.password.message}
+                Senha inválida (mín. 8, com maiúscula, minúscula, número e símbolo)
               </p>
             )}
           </div>

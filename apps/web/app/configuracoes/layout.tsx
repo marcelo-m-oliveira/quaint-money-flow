@@ -21,6 +21,13 @@ interface ConfigLayoutProps {
 
 const menuItems = [
   {
+    id: 'perfil',
+    label: 'Perfil',
+    icon: User,
+    href: '/configuracoes/perfil',
+    description: 'Atualize informações da sua conta',
+  },
+  {
     id: 'categorias',
     label: 'Categorias',
     icon: Tag,

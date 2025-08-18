@@ -211,10 +211,12 @@ export function Topbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
-                </DropdownMenuItem>
+                <Link href="/configuracoes/perfil">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </DropdownMenuItem>
+                </Link>
                 <Link href="/configuracoes">
                   <DropdownMenuItem>
                     <Settings className="mr-2 h-4 w-4" />

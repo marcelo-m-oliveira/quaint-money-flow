@@ -102,6 +102,12 @@ export const authOptions: NextAuthOptions = {
         token.accessTokenExpires &&
         Date.now() < (token.accessTokenExpires as number) - 60_000
       ) {
+        // Even if token is valid, try to update user data if we have a user object
+        if (user) {
+          token.name = user.name
+          token.email = user.email
+          token.picture = (user as any).image
+        }
         return token
       }
 
@@ -140,7 +146,33 @@ export const authOptions: NextAuthOptions = {
       // Expose tokens in session object
       ;(session as any).accessToken = token.accessToken
       ;(session as any).refreshToken = token.refreshToken
-      // Ensure user identity is available in the session
+      
+      // Fetch fresh user data from backend to ensure we have the latest profile info
+      try {
+        const accessToken = token.accessToken as string | undefined
+        if (accessToken) {
+          const resp = await fetch(`${API_BASE_URL}/users/me`, {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'content-type': 'application/json',
+            },
+          })
+          if (resp.ok) {
+            const userData = await resp.json()
+            session.user = {
+              id: userData.id,
+              name: userData.name,
+              email: userData.email,
+              image: userData.avatarUrl || undefined,
+            }
+            return session
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch fresh user data:', error)
+      }
+      
+      // Fallback to token data if API call fails
       session.user = session.user || ({} as any)
       if (token?.name) (session.user as any).name = token.name
       if (token?.email) (session.user as any).email = token.email
