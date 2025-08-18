@@ -1,7 +1,6 @@
-import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { UserPreferencesRepository } from '@/repositories/user-preferences.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { UserPreferencesService } from '@/services/user-preferences.service'
-import { prisma } from '@/lib/prisma'
 
 // Mock do repositório
 const mockUserPreferencesRepository = {
@@ -48,11 +47,15 @@ describe('UserPreferencesService', () => {
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(mockPreferences)
+      mockUserPreferencesRepository.findByUserId.mockResolvedValue(
+        mockPreferences,
+      )
 
       const result = await userPreferencesService.findByUserId('user-1')
 
-      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith('user-1')
+      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(result).toEqual(mockPreferences)
     })
 
@@ -73,14 +76,24 @@ describe('UserPreferencesService', () => {
       mockUserPreferencesRepository.findByUserId.mockResolvedValue(null)
       mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockUserPreferencesRepository.existsByUserId.mockResolvedValue(false)
-      mockUserPreferencesRepository.createDefault.mockResolvedValue(mockDefaultPreferences)
+      mockUserPreferencesRepository.createDefault.mockResolvedValue(
+        mockDefaultPreferences,
+      )
 
       const result = await userPreferencesService.findByUserId('user-1')
 
-      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith('user-1')
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user-1' } })
-      expect(mockUserPreferencesRepository.existsByUserId).toHaveBeenCalledWith('user-1')
-      expect(mockUserPreferencesRepository.createDefault).toHaveBeenCalledWith('user-1')
+      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith(
+        'user-1',
+      )
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+      })
+      expect(mockUserPreferencesRepository.existsByUserId).toHaveBeenCalledWith(
+        'user-1',
+      )
+      expect(mockUserPreferencesRepository.createDefault).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(result).toEqual(mockDefaultPreferences)
     })
   })
@@ -110,9 +123,9 @@ describe('UserPreferencesService', () => {
     it('should throw error when preferences not found', async () => {
       mockUserPreferencesRepository.findById.mockResolvedValue(null)
 
-      await expect(userPreferencesService.findById('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Preferências não encontradas'),
-      )
+      await expect(
+        userPreferencesService.findById('1', 'user-1'),
+      ).rejects.toThrow(new BadRequestError('Preferências não encontradas'))
     })
 
     it('should throw error when preferences do not belong to user', async () => {
@@ -130,7 +143,9 @@ describe('UserPreferencesService', () => {
 
       mockUserPreferencesRepository.findById.mockResolvedValue(mockPreferences)
 
-      await expect(userPreferencesService.findById('1', 'user-1')).rejects.toThrow(
+      await expect(
+        userPreferencesService.findById('1', 'user-1'),
+      ).rejects.toThrow(
         new BadRequestError('Preferências não pertencem ao usuário'),
       )
     })
@@ -159,7 +174,9 @@ describe('UserPreferencesService', () => {
 
       const result = await userPreferencesService.create(createData, 'user-1')
 
-      expect(mockUserPreferencesRepository.existsByUserId).toHaveBeenCalledWith('user-1')
+      expect(mockUserPreferencesRepository.existsByUserId).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(mockUserPreferencesRepository.create).toHaveBeenCalledWith({
         ...createData,
         user: { connect: { id: 'user-1' } },
@@ -178,7 +195,9 @@ describe('UserPreferencesService', () => {
         isFinancialSummaryExpanded: false,
       }
 
-      await expect(userPreferencesService.create(createData, 'user-1')).rejects.toThrow(
+      await expect(
+        userPreferencesService.create(createData, 'user-1'),
+      ).rejects.toThrow(
         new BadRequestError('Já existem preferências para este usuário'),
       )
     })
@@ -200,13 +219,22 @@ describe('UserPreferencesService', () => {
       }
       const updatedPreferences = { ...existingPreferences, ...updateData }
 
-      mockUserPreferencesRepository.findById.mockResolvedValue(existingPreferences)
+      mockUserPreferencesRepository.findById.mockResolvedValue(
+        existingPreferences,
+      )
       mockUserPreferencesRepository.update.mockResolvedValue(updatedPreferences)
 
-      const result = await userPreferencesService.update('1', updateData, 'user-1')
+      const result = await userPreferencesService.update(
+        '1',
+        updateData,
+        'user-1',
+      )
 
       expect(mockUserPreferencesRepository.findById).toHaveBeenCalledWith('1')
-      expect(mockUserPreferencesRepository.update).toHaveBeenCalledWith('1', updateData)
+      expect(mockUserPreferencesRepository.update).toHaveBeenCalledWith(
+        '1',
+        updateData,
+      )
       expect(result).toEqual(updatedPreferences)
     })
 
@@ -215,9 +243,9 @@ describe('UserPreferencesService', () => {
 
       const updateData = { entryOrder: 'ascending' as const }
 
-      await expect(userPreferencesService.update('1', updateData, 'user-1')).rejects.toThrow(
-        new BadRequestError('Preferências não encontradas'),
-      )
+      await expect(
+        userPreferencesService.update('1', updateData, 'user-1'),
+      ).rejects.toThrow(new BadRequestError('Preferências não encontradas'))
     })
 
     it('should throw error when preferences do not belong to user', async () => {
@@ -233,11 +261,15 @@ describe('UserPreferencesService', () => {
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.findById.mockResolvedValue(existingPreferences)
+      mockUserPreferencesRepository.findById.mockResolvedValue(
+        existingPreferences,
+      )
 
       const updateData = { entryOrder: 'ascending' as const }
 
-      await expect(userPreferencesService.update('1', updateData, 'user-1')).rejects.toThrow(
+      await expect(
+        userPreferencesService.update('1', updateData, 'user-1'),
+      ).rejects.toThrow(
         new BadRequestError('Preferências não pertencem ao usuário'),
       )
     })
@@ -259,13 +291,23 @@ describe('UserPreferencesService', () => {
       }
       const updatedPreferences = { ...existingPreferences, ...updateData }
 
-      mockUserPreferencesRepository.findByUserId.mockResolvedValue(existingPreferences)
+      mockUserPreferencesRepository.findByUserId.mockResolvedValue(
+        existingPreferences,
+      )
       mockUserPreferencesRepository.update.mockResolvedValue(updatedPreferences)
 
-      const result = await userPreferencesService.updateByUserId('user-1', updateData)
+      const result = await userPreferencesService.updateByUserId(
+        'user-1',
+        updateData,
+      )
 
-      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith('user-1')
-      expect(mockUserPreferencesRepository.update).toHaveBeenCalledWith('1', updateData)
+      expect(mockUserPreferencesRepository.findByUserId).toHaveBeenCalledWith(
+        'user-1',
+      )
+      expect(mockUserPreferencesRepository.update).toHaveBeenCalledWith(
+        '1',
+        updateData,
+      )
       expect(result).toEqual(updatedPreferences)
     })
 
@@ -274,9 +316,9 @@ describe('UserPreferencesService', () => {
 
       const updateData = { entryOrder: 'ascending' as const }
 
-      await expect(userPreferencesService.updateByUserId('user-1', updateData)).rejects.toThrow(
-        new BadRequestError('Preferências não encontradas'),
-      )
+      await expect(
+        userPreferencesService.updateByUserId('user-1', updateData),
+      ).rejects.toThrow(new BadRequestError('Preferências não encontradas'))
     })
   })
 
@@ -294,8 +336,12 @@ describe('UserPreferencesService', () => {
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.findById.mockResolvedValue(existingPreferences)
-      mockUserPreferencesRepository.delete.mockResolvedValue(existingPreferences)
+      mockUserPreferencesRepository.findById.mockResolvedValue(
+        existingPreferences,
+      )
+      mockUserPreferencesRepository.delete.mockResolvedValue(
+        existingPreferences,
+      )
 
       const result = await userPreferencesService.delete('1', 'user-1')
 
@@ -307,9 +353,9 @@ describe('UserPreferencesService', () => {
     it('should throw error when preferences not found', async () => {
       mockUserPreferencesRepository.findById.mockResolvedValue(null)
 
-      await expect(userPreferencesService.delete('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Preferências não encontradas'),
-      )
+      await expect(
+        userPreferencesService.delete('1', 'user-1'),
+      ).rejects.toThrow(new BadRequestError('Preferências não encontradas'))
     })
 
     it('should throw error when preferences do not belong to user', async () => {
@@ -325,9 +371,13 @@ describe('UserPreferencesService', () => {
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.findById.mockResolvedValue(existingPreferences)
+      mockUserPreferencesRepository.findById.mockResolvedValue(
+        existingPreferences,
+      )
 
-      await expect(userPreferencesService.delete('1', 'user-1')).rejects.toThrow(
+      await expect(
+        userPreferencesService.delete('1', 'user-1'),
+      ).rejects.toThrow(
         new BadRequestError('Preferências não pertencem ao usuário'),
       )
     })
@@ -348,7 +398,9 @@ describe('UserPreferencesService', () => {
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.upsertByUserId.mockResolvedValue(mockPreferences)
+      mockUserPreferencesRepository.upsertByUserId.mockResolvedValue(
+        mockPreferences,
+      )
 
       const result = await userPreferencesService.upsert('user-1', upsertData)
 
@@ -382,11 +434,15 @@ describe('UserPreferencesService', () => {
         updatedAt: new Date(),
       }
 
-      mockUserPreferencesRepository.resetToDefault.mockResolvedValue(mockPreferences)
+      mockUserPreferencesRepository.resetToDefault.mockResolvedValue(
+        mockPreferences,
+      )
 
       const result = await userPreferencesService.reset('user-1')
 
-      expect(mockUserPreferencesRepository.resetToDefault).toHaveBeenCalledWith('user-1')
+      expect(mockUserPreferencesRepository.resetToDefault).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(result).toEqual(mockPreferences)
     })
   })
@@ -408,22 +464,30 @@ describe('UserPreferencesService', () => {
 
       mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockUserPreferencesRepository.existsByUserId.mockResolvedValue(false)
-      mockUserPreferencesRepository.createDefault.mockResolvedValue(mockPreferences)
+      mockUserPreferencesRepository.createDefault.mockResolvedValue(
+        mockPreferences,
+      )
 
       const result = await userPreferencesService.createDefault('user-1')
 
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user-1' } })
-      expect(mockUserPreferencesRepository.existsByUserId).toHaveBeenCalledWith('user-1')
-      expect(mockUserPreferencesRepository.createDefault).toHaveBeenCalledWith('user-1')
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+      })
+      expect(mockUserPreferencesRepository.existsByUserId).toHaveBeenCalledWith(
+        'user-1',
+      )
+      expect(mockUserPreferencesRepository.createDefault).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(result).toEqual(mockPreferences)
     })
 
     it('should throw error when user not found', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null)
 
-      await expect(userPreferencesService.createDefault('user-1')).rejects.toThrow(
-        new BadRequestError('Usuário não encontrado'),
-      )
+      await expect(
+        userPreferencesService.createDefault('user-1'),
+      ).rejects.toThrow(new BadRequestError('Usuário não encontrado'))
     })
 
     it('should throw error when preferences already exist', async () => {
@@ -432,7 +496,9 @@ describe('UserPreferencesService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser)
       mockUserPreferencesRepository.existsByUserId.mockResolvedValue(true)
 
-      await expect(userPreferencesService.createDefault('user-1')).rejects.toThrow(
+      await expect(
+        userPreferencesService.createDefault('user-1'),
+      ).rejects.toThrow(
         new BadRequestError('Já existem preferências para este usuário'),
       )
     })

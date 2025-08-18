@@ -26,7 +26,10 @@ describe('Overview Controller', () => {
       query: {},
       log: { info: jest.fn(), error: jest.fn() },
     }
-    mockReply = { status: jest.fn().mockReturnThis(), send: jest.fn().mockReturnThis() }
+    mockReply = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+    }
   })
 
   it('getGeneralOverview should return overview', async () => {
@@ -36,13 +39,41 @@ describe('Overview Controller', () => {
       monthlyExpenses: 50,
       totalAccountsPayable: 10,
       totalAccountsReceivable: 20,
-      accountsPayable: [{ id: '1', description: 'x', amount: 10, date: now, type: 'expense', categoryId: 'c1', categoryName: 'Food', icon: 'i', color: '#f00', isOverdue: false }],
-      accountsReceivable: [{ id: '2', description: 'y', amount: 20, date: now, type: 'income', categoryId: 'c1', categoryName: 'Food', icon: 'i', color: '#f00', isOverdue: false }],
+      accountsPayable: [
+        {
+          id: '1',
+          description: 'x',
+          amount: 10,
+          date: now,
+          type: 'expense',
+          categoryId: 'c1',
+          categoryName: 'Food',
+          icon: 'i',
+          color: '#f00',
+          isOverdue: false,
+        },
+      ],
+      accountsReceivable: [
+        {
+          id: '2',
+          description: 'y',
+          amount: 20,
+          date: now,
+          type: 'income',
+          categoryId: 'c1',
+          categoryName: 'Food',
+          icon: 'i',
+          color: '#f00',
+          isOverdue: false,
+        },
+      ],
       period: { year: 2024, month: 1 },
     })
 
     await controller.getGeneralOverview(mockRequest, mockReply)
-    expect(mockOverviewService.getGeneralOverview).toHaveBeenCalledWith('user-1')
+    expect(mockOverviewService.getGeneralOverview).toHaveBeenCalledWith(
+      'user-1',
+    )
     expect(mockReply.status).toHaveBeenCalledWith(200)
     expect(mockReply.send).toHaveBeenCalled()
   })
@@ -57,7 +88,10 @@ describe('Overview Controller', () => {
     })
 
     await controller.getTopExpensesByCategory(mockRequest, mockReply)
-    expect(mockOverviewService.getTopExpensesByCategory).toHaveBeenCalledWith('user-1', 'current-month')
+    expect(mockOverviewService.getTopExpensesByCategory).toHaveBeenCalledWith(
+      'user-1',
+      'current-month',
+    )
     expect(mockReply.status).toHaveBeenCalledWith(200)
   })
 
@@ -75,5 +109,3 @@ describe('Overview Controller', () => {
     expect(mockReply.status).toHaveBeenCalledWith(200)
   })
 })
-
-

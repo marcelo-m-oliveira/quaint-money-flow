@@ -8,7 +8,7 @@ export class OverviewService extends BaseService<'entry'> {
     private overviewRepository: OverviewRepository,
     prisma: PrismaClient,
   ) {
-    super((overviewRepository as unknown) as any, prisma)
+    super(overviewRepository as unknown as any, prisma)
   }
 
   async getGeneralOverview(userId: string) {

@@ -143,7 +143,9 @@ describe('Category Service', () => {
 
       mockCategoryRepository.findFirst.mockResolvedValue({ id: 'dup' })
 
-      await expect(categoryService.create(data as any, 'user-1')).rejects.toThrow(
+      await expect(
+        categoryService.create(data as any, 'user-1'),
+      ).rejects.toThrow(
         new BadRequestError('Ja existe uma categoria com este nome'),
       )
     })
@@ -156,7 +158,10 @@ describe('Category Service', () => {
 
       mockCategoryRepository.findFirst.mockResolvedValue(existing)
       mockPrismaClient.category.updateMany.mockResolvedValue({ count: 1 })
-      mockCategoryRepository.findFirst.mockResolvedValue({ id: '1', ...updateData })
+      mockCategoryRepository.findFirst.mockResolvedValue({
+        id: '1',
+        ...updateData,
+      })
 
       await categoryService.update('1', updateData as any, 'user-1')
 
@@ -174,13 +179,18 @@ describe('Category Service', () => {
 
       await expect(
         categoryService.update('1', { name: 'Duplicada' } as any, 'user-1'),
-      ).rejects.toThrow(new BadRequestError('Ja existe uma categoria com este nome'))
+      ).rejects.toThrow(
+        new BadRequestError('Ja existe uma categoria com este nome'),
+      )
     })
   })
 
   describe('delete', () => {
     it('should delete when no entries or children', async () => {
-      mockCategoryRepository.findFirst.mockResolvedValue({ id: '1', userId: 'user-1' })
+      mockCategoryRepository.findFirst.mockResolvedValue({
+        id: '1',
+        userId: 'user-1',
+      })
       mockPrismaClient.entry.count.mockResolvedValue(0)
       mockPrismaClient.category.count.mockResolvedValue(0)
       mockCategoryRepository.delete.mockResolvedValue({ id: '1' })
@@ -192,21 +202,31 @@ describe('Category Service', () => {
     })
 
     it('should prevent delete when has entries', async () => {
-      mockCategoryRepository.findFirst.mockResolvedValue({ id: '1', userId: 'user-1' })
+      mockCategoryRepository.findFirst.mockResolvedValue({
+        id: '1',
+        userId: 'user-1',
+      })
       mockPrismaClient.entry.count.mockResolvedValue(3)
 
       await expect(categoryService.delete('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Nao e possivel excluir uma categoria que possui entries'),
+        new BadRequestError(
+          'Nao e possivel excluir uma categoria que possui entries',
+        ),
       )
     })
 
     it('should prevent delete when has children', async () => {
-      mockCategoryRepository.findFirst.mockResolvedValue({ id: '1', userId: 'user-1' })
+      mockCategoryRepository.findFirst.mockResolvedValue({
+        id: '1',
+        userId: 'user-1',
+      })
       mockPrismaClient.entry.count.mockResolvedValue(0)
       mockPrismaClient.category.count.mockResolvedValue(2)
 
       await expect(categoryService.delete('1', 'user-1')).rejects.toThrow(
-        new BadRequestError('Nao e possivel excluir uma categoria que possui subcategorias'),
+        new BadRequestError(
+          'Nao e possivel excluir uma categoria que possui subcategorias',
+        ),
       )
     })
   })
@@ -218,22 +238,34 @@ describe('Category Service', () => {
 
       const result = await categoryService.findForSelect('user-1', 'expense')
 
-      expect(mockCategoryRepository.findForSelect).toHaveBeenCalledWith('user-1', 'expense')
+      expect(mockCategoryRepository.findForSelect).toHaveBeenCalledWith(
+        'user-1',
+        'expense',
+      )
       expect(result).toEqual(options)
     })
   })
 
   describe('getUsageStats', () => {
     it('should return usage data', async () => {
-      const usage = [{ id: '1', name: 'Alimentação', icon: 'food', type: 'expense', entryCount: 5, totalAmount: 0 }]
+      const usage = [
+        {
+          id: '1',
+          name: 'Alimentação',
+          icon: 'food',
+          type: 'expense',
+          entryCount: 5,
+          totalAmount: 0,
+        },
+      ]
       mockCategoryRepository.getUsageStats.mockResolvedValue(usage)
 
       const result = await categoryService.getUsageStats('user-1')
 
-      expect(mockCategoryRepository.getUsageStats).toHaveBeenCalledWith('user-1')
+      expect(mockCategoryRepository.getUsageStats).toHaveBeenCalledWith(
+        'user-1',
+      )
       expect(result).toEqual(usage)
     })
   })
 })
-
-

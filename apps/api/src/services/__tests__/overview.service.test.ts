@@ -31,10 +31,28 @@ describe('Overview Service', () => {
         { type: 'expense', _sum: { amount: 30 } },
       ],
       accountsPayable: [
-        { id: '1', description: 'x', amount: '10', date: now, type: 'expense', accountId: null, creditCardId: null, category: { id: 'c1', name: 'Cat', color: '#f00', icon: 'i' } },
+        {
+          id: '1',
+          description: 'x',
+          amount: '10',
+          date: now,
+          type: 'expense',
+          accountId: null,
+          creditCardId: null,
+          category: { id: 'c1', name: 'Cat', color: '#f00', icon: 'i' },
+        },
       ],
       accountsReceivable: [
-        { id: '2', description: 'y', amount: '20', date: now, type: 'income', accountId: null, creditCardId: null, category: { id: 'c1', name: 'Cat', color: '#f00', icon: 'i' } },
+        {
+          id: '2',
+          description: 'y',
+          amount: '20',
+          date: now,
+          type: 'income',
+          accountId: null,
+          creditCardId: null,
+          category: { id: 'c1', name: 'Cat', color: '#f00', icon: 'i' },
+        },
       ],
     })
 
@@ -48,12 +66,24 @@ describe('Overview Service', () => {
   it('getTopExpensesByCategory should return totals and dateRange', async () => {
     const startDate = new Date('2024-01-01')
     const endDate = new Date('2024-01-31')
-    mockOverviewRepository.getDateRangeForPeriod.mockReturnValue({ startDate, endDate })
+    mockOverviewRepository.getDateRangeForPeriod.mockReturnValue({
+      startDate,
+      endDate,
+    })
     mockOverviewRepository.getTopExpensesByCategory.mockResolvedValue([
-      { id: 'c1', categoryName: 'Food', totalAmount: 50, icon: 'i', color: '#f00' },
+      {
+        id: 'c1',
+        categoryName: 'Food',
+        totalAmount: 50,
+        icon: 'i',
+        color: '#f00',
+      },
     ])
 
-    const result = await service.getTopExpensesByCategory('user-1', 'current-month')
+    const result = await service.getTopExpensesByCategory(
+      'user-1',
+      'current-month',
+    )
     expect(result.dateRange.startDate).toEqual(startDate)
     expect(result.totalExpenses).toBe(50)
     expect(result.expenses).toHaveLength(1)
@@ -76,5 +106,3 @@ describe('Overview Service', () => {
     expect(stats.totalPendingPayable).toBe(1)
   })
 })
-
-

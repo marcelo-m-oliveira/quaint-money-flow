@@ -46,5 +46,3 @@ describe('Reports Repository', () => {
     expect(totals).toEqual({ totalIncome: 100, totalExpense: 40 })
   })
 })
-
-

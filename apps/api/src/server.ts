@@ -2,7 +2,6 @@ import { execSync } from 'node:child_process'
 
 import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
-import { env } from '@saas/env'
 import fastify from 'fastify'
 import {
   serializerCompiler,
@@ -12,6 +11,7 @@ import {
 
 import { setupSwagger } from '@/lib/swagger'
 import { accountRoutes } from '@/routes/accounts'
+import { authRoutes } from '@/routes/auth'
 import { categoryRoutes } from '@/routes/categories'
 import { creditCardRoutes } from '@/routes/credit-cards'
 import { entryRoutes } from '@/routes/entries'
@@ -55,6 +55,7 @@ const loggerConfig = isDevelopment
     }
 
 export async function createApp() {
+  const { env } = await import('@saas/env')
   const app = fastify({
     logger: loggerConfig,
   }).withTypeProvider<ZodTypeProvider>()
@@ -73,6 +74,9 @@ export async function createApp() {
   app.register(fastifyCors)
 
   // Registrar rotas com prefixo
+  app.register(authRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
   app.register(accountRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
@@ -109,7 +113,8 @@ export async function createApp() {
 }
 
 if (require.main === module) {
-  createApp().then((app) => {
+  createApp().then(async (app) => {
+    const { env } = await import('@saas/env')
     app.listen({ port: env.PORT, host: '0.0.0.0' }).then(() => {
       app.log.info(
         {

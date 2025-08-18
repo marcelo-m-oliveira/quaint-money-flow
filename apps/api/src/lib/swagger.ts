@@ -1,8 +1,9 @@
-import { env } from '@saas/env'
+// Import dinâmico para compatibilidade ESM/CJS
 import { FastifyInstance } from 'fastify'
 import { SwaggerTheme, SwaggerThemeNameEnum } from 'swagger-themes'
 
 export async function setupSwagger(app: FastifyInstance) {
+  const { env } = await import('@saas/env')
   if (!env.SWAGGER_ENABLED) {
     return
   }
@@ -16,12 +17,13 @@ export async function setupSwagger(app: FastifyInstance) {
         description: `
 ## 📊 API para Gerenciamento Financeiro Pessoal
 
-### 🔐 Autenticação
-Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
-
-1. **Token de Desenvolvimento**: Use qualquer token válido (ex: "dev-token")
-2. **Header**: Adicione \`Authorization: Bearer dev-token\` em todas as requisições
-3. **Swagger UI**: Clique no botão "Authorize" no topo da página e insira \`dev-token\`
+### 🔐 Autenticação (JWT + OAuth2 Google)
+- Autorização via \`Authorization: Bearer <accessToken>\`.
+- Obtenha tokens via:
+  - \`POST /auth/login\` (email/senha)
+  - \`GET /auth/google/callback?code=...\` (Google OAuth2)
+  - \`POST /auth/refresh\` (renova accessToken com refreshToken)
+  - \`POST /auth/logout\` (revoga refreshToken)
 
 ### 📋 Endpoints Organizados por Funcionalidade
 
@@ -35,16 +37,16 @@ Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
 
 ### 🚀 Como Testar
 
-1. **Autorize-se**: Use o botão "Authorize" com \`dev-token\`
-2. **Escolha o endpoint**: Navegue pelas tags organizadas
-3. **Configure parâmetros**: Preencha os campos necessários
-4. **Execute**: Clique em "Try it out" e depois "Execute"
+1. **Obtenha um token**: \`POST /auth/login\` com email/senha de um usuário seed.
+2. **Autorize-se**: Clique em "Authorize" e informe o accessToken.
+3. **Execute**: Use os endpoints protegidos normalmente.
 
 ### 📝 Exemplos de Uso
 
-- **Criar transação**: POST /entries com dados de receita/despesa
-- **Relatório de fluxo**: GET /reports/cashflow com filtros de período
-- **Filtrar contas**: GET /reports/accounts com accountFilter
+- **Login**: POST /auth/login
+- **Refresh**: POST /auth/refresh
+- **Logout**: POST /auth/logout
+- **Google OAuth**: GET /auth/google/callback
         `,
         version: '1.0.0',
         contact: {
@@ -69,7 +71,7 @@ Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
             scheme: 'bearer',
             bearerFormat: 'JWT',
             description:
-              'Token de autenticação Bearer. Use "dev-token" para testes.',
+              'Token de autenticação Bearer via JWT (obtenha em /auth/login ou /auth/google/callback).',
           },
         },
         schemas: {
@@ -88,7 +90,7 @@ Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
               message: {
                 type: 'string',
                 description: 'Mensagem de erro de autenticação',
-                example: 'Token de acesso requerido',
+                example: 'Token de acesso inválido ou expirado',
               },
             },
           },
@@ -130,6 +132,10 @@ Esta API utiliza autenticação Bearer Token. Para testar os endpoints:
         {
           name: '📊 Visão Geral',
           description: 'Dashboard e resumos financeiros',
+        },
+        {
+          name: '🔐 Autenticação',
+          description: 'Login por email/senha, Google OAuth2, refresh e logout',
         },
       ],
     },

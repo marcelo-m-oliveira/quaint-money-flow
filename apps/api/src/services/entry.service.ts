@@ -310,39 +310,36 @@ export class EntryService extends BaseService<'entry'> {
   }
 
   async findById(id: string, userId: string) {
-    const entry = await this.entryRepository.findFirst(
-      { id, userId } as any,
-      {
-        include: {
-          category: {
-            select: {
-              id: true,
-              name: true,
-              color: true,
-              icon: true,
-              type: true,
-            },
+    const entry = await this.entryRepository.findFirst({ id, userId } as any, {
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            icon: true,
+            type: true,
           },
-          account: {
-            select: {
-              id: true,
-              name: true,
-              icon: true,
-              iconType: true,
-            },
+        },
+        account: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            iconType: true,
           },
-          creditCard: {
-            select: {
-              id: true,
-              name: true,
-              icon: true,
-              iconType: true,
-              limit: true,
-            },
+        },
+        creditCard: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            iconType: true,
+            limit: true,
           },
         },
       },
-    )
+    })
 
     if (!entry) {
       throw new BadRequestError('Lançamento não encontrado')

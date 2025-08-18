@@ -95,8 +95,14 @@ describe('Entry Service', () => {
 
   describe('update', () => {
     it('should update with relation toggles', async () => {
-      mockEntryRepository.findFirst.mockResolvedValue({ id: 'e1', userId: 'user-1' })
-      mockPrismaClient.entry.update.mockResolvedValue({ id: 'e1', description: 'changed' })
+      mockEntryRepository.findFirst.mockResolvedValue({
+        id: 'e1',
+        userId: 'user-1',
+      })
+      mockPrismaClient.entry.update.mockResolvedValue({
+        id: 'e1',
+        description: 'changed',
+      })
 
       const result = await service.update(
         'e1',
@@ -110,11 +116,16 @@ describe('Entry Service', () => {
 
   describe('delete', () => {
     it('should delete entry', async () => {
-      mockEntryRepository.findFirst.mockResolvedValue({ id: 'e1', userId: 'user-1' })
+      mockEntryRepository.findFirst.mockResolvedValue({
+        id: 'e1',
+        userId: 'user-1',
+      })
       mockPrismaClient.entry.delete.mockResolvedValue({ id: 'e1' })
 
       const result = await service.delete('e1', 'user-1')
-      expect(mockPrismaClient.entry.delete).toHaveBeenCalledWith({ where: { id: 'e1', userId: 'user-1' } })
+      expect(mockPrismaClient.entry.delete).toHaveBeenCalledWith({
+        where: { id: 'e1', userId: 'user-1' },
+      })
       expect(result.id).toBe('e1')
     })
   })
@@ -137,5 +148,3 @@ describe('Entry Service', () => {
     })
   })
 })
-
-

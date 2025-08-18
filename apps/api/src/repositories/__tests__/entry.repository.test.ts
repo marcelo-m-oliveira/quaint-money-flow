@@ -32,7 +32,9 @@ describe('Entry Repository', () => {
     mockPrismaClient.entry.findUnique.mockResolvedValue(entry)
 
     const result = await repository.findById('e1')
-    expect(mockPrismaClient.entry.findUnique).toHaveBeenCalledWith({ where: { id: 'e1' } })
+    expect(mockPrismaClient.entry.findUnique).toHaveBeenCalledWith({
+      where: { id: 'e1' },
+    })
     expect(result).toBe(entry)
   })
 
@@ -49,8 +51,13 @@ describe('Entry Repository', () => {
   it('findFirst should pass where/include', async () => {
     const entry = { id: 'e1' }
     mockPrismaClient.entry.findFirst.mockResolvedValue(entry)
-    const result = await repository.findFirst({ id: 'e1' } as any, { include: { category: true } })
-    expect(mockPrismaClient.entry.findFirst).toHaveBeenCalledWith({ where: { id: 'e1' }, include: { category: true } })
+    const result = await repository.findFirst({ id: 'e1' } as any, {
+      include: { category: true },
+    })
+    expect(mockPrismaClient.entry.findFirst).toHaveBeenCalledWith({
+      where: { id: 'e1' },
+      include: { category: true },
+    })
     expect(result).toBe(entry)
   })
 
@@ -58,16 +65,29 @@ describe('Entry Repository', () => {
     const created = { id: 'e1' }
     mockPrismaClient.entry.create.mockResolvedValue(created)
     const data = { description: 'x', user: { connect: { id: 'user-1' } } }
-    const result = await repository.create(data, { include: { category: true } })
-    expect(mockPrismaClient.entry.create).toHaveBeenCalledWith({ data, include: { category: true } })
+    const result = await repository.create(data, {
+      include: { category: true },
+    })
+    expect(mockPrismaClient.entry.create).toHaveBeenCalledWith({
+      data,
+      include: { category: true },
+    })
     expect(result).toBe(created)
   })
 
   it('update should call prisma.entry.update', async () => {
     const updated = { id: 'e1', description: 'changed' }
     mockPrismaClient.entry.update.mockResolvedValue(updated)
-    const result = await repository.update('e1', { description: 'changed' }, { include: { account: true } })
-    expect(mockPrismaClient.entry.update).toHaveBeenCalledWith({ where: { id: 'e1' }, data: { description: 'changed' }, include: { account: true } })
+    const result = await repository.update(
+      'e1',
+      { description: 'changed' },
+      { include: { account: true } },
+    )
+    expect(mockPrismaClient.entry.update).toHaveBeenCalledWith({
+      where: { id: 'e1' },
+      data: { description: 'changed' },
+      include: { account: true },
+    })
     expect(result).toBe(updated)
   })
 
@@ -75,16 +95,18 @@ describe('Entry Repository', () => {
     const deleted = { id: 'e1' }
     mockPrismaClient.entry.delete.mockResolvedValue(deleted)
     const result = await repository.delete('e1')
-    expect(mockPrismaClient.entry.delete).toHaveBeenCalledWith({ where: { id: 'e1' } })
+    expect(mockPrismaClient.entry.delete).toHaveBeenCalledWith({
+      where: { id: 'e1' },
+    })
     expect(result).toBe(deleted)
   })
 
   it('count should call prisma.entry.count', async () => {
     mockPrismaClient.entry.count.mockResolvedValue(3)
     const result = await repository.count({ userId: 'user-1' } as any)
-    expect(mockPrismaClient.entry.count).toHaveBeenCalledWith({ where: { userId: 'user-1' } })
+    expect(mockPrismaClient.entry.count).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+    })
     expect(result).toBe(3)
   })
 })
-
-

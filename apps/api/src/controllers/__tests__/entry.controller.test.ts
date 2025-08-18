@@ -54,7 +54,14 @@ describe('Entry Controller', () => {
         },
       ],
       summary: { all: { income: 10, expense: 0, balance: 10 } },
-      pagination: { page: 1, limit: 20, total: 1, totalPages: 1, hasNext: false, hasPrev: false },
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      },
     })
 
     await controller.index(mockRequest, mockReply)
@@ -84,8 +91,20 @@ describe('Entry Controller', () => {
 
   it('store should create an entry', async () => {
     const now = new Date()
-    mockRequest.body = { description: 'desc', amount: '10', type: 'income', date: Math.floor(now.getTime()/1000), categoryId: 'c1' }
-    mockEntryService.create.mockResolvedValue({ id: 'e1', description: 'desc', amount: 10, date: now, createdAt: now })
+    mockRequest.body = {
+      description: 'desc',
+      amount: '10',
+      type: 'income',
+      date: Math.floor(now.getTime() / 1000),
+      categoryId: 'c1',
+    }
+    mockEntryService.create.mockResolvedValue({
+      id: 'e1',
+      description: 'desc',
+      amount: 10,
+      date: now,
+      createdAt: now,
+    })
 
     await controller.store(mockRequest, mockReply)
     expect(mockEntryService.create).toHaveBeenCalled()
@@ -96,10 +115,21 @@ describe('Entry Controller', () => {
     const now = new Date()
     mockRequest.params = { id: 'e1' }
     mockRequest.body = { description: 'changed' }
-    mockEntryService.update.mockResolvedValue({ id: 'e1', description: 'changed', amount: 10, date: now, createdAt: now, updatedAt: now })
+    mockEntryService.update.mockResolvedValue({
+      id: 'e1',
+      description: 'changed',
+      amount: 10,
+      date: now,
+      createdAt: now,
+      updatedAt: now,
+    })
 
     await controller.update(mockRequest, mockReply)
-    expect(mockEntryService.update).toHaveBeenCalledWith('e1', expect.any(Object), 'user-1')
+    expect(mockEntryService.update).toHaveBeenCalledWith(
+      'e1',
+      expect.any(Object),
+      'user-1',
+    )
     expect(mockReply.status).toHaveBeenCalledWith(200)
   })
 
@@ -107,10 +137,21 @@ describe('Entry Controller', () => {
     const now = new Date()
     mockRequest.params = { id: 'e1' }
     mockRequest.body = { description: 'patched' }
-    mockEntryService.update.mockResolvedValue({ id: 'e1', description: 'patched', amount: 10, date: now, createdAt: now, updatedAt: now })
+    mockEntryService.update.mockResolvedValue({
+      id: 'e1',
+      description: 'patched',
+      amount: 10,
+      date: now,
+      createdAt: now,
+      updatedAt: now,
+    })
 
     await controller.patch(mockRequest, mockReply)
-    expect(mockEntryService.update).toHaveBeenCalledWith('e1', expect.any(Object), 'user-1')
+    expect(mockEntryService.update).toHaveBeenCalledWith(
+      'e1',
+      expect.any(Object),
+      'user-1',
+    )
     expect(mockReply.status).toHaveBeenCalledWith(200)
   })
 
@@ -124,12 +165,13 @@ describe('Entry Controller', () => {
   })
 
   it('deleteAll should delete all entries', async () => {
-    mockEntryService.deleteAllByUserId.mockResolvedValue({ deletedCount: 2, message: 'OK' })
+    mockEntryService.deleteAllByUserId.mockResolvedValue({
+      deletedCount: 2,
+      message: 'OK',
+    })
 
     await controller.deleteAll(mockRequest, mockReply)
     expect(mockEntryService.deleteAllByUserId).toHaveBeenCalledWith('user-1')
     expect(mockReply.status).toHaveBeenCalledWith(200)
   })
 })
-
-

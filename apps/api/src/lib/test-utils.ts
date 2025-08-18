@@ -58,9 +58,21 @@ export class TestUtils {
    * Gera token de autenticação para testes
    */
   static generateAuthToken(userId: string = 'test-user-id'): string {
-    // Em um ambiente real, você geraria um JWT válido
-    // Para testes, usamos um token mock
-    return `test-token-${userId}`
+    // Gera um JWT válido para testes (assinado pela instância do app)
+    // Observação: como utilitário isolado, quando não houver app disponível,
+    // os testes podem optar por fazer login via rota /auth/login.
+    const secret =
+      process.env.JWT_SECRET ||
+      'your-super-secret-jwt-key-change-this-in-production'
+    const jwt = require('jsonwebtoken') as typeof import('jsonwebtoken')
+    return jwt.sign(
+      { sub: userId, email: 'test@example.com', name: 'Test User' },
+      secret,
+      {
+        expiresIn: '15m',
+        subject: userId,
+      },
+    )
   }
 
   /**

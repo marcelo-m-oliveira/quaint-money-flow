@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker'
 import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -7,13 +8,15 @@ async function main() {
   console.log('🌱 Starting database seed...')
 
   // Criar usuário de exemplo
+  const passwordHash = await bcrypt.hash('password123', 10)
+
   const user = await prisma.user.upsert({
     where: { email: 'user@example.com' },
     update: {},
     create: {
       email: 'user@example.com',
       name: 'Usuário Exemplo',
-      password: '$2b$10$example.hash.for.development', // Hash de exemplo para desenvolvimento
+      password: passwordHash,
     },
   })
 
@@ -313,7 +316,7 @@ async function main() {
     const isIncome = createdIncomeCategories.some(
       (cat) => cat.id === category.id,
     )
- 
+
     // Verificar se a categoria foi criada corretamente
     if (!category || !category.id) {
       console.warn('Categoria inválida encontrada, pulando transação')
@@ -358,7 +361,7 @@ async function main() {
       description,
       amount,
       date: transactionDate,
-      type: isIncome ? 'income' : 'expense' as any,
+      type: isIncome ? 'income' : ('expense' as any),
       categoryId: category.id,
       accountId: selectedAccount?.id || null,
       creditCardId: selectedCreditCard?.id || null,

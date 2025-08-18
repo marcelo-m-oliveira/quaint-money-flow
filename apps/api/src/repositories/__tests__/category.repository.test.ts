@@ -89,7 +89,9 @@ describe('Category Repository', () => {
       const created = { id: '1', name: 'Mercado' }
       mockPrismaClient.category.create.mockResolvedValue(created)
 
-      const result = await categoryRepository.create(data, { include: { parent: true } })
+      const result = await categoryRepository.create(data, {
+        include: { parent: true },
+      })
 
       expect(mockPrismaClient.category.create).toHaveBeenCalledWith({
         data,
@@ -104,9 +106,13 @@ describe('Category Repository', () => {
       const updated = { id: '1', name: 'Mercado' }
       mockPrismaClient.category.update.mockResolvedValue(updated)
 
-      const result = await categoryRepository.update('1', { name: 'Mercado' }, {
-        include: { children: true },
-      })
+      const result = await categoryRepository.update(
+        '1',
+        { name: 'Mercado' },
+        {
+          include: { children: true },
+        },
+      )
 
       expect(mockPrismaClient.category.update).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -124,7 +130,9 @@ describe('Category Repository', () => {
 
       const result = await categoryRepository.delete('1')
 
-      expect(mockPrismaClient.category.delete).toHaveBeenCalledWith({ where: { id: '1' } })
+      expect(mockPrismaClient.category.delete).toHaveBeenCalledWith({
+        where: { id: '1' },
+      })
       expect(result).toEqual(deleted)
     })
   })
@@ -135,7 +143,9 @@ describe('Category Repository', () => {
 
       const result = await categoryRepository.count({ userId: 'user-1' } as any)
 
-      expect(mockPrismaClient.category.count).toHaveBeenCalledWith({ where: { userId: 'user-1' } })
+      expect(mockPrismaClient.category.count).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      })
       expect(result).toBe(3)
     })
   })
@@ -144,7 +154,10 @@ describe('Category Repository', () => {
     it('should return true when exists', async () => {
       mockPrismaClient.category.findFirst.mockResolvedValue({ id: '1' })
 
-      const result = await categoryRepository.existsByNameAndUserId('Alimentação', 'user-1')
+      const result = await categoryRepository.existsByNameAndUserId(
+        'Alimentação',
+        'user-1',
+      )
 
       expect(mockPrismaClient.category.findFirst).toHaveBeenCalledWith({
         where: { name: 'Alimentação', userId: 'user-1' },
@@ -155,7 +168,11 @@ describe('Category Repository', () => {
     it('should apply NOT when excludeId provided', async () => {
       mockPrismaClient.category.findFirst.mockResolvedValue(null)
 
-      await categoryRepository.existsByNameAndUserId('Alimentação', 'user-1', '1')
+      await categoryRepository.existsByNameAndUserId(
+        'Alimentação',
+        'user-1',
+        '1',
+      )
 
       expect(mockPrismaClient.category.findFirst).toHaveBeenCalledWith({
         where: { name: 'Alimentação', userId: 'user-1', NOT: { id: '1' } },
@@ -166,7 +183,13 @@ describe('Category Repository', () => {
   describe('findForSelect', () => {
     it('should map select options', async () => {
       mockPrismaClient.category.findMany.mockResolvedValue([
-        { id: '1', name: 'Alimentação', color: '#ff0000', icon: 'food', type: 'expense' },
+        {
+          id: '1',
+          name: 'Alimentação',
+          color: '#ff0000',
+          icon: 'food',
+          type: 'expense',
+        },
       ])
 
       const result = await categoryRepository.findForSelect('user-1', 'expense')
@@ -184,7 +207,13 @@ describe('Category Repository', () => {
   describe('getUsageStats', () => {
     it('should map usage stats', async () => {
       mockPrismaClient.category.findMany.mockResolvedValue([
-        { id: '1', name: 'Alimentação', icon: 'food', type: 'expense', _count: { entries: 2, children: 0 } },
+        {
+          id: '1',
+          name: 'Alimentação',
+          icon: 'food',
+          type: 'expense',
+          _count: { entries: 2, children: 0 },
+        },
       ])
 
       const result = await categoryRepository.getUsageStats('user-1')
@@ -200,5 +229,3 @@ describe('Category Repository', () => {
     })
   })
 })
-
-

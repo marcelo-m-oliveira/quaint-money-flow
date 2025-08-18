@@ -51,27 +51,35 @@ describe('Category Controller', () => {
     // Mock dos métodos do BaseController usados em store/update/destroy
     jest
       .spyOn(categoryController as any, 'handleCreateRequest')
-      .mockImplementation(async (_request: any, _reply: any, operation: any) => {
-        const result = await operation()
-        return mockReply.status(201).send(result)
-      })
+      .mockImplementation(
+        async (_request: any, _reply: any, operation: any) => {
+          const result = await operation()
+          return mockReply.status(201).send(result)
+        },
+      )
 
     jest
       .spyOn(categoryController as any, 'handleUpdateRequest')
-      .mockImplementation(async (_request: any, _reply: any, operation: any) => {
-        const result = await operation()
-        return mockReply.status(200).send(result)
-      })
+      .mockImplementation(
+        async (_request: any, _reply: any, operation: any) => {
+          const result = await operation()
+          return mockReply.status(200).send(result)
+        },
+      )
 
     jest
       .spyOn(categoryController as any, 'handleDeleteRequest')
-      .mockImplementation(async (_request: any, _reply: any, operation: any) => {
-        await operation()
-        return mockReply.status(204).send()
-      })
+      .mockImplementation(
+        async (_request: any, _reply: any, operation: any) => {
+          await operation()
+          return mockReply.status(204).send()
+        },
+      )
 
     // Mock helpers de extração
-    jest.spyOn(categoryController as any, 'getUserId').mockReturnValue('test-user-id')
+    jest
+      .spyOn(categoryController as any, 'getUserId')
+      .mockReturnValue('test-user-id')
     jest.spyOn(categoryController as any, 'getQueryParams').mockReturnValue({})
     jest.spyOn(categoryController as any, 'getBodyParams').mockReturnValue({})
     jest.spyOn(categoryController as any, 'getPathParams').mockReturnValue({})
@@ -107,11 +115,14 @@ describe('Category Controller', () => {
 
       await categoryController.index(mockRequest, mockReply)
 
-      expect(mockCategoryService.findMany).toHaveBeenCalledWith('test-user-id', {
-        page: 1,
-        limit: 20,
-        type: undefined,
-      })
+      expect(mockCategoryService.findMany).toHaveBeenCalledWith(
+        'test-user-id',
+        {
+          page: 1,
+          limit: 20,
+          type: undefined,
+        },
+      )
 
       expect(mockReply.status).toHaveBeenCalledWith(200)
       const sent = (mockReply.send as any).mock.calls[0][0]
@@ -142,13 +153,22 @@ describe('Category Controller', () => {
   describe('usage', () => {
     it('should return usage stats', async () => {
       const usage = [
-        { id: '1', name: 'Alimentação', icon: 'food', type: 'expense', entryCount: 5, totalAmount: 0 },
+        {
+          id: '1',
+          name: 'Alimentação',
+          icon: 'food',
+          type: 'expense',
+          entryCount: 5,
+          totalAmount: 0,
+        },
       ]
       mockCategoryService.getUsageStats.mockResolvedValue(usage)
 
       await categoryController.usage(mockRequest, mockReply)
 
-      expect(mockCategoryService.getUsageStats).toHaveBeenCalledWith('test-user-id')
+      expect(mockCategoryService.getUsageStats).toHaveBeenCalledWith(
+        'test-user-id',
+      )
       expect(mockReply.status).toHaveBeenCalledWith(200)
       expect(mockReply.send).toHaveBeenCalledWith(usage)
     })
@@ -167,12 +187,17 @@ describe('Category Controller', () => {
         updatedAt: now,
       }
 
-      jest.spyOn(categoryController as any, 'getPathParams').mockReturnValue({ id: '1' })
+      jest
+        .spyOn(categoryController as any, 'getPathParams')
+        .mockReturnValue({ id: '1' })
       mockCategoryService.findById.mockResolvedValue(mockCategory)
 
       await categoryController.show(mockRequest, mockReply)
 
-      expect(mockCategoryService.findById).toHaveBeenCalledWith('1', 'test-user-id')
+      expect(mockCategoryService.findById).toHaveBeenCalledWith(
+        '1',
+        'test-user-id',
+      )
       expect(mockReply.status).toHaveBeenCalledWith(200)
       const sent = (mockReply.send as any).mock.calls[0][0]
       expect(sent.id).toBe('1')
@@ -189,14 +214,24 @@ describe('Category Controller', () => {
         icon: 'car',
         type: 'expense' as const,
       }
-      const created = { id: '2', ...data, createdAt: new Date(), updatedAt: new Date() }
+      const created = {
+        id: '2',
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
 
-      jest.spyOn(categoryController as any, 'getBodyParams').mockReturnValue(data)
+      jest
+        .spyOn(categoryController as any, 'getBodyParams')
+        .mockReturnValue(data)
       mockCategoryService.create.mockResolvedValue(created)
 
       await categoryController.store(mockRequest, mockReply)
 
-      expect(mockCategoryService.create).toHaveBeenCalledWith(data, 'test-user-id')
+      expect(mockCategoryService.create).toHaveBeenCalledWith(
+        data,
+        'test-user-id',
+      )
       expect(mockReply.status).toHaveBeenCalledWith(201)
     })
   })
@@ -214,28 +249,39 @@ describe('Category Controller', () => {
         updatedAt: new Date(),
       }
 
-      jest.spyOn(categoryController as any, 'getPathParams').mockReturnValue({ id: '1' })
-      jest.spyOn(categoryController as any, 'getBodyParams').mockReturnValue(updateData)
+      jest
+        .spyOn(categoryController as any, 'getPathParams')
+        .mockReturnValue({ id: '1' })
+      jest
+        .spyOn(categoryController as any, 'getBodyParams')
+        .mockReturnValue(updateData)
       mockCategoryService.update.mockResolvedValue(updated)
 
       await categoryController.update(mockRequest, mockReply)
 
-      expect(mockCategoryService.update).toHaveBeenCalledWith('1', updateData, 'test-user-id')
+      expect(mockCategoryService.update).toHaveBeenCalledWith(
+        '1',
+        updateData,
+        'test-user-id',
+      )
       expect(mockReply.status).toHaveBeenCalledWith(200)
     })
   })
 
   describe('destroy', () => {
     it('should delete a category', async () => {
-      jest.spyOn(categoryController as any, 'getPathParams').mockReturnValue({ id: '1' })
+      jest
+        .spyOn(categoryController as any, 'getPathParams')
+        .mockReturnValue({ id: '1' })
       mockCategoryService.delete.mockResolvedValue(undefined)
 
       await categoryController.destroy(mockRequest, mockReply)
 
-      expect(mockCategoryService.delete).toHaveBeenCalledWith('1', 'test-user-id')
+      expect(mockCategoryService.delete).toHaveBeenCalledWith(
+        '1',
+        'test-user-id',
+      )
       expect(mockReply.status).toHaveBeenCalledWith(204)
     })
   })
 })
-
-

@@ -31,5 +31,3 @@ describe('Overview Repository', () => {
     expect(endDate).toBeInstanceOf(Date)
   })
 })
-
-

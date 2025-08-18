@@ -68,7 +68,7 @@ export const rateLimitMiddleware = (config: RateLimitConfig) => {
     statusCode = 429,
     keyGenerator = (request) => {
       // Usar IP do usuário ou user ID se autenticado
-      return request.user?.sub || request.ip || 'anonymous'
+      return (request.user as any)?.sub || request.ip || 'anonymous'
     },
     skip = () => false,
   } = config
@@ -127,8 +127,9 @@ export const rateLimitConfigs = {
   authenticated: {
     windowMs: 15 * 60 * 1000, // 15 minutos
     max: 1000, // 1000 requisições
-    keyGenerator: (request: FastifyRequest) => `user:${request.user?.sub}`,
-    skip: (request: FastifyRequest) => !request.user?.sub,
+    keyGenerator: (request: FastifyRequest) =>
+      `user:${(request.user as any)?.sub}`,
+    skip: (request: FastifyRequest) => !(request.user as any)?.sub,
   },
 }
 

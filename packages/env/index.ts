@@ -27,6 +27,14 @@ export const env = createEnv({
       .default('your-super-secret-jwt-key-change-this-in-production'),
     JWT_EXPIRES_IN: z.string().default('7d'),
 
+    // Refresh Tokens
+    REFRESH_TOKEN_EXPIRES_IN: z.string().default('30d'),
+
+    // Google OAuth2
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_REDIRECT_URI: z.string().optional(),
+
     SWAGGER_ENABLED: z.coerce.boolean().default(true),
     SWAGGER_PATH: z.string().default('/docs'),
   },
@@ -46,6 +54,10 @@ export const env = createEnv({
     RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX,
     CORS_ORIGIN: process.env.CORS_ORIGIN,
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+    REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
   emptyStringAsUndefined: true,

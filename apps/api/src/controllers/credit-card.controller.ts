@@ -29,12 +29,14 @@ export class CreditCardController extends BaseController {
       limit: filters.limit || 20,
     })
 
-    const creditCardsWithConvertedDates = result.creditCards.map((creditCard) => ({
-      ...convertDatesToSeconds(creditCard),
-      limit: Number(creditCard.limit),
-      usage: Number(creditCard.usage || 0),
-      availableLimit: Number(creditCard.availableLimit || 0),
-    }))
+    const creditCardsWithConvertedDates = result.creditCards.map(
+      (creditCard) => ({
+        ...convertDatesToSeconds(creditCard),
+        limit: Number(creditCard.limit),
+        usage: Number(creditCard.usage || 0),
+        availableLimit: Number(creditCard.availableLimit || 0),
+      }),
+    )
 
     return reply.status(200).send({
       creditCards: creditCardsWithConvertedDates,
