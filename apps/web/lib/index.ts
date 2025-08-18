@@ -71,6 +71,7 @@ export { accountsService } from './services/accounts'
 export { creditCardsService } from './services/credit-cards'
 export { userPreferencesService } from './services/user-preferences'
 export { overviewService } from './services/overview'
+export { authService } from './services/auth'
 
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - HOOKS
