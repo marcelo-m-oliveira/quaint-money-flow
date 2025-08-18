@@ -17,7 +17,7 @@ async function main() {
       email: 'user@example.com',
       name: 'Usuário Exemplo',
       password: passwordHash,
-      avatarUrl: this.faker.image.avatar(),
+      avatarUrl: faker.image?.avatar(),
     },
   })
 

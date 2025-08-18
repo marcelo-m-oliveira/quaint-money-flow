@@ -1,3 +1,22 @@
+## Auth (NextAuth)
+
+This app uses NextAuth (credentials + Google) with the backend Fastify API.
+
+- API base requests are sent via `/api/proxy/*`, which injects the `Authorization` header from the NextAuth session.
+- Sign-in is available at `/signin`.
+- Google sign-in uses `/api/auth/google` → Google consent → backend `/auth/google/callback` → bridges to NextAuth credentials.
+
+Environment variables required (in workspace root `.env` loaded by dotenv-cli):
+
+```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace-with-strong-secret
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://localhost:3333/api/v1/auth/google/callback
+NEXT_PUBLIC_API_URL=http://localhost:3333/api/v1
+```
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/create-next-app).
 
 ## Getting Started

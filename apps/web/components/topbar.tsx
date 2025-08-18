@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react'
 import Link from 'next/link'
+import { signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
@@ -213,7 +214,7 @@ export function Topbar() {
                   <span>Upgrade</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>

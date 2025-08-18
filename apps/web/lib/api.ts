@@ -1,8 +1,7 @@
-import { env } from '@saas/env'
-
 import type { ApiResponse, PaginatedResponse } from './types'
 
-const API_BASE_URL = env.NEXT_PUBLIC_API_URL
+// Use internal proxy so that cookies/session are available and we can inject auth
+const API_BASE_URL = '/api/proxy'
 
 export type { ApiResponse, PaginatedResponse }
 
@@ -19,14 +18,13 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
-    // Para desenvolvimento, usar um token fixo
-    // Em produção, isso deve vir do contexto de autenticação
-    const token = 'dev-token-123'
+    // Read access token from NextAuth session (server or client-safe header injection)
+    // Token is injected by proxy route; no need to read here
+    const token: string | undefined = undefined
 
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
         ...options.headers,
       },
       ...options,
@@ -77,14 +75,11 @@ class ApiClient {
   async delete<T>(endpoint: string): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
-    // Para desenvolvimento, usar um token fixo
-    // Em produção, isso deve vir do contexto de autenticação
-    const token = 'dev-token-123'
+    const token: string | undefined = undefined
 
     const config: RequestInit = {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`,
         // Não incluir Content-Type para DELETE sem body
       },
     }

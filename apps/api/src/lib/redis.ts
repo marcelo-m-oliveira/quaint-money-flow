@@ -8,7 +8,8 @@ const redisConfig = {
   db: parseInt(process.env.REDIS_DB || '0'),
   retryDelayOnFailover: 100,
   maxRetriesPerRequest: 3,
-  lazyConnect: true,
+  // Connect eagerly so routes depending on Redis don't fail on first call
+  lazyConnect: false,
   keepAlive: 30000,
   connectTimeout: 10000,
   commandTimeout: 5000,
