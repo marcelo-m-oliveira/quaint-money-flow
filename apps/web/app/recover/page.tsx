@@ -29,7 +29,9 @@ export default function RecoverPage() {
           'Se o email existir, você receberá instruções para recuperar sua conta. Verifique sua caixa de entrada.',
         )
       } else if (resp.ok) {
-        setMessage('Sua conta existe. Você pode prosseguir para a página de login.')
+        setMessage(
+          'Sua conta existe. Você pode prosseguir para a página de login.',
+        )
       } else {
         setMessage('Verifique seu email. Se existir, enviaremos instruções.')
       }
@@ -73,7 +75,11 @@ export default function RecoverPage() {
         )}
 
         <div className="space-y-3">
-          <Button className="w-full" disabled={loading || !email} onClick={handleRecover}>
+          <Button
+            className="w-full"
+            disabled={loading || !email}
+            onClick={handleRecover}
+          >
             Verificar email
           </Button>
 
@@ -88,5 +94,3 @@ export default function RecoverPage() {
     </div>
   )
 }
-
-

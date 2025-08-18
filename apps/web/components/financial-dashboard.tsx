@@ -9,6 +9,7 @@ import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { formatCurrency, getDayPeriod } from '@/lib/format'
 import { useCategories } from '@/lib/hooks/use-categories'
 import { useEntries } from '@/lib/hooks/use-entries'
+import { useSession } from '@/lib/hooks/use-session'
 import { Entry, EntryFormData, PendingAccount } from '@/lib/types'
 
 import {
@@ -65,6 +66,8 @@ export function FinancialDashboard() {
 
   // Estado para armazenar o período do dia
   const [dayPeriod, setDayPeriod] = useState(getDayPeriod())
+  const { data } = useSession()
+  const displayName = data?.user?.name || ''
 
   // Atualiza o período do dia a cada minuto
   useEffect(() => {
@@ -226,7 +229,7 @@ export function FinancialDashboard() {
                   {dayPeriod.greeting},
                 </p>
                 <p className="flex flex-wrap items-center justify-center gap-2 text-xl font-bold text-foreground lg:justify-start lg:text-2xl">
-                  Marcelo Oliveira!
+                  {displayName}!
                   <span className="text-xl lg:text-2xl">{dayPeriod.icon}</span>
                 </p>
               </div>

@@ -2,8 +2,8 @@ import './globals.css'
 
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { AuthSessionProvider } from '@/components/auth-session-provider'
 
+import { AuthSessionProvider } from '@/components/auth-session-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { AccountsProvider } from '@/lib/contexts/accounts-context'

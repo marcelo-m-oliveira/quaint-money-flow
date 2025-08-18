@@ -19,6 +19,8 @@ import { signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
+import { useSession } from '@/lib/hooks/use-session'
+
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 import {
@@ -32,8 +34,17 @@ import {
 
 export function Topbar() {
   const { setTheme } = useTheme()
-  const [userName] = useState('Marcelo Oliveira')
-  const [userInitials] = useState('MO')
+  const { data } = useSession()
+  const userName = data?.user?.name || 'Usuário'
+  const userEmail = data?.user?.email || ''
+  const [userInitials] = useState(
+    (userName || '')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('') || 'U',
+  )
 
   return (
     <header className="border-b bg-card">
@@ -181,7 +192,7 @@ export function Topbar() {
                       {userName}
                     </span>
                     <span className="text-xs leading-tight text-muted-foreground">
-                      Plano Gratuito
+                      {userEmail || ' '}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -194,7 +205,7 @@ export function Topbar() {
                       {userName}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      marcelo@example.com
+                      {userEmail}
                     </p>
                   </div>
                 </DropdownMenuLabel>

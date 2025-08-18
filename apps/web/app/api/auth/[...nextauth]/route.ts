@@ -139,6 +139,10 @@ export const authOptions: NextAuthOptions = {
       // Expose tokens in session object
       ;(session as any).accessToken = token.accessToken
       ;(session as any).refreshToken = token.refreshToken
+      // Ensure user identity is available in the session
+      session.user = session.user || ({} as any)
+      if (token?.name) (session.user as any).name = token.name
+      if (token?.email) (session.user as any).email = token.email
       return session
     },
   },

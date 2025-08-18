@@ -10,7 +10,6 @@ import {
   User,
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 
 import { PageLayout } from '@/components/layouts/page-layout'
 import { Button } from '@/components/ui/button'
@@ -80,7 +79,7 @@ const menuItems = [
 ]
 
 export default function ConfigLayout({ children }: ConfigLayoutProps) {
-  const pathname = usePathname()
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
 
   return (
     <PageLayout>

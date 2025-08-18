@@ -1,6 +1,6 @@
 'use client'
 
-import { LogIn, Mail, MoveRight, Shield, UserPlus } from 'lucide-react'
+import { LogIn, Mail, MoveRight, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
@@ -51,7 +51,10 @@ export default function SignInPage() {
             <Link href="/signup" className="text-primary hover:underline">
               Ainda não tem conta?
             </Link>
-            <Link href="/recover" className="text-muted-foreground hover:underline">
+            <Link
+              href="/recover"
+              className="text-muted-foreground hover:underline"
+            >
               Esqueci minha senha
             </Link>
           </div>
@@ -82,7 +85,10 @@ export default function SignInPage() {
 
         <div className="flex items-center justify-center gap-2 text-sm">
           <span className="text-muted-foreground">Novo por aqui?</span>
-          <Link href="/signup" className="inline-flex items-center text-primary hover:underline">
+          <Link
+            href="/signup"
+            className="inline-flex items-center text-primary hover:underline"
+          >
             Criar conta <MoveRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
