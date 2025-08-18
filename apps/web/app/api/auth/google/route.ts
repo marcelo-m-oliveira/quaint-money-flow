@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
+import { env } from '@saas/env'
 
 // This route is a small helper that redirects to Google's OAuth consent screen
 // and sets the redirect_uri to the backend's /auth/google/callback.
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL as string
+const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
 export async function GET() {
-  const clientId = process.env.GOOGLE_CLIENT_ID
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI
+  const clientId = env.GOOGLE_CLIENT_ID
+  const redirectUri = env.GOOGLE_REDIRECT_URI
   const scope = encodeURIComponent('openid email profile')
   const state = Math.random().toString(36).slice(2)
 

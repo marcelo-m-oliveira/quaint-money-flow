@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { env } from '@saas/env'
 
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL as string
+const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
 async function forward(
   request: Request,

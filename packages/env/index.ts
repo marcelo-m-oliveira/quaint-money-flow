@@ -41,6 +41,7 @@ export const env = createEnv({
   client: {},
   shared: {
     NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3333/api/v1'),
+    NEXTAUTH_SECRET: z.string().default('your-super-secret-jwt-key-change-this-in-production'),
   },
   runtimeEnv: {
     PORT: process.env.PORT,
@@ -59,6 +60,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   },
   emptyStringAsUndefined: true,
 })

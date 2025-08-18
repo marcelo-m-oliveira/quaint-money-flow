@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
+import { env } from '@saas/env'
 
 // This route receives ?code= from Google, forwards it to the backend callback,
 // then signs the user in via NextAuth Credentials provider passing tokens.
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL as string
+const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)

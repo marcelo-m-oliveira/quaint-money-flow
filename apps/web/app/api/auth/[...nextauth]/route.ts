@@ -4,10 +4,11 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 // We will manage Google OAuth with a custom callback route that calls the backend
 // and then signs in via Credentials provider using the issued JWTs.
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL as string
+import { env } from '@saas/env'
+const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60,
