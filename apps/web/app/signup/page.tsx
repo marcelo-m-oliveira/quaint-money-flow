@@ -3,7 +3,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Mail, ShieldCheck, UserPlus } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -28,10 +29,14 @@ const signUpSchema = z.object({
 type SignUpSchema = z.infer<typeof signUpSchema>
 
 export default function SignUpPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(
+    null,
+  )
   const {
     register,
     handleSubmit,
@@ -39,13 +44,30 @@ export default function SignUpPage() {
     formState: { errors },
   } = useForm<SignUpSchema>({ resolver: zodResolver(signUpSchema) })
 
+  // Efeito para redirecionamento automático após sucesso
+  useEffect(() => {
+    if (success && redirectCountdown !== null) {
+      const timer = setTimeout(() => {
+        if (redirectCountdown > 1) {
+          setRedirectCountdown(redirectCountdown - 1)
+        } else {
+          router.push('/')
+        }
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [success, redirectCountdown, router])
+
   async function onSubmit(data: SignUpSchema) {
     setLoading(true)
     setError(null)
     setSuccess(null)
+    setRedirectCountdown(null)
     try {
       await authService.register(data)
       setSuccess('Conta criada com sucesso! Você já pode entrar.')
+      setRedirectCountdown(5) // Iniciar countdown de 5 segundos
       reset()
     } catch (e: any) {
       setError(e?.message || 'Erro inesperado')
@@ -146,7 +168,16 @@ export default function SignUpPage() {
         )}
         {success && (
           <div className="flex items-center gap-2 rounded-md border border-emerald-300/30 bg-emerald-500/10 p-2 text-sm text-emerald-500">
-            <ShieldCheck className="h-4 w-4" /> {success}
+            <ShieldCheck className="h-4 w-4" />
+            <div className="flex-1">
+              <div>{success}</div>
+              {redirectCountdown !== null && (
+                <div className="text-xs text-emerald-600">
+                  Redirecionando em {redirectCountdown} segundo
+                  {redirectCountdown !== 1 ? 's' : ''}...
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
