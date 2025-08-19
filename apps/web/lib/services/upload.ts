@@ -7,12 +7,16 @@ export interface UploadResponse {
 
 export const uploadService = {
   async uploadAvatar(imageData: string): Promise<UploadResponse> {
-    return apiClient.post<UploadResponse>('/upload/avatar', {
-      imageData,
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
+    return apiClient.post<UploadResponse>(
+      '/upload/avatar',
+      {
+        imageData,
       },
-    })
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
   },
 }

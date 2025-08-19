@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, ShieldCheck, UserPlus } from 'lucide-react'
+import { Eye, EyeOff, Mail, ShieldCheck, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -119,6 +119,16 @@ export default function SignUpPage() {
           <div className="space-y-3 pt-2">
             <Button className="w-full" disabled={loading} type="submit">
               Criar conta
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              type="button"
+              onClick={() => {
+                window.location.href = '/api/auth/google'
+              }}
+            >
+              <Mail className="h-4 w-4" /> Criar conta com Google
             </Button>
             <div className="flex items-center justify-center gap-2 text-sm">
               <span className="text-muted-foreground">Já tem conta?</span>

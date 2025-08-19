@@ -31,9 +31,15 @@ export const env = createEnv({
     REFRESH_TOKEN_EXPIRES_IN: z.string().default('30d'),
 
     // Google OAuth2
-    GOOGLE_CLIENT_ID: z.string().optional(),
-    GOOGLE_CLIENT_SECRET: z.string().optional(),
-    GOOGLE_REDIRECT_URI: z.string().optional(),
+    GOOGLE_CLIENT_ID: z
+      .string()
+      .default(
+        '800618207324-q718np1big2b75ic1dgu0aaihpls0ab2.apps.googleusercontent.com',
+      ),
+    GOOGLE_CLIENT_SECRET: z
+      .string()
+      .default('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'),
+    GOOGLE_REDIRECT_URI: z.string().default('http://localhost:3000/auth/google/callback'),
 
     SWAGGER_ENABLED: z.coerce.boolean().default(true),
     SWAGGER_PATH: z.string().default('/docs'),
@@ -41,7 +47,9 @@ export const env = createEnv({
   client: {},
   shared: {
     NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3333/api/v1'),
-    NEXTAUTH_SECRET: z.string().default('your-super-secret-jwt-key-change-this-in-production'),
+    NEXTAUTH_SECRET: z
+      .string()
+      .default('your-super-secret-jwt-key-change-this-in-production'),
   },
   runtimeEnv: {
     PORT: process.env.PORT,

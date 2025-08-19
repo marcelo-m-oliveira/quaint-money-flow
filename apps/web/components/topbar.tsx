@@ -37,7 +37,9 @@ export function Topbar() {
   const { data } = useSession()
   const userName = data?.user?.name || ''
   const userEmail = data?.user?.email || ''
-  const userImage = (data?.user as any)?.avatarUrl || (data?.user as any)?.image as string | undefined
+  const userImage =
+    (data?.user as any)?.avatarUrl ||
+    ((data?.user as any)?.image as string | undefined)
   const [userInitials] = useState(
     (userName || '')
       .split(' ')

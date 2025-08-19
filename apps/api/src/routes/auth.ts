@@ -149,10 +149,19 @@ export async function authRoutes(app: FastifyInstance) {
             password: z
               .string()
               .min(8, 'A senha deve ter pelo menos 8 caracteres')
-              .refine((val) => /[a-z]/.test(val), 'A senha deve conter letra minúscula')
-              .refine((val) => /[A-Z]/.test(val), 'A senha deve conter letra maiúscula')
+              .refine(
+                (val) => /[a-z]/.test(val),
+                'A senha deve conter letra minúscula',
+              )
+              .refine(
+                (val) => /[A-Z]/.test(val),
+                'A senha deve conter letra maiúscula',
+              )
               .refine((val) => /\d/.test(val), 'A senha deve conter número')
-              .refine((val) => /[^\w\s]/.test(val), 'A senha deve conter caractere especial'),
+              .refine(
+                (val) => /[^\w\s]/.test(val),
+                'A senha deve conter caractere especial',
+              ),
           })
           .strict(),
         response: {
@@ -215,146 +224,207 @@ export async function authRoutes(app: FastifyInstance) {
         tags: ['🔐 Autenticação'],
         summary: 'Callback de login via Google OAuth2',
         security: [],
-        querystring: {
-          type: 'object',
-          properties: { code: { type: 'string' } },
-          required: ['code'],
-        },
       },
     },
     async (request, reply) => {
-      const { code } = request.query as any
-      const clientId = process.env.GOOGLE_CLIENT_ID as string
-      const clientSecret = process.env.GOOGLE_CLIENT_SECRET as string
-      const redirectUri = process.env.GOOGLE_REDIRECT_URI as string
+      try {
+        request.log.info('Google OAuth callback started')
 
-      if (!clientId || !clientSecret || !redirectUri) {
+        const { env } = await import('@saas/env')
+        const { code } = request.query as any
+        const clientId = env.GOOGLE_CLIENT_ID
+        const clientSecret = env.GOOGLE_CLIENT_SECRET
+        const redirectUri = env.GOOGLE_REDIRECT_URI
+
+        request.log.info(
+          { clientId: !!clientId, clientSecret: !!clientSecret, redirectUri },
+          'Google OAuth config',
+        )
+
+        if (!clientId || !clientSecret || !redirectUri) {
+          request.log.error('Google OAuth2 configuration missing')
+          return ResponseFormatter.error(
+            reply,
+            'Configuração do Google OAuth2 ausente',
+            undefined,
+            500,
+          )
+        }
+
+        if (!code) {
+          request.log.error('Missing authorization code')
+          return ResponseFormatter.error(
+            reply,
+            'Código de autorização não fornecido',
+            undefined,
+            400,
+          )
+        }
+
+        // Troca code -> tokens
+        const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            code,
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+          }),
+        })
+
+        if (!tokenResp.ok) {
+          const err = await tokenResp.text()
+          request.log.error(
+            { err, status: tokenResp.status },
+            'Falha ao trocar code por token no Google',
+          )
+          return ResponseFormatter.error(
+            reply,
+            'Falha na autenticação Google',
+            undefined,
+            401,
+          )
+        }
+
+        // eslint-disable-next-line camelcase
+        const { access_token } = (await tokenResp.json()) as any
+
+        // eslint-disable-next-line camelcase
+        if (!access_token) {
+          request.log.error('No access token received from Google')
+          return ResponseFormatter.error(
+            reply,
+            'Token de acesso não recebido do Google',
+            undefined,
+            401,
+          )
+        }
+
+        // Buscar perfil
+        const profileResp = await fetch(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          {
+            // eslint-disable-next-line camelcase
+            headers: { Authorization: `Bearer ${access_token}` },
+          },
+        )
+
+        if (!profileResp.ok) {
+          const err = await profileResp.text()
+          request.log.error(
+            { err, status: profileResp.status },
+            'Falha ao obter perfil do Google',
+          )
+          return ResponseFormatter.error(
+            reply,
+            'Falha na autenticação Google',
+            undefined,
+            401,
+          )
+        }
+
+        const profile = (await profileResp.json()) as any
+        const email = profile.email as string
+        const name = (profile.name as string) || email
+        const picture = (profile.picture as string) || undefined
+        const providerUserId = profile.sub as string
+
+        if (!email) {
+          request.log.error('No email available in Google profile')
+          return ResponseFormatter.error(
+            reply,
+            'Email não disponível no Google',
+            undefined,
+            400,
+          )
+        }
+
+        // Upsert usuário
+        let user = await prisma.user.findUnique({ where: { email } })
+        if (!user) {
+          const randomPasswordHash = await bcrypt.hash(randomUUID(), 10)
+          user = await prisma.user.create({
+            data: {
+              email,
+              name,
+              password: randomPasswordHash,
+              avatarUrl: picture,
+            },
+          })
+          request.log.info(
+            { userId: user.id, email },
+            'Novo usuário criado via Google OAuth',
+          )
+        } else if (!user.avatarUrl && picture) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { avatarUrl: picture },
+          })
+          request.log.info(
+            { userId: user.id, email },
+            'Avatar do usuário atualizado via Google OAuth',
+          )
+        }
+
+        // Vincular/atualizar provedor
+        if (providerUserId) {
+          await prisma.userProvider.upsert({
+            where: {
+              provider_providerUserId: {
+                provider: 'google',
+                providerUserId,
+              },
+            },
+            update: { userId: user.id },
+            create: {
+              userId: user.id,
+              provider: 'google',
+              providerUserId,
+            },
+          })
+        }
+
+        const payload = {
+          sub: user.id,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        }
+        const accessToken = await signAccessToken(payload)
+        const refresh = await signRefreshToken(user.id)
+
+        request.log.info(
+          { userId: user.id, email },
+          'Login via Google OAuth realizado com sucesso',
+        )
+
+        return reply.status(200).send({
+          accessToken,
+          refreshToken: refresh.token,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            avatarUrl: user.avatarUrl ?? null,
+          },
+        })
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error'
+        const errorStack = error instanceof Error ? error.stack : undefined
+        request.log.error(
+          { error: errorMessage, stack: errorStack },
+          'Erro inesperado no callback do Google OAuth',
+        )
         return ResponseFormatter.error(
           reply,
-          'Configuração do Google OAuth2 ausente',
+          'Erro interno do servidor',
           undefined,
           500,
         )
       }
-
-      // Troca code -> tokens
-      const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          code,
-          client_id: clientId,
-          client_secret: clientSecret,
-          redirect_uri: redirectUri,
-          grant_type: 'authorization_code',
-        }),
-      })
-
-      if (!tokenResp.ok) {
-        const err = await tokenResp.text()
-        request.log.error({ err }, 'Falha ao trocar code por token no Google')
-        return ResponseFormatter.error(
-          reply,
-          'Falha na autenticação Google',
-          undefined,
-          401,
-        )
-      }
-
-      // eslint-disable-next-line camelcase
-      const { access_token } = (await tokenResp.json()) as any
-
-      // Buscar perfil
-      const profileResp = await fetch(
-        'https://www.googleapis.com/oauth2/v3/userinfo',
-        {
-          // eslint-disable-next-line camelcase
-          headers: { Authorization: `Bearer ${access_token}` },
-        },
-      )
-
-      if (!profileResp.ok) {
-        const err = await profileResp.text()
-        request.log.error({ err }, 'Falha ao obter perfil do Google')
-        return ResponseFormatter.error(
-          reply,
-          'Falha na autenticação Google',
-          undefined,
-          401,
-        )
-      }
-
-      const profile = (await profileResp.json()) as any
-      const email = profile.email as string
-      const name = (profile.name as string) || email
-      const picture = (profile.picture as string) || undefined
-      const providerUserId = profile.sub as string
-
-      if (!email) {
-        return ResponseFormatter.error(
-          reply,
-          'Email não disponível no Google',
-          undefined,
-          400,
-        )
-      }
-
-      // Upsert usuário
-      let user = await prisma.user.findUnique({ where: { email } })
-      if (!user) {
-        const randomPasswordHash = await bcrypt.hash(randomUUID(), 10)
-        user = await prisma.user.create({
-          data: {
-            email,
-            name,
-            password: randomPasswordHash,
-            avatarUrl: picture,
-          },
-        })
-      } else if (!user.avatarUrl && picture) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { avatarUrl: picture },
-        })
-      }
-
-      // Vincular/atualizar provedor
-      if (providerUserId) {
-        await prisma.userProvider.upsert({
-          where: {
-            provider_providerUserId: {
-              provider: 'google',
-              providerUserId,
-            },
-          },
-          update: { userId: user.id },
-          create: {
-            userId: user.id,
-            provider: 'google',
-            providerUserId,
-          },
-        })
-      }
-
-      const payload = {
-        sub: user.id,
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      }
-      const accessToken = await signAccessToken(payload)
-      const refresh = await signRefreshToken(user.id)
-
-      return reply.status(200).send({
-        accessToken,
-        refreshToken: refresh.token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          avatarUrl: user.avatarUrl ?? null,
-        },
-      })
     },
   )
 

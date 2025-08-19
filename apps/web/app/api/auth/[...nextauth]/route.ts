@@ -1,10 +1,8 @@
-import NextAuth, { type NextAuthOptions } from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
-
 // We will manage Google OAuth with a custom callback route that calls the backend
 // and then signs in via Credentials provider using the issued JWTs.
-
 import { env } from '@saas/env'
+import NextAuth, { type NextAuthOptions } from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
 const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
 export const authOptions: NextAuthOptions = {

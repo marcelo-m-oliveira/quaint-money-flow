@@ -28,14 +28,23 @@ export async function userRoutes(app: FastifyInstance) {
           200: userResponseSchema,
         },
       },
-      preHandler: [authMiddleware, performanceMiddleware(), rateLimitMiddlewares.authenticated()],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     async (request, reply) => {
       const decoded = request.user as any
       const userId = decoded?.sub as string
       const user = await prisma.user.findUnique({ where: { id: userId } })
       if (!user) {
-        return ResponseFormatter.error(reply, 'Usuário não encontrado', undefined, 404)
+        return ResponseFormatter.error(
+          reply,
+          'Usuário não encontrado',
+          undefined,
+          404,
+        )
       }
       return reply.send({
         id: user.id,
@@ -64,10 +73,17 @@ export async function userRoutes(app: FastifyInstance) {
           200: userResponseSchema,
         },
       },
-      preHandler: [authMiddleware, performanceMiddleware(), validateBody(z.object({
-        name: z.string().min(1),
-        avatarUrl: z.string().url().nullable().optional(),
-      })), rateLimitMiddlewares.authenticated()],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateBody(
+          z.object({
+            name: z.string().min(1),
+            avatarUrl: z.string().url().nullable().optional(),
+          }),
+        ),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     async (request, reply) => {
       const decoded = request.user as any
@@ -96,22 +112,41 @@ export async function userRoutes(app: FastifyInstance) {
         security: [{ bearerAuth: [] }],
         body: z
           .object({
-            currentPassword: z.string().min(6, 'Senha atual deve ter pelo menos 6 caracteres'),
-            newPassword: z.string()
+            currentPassword: z
+              .string()
+              .min(6, 'Senha atual deve ter pelo menos 6 caracteres'),
+            newPassword: z
+              .string()
               .min(8, 'Nova senha deve ter pelo menos 8 caracteres')
-              .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 'Nova senha deve conter pelo menos uma letra minúscula, uma maiúscula, um número e um caractere especial'),
+              .regex(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                'Nova senha deve conter pelo menos uma letra minúscula, uma maiúscula, um número e um caractere especial',
+              ),
           })
           .strict(),
         response: {
           204: z.null(),
         },
       },
-      preHandler: [authMiddleware, performanceMiddleware(), validateBody(z.object({
-        currentPassword: z.string().min(6, 'Senha atual deve ter pelo menos 6 caracteres'),
-        newPassword: z.string()
-          .min(8, 'Nova senha deve ter pelo menos 8 caracteres')
-          .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 'Nova senha deve conter pelo menos uma letra minúscula, uma maiúscula, um número e um caractere especial'),
-      })), rateLimitMiddlewares.authenticated()],
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        validateBody(
+          z.object({
+            currentPassword: z
+              .string()
+              .min(6, 'Senha atual deve ter pelo menos 6 caracteres'),
+            newPassword: z
+              .string()
+              .min(8, 'Nova senha deve ter pelo menos 8 caracteres')
+              .regex(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                'Nova senha deve conter pelo menos uma letra minúscula, uma maiúscula, um número e um caractere especial',
+              ),
+          }),
+        ),
+        rateLimitMiddlewares.authenticated(),
+      ],
     },
     async (request, reply) => {
       const { currentPassword, newPassword } = request.body as any
@@ -119,19 +154,30 @@ export async function userRoutes(app: FastifyInstance) {
       const userId = decoded?.sub as string
       const user = await prisma.user.findUnique({ where: { id: userId } })
       if (!user) {
-        return ResponseFormatter.error(reply, 'Usuário não encontrado', undefined, 404)
+        return ResponseFormatter.error(
+          reply,
+          'Usuário não encontrado',
+          undefined,
+          404,
+        )
       }
       // compare password
       const bcrypt = await import('bcryptjs')
       const ok = await bcrypt.default.compare(currentPassword, user.password)
       if (!ok) {
-        return ResponseFormatter.error(reply, 'Senha atual inválida', undefined, 400)
+        return ResponseFormatter.error(
+          reply,
+          'Senha atual inválida',
+          undefined,
+          400,
+        )
       }
       const hashed = await bcrypt.default.hash(newPassword, 10)
-      await prisma.user.update({ where: { id: userId }, data: { password: hashed } })
+      await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashed },
+      })
       return reply.status(204).send()
     },
   )
 }
-
-

@@ -1,12 +1,12 @@
 'use client'
 
-import { Camera, Upload, X } from 'lucide-react'
+import { Camera, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { uploadService } from '@/lib/services/upload'
+import { cn } from '@/lib/utils'
 
 interface FileUploadProps {
   value?: string | null
@@ -67,7 +67,8 @@ export function FileUpload({
           onChange(response.url)
           onUploadSuccess?.(response.url)
         } catch (error: any) {
-          const errorMessage = error?.message || 'Erro ao fazer upload do arquivo'
+          const errorMessage =
+            error?.message || 'Erro ao fazer upload do arquivo'
           setError(errorMessage)
           onUploadError?.(errorMessage)
         }
@@ -134,7 +135,7 @@ export function FileUpload({
           isDragOver
             ? 'border-primary bg-primary/5'
             : 'border-muted-foreground/25 hover:border-muted-foreground/50',
-          disabled && 'opacity-50 cursor-not-allowed',
+          disabled && 'cursor-not-allowed opacity-50',
         )}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -189,9 +190,7 @@ export function FileUpload({
         </div>
       </div>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }

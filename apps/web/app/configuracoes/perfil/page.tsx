@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileUpload } from '@/components/ui/file-upload'
@@ -125,7 +124,7 @@ export default function PerfilPage() {
               </div>
 
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
+                <label className="mb-2 block text-sm text-muted-foreground">
                   Foto de perfil
                 </label>
                 <FileUpload
@@ -133,7 +132,7 @@ export default function PerfilPage() {
                   onChange={(value) => {
                     // Atualizar o valor do formulário
                     const event = {
-                      target: { name: 'avatarUrl', value }
+                      target: { name: 'avatarUrl', value },
                     } as any
                     register('avatarUrl').onChange(event)
                   }}
@@ -153,7 +152,7 @@ export default function PerfilPage() {
                   }}
                 />
                 {errors.avatarUrl && (
-                  <p className="text-xs text-destructive mt-2">
+                  <p className="mt-2 text-xs text-destructive">
                     {errors.avatarUrl.message}
                   </p>
                 )}
