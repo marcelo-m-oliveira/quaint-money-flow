@@ -1,53 +1,70 @@
-import { Prisma, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
-export class UserPreferencesRepository {
-  constructor(private prisma: PrismaClient) {}
+import { BaseRepository } from '@/repositories/base.repository'
 
-  async findUnique(params: {
-    where: Prisma.UserPreferencesWhereUniqueInput
-    include?: Prisma.UserPreferencesInclude
-  }) {
-    return this.prisma.userPreferences.findUnique(params)
+export class UserPreferencesRepository extends BaseRepository<'userPreferences'> {
+  constructor(prisma: PrismaClient) {
+    super(prisma, 'userPreferences')
   }
 
-  async findFirst(params: {
-    where?: Prisma.UserPreferencesWhereInput
-    include?: Prisma.UserPreferencesInclude
-  }) {
-    return this.prisma.userPreferences.findFirst(params)
-  }
-
-  async create(params: {
-    data: Prisma.UserPreferencesCreateInput
-    include?: Prisma.UserPreferencesInclude
-  }) {
-    return this.prisma.userPreferences.create(params)
-  }
-
-  async update(params: {
-    where: Prisma.UserPreferencesWhereUniqueInput
-    data: Prisma.UserPreferencesUpdateInput
-    include?: Prisma.UserPreferencesInclude
-  }) {
-    return this.prisma.userPreferences.update(params)
-  }
-
-  async upsert(params: {
-    where: Prisma.UserPreferencesWhereUniqueInput
-    create: Prisma.UserPreferencesCreateInput
-    update: Prisma.UserPreferencesUpdateInput
-    include?: Prisma.UserPreferencesInclude
-  }) {
-    return this.prisma.userPreferences.upsert(params)
-  }
-
-  async delete(params: { where: Prisma.UserPreferencesWhereUniqueInput }) {
-    return this.prisma.userPreferences.delete(params)
-  }
-
+  // Métodos específicos de negócio
   async findByUserId(userId: string) {
     return this.prisma.userPreferences.findUnique({
       where: { userId },
+    })
+  }
+
+  async existsByUserId(userId: string): Promise<boolean> {
+    const preferences = await this.prisma.userPreferences.findUnique({
+      where: { userId },
+    })
+    return !!preferences
+  }
+
+  async createDefault(userId: string) {
+    const defaultPreferences = {
+      entryOrder: 'descending' as const,
+      defaultNavigationPeriod: 'monthly' as const,
+      showDailyBalance: false,
+      viewMode: 'all' as const,
+      isFinancialSummaryExpanded: false,
+    }
+
+    return this.prisma.userPreferences.create({
+      data: {
+        ...defaultPreferences,
+        user: { connect: { id: userId } },
+      },
+    })
+  }
+
+  async upsertByUserId(userId: string, createData: any, updateData: any) {
+    return this.prisma.userPreferences.upsert({
+      where: { userId },
+      create: {
+        ...createData,
+        user: { connect: { id: userId } },
+      },
+      update: updateData,
+    })
+  }
+
+  async resetToDefault(userId: string) {
+    const defaultPreferences = {
+      entryOrder: 'descending' as const,
+      defaultNavigationPeriod: 'monthly' as const,
+      showDailyBalance: false,
+      viewMode: 'all' as const,
+      isFinancialSummaryExpanded: false,
+    }
+
+    return this.prisma.userPreferences.upsert({
+      where: { userId },
+      create: {
+        ...defaultPreferences,
+        user: { connect: { id: userId } },
+      },
+      update: defaultPreferences,
     })
   }
 }

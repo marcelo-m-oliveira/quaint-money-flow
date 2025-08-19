@@ -1,15 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma, PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { EntryRepository } from '@/repositories/entry.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { BaseService } from '@/services/base.service'
 import { EntryCreateSchema, EntryUpdateSchema } from '@/utils/schemas'
 
-export class EntryService {
+export class EntryService extends BaseService<'entry'> {
   constructor(
     private entryRepository: EntryRepository,
-    private prisma: PrismaClient,
-  ) {}
+    prisma: PrismaClient,
+  ) {
+    super(entryRepository, prisma)
+  }
 
   async findMany(
     userId: string,
@@ -136,7 +139,7 @@ export class EntryService {
       }
 
       // Get total count for pagination
-      const total = await this.entryRepository.count({ where })
+      const total = await this.entryRepository.count(where)
       const totalPages = Math.ceil(total / limit)
 
       // Calculate summary based on viewMode
@@ -307,8 +310,7 @@ export class EntryService {
   }
 
   async findById(id: string, userId: string) {
-    const entry = await this.entryRepository.findUnique({
-      where: { id, userId },
+    const entry = await this.entryRepository.findFirst({ id, userId } as any, {
       include: {
         category: {
           select: {
@@ -384,8 +386,8 @@ export class EntryService {
     // Remove ID fields from data to avoid conflicts with Prisma relations
     const { categoryId, accountId, creditCardId, ...entryData } = data
 
-    return this.entryRepository.create({
-      data: {
+    return this.entryRepository.create(
+      {
         ...entryData,
         user: { connect: { id: userId } },
         category: { connect: { id: categoryId } },
@@ -396,35 +398,37 @@ export class EntryService {
           creditCard: { connect: { id: creditCardId } },
         }),
       },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
-            type: true,
+      {
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+              type: true,
+            },
           },
-        },
-        account: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            iconType: true,
+          account: {
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              iconType: true,
+            },
           },
-        },
-        creditCard: {
-          select: {
-            id: true,
-            name: true,
-            icon: true,
-            iconType: true,
-            limit: true,
+          creditCard: {
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              iconType: true,
+              limit: true,
+            },
           },
         },
       },
-    })
+    )
   }
 
   async update(
@@ -536,5 +540,35 @@ export class EntryService {
     return this.prisma.entry.delete({
       where: { id, userId },
     })
+  }
+
+  async deleteAllByUserId(userId: string) {
+    // Verificar se o usuário existe
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    if (!user) {
+      throw new BadRequestError('Usuário não encontrado')
+    }
+
+    // Contar quantas entradas o usuário tem antes de deletar
+    const entryCount = await this.prisma.entry.count({
+      where: { userId },
+    })
+
+    if (entryCount === 0) {
+      throw new BadRequestError('Nenhuma entrada encontrada para excluir')
+    }
+
+    // Deletar todas as entradas do usuário
+    const deleteResult = await this.prisma.entry.deleteMany({
+      where: { userId },
+    })
+
+    return {
+      deletedCount: deleteResult.count,
+      message: `${deleteResult.count} entrada(s) excluída(s) com sucesso`,
+    }
   }
 }

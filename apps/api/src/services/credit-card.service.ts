@@ -1,51 +1,65 @@
-import { Prisma, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { CreditCardRepository } from '@/repositories/credit-card.repository'
-import { type CreditCardCreateSchema } from '@/utils/schemas'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { BaseService } from '@/services/base.service'
+import {
+  type CreditCardCreateSchema,
+  type CreditCardUpdateSchema,
+} from '@/utils/schemas'
 
-export class CreditCardService {
+export class CreditCardService extends BaseService<'creditCard'> {
   constructor(
     private creditCardRepository: CreditCardRepository,
-    private prisma: PrismaClient,
-  ) {}
+    prisma: PrismaClient,
+  ) {
+    super(creditCardRepository, prisma)
+  }
 
   async findMany(
     userId: string,
     filters: {
+      search?: string
       page: number
       limit: number
     },
   ) {
-    const { page, limit } = filters
+    const { page, limit, search } = filters
     const skip = (page - 1) * limit
 
     // Buscar cartões com transações para calcular o uso
     const creditCardsWithUsage =
       await this.creditCardRepository.getCreditCardsWithUsage(userId)
 
+    // Filtrar por busca se fornecida
+    const filteredCreditCards = creditCardsWithUsage.filter((creditCard) => {
+      return !(
+        search && !creditCard.name.toLowerCase().includes(search.toLowerCase())
+      )
+    })
+
     // Ordenar por data de criação (mais recentes primeiro)
-    creditCardsWithUsage.sort(
+    filteredCreditCards.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
 
-    const total = creditCardsWithUsage.length
-    const totalPages = Math.ceil(total / limit)
+    const total = filteredCreditCards.length
+    const pagination = this.calculatePagination(total, page, limit)
 
     // Aplicar paginação
-    const paginatedCreditCards = creditCardsWithUsage.slice(skip, skip + limit)
+    const paginatedCreditCards = filteredCreditCards.slice(skip, skip + limit)
 
     // Calcular o uso para cada cartão
     const creditCardsWithUsageCalculated = paginatedCreditCards.map(
       (creditCard) => {
-        const usage = creditCard.entries.reduce((acc, entriy) => {
-          const amount = Number(entriy.amount)
-          return entriy.type === 'expense' ? acc + amount : acc
+        const usage = creditCard.entries.reduce((acc, entry) => {
+          const amount = Number(entry.amount)
+          return entry.type === 'expense' ? acc + amount : acc
         }, 0)
 
         // Remover as transações do retorno e adicionar o uso
-        const { ...creditCardData } = creditCard
+        const { entries, ...creditCardData } = creditCard
         return {
           ...creditCardData,
           usage,
@@ -56,27 +70,20 @@ export class CreditCardService {
 
     return {
       creditCards: creditCardsWithUsageCalculated,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
-      },
+      pagination,
     }
   }
 
   async findById(id: string, userId: string) {
-    const creditCard = await this.creditCardRepository.findUnique({
-      where: { id, userId },
-      include: {
-        defaultPaymentAccount: true,
-      },
-    })
+    const creditCard = await this.creditCardRepository.findById(id)
 
     if (!creditCard) {
       throw new BadRequestError('Cartao de credito nao encontrado')
+    }
+
+    // Verificar se o cartão pertence ao usuário
+    if (creditCard.userId !== userId) {
+      throw new BadRequestError('Cartao de credito nao pertence ao usuario')
     }
 
     return creditCard
@@ -85,14 +92,12 @@ export class CreditCardService {
   async create(data: CreditCardCreateSchema, userId: string) {
     // Verificar se já existe um cartão com o mesmo nome
     const existingCreditCard = await this.creditCardRepository.findFirst({
-      where: {
-        name: data.name,
-        userId,
-      },
+      name: data.name,
+      userId,
     })
 
     if (existingCreditCard) {
-      throw new BadRequestError('Ja existe um cartao de credito com este nome')
+      throw new BadRequestError('Já existe um cartão de crédito com este nome')
     }
 
     // Verificar se a conta de pagamento padrão existe (se fornecida)
@@ -105,7 +110,7 @@ export class CreditCardService {
       })
 
       if (!account) {
-        throw new BadRequestError('Conta de pagamento padrao nao encontrada')
+        throw new BadRequestError('Conta de pagamento padrão não encontrada')
       }
     }
 
@@ -115,42 +120,41 @@ export class CreditCardService {
     // Preparar dados para criação, removendo defaultPaymentAccountId do spread
     const { defaultPaymentAccountId, ...restData } = data
 
-    return this.creditCardRepository.create({
-      data: {
-        ...restData,
-        limit: limitAsNumber,
-        user: { connect: { id: userId } },
-        ...(defaultPaymentAccountId && {
-          defaultPaymentAccount: {
-            connect: { id: defaultPaymentAccountId },
-          },
-        }),
-      },
-      include: {
-        defaultPaymentAccount: true,
-      },
+    const creditCard = await this.creditCardRepository.create({
+      ...restData,
+      limit: limitAsNumber,
+      user: { connect: { id: userId } },
+      ...(defaultPaymentAccountId && {
+        defaultPaymentAccount: {
+          connect: { id: defaultPaymentAccountId },
+        },
+      }),
     })
+
+    this.logOperation('CREATE_CREDIT_CARD', userId, {
+      creditCardId: creditCard.id,
+      creditCardName: creditCard.name,
+    })
+    return creditCard
   }
 
   async update(
     id: string,
-    data: Partial<CreditCardCreateSchema>,
+    data: Partial<CreditCardUpdateSchema>,
     userId: string,
   ) {
-    // Verificar se o cartão existe
+    // Verificar se o cartão existe e pertence ao usuário
     await this.findById(id, userId)
 
-    // Verificar se já existe outro cartão com o mesmo nome
+    // Verificar se já existe outro cartão com o mesmo nome (apenas se o nome foi fornecido)
     if (data.name) {
-      const existingCreditCard = await this.creditCardRepository.findFirst({
-        where: {
-          name: data.name,
-          userId,
-          NOT: { id },
-        },
+      const duplicateCreditCard = await this.creditCardRepository.findFirst({
+        name: data.name,
+        userId,
+        id: { not: id },
       })
 
-      if (existingCreditCard) {
+      if (duplicateCreditCard) {
         throw new BadRequestError(
           'Já existe um cartão de crédito com este nome',
         )
@@ -173,7 +177,7 @@ export class CreditCardService {
 
     // Preparar dados para atualização
     const { defaultPaymentAccountId, ...restData } = data
-    const updateData: Prisma.CreditCardUpdateInput = { ...restData }
+    const updateData: any = { ...restData }
 
     // Converter limit de string para number se fornecido
     if (data.limit) {
@@ -187,55 +191,43 @@ export class CreditCardService {
       }
     }
 
-    return this.creditCardRepository.update({
-      where: { id, userId },
-      data: updateData,
-      include: {
-        defaultPaymentAccount: true,
-      },
+    const creditCard = await this.creditCardRepository.update(id, updateData)
+
+    this.logOperation('UPDATE_CREDIT_CARD', userId, {
+      creditCardId: creditCard.id,
+      creditCardName: creditCard.name,
     })
+    return creditCard
   }
 
   async delete(id: string, userId: string) {
-    // Verificar se o cartão existe
-    await this.findById(id, userId)
+    // Verificar se o cartão existe e pertence ao usuário
+    const creditCard = await this.findById(id, userId)
 
     // Verificar se há transações associadas
-    const entriyCount = await this.prisma.entry.count({
+    const entryCount = await this.prisma.entry.count({
       where: { creditCardId: id, userId },
     })
 
-    if (entriyCount > 0) {
+    if (entryCount > 0) {
       throw new BadRequestError(
         'Não é possível excluir um cartão de crédito que possui transações',
       )
     }
 
-    return this.creditCardRepository.delete({
-      where: { id, userId },
-    })
+    await this.creditCardRepository.delete(id)
+
+    this.logOperation('DELETE_CREDIT_CARD', userId, { creditCardId: id })
+
+    return creditCard
   }
 
   async getUsage(id: string, userId: string) {
-    // Verificar se o cartão existe
+    // Verificar se o cartão existe e pertence ao usuário
     const creditCard = await this.findById(id, userId)
 
-    // Calcular uso baseado nas transações de despesa
-    const entriy = await this.prisma.entry.findMany({
-      where: {
-        creditCardId: id,
-        userId,
-        type: 'expense',
-      },
-      select: {
-        amount: true,
-      },
-    })
-
-    const usage = entriy.reduce((acc, entriy) => {
-      const amount = Number(entriy.amount)
-      return acc + amount
-    }, 0)
+    // Usar o método do repository para calcular o uso
+    const usage = await this.creditCardRepository.getCreditCardUsage(id, userId)
 
     const availableLimit = Number(creditCard.limit) - usage
 

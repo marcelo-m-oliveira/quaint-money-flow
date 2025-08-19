@@ -19,6 +19,13 @@
 
 ## ✨ Funcionalidades
 
+### 🔐 Autenticação
+- ✅ **Login com email e senha** - Autenticação tradicional
+- ✅ **Login com Google OAuth2** - Autenticação social
+- ✅ **Cadastro de novos usuários** - Criação de contas
+- ✅ **Sessões seguras** - Gerenciamento automático de tokens
+- ✅ **Refresh automático** - Renovação transparente de tokens
+
 ### 💸 Controle de Transações
 - ✅ **Adicionar receitas e despesas** com formulários intuitivos
 - ✅ **Editar e excluir** transações existentes
@@ -51,6 +58,14 @@
 - **Tailwind CSS** - Framework CSS utilitário
 - **Radix UI** - Componentes acessíveis e sem estilo
 - **Lucide React** - Ícones modernos e consistentes
+- **NextAuth.js** - Autenticação e sessões
+
+### Backend
+- **Fastify** - Framework web rápido e eficiente
+- **Prisma** - ORM moderno para TypeScript
+- **PostgreSQL** - Banco de dados relacional
+- **JWT** - Tokens de autenticação
+- **bcrypt** - Hash de senhas
 
 ### Ferramentas de Desenvolvimento
 - **ESLint** - Linting de código
@@ -64,7 +79,8 @@
 - **Monorepo** com Turbo
 - **Configurações compartilhadas** (ESLint, Prettier, TypeScript)
 - **Hooks customizados** para lógica de negócio
-- **Persistência local** com localStorage
+- **API REST** com autenticação JWT
+- **Proxy de API** para segurança
 - **Componentes reutilizáveis** com design system
 
 ---
@@ -74,6 +90,7 @@
 ### Pré-requisitos
 - Node.js 18+ 
 - pnpm (recomendado) ou npm
+- PostgreSQL (local ou Docker)
 
 ### Instalação
 
@@ -85,9 +102,42 @@ cd quaint-money-flow
 # Instale as dependências
 pnpm install
 
+# Configure as variáveis de ambiente
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+
+# Execute as migrações do banco
+cd apps/api
+pnpm db:migrate
+pnpm db:seed
+
 # Execute o projeto em modo de desenvolvimento
 pnpm dev
 ```
+
+### 🔐 Configuração do Google OAuth2
+
+Para usar o login com Google:
+
+1. **Configure as credenciais no Google Cloud Console**
+   - Crie um projeto no [Google Cloud Console](https://console.cloud.google.com/)
+   - Habilite a Google+ API
+   - Crie credenciais OAuth2
+   - Configure o redirect URI: `http://localhost:3333/api/v1/auth/google/callback`
+
+2. **Configure as variáveis de ambiente**
+   ```env
+   GOOGLE_CLIENT_ID=seu-client-id
+   GOOGLE_CLIENT_SECRET=seu-client-secret
+   GOOGLE_REDIRECT_URI=http://localhost:3333/api/v1/auth/google/callback
+   ```
+
+3. **Teste a configuração**
+   ```bash
+   node scripts/test-google-oauth.js
+   ```
+
+📖 **Documentação completa**: [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md)
 
 ### Scripts Disponíveis
 

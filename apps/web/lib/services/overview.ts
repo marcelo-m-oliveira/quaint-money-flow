@@ -5,6 +5,7 @@ import type {
   TopExpensesByCategory,
   TopExpensesQueryParams,
 } from '@/lib/types'
+import { buildQuery } from '@/lib/utils'
 
 // Helper function to convert API response (no conversion needed for dueDate as it's already timestamp)
 function convertOverviewFromApi(overview: GeneralOverview): GeneralOverview {
@@ -34,16 +35,8 @@ export const overviewService = {
   async getTopExpensesByCategory(
     params?: TopExpensesQueryParams,
   ): Promise<TopExpensesByCategory> {
-    const searchParams = new URLSearchParams()
-
-    if (params?.period) {
-      searchParams.append('period', params.period)
-    }
-
-    // Adicionar cache-busting para forçar nova requisição
-    searchParams.append('_t', Date.now().toString())
-
-    const endpoint = `/overview/top-expenses?${searchParams.toString()}`
+    const qs = buildQuery({ period: params?.period }, { cacheBust: true })
+    const endpoint = `/overview/top-expenses${qs}`
     const topExpenses = await apiClient.get<TopExpensesByCategory>(endpoint)
     return convertTopExpensesFromApi(topExpenses)
   },

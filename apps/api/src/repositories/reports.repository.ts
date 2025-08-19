@@ -139,56 +139,53 @@ export class ReportsRepository extends BaseRepository<'entry'> {
     const parentCategories = categories.filter((cat) => !cat.parentId)
     const subCategories = categories.filter((cat) => cat.parentId)
 
-    console.log('Debug - Categorias encontradas:', {
-      total: categories.length,
-      parentCategories: parentCategories.length,
-      subCategories: subCategories.length,
-      parentIds: parentCategories.map(c => ({ id: c.id, name: c.name })),
-      subIds: subCategories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId }))
-    })
-
     // Mapear resultados agrupados por categoria pai
     const groupedResults: CategoryReportData[] = []
 
     for (const parentCategory of parentCategories) {
       // Buscar dados da categoria pai
-      const parentData = result.find((item) => item.categoryId === parentCategory.id)
-      
+      const parentData = result.find(
+        (item) => item.categoryId === parentCategory.id,
+      )
+
       // Buscar subcategorias desta categoria pai
-      const childCategories = subCategories.filter((cat) => cat.parentId === parentCategory.id)
-      
-      console.log(`Debug - Categoria pai "${parentCategory.name}" (${parentCategory.id}):`, {
-        childCategories: childCategories.length,
-        children: childCategories.map(c => ({ id: c.id, name: c.name }))
-      })
-      
+      const childCategories = subCategories.filter(
+        (cat) => cat.parentId === parentCategory.id,
+      )
+
       // Buscar dados das subcategorias
-      const childData = childCategories.map((child) => {
-        const childResult = result.find((item) => item.categoryId === child.id)
-        return {
-          categoryId: child.id,
-          categoryName: child.name,
-          categoryColor: child.color,
-          categoryIcon: child.icon,
-          parentId: child.parentId,
-          amount: Number(childResult?._sum.amount) || 0,
-          transactionCount: childResult?._count.id || 0,
-        }
-      }).filter((child) => child.amount > 0 || child.transactionCount > 0)
+      const childData = childCategories
+        .map((child) => {
+          const childResult = result.find(
+            (item) => item.categoryId === child.id,
+          )
+          return {
+            categoryId: child.id,
+            categoryName: child.name,
+            categoryColor: child.color,
+            categoryIcon: child.icon,
+            parentId: child.parentId,
+            amount: Number(childResult?._sum.amount) || 0,
+            transactionCount: childResult?._count.id || 0,
+          }
+        })
+        .filter((child) => child.amount > 0 || child.transactionCount > 0)
 
       // Calcular totais da categoria pai (incluindo subcategorias)
-      const totalAmount = childData.reduce((sum, child) => sum + child.amount, 0)
-      const totalTransactions = childData.reduce((sum, child) => sum + child.transactionCount, 0)
+      const totalAmount = childData.reduce(
+        (sum, child) => sum + child.amount,
+        0,
+      )
+      const totalTransactions = childData.reduce(
+        (sum, child) => sum + child.transactionCount,
+        0,
+      )
 
       // Adicionar categoria pai se tiver dados ou subcategorias
       if (parentData || childData.length > 0) {
         const parentAmount = Number(parentData?._sum.amount) || 0
         const parentTransactions = parentData?._count.id || 0
 
-        console.log(`Debug - Adicionando categoria "${parentCategory.name}" com ${childData.length} subcategorias:`, {
-          subcategories: childData.map(c => ({ name: c.categoryName, amount: c.amount }))
-        })
-        
         groupedResults.push({
           categoryId: parentCategory.id,
           categoryName: parentCategory.name,
@@ -204,7 +201,9 @@ export class ReportsRepository extends BaseRepository<'entry'> {
 
     // Adicionar subcategorias órfãs (que não têm categoria pai)
     const orphanSubCategories = subCategories.filter((cat) => {
-      const parentExists = parentCategories.some((parent) => parent.id === cat.parentId)
+      const parentExists = parentCategories.some(
+        (parent) => parent.id === cat.parentId,
+      )
       return !parentExists
     })
 
@@ -231,7 +230,6 @@ export class ReportsRepository extends BaseRepository<'entry'> {
   async getCategoriesReportTotals(
     filters: CategoriesReportFilters,
   ): Promise<{ totalIncome: number; totalExpense: number }> {
-    console.log('getCategoriesReportTotals chamado com filtros:', filters)
     const { userId, startDate, endDate } = filters
 
     const whereConditions: Prisma.EntryWhereInput = {
@@ -316,19 +314,23 @@ export class ReportsRepository extends BaseRepository<'entry'> {
           const weekStart = new Date(entryDate)
           const dayOfWeek = entryDate.getDay()
           weekStart.setDate(entryDate.getDate() - dayOfWeek)
-          
+
           // Calcular fim da semana (sábado)
           const weekEnd = new Date(weekStart)
           weekEnd.setDate(weekStart.getDate() + 6)
-          
+
           key = weekStart.toISOString().split('T')[0]
-          
+
           // Formatar período semanal no formato "28 Jun à 14 Ago"
           const startDay = weekStart.getDate().toString().padStart(2, '0')
-          const startMonth = weekStart.toLocaleDateString('pt-BR', { month: 'short' })
+          const startMonth = weekStart.toLocaleDateString('pt-BR', {
+            month: 'short',
+          })
           const endDay = weekEnd.getDate().toString().padStart(2, '0')
-          const endMonth = weekEnd.toLocaleDateString('pt-BR', { month: 'short' })
-          
+          const endMonth = weekEnd.toLocaleDateString('pt-BR', {
+            month: 'short',
+          })
+
           if (startMonth === endMonth) {
             periodLabel = `${startDay} à ${endDay} ${startMonth}`
           } else {
@@ -403,9 +405,9 @@ export class ReportsRepository extends BaseRepository<'entry'> {
 
     // Query agregada por conta bancária (apenas se o filtro permitir)
     let accountEntries: any[] = []
-    
+
     if (accountFilter === 'all' || accountFilter === 'bank_accounts') {
-      accountEntries = await this.prisma.entry.groupBy({
+      accountEntries = (await this.prisma.entry.groupBy({
         by: ['accountId'],
         where: {
           ...whereConditions,
@@ -417,14 +419,14 @@ export class ReportsRepository extends BaseRepository<'entry'> {
         _count: {
           id: true,
         },
-      }) as any
+      })) as any
     }
 
     // Query agregada por cartão de crédito (apenas se o filtro permitir)
     let creditCardEntries: any[] = []
-    
+
     if (accountFilter === 'all' || accountFilter === 'credit_cards') {
-      creditCardEntries = await this.prisma.entry.groupBy({
+      creditCardEntries = (await this.prisma.entry.groupBy({
         by: ['creditCardId'],
         where: {
           ...whereConditions,
@@ -436,7 +438,7 @@ export class ReportsRepository extends BaseRepository<'entry'> {
         _count: {
           id: true,
         },
-      }) as any
+      })) as any
     }
 
     const results: AccountReportData[] = []
@@ -519,6 +521,7 @@ export class ReportsRepository extends BaseRepository<'entry'> {
           id: true,
           name: true,
           icon: true,
+          iconType: true,
         },
       })
 
@@ -565,7 +568,7 @@ export class ReportsRepository extends BaseRepository<'entry'> {
           balance: totalIncome - totalExpense,
           transactionCount: creditCardEntry._count.id || 0,
           icon: creditCard.icon || 'credit-card',
-          iconType: 'generic',
+          iconType: creditCard.iconType || 'generic',
         })
       }
     }

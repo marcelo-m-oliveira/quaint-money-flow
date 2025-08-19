@@ -1,9 +1,15 @@
-import { AccountType, IconType, Prisma, PrismaClient } from '@prisma/client'
-
 import { AccountRepository } from '../account.repository'
 
-// Mock do Prisma
-const mockPrisma = {
+// Declarações para Jest
+declare const jest: any
+declare const expect: any
+declare const describe: any
+declare const it: any
+declare const beforeEach: any
+declare const afterEach: any
+
+// Mock do PrismaClient
+const mockPrismaClient = {
   account: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
@@ -14,230 +20,329 @@ const mockPrisma = {
     count: jest.fn(),
     upsert: jest.fn(),
   },
-  entry: {
-    aggregate: jest.fn(),
-  },
-} as unknown as PrismaClient
+}
 
-describe('AccountRepository', () => {
+describe('Account Repository', () => {
   let accountRepository: AccountRepository
-  const userId = 'user-123'
 
   beforeEach(() => {
-    accountRepository = new AccountRepository(mockPrisma)
+    // Reset mocks
     jest.clearAllMocks()
+
+    // Criar instância do repository
+    accountRepository = new AccountRepository(mockPrismaClient as any)
   })
 
   describe('findMany', () => {
-    it('should call prisma.account.findMany with correct parameters', async () => {
+    it('should find many accounts with params', async () => {
       const mockAccounts = [
         {
-          id: 'account-1',
-          name: 'Conta Corrente',
+          id: '1',
+          name: 'Conta Principal',
           type: 'bank',
-          userId,
+          userId: 'user-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ]
 
-      ;(mockPrisma.account.findMany as jest.Mock).mockResolvedValue(
-        mockAccounts,
-      )
-
-      const options = {
-        where: { userId },
+      const params = {
+        where: { userId: 'user-1' },
         skip: 0,
-        take: 20,
-        orderBy: { createdAt: Prisma.SortOrder.desc },
+        take: 10,
+        orderBy: { createdAt: 'desc' },
       }
 
-      const result = await accountRepository.findMany(options)
+      mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
 
-      expect(mockPrisma.account.findMany).toHaveBeenCalledWith(options)
+      const result = await accountRepository.findMany(params)
+
+      expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith(params)
+      expect(result).toEqual(mockAccounts)
+    })
+
+    it('should find many accounts without params', async () => {
+      const mockAccounts = []
+      mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
+
+      const result = await accountRepository.findMany({})
+
+      expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({})
       expect(result).toEqual(mockAccounts)
     })
   })
 
   describe('findUnique', () => {
-    it('should call prisma.account.findUnique with correct parameters', async () => {
+    it('should find unique account by ID', async () => {
       const mockAccount = {
-        id: 'account-1',
-        name: 'Conta Corrente',
-        userId,
+        id: '1',
+        name: 'Conta Principal',
+        type: 'bank',
+        userId: 'user-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
 
-      ;(mockPrisma.account.findUnique as jest.Mock).mockResolvedValue(
-        mockAccount,
-      )
+      const params = {
+        where: { id: '1' },
+        include: { entries: true },
+      }
 
-      const options = { where: { id: 'account-1' } }
-      const result = await accountRepository.findUnique(options)
+      mockPrismaClient.account.findUnique.mockResolvedValue(mockAccount)
 
-      expect(mockPrisma.account.findUnique).toHaveBeenCalledWith(options)
+      const result = await accountRepository.findById('1')
+
+      expect(mockPrismaClient.account.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+      })
       expect(result).toEqual(mockAccount)
     })
   })
 
   describe('findFirst', () => {
-    it('should call prisma.account.findFirst with correct parameters', async () => {
+    it('should find first account with where clause', async () => {
       const mockAccount = {
-        id: 'account-1',
-        name: 'Conta Corrente',
-        userId,
+        id: '1',
+        name: 'Conta Principal',
+        type: 'bank',
+        userId: 'user-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
 
-      ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue(
-        mockAccount,
-      )
+      const where = { name: 'Conta Principal' }
+      const include = { entries: true }
 
-      const options = { where: { name: 'Conta Corrente', userId } }
-      const result = await accountRepository.findFirst(options)
+      mockPrismaClient.account.findFirst.mockResolvedValue(mockAccount)
 
-      expect(mockPrisma.account.findFirst).toHaveBeenCalledWith(options)
+      const result = await accountRepository.findFirst(where, { include })
+
+      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
+        where,
+        include,
+      })
       expect(result).toEqual(mockAccount)
     })
   })
 
   describe('create', () => {
-    it('should call prisma.account.create with correct parameters', async () => {
-      const mockCreatedAccount = {
-        id: 'account-1',
+    it('should create a new account', async () => {
+      const accountData = {
         name: 'Nova Conta',
         type: 'bank',
-        userId,
+        icon: 'bank-icon',
+        iconType: 'bank',
+        includeInGeneralBalance: true,
+        user: { connect: { id: 'user-1' } },
       }
 
-      ;(mockPrisma.account.create as jest.Mock).mockResolvedValue(
-        mockCreatedAccount,
-      )
-
-      const options = {
-        data: {
-          name: 'Nova Conta',
-          type: AccountType.cash,
-          icon: 'cash-icon',
-          iconType: IconType.generic,
-          includeInGeneralBalance: true,
-          user: { connect: { id: userId } },
-        },
+      const createdAccount = {
+        id: '1',
+        ...accountData,
+        userId: 'user-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
-      const result = await accountRepository.create(options)
 
-      expect(mockPrisma.account.create).toHaveBeenCalledWith(options)
-      expect(result).toEqual(mockCreatedAccount)
+      mockPrismaClient.account.create.mockResolvedValue(createdAccount)
+
+      const result = await accountRepository.create(accountData, {
+        include: { entries: true },
+      })
+
+      expect(mockPrismaClient.account.create).toHaveBeenCalledWith({
+        data: accountData,
+        include: { entries: true },
+      })
+      expect(result).toEqual(createdAccount)
     })
   })
 
   describe('update', () => {
-    it('should call prisma.account.update with correct parameters', async () => {
+    it('should update an existing account', async () => {
       const updateData = {
         name: 'Conta Atualizada',
-        type: AccountType.cash,
       }
 
-      const mockUpdatedAccount = {
-        id: 'account-1',
-        ...updateData,
-        userId,
+      const updatedAccount = {
+        id: '1',
+        name: 'Conta Atualizada',
+        type: 'bank',
+        icon: 'bank-icon',
+        iconType: 'bank',
+        includeInGeneralBalance: true,
+        userId: 'user-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
 
-      ;(mockPrisma.account.update as jest.Mock).mockResolvedValue(
-        mockUpdatedAccount,
-      )
+      mockPrismaClient.account.update.mockResolvedValue(updatedAccount)
 
-      const options = {
-        where: { id: 'account-1' },
+      const result = await accountRepository.update('1', updateData, {
+        include: { entries: true },
+      })
+
+      expect(mockPrismaClient.account.update).toHaveBeenCalledWith({
+        where: { id: '1' },
         data: updateData,
-      }
-
-      const result = await accountRepository.update(options)
-
-      expect(mockPrisma.account.update).toHaveBeenCalledWith(options)
-      expect(result).toEqual(mockUpdatedAccount)
+        include: { entries: true },
+      })
+      expect(result).toEqual(updatedAccount)
     })
   })
 
   describe('delete', () => {
-    it('should call prisma.account.delete with correct parameters', async () => {
-      const mockDeletedAccount = {
-        id: 'account-1',
-        name: 'Conta Deletada',
-        userId,
+    it('should delete an account', async () => {
+      const deletedAccount = {
+        id: '1',
+        name: 'Conta Principal',
+        type: 'bank',
+        userId: 'user-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
 
-      ;(mockPrisma.account.delete as jest.Mock).mockResolvedValue(
-        mockDeletedAccount,
-      )
+      mockPrismaClient.account.delete.mockResolvedValue(deletedAccount)
 
-      const options = { where: { id: 'account-1' } }
-      const result = await accountRepository.delete(options)
+      const result = await accountRepository.delete('1')
 
-      expect(mockPrisma.account.delete).toHaveBeenCalledWith(options)
-      expect(result).toEqual(mockDeletedAccount)
+      expect(mockPrismaClient.account.delete).toHaveBeenCalledWith({
+        where: { id: '1' },
+      })
+      expect(result).toEqual(deletedAccount)
     })
   })
 
   describe('count', () => {
-    it('should call prisma.account.count with correct parameters', async () => {
-      ;(mockPrisma.account.count as jest.Mock).mockResolvedValue(5)
+    it('should count accounts with where clause', async () => {
+      const where = { userId: 'user-1' }
 
-      const options = { where: { userId } }
-      const result = await accountRepository.count(options)
+      mockPrismaClient.account.count.mockResolvedValue(5)
 
-      expect(mockPrisma.account.count).toHaveBeenCalledWith(options)
+      const result = await accountRepository.count(where)
+
+      expect(mockPrismaClient.account.count).toHaveBeenCalledWith({
+        where,
+      })
       expect(result).toBe(5)
+    })
+
+    it('should count all accounts without where clause', async () => {
+      mockPrismaClient.account.count.mockResolvedValue(10)
+
+      const result = await accountRepository.count()
+
+      expect(mockPrismaClient.account.count).toHaveBeenCalledWith({})
+      expect(result).toBe(10)
     })
   })
 
   describe('upsert', () => {
-    it('should call prisma.account.upsert with correct parameters', async () => {
-      const mockUpsertedAccount = {
-        id: 'account-1',
-        name: 'Conta Upsert',
-        type: 'bank',
-        userId,
+    it('should upsert an account', async () => {
+      const upsertData = {
+        where: { id: '1' },
+        create: {
+          name: 'Nova Conta',
+          type: 'bank',
+          icon: 'bank-icon',
+          iconType: 'bank',
+          includeInGeneralBalance: true,
+          user: { connect: { id: 'user-1' } },
+        },
+        update: {
+          name: 'Conta Atualizada',
+        },
+        include: { entries: true },
       }
 
-      ;(mockPrisma.account.upsert as jest.Mock).mockResolvedValue(
-        mockUpsertedAccount,
+      const upsertedAccount = {
+        id: '1',
+        name: 'Conta Atualizada',
+        type: 'bank',
+        icon: 'bank-icon',
+        iconType: 'bank',
+        includeInGeneralBalance: true,
+        userId: 'user-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockPrismaClient.account.upsert.mockResolvedValue(upsertedAccount)
+
+      const result = await accountRepository.upsert(
+        { id: '1' },
+        upsertData.create,
+        upsertData.update,
       )
 
-      const options = {
-        where: { id: 'account-1' },
-        update: { name: 'Conta Upsert' },
-        create: {
-          name: 'New Account',
-          type: AccountType.cash,
-          icon: 'bank-icon',
-          iconType: IconType.bank,
-          includeInGeneralBalance: true,
-          user: { connect: { id: userId } },
-        },
-      }
-
-      const result = await accountRepository.upsert(options)
-
-      expect(mockPrisma.account.upsert).toHaveBeenCalledWith(options)
-      expect(result).toEqual(mockUpsertedAccount)
+      expect(mockPrismaClient.account.upsert).toHaveBeenCalledWith({
+        where: { id: '1' },
+        create: upsertData.create,
+        update: upsertData.update,
+      })
+      expect(result).toEqual(upsertedAccount)
     })
   })
 
   describe('findByUserId', () => {
-    it('should find accounts by user ID', async () => {
+    it('should find accounts by user ID without entries', async () => {
       const mockAccounts = [
-        { id: 'account-1', name: 'Conta 1', userId },
-        { id: 'account-2', name: 'Conta 2', userId },
+        {
+          id: '1',
+          name: 'Conta Principal',
+          type: 'bank',
+          userId: 'user-1',
+          entries: [],
+          _count: { entries: 0 },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ]
 
-      ;(mockPrisma.account.findMany as jest.Mock).mockResolvedValue(
-        mockAccounts,
-      )
+      mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
 
-      const result = await accountRepository.findByUserId(userId)
+      const result = await accountRepository.findByUserId('user-1', false)
 
-      expect(mockPrisma.account.findMany).toHaveBeenCalledWith({
-        where: { userId },
+      expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
         include: {
           entries: false,
+          _count: {
+            select: {
+              entries: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      expect(result).toEqual(mockAccounts)
+    })
+
+    it('should find accounts by user ID with entries', async () => {
+      const mockAccounts = [
+        {
+          id: '1',
+          name: 'Conta Principal',
+          type: 'bank',
+          userId: 'user-1',
+          entries: [
+            { id: '1', amount: '100', type: 'income' },
+            { id: '2', amount: '50', type: 'expense' },
+          ],
+          _count: { entries: 2 },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]
+
+      mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
+
+      const result = await accountRepository.findByUserId('user-1', true)
+
+      expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        include: {
+          entries: true,
           _count: {
             select: {
               entries: true,
@@ -253,17 +358,60 @@ describe('AccountRepository', () => {
   describe('findByUserIdAndType', () => {
     it('should find accounts by user ID and type', async () => {
       const mockAccounts = [
-        { id: 'account-1', name: 'Conta Banco', type: 'bank', userId },
+        {
+          id: '1',
+          name: 'Conta Bancária',
+          type: 'bank',
+          userId: 'user-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ]
 
-      ;(mockPrisma.account.findMany as jest.Mock).mockResolvedValue(
-        mockAccounts,
+      mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
+
+      const result = await accountRepository.findByUserIdAndType(
+        'user-1',
+        'bank',
       )
 
-      const result = await accountRepository.findByUserIdAndType(userId, 'bank')
+      expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-1',
+          type: 'bank',
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+      expect(result).toEqual(mockAccounts)
+    })
 
-      expect(mockPrisma.account.findMany).toHaveBeenCalledWith({
-        where: { userId, type: 'bank' },
+    it('should find accounts by user ID, type and includeInGeneralBalance', async () => {
+      const mockAccounts = [
+        {
+          id: '1',
+          name: 'Conta Bancária',
+          type: 'bank',
+          userId: 'user-1',
+          includeInGeneralBalance: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]
+
+      mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
+
+      const result = await accountRepository.findByUserIdAndType(
+        'user-1',
+        'bank',
+        true,
+      )
+
+      expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-1',
+          type: 'bank',
+          includeInGeneralBalance: true,
+        },
         orderBy: { createdAt: 'desc' },
       })
       expect(result).toEqual(mockAccounts)
@@ -272,84 +420,91 @@ describe('AccountRepository', () => {
 
   describe('existsByNameAndUserId', () => {
     it('should return true when account exists', async () => {
-      ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue({
-        id: 'account-1',
-        name: 'Conta Existente',
-        userId,
-      })
+      const mockAccount = {
+        id: '1',
+        name: 'Conta Principal',
+        type: 'bank',
+        userId: 'user-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      mockPrismaClient.account.findFirst.mockResolvedValue(mockAccount)
 
       const result = await accountRepository.existsByNameAndUserId(
-        'Conta Existente',
-        userId,
+        'Conta Principal',
+        'user-1',
       )
 
-      expect(mockPrisma.account.findFirst).toHaveBeenCalledWith({
-        where: { name: 'Conta Existente', userId },
+      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'Conta Principal',
+          userId: 'user-1',
+        },
       })
       expect(result).toBe(true)
     })
 
     it('should return false when account does not exist', async () => {
-      ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue(null)
+      mockPrismaClient.account.findFirst.mockResolvedValue(null)
 
       const result = await accountRepository.existsByNameAndUserId(
         'Conta Inexistente',
-        userId,
+        'user-1',
       )
 
+      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
+        where: {
+          name: 'Conta Inexistente',
+          userId: 'user-1',
+        },
+      })
       expect(result).toBe(false)
     })
 
-    it('should exclude specific account ID when provided', async () => {
-      ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue(null)
+    it('should exclude account by ID when provided', async () => {
+      mockPrismaClient.account.findFirst.mockResolvedValue(null)
 
-      await accountRepository.existsByNameAndUserId(
-        'Conta Teste',
-        userId,
-        'account-1',
+      const result = await accountRepository.existsByNameAndUserId(
+        'Conta Principal',
+        'user-1',
+        '1',
       )
 
-      expect(mockPrisma.account.findFirst).toHaveBeenCalledWith({
+      expect(mockPrismaClient.account.findFirst).toHaveBeenCalledWith({
         where: {
-          name: 'Conta Teste',
-          userId,
-          NOT: { id: 'account-1' },
+          name: 'Conta Principal',
+          userId: 'user-1',
+          NOT: { id: '1' },
         },
       })
+      expect(result).toBe(false)
     })
   })
 
   describe('getAccountsWithBalance', () => {
-    it('should return accounts with calculated balance', async () => {
+    it('should get accounts with paid entries for balance calculation', async () => {
       const mockAccounts = [
         {
-          id: 'account-1',
-          name: 'Conta 1',
-          userId,
+          id: '1',
+          name: 'Conta Principal',
+          type: 'bank',
+          userId: 'user-1',
           entries: [
-            { amount: 1000, type: 'income' },
-            { amount: 500, type: 'expense' },
+            { amount: '100', type: 'income' },
+            { amount: '50', type: 'expense' },
           ],
-        },
-        {
-          id: 'account-2',
-          name: 'Conta 2',
-          userId,
-          entries: [
-            { amount: 2000, type: 'income' },
-            { amount: 300, type: 'expense' },
-          ],
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ]
 
-      ;(mockPrisma.account.findMany as jest.Mock).mockResolvedValue(
-        mockAccounts,
-      )
+      mockPrismaClient.account.findMany.mockResolvedValue(mockAccounts)
 
-      const result = await accountRepository.getAccountsWithBalance(userId)
+      const result = await accountRepository.getAccountsWithBalance('user-1')
 
-      expect(mockPrisma.account.findMany).toHaveBeenCalledWith({
-        where: { userId },
+      expect(mockPrismaClient.account.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
         include: {
           entries: {
             where: { paid: true },
@@ -359,30 +514,38 @@ describe('AccountRepository', () => {
             },
           },
         },
+        orderBy: { createdAt: 'desc' },
       })
+      expect(result).toEqual(mockAccounts)
+    })
+  })
 
-      expect(result).toHaveLength(2)
-      expect(result[0]).toEqual(mockAccounts[0])
-      expect(result[1]).toEqual(mockAccounts[1])
+  describe('error handling', () => {
+    it('should handle Prisma errors gracefully', async () => {
+      const error = new Error('Database connection error')
+      mockPrismaClient.account.findMany.mockRejectedValue(error)
+
+      await expect(accountRepository.findMany({})).rejects.toThrow(
+        'Database connection error',
+      )
     })
 
-    it('should handle accounts with no entries', async () => {
-      const mockAccounts = [
-        {
-          id: 'account-1',
-          name: 'Conta Vazia',
-          userId,
-          entries: [],
-        },
-      ]
+    it('should handle unique constraint violations', async () => {
+      const error = new Error('Unique constraint failed')
+      mockPrismaClient.account.create.mockRejectedValue(error)
 
-      ;(mockPrisma.account.findMany as jest.Mock).mockResolvedValue(
-        mockAccounts,
-      )
-
-      const result = await accountRepository.getAccountsWithBalance(userId)
-
-      expect(result[0]).toEqual(mockAccounts[0])
+      await expect(
+        accountRepository.create({
+          data: {
+            name: 'Conta Duplicada',
+            type: 'bank',
+            icon: 'bank-icon',
+            iconType: 'bank',
+            includeInGeneralBalance: true,
+            user: { connect: { id: 'user-1' } },
+          },
+        }),
+      ).rejects.toThrow('Unique constraint failed')
     })
   })
 })

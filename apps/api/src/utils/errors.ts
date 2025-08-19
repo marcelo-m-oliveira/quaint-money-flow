@@ -1,73 +1,71 @@
+import { env } from '@saas/env'
 import type { FastifyError, FastifyInstance, FastifyReply } from 'fastify'
 import { ZodError } from 'zod'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
-import { NotFoundError } from '@/http/routes/_errors/not-found-error'
-import { UnauthorizedError } from '@/http/routes/_errors/unauthorized-error'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { NotFoundError } from '@/routes/_errors/not-found-error'
+import { UnauthorizedError } from '@/routes/_errors/unauthorized-error'
+import { ResponseFormatter } from '@/utils/response'
 
 type FastifyErrorHandler = FastifyInstance['errorHandler']
 
 export const errorHandler: FastifyErrorHandler = (error, request, reply) => {
   if (error instanceof ZodError) {
-    reply.status(400).send({
-      message: 'Validation error',
-      errors: error.flatten().fieldErrors,
-    })
+    return ResponseFormatter.error(
+      reply,
+      'Validation error',
+      error.flatten().fieldErrors,
+      400,
+    )
   }
 
   if (error instanceof BadRequestError) {
-    reply.status(400).send({
-      message: error.message,
-    })
+    return ResponseFormatter.error(reply, error.message, undefined, 400)
   }
 
   if (error instanceof UnauthorizedError) {
-    reply.status(401).send({
-      message: error.message,
-    })
+    return ResponseFormatter.error(reply, error.message, undefined, 401)
   }
 
   if (error instanceof NotFoundError) {
-    reply.status(404).send({
-      message: error.message,
-    })
+    return ResponseFormatter.error(reply, error.message, undefined, 404)
   }
 
-  console.error(error)
+  if (env.NODE_ENV !== 'test') {
+    console.error(error)
+  }
 
   // send error to some observability platform
 
-  reply.status(500).send({ error: 'Internal server error' })
+  return ResponseFormatter.error(reply, 'Internal server error', undefined, 500)
 }
 
 // Utility function for handling errors in controllers
 export const handleError = (error: FastifyError, reply: FastifyReply) => {
   if (error instanceof ZodError) {
-    return reply.status(400).send({
-      message: 'Validation error',
-      errors: error.flatten().fieldErrors,
-    })
+    return ResponseFormatter.error(
+      reply,
+      'Validation error',
+      error.flatten().fieldErrors,
+      400,
+    )
   }
 
   if (error instanceof BadRequestError) {
-    return reply.status(400).send({
-      message: error.message,
-    })
+    return ResponseFormatter.error(reply, error.message, undefined, 400)
   }
 
   if (error instanceof UnauthorizedError) {
-    return reply.status(401).send({
-      message: error.message,
-    })
+    return ResponseFormatter.error(reply, error.message, undefined, 401)
   }
 
   if (error instanceof NotFoundError) {
-    return reply.status(404).send({
-      message: error.message,
-    })
+    return ResponseFormatter.error(reply, error.message, undefined, 404)
   }
 
-  console.error(error)
+  if (env.NODE_ENV !== 'test') {
+    console.error(error)
+  }
 
-  return reply.status(500).send({ error: 'Internal server error' })
+  return ResponseFormatter.error(reply, 'Internal server error', undefined, 500)
 }

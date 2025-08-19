@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "API backend for Quaint Money Flow",
   "scripts": {
-    "dev": "pnpm env:load tsx watch src/http/server.ts",
+    "dev": "pnpm env:load tsx watch src/server.ts",
     "db:migrate": "pnpm env:load prisma migrate dev",
     "db:studio": "pnpm env:load prisma studio",
     "env:load": "dotenv -e ../../.env",
@@ -14,9 +14,7 @@
     "lint": "eslint src --ext .ts --fix",
     "lint:check": "eslint src --ext .ts",
     "start": "node dist/http/server.js",
-    "test": "pnpm env:load jest",
-    "test:watch": "pnpm env:load jest --watch",
-    "test:coverage": "pnpm env:load jest --coverage"
+    "test": "pnpm env:load jest"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -25,6 +23,7 @@
     "@fastify/cors": "^10.1.0",
     "@fastify/helmet": "^12.0.1",
     "@fastify/jwt": "^9.1.0",
+
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/swagger": "^9.5.1",
     "@fastify/swagger-ui": "^5.2.3",
@@ -33,13 +32,15 @@
     "@saas/utils": "workspace:*",
     "@saas/validations": "workspace:*",
     "bcryptjs": "^2.4.3",
+    "decimal.js": "^10.6.0",
     "dotenv": "^16.4.5",
     "fastify": "^5.4.0",
     "fastify-type-provider-zod": "^5.0.3",
+    "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
+    "redis": "^5.8.1",
     "swagger-themes": "^1.4.3",
-    "zod": "^4.0.15",
-    "decimal.js": "^10.6.0"
+    "zod": "^4.0.15"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

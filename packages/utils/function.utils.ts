@@ -69,8 +69,15 @@ export function nameReport(
  * Obtém o limite de caracteres com base na largura da tela
  */
 export function getCharacterLimit(customLimit: number = 55): number {
-  const screenWidth = window.innerWidth
-  return Math.floor(screenWidth / customLimit)
+  try {
+    // Evita depender do nome global 'window' em ambientes Node (TS check)
+    const anyGlobal: any = globalThis as any
+    const screenWidth = anyGlobal?.window?.innerWidth
+    if (typeof screenWidth === 'number') {
+      return Math.floor(screenWidth / customLimit)
+    }
+  } catch {}
+  return Math.floor(1024 / customLimit)
 }
 
 /**

@@ -13,12 +13,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String // Campo para autenticação
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String   @id @default(uuid(7))
+  email               String   @unique
+  name                String
+  password            String // Campo para autenticação
+  passwordConfigured  Boolean  @default(false) // Indica se a senha foi configurada pelo usuário
+  avatarUrl           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // Relacionamentos
   accounts    Account[]
@@ -26,13 +28,43 @@ model User {
   categories  Category[]
   entries     Entry[]
   preferences UserPreferences?
+  providers   UserProvider[]
+  refreshTokens RefreshToken[]
 
   @@map("users")
   @@schema("auth")
 }
 
+model UserProvider {
+  id             String   @id @default(uuid(7))
+  userId         String
+  provider       String
+  providerUserId String
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@map("user_providers")
+  @@schema("auth")
+}
+
+model RefreshToken {
+  jti       String   @id
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+  @@schema("auth")
+}
+
 model Account {
-  id                      String      @id @default(cuid())
+  id                      String      @id @default(uuid(7))
   name                    String
   type                    AccountType
   icon                    String
@@ -52,7 +84,7 @@ model Account {
 }
 
 model CreditCard {
-  id                      String   @id @default(cuid())
+  id                      String   @id @default(uuid(7))
   name                    String
   icon                    String
   iconType                IconType @default(generic)
@@ -74,7 +106,7 @@ model CreditCard {
 }
 
 model Category {
-  id        String          @id @default(cuid())
+  id        String          @id @default(uuid(7))
   name      String
   color     String
   type      EntryType
@@ -95,7 +127,7 @@ model Category {
 }
 
 model Entry {
-  id           String          @id @default(cuid())
+  id           String          @id @default(uuid(7))
   description  String
   amount       Decimal         @db.Decimal(18, 2)
   type         EntryType
@@ -119,7 +151,7 @@ model Entry {
 }
 
 model UserPreferences {
-  id                         String           @id @default(cuid())
+  id                         String           @id @default(uuid(7))
   entryOrder                EntryOrder       @default(descending)
   defaultNavigationPeriod    NavigationPeriod @default(monthly)
   showDailyBalance           Boolean          @default(false)

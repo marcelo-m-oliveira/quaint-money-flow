@@ -1,46 +1,43 @@
-import { Account, AccountType, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { AccountRepository } from '@/repositories/account.repository'
-import { type AccountCreateSchema } from '@/utils/schemas'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { BaseService } from '@/services/base.service'
+import {
+  type AccountCreateSchema,
+  type AccountUpdateSchema,
+} from '@/utils/schemas'
 
-export class AccountService {
+export class AccountService extends BaseService<'account'> {
   constructor(
     private accountRepository: AccountRepository,
-    private prisma: PrismaClient,
-  ) {}
+    prisma: PrismaClient,
+  ) {
+    super(accountRepository, prisma)
+  }
 
   async findMany(
     userId: string,
     filters: {
       type?: string
       includeInGeneralBalance?: boolean
+      search?: string
       page: number
       limit: number
     },
   ) {
-    const { page, limit, type, includeInGeneralBalance } = filters
+    const { page, limit, type, includeInGeneralBalance, search } = filters
     const skip = (page - 1) * limit
 
-    const where: Partial<Account> = {
-      userId,
-    }
-
-    if (type) {
-      where.type = type as AccountType
-    }
-
-    if (includeInGeneralBalance !== undefined) {
-      where.includeInGeneralBalance = includeInGeneralBalance
-    }
-
-    // Buscar contas com transações para calcular o balance
-    const accountsWithEntries =
+    // Buscar contas com balance
+    const accountsWithBalance =
       await this.accountRepository.getAccountsWithBalance(userId)
 
     // Filtrar e paginar as contas
-    const filteredAccounts = accountsWithEntries.filter((account) => {
+    const filteredAccounts = accountsWithBalance.filter((account) => {
       if (type && account.type !== type) return false
+      if (search && !account.name.toLowerCase().includes(search.toLowerCase()))
+        return false
       return !(
         includeInGeneralBalance !== undefined &&
         account.includeInGeneralBalance !== includeInGeneralBalance
@@ -54,46 +51,41 @@ export class AccountService {
     )
 
     const total = filteredAccounts.length
-    const totalPages = Math.ceil(total / limit)
+    const pagination = this.calculatePagination(total, page, limit)
 
     // Aplicar paginação
     const paginatedAccounts = filteredAccounts.slice(skip, skip + limit)
 
-    // Calcular o balance para cada conta
-    const accountsWithBalance = paginatedAccounts.map((account) => {
-      const balance = account.entries.reduce((acc, entriy) => {
-        const amount = Number(entriy.amount)
-        return entriy.type === 'income' ? acc + amount : acc - amount
+    // Calcular balance para cada conta
+    const accountsWithCalculatedBalance = paginatedAccounts.map((account) => {
+      const balance = account.entries.reduce((acc, entry) => {
+        const amount = Number(entry.amount)
+        return entry.type === 'income' ? acc + amount : acc - amount
       }, 0)
 
-      // Remover as transações do retorno e adicionar o balance
-      const { ...accountData } = account
       return {
-        ...accountData,
+        ...account,
         balance,
+        entries: undefined, // Remover entries do resultado final
       }
     })
 
     return {
-      accounts: accountsWithBalance,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
-      },
+      accounts: accountsWithCalculatedBalance,
+      pagination,
     }
   }
 
   async findById(id: string, userId: string) {
-    const account = await this.accountRepository.findUnique({
-      where: { id, userId },
-    })
+    const account = await this.accountRepository.findById(id)
 
     if (!account) {
-      throw new BadRequestError('Conta não encontrada')
+      throw new BadRequestError('Conta nao encontrada')
+    }
+
+    // Verificar se a conta pertence ao usuário
+    if (account.userId !== userId) {
+      throw new BadRequestError('Conta nao pertence ao usuario')
     }
 
     return account
@@ -102,50 +94,55 @@ export class AccountService {
   async create(data: AccountCreateSchema, userId: string) {
     // Verificar se já existe uma conta com o mesmo nome
     const existingAccount = await this.accountRepository.findFirst({
-      where: {
-        name: data.name,
-        userId,
-      },
+      name: data.name,
+      userId,
     })
 
     if (existingAccount) {
       throw new BadRequestError('Já existe uma conta com este nome')
     }
 
-    return this.accountRepository.create({
-      data: {
-        ...data,
-        user: { connect: { id: userId } },
-      },
+    const account = await this.accountRepository.create({
+      ...data,
+      user: { connect: { id: userId } },
     })
+
+    this.logOperation('CREATE_ACCOUNT', userId, {
+      accountId: account.id,
+      accountName: account.name,
+    })
+    return account
   }
 
-  async update(id: string, data: Partial<AccountCreateSchema>, userId: string) {
-    // Verificar se a conta existe
+  async update(id: string, data: Partial<AccountUpdateSchema>, userId: string) {
+    // Verificar se a conta existe e pertence ao usuário
     await this.findById(id, userId)
 
-    // Verificar se já existe outra conta com o mesmo nome
-    const existingAccount = await this.accountRepository.findFirst({
-      where: {
+    // Verificar se já existe outra conta com o mesmo nome (apenas se o nome foi fornecido)
+    if (data.name) {
+      const duplicateAccount = await this.accountRepository.findFirst({
         name: data.name,
         userId,
-        NOT: { id },
-      },
-    })
+        id: { not: id },
+      })
 
-    if (existingAccount) {
-      throw new BadRequestError('Já existe uma conta com este nome')
+      if (duplicateAccount) {
+        throw new BadRequestError('Já existe uma conta com este nome')
+      }
     }
 
-    return this.accountRepository.update({
-      where: { id, userId },
-      data,
+    const account = await this.accountRepository.update(id, data)
+
+    this.logOperation('UPDATE_ACCOUNT', userId, {
+      accountId: account.id,
+      accountName: account.name,
     })
+    return account
   }
 
   async delete(id: string, userId: string) {
-    // Verificar se a conta existe
-    await this.findById(id, userId)
+    // Verificar se a conta existe e pertence ao usuário
+    const account = await this.findById(id, userId)
 
     // Verificar se há transações associadas
     const entryCount = await this.prisma.entry.count({
@@ -158,32 +155,19 @@ export class AccountService {
       )
     }
 
-    return this.accountRepository.delete({
-      where: { id, userId },
-    })
+    await this.accountRepository.delete(id)
+
+    this.logOperation('DELETE_ACCOUNT', userId, { accountId: id })
+
+    return account
   }
 
   async getBalance(id: string, userId: string) {
-    // Verificar se a conta existe
+    // Verificar se a conta existe e pertence ao usuário
     await this.findById(id, userId)
 
-    // Calcular saldo baseado nas transações pagas
-    const entries = await this.prisma.entry.findMany({
-      where: {
-        accountId: id,
-        userId,
-        paid: true,
-      },
-      select: {
-        amount: true,
-        type: true,
-      },
-    })
-
-    const balance = entries.reduce((acc, entriy) => {
-      const amount = Number(entriy.amount)
-      return entriy.type === 'income' ? acc + amount : acc - amount
-    }, 0)
+    // Usar o método do repository para calcular o balance
+    const balance = await this.accountRepository.getAccountBalance(id, userId)
 
     return {
       balance,

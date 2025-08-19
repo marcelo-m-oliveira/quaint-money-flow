@@ -1,26 +1,25 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { useUserPreferences as useUserPreferencesContext } from '../contexts/user-preferences-context'
-
-// Hook que retorna o contexto de preferências sem inicialização automática
-export function useUserPreferences() {
-  return useUserPreferencesContext()
-}
 
 // Hook que inicializa as preferências automaticamente quando usado
 export function useUserPreferencesWithAutoInit() {
   const context = useUserPreferencesContext()
+  const hasInitialized = useRef(false)
 
   // Inicializar preferências automaticamente quando o hook é usado
   useEffect(() => {
-    if (!context.isInitialized && !context.isLoading) {
+    if (
+      !hasInitialized.current &&
+      !context.isInitialized &&
+      !context.isLoading
+    ) {
+      hasInitialized.current = true
       context.initialize()
     }
   }, [context.isInitialized, context.isLoading, context.initialize])
 
   return context
 }
-
-export { useUserPreferences as useUserPreferencesContext } from '../contexts/user-preferences-context'

@@ -1,5 +1,7 @@
 'use client'
 
+import { buildQuery } from '@/lib/utils'
+
 import { apiClient } from '../api'
 
 export interface ReportFilters {
@@ -80,20 +82,12 @@ export const reportsService = {
   async getCategoriesReport(
     filters?: CategoriesReportFilters,
   ): Promise<CategoriesReportResponse> {
-    const params = new URLSearchParams()
-
-    if (filters?.startDate) {
-      params.append('startDate', filters.startDate.toString())
-    }
-    if (filters?.endDate) {
-      params.append('endDate', filters.endDate.toString())
-    }
-    if (filters?.type) {
-      params.append('type', filters.type)
-    }
-
-    const queryString = params.toString()
-    const endpoint = `/reports/categories${queryString ? `?${queryString}` : ''}`
+    const qs = buildQuery({
+      startDate: filters?.startDate,
+      endDate: filters?.endDate,
+      type: filters?.type,
+    })
+    const endpoint = `/reports/categories${qs}`
 
     return apiClient.get<CategoriesReportResponse>(endpoint)
   },
@@ -101,20 +95,12 @@ export const reportsService = {
   async getCashflowReport(
     filters?: CashflowReportFilters,
   ): Promise<CashflowReportResponse> {
-    const params = new URLSearchParams()
-
-    if (filters?.startDate) {
-      params.append('startDate', filters.startDate.toString())
-    }
-    if (filters?.endDate) {
-      params.append('endDate', filters.endDate.toString())
-    }
-    if (filters?.viewMode) {
-      params.append('viewMode', filters.viewMode)
-    }
-
-    const queryString = params.toString()
-    const endpoint = `/reports/cashflow${queryString ? `?${queryString}` : ''}`
+    const qs = buildQuery({
+      startDate: filters?.startDate,
+      endDate: filters?.endDate,
+      viewMode: filters?.viewMode,
+    })
+    const endpoint = `/reports/cashflow${qs}`
 
     return apiClient.get<CashflowReportResponse>(endpoint)
   },
@@ -122,20 +108,12 @@ export const reportsService = {
   async getAccountsReport(
     filters?: AccountsReportFilters,
   ): Promise<AccountsReportResponse> {
-    const params = new URLSearchParams()
-
-    if (filters?.startDate) {
-      params.append('startDate', filters.startDate.toString())
-    }
-    if (filters?.endDate) {
-      params.append('endDate', filters.endDate.toString())
-    }
-    if (filters?.accountFilter) {
-      params.append('accountFilter', filters.accountFilter)
-    }
-
-    const queryString = params.toString()
-    const endpoint = `/reports/accounts${queryString ? `?${queryString}` : ''}`
+    const qs = buildQuery({
+      startDate: filters?.startDate,
+      endDate: filters?.endDate,
+      accountFilter: filters?.accountFilter,
+    })
+    const endpoint = `/reports/accounts${qs}`
 
     return apiClient.get<AccountsReportResponse>(endpoint)
   },

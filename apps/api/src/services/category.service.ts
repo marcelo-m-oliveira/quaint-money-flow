@@ -1,19 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Category, Prisma, PrismaClient } from '@prisma/client'
 
-import { BadRequestError } from '@/http/routes/_errors/bad-request-error'
 import { CategoryRepository } from '@/repositories/category.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { BaseService } from '@/services/base.service'
 import {
   CategoryCreateSchema,
   CategoryUsageSchema,
   SelectOptionSchema,
 } from '@/utils/schemas'
 
-export class CategoryService {
+export class CategoryService extends BaseService<'category'> {
   constructor(
     private categoryRepository: CategoryRepository,
-    private prisma: PrismaClient,
-  ) {}
+    prisma: PrismaClient,
+  ) {
+    super(categoryRepository, prisma)
+  }
 
   // Função auxiliar para herdar propriedades do parent
   private inheritFromParent(data: any, parentCategory: Category) {
@@ -69,19 +72,12 @@ export class CategoryService {
       })
 
       // Buscar total de categorias para paginação
-      const total = await this.categoryRepository.count({ where })
-      const totalPages = Math.ceil(total / limit)
+      const total = await this.categoryRepository.count(where)
+      const pagination = this.calculatePagination(total, page, limit)
 
       return {
         categories,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
-        },
+        pagination,
       }
     } catch (error) {
       console.error('Erro ao buscar categorias:', error)
@@ -90,27 +86,32 @@ export class CategoryService {
   }
 
   async findById(id: string, userId: string) {
-    const category = await this.categoryRepository.findUnique({
-      where: { id, userId },
-      include: {
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
+    const category = await this.categoryRepository.findFirst(
+      {
+        id,
+        userId,
+      } as any,
+      {
+        include: {
+          parent: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+            },
           },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
+          children: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+            },
           },
         },
       },
-    })
+    )
 
     if (!category) {
       throw new BadRequestError('Categoria nao encontrada')
@@ -122,10 +123,8 @@ export class CategoryService {
   async create(data: CategoryCreateSchema, userId: string) {
     // Verificar se já existe uma categoria com o mesmo nome
     const existingCategory = await this.categoryRepository.findFirst({
-      where: {
-        name: data.name,
-        userId,
-      },
+      name: data.name,
+      userId,
     })
 
     if (existingCategory) {
@@ -154,33 +153,35 @@ export class CategoryService {
     // Preparar dados para criação, removendo parentId e adicionando as conexões
     const { parentId, ...categoryData } = finalData
 
-    return this.categoryRepository.create({
-      data: {
+    return this.categoryRepository.create(
+      {
         ...categoryData,
         user: { connect: { id: userId } },
         ...(parentId && {
           parent: { connect: { id: parentId } },
         }),
       },
-      include: {
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
+      {
+        include: {
+          parent: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+            },
           },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
+          children: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+            },
           },
         },
       },
-    })
+    )
   }
 
   async update(
@@ -194,12 +195,11 @@ export class CategoryService {
     // Verificar se já existe outra categoria com o mesmo nome
     if (data.name) {
       const existingCategory = await this.categoryRepository.findFirst({
-        where: {
-          name: data.name,
-          userId,
-          NOT: { id },
-        },
-      })
+        name: data.name,
+        userId,
+        type: data.type,
+        NOT: { id },
+      } as any)
 
       if (existingCategory) {
         throw new BadRequestError('Ja existe uma categoria com este nome')
@@ -241,9 +241,7 @@ export class CategoryService {
     }
 
     // Atualizar a categoria principal
-    await this.categoryRepository.update({
-      where: { id, userId },
-      data: updatePayload,
+    await this.categoryRepository.update(id, updatePayload, {
       include: {
         parent: {
           select: {
@@ -287,27 +285,32 @@ export class CategoryService {
     }
 
     // Retornar a categoria atualizada com as filhas atualizadas
-    return this.categoryRepository.findUnique({
-      where: { id, userId },
-      include: {
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
+    return this.categoryRepository.findFirst(
+      {
+        id,
+        userId,
+      } as any,
+      {
+        include: {
+          parent: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+            },
           },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-            icon: true,
+          children: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              icon: true,
+            },
           },
         },
       },
-    })
+    )
   }
 
   async delete(id: string, userId: string) {
@@ -336,9 +339,7 @@ export class CategoryService {
       )
     }
 
-    return this.categoryRepository.delete({
-      where: { id, userId },
-    })
+    return this.categoryRepository.delete(id)
   }
 
   async findForSelect(

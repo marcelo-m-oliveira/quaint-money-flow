@@ -1,13 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { dateToSeconds } from '@saas/utils'
-import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
-import { id } from 'zod/v4/locales'
+import { FastifyReply, FastifyRequest } from 'fastify'
 
+import { BaseController } from '@/controllers/base.controller'
 import { AccountService } from '@/services/account.service'
-import { handleError } from '@/utils/errors'
+import {
+  convertArrayDatesToSeconds,
+  convertDatesToSeconds,
+} from '@/utils/response'
 
 import type {
   AccountCreateSchema,
+  AccountUpdateSchema,
   IdParamSchema,
   PaginationSchema,
 } from '../utils/schemas'
@@ -15,59 +17,50 @@ import type {
 interface AccountFilters extends PaginationSchema {
   type?: string
   includeInGeneralBalance?: boolean
+  search?: string
 }
 
-export class AccountController {
-  constructor(private accountService: AccountService) {}
+export class AccountController extends BaseController {
+  constructor(private accountService: AccountService) {
+    super({ entityName: 'Conta', entityNamePlural: 'Contas' })
+  }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const filters = request.query as AccountFilters
+    const userId = this.getUserId(request)
+    const filters = this.getQueryParams<AccountFilters>(request)
 
-      request.log.info({ userId, filters }, 'Listando contas do usuario')
-      const result = await this.accountService.findMany(userId, {
-        type: filters.type,
-        includeInGeneralBalance: filters.includeInGeneralBalance,
-        page: filters.page || 1,
-        limit: filters.limit || 20,
-      })
-      request.log.info(
-        {
-          userId,
-          totalAccounts: result.accounts.length,
-          totalPages: result.pagination.totalPages,
-        },
-        'Contas listadas com sucesso',
-      )
+    const result = await this.accountService.findMany(userId, {
+      type: filters.type,
+      includeInGeneralBalance: filters.includeInGeneralBalance,
+      search: filters.search,
+      page: filters.page || 1,
+      limit: filters.limit || 20,
+    })
 
-      // Convert dates to seconds for frontend
-      const convertedResult = {
-        ...result,
-        accounts: result.accounts.map((account) => ({
-          ...account,
-          createdAt: account.createdAt
-            ? dateToSeconds(account.createdAt)
-            : undefined,
-          updatedAt: account.updatedAt
-            ? dateToSeconds(account.updatedAt)
-            : undefined,
-        })),
-      }
+    const accountsWithConvertedDates = convertArrayDatesToSeconds(
+      result.accounts,
+    )
 
-      return reply.status(200).send(convertedResult)
-    } catch (error: any) {
-      request.log.error({ error: error.message }, 'Erro ao listar contas')
-      return handleError(error as FastifyError, reply)
-    }
+    return reply.status(200).send({
+      accounts: accountsWithConvertedDates,
+      pagination: result.pagination,
+    })
   }
 
   async selectOptions(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
+      const filters = this.getQueryParams<AccountFilters>(request)
 
-      request.log.info({ userId }, 'Buscando contas para select')
+      request.log.info(
+        { userId, operation: 'selectOptions' },
+        `Iniciando busca de opções de select para ${this.entityNamePlural}`,
+      )
+
       const result = await this.accountService.findMany(userId, {
+        type: filters.type,
+        includeInGeneralBalance: filters.includeInGeneralBalance,
+        search: filters.search,
         page: 1,
         limit: 1000, // Buscar todas as contas para o select
       })
@@ -81,148 +74,97 @@ export class AccountController {
       }))
 
       request.log.info(
-        { userId, totalOptions: selectOptions.length },
-        'Opcoes de select retornadas com sucesso',
+        {
+          userId,
+          operation: 'selectOptions',
+          totalOptions: selectOptions.length,
+        },
+        `Busca de opções de select para ${this.entityNamePlural} concluída com sucesso`,
       )
 
+      // Retornar array diretamente, sem envolver em objeto data
       return reply.status(200).send(selectOptions)
     } catch (error: any) {
       request.log.error(
-        { error: error.message },
-        'Erro ao buscar opções de select',
+        { error: error.message, operation: 'selectOptions' },
+        `Erro na busca de opções de select para ${this.entityNamePlural}`,
       )
-      return handleError(error as FastifyError, reply)
+      throw error // Deixar o Fastify tratar o erro
     }
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+    return this.handleRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      request.log.info({ userId, accountId: id }, 'Buscando conta por ID')
-      const account = await this.accountService.findById(id, userId)
-
-      // Convert dates to seconds for frontend
-      const convertedAccount = {
-        ...account,
-        createdAt: account.createdAt
-          ? dateToSeconds(account.createdAt)
-          : undefined,
-        updatedAt: account.updatedAt
-          ? dateToSeconds(account.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(200).send(convertedAccount)
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, accountId: id, error: error.message },
-        'Erro ao buscar conta',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        const account = await this.accountService.findById(id, userId)
+        return convertDatesToSeconds(account)
+      },
+      `Busca de ${this.entityName} específica`,
+    )
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const data = request.body as AccountCreateSchema
+    return this.handleCreateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const data = this.getBodyParams<AccountCreateSchema>(request)
 
-      request.log.info({ userId, accountData: data }, 'Criando nova conta')
-      const account = await this.accountService.create(data, userId)
-      request.log.info(
-        { accountId: account.id, name: account.name },
-        'Conta criada com sucesso',
-      )
-
-      // Convert dates to seconds for frontend
-      const convertedAccount = {
-        ...account,
-        createdAt: account.createdAt
-          ? dateToSeconds(account.createdAt)
-          : undefined,
-        updatedAt: account.updatedAt
-          ? dateToSeconds(account.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(201).send(convertedAccount)
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, error: error.message },
-        'Erro ao criar conta',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        const account = await this.accountService.create(data, userId)
+        return convertDatesToSeconds(account)
+      },
+      `Criação de ${this.entityName}`,
+    )
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
-      const data = request.body as AccountCreateSchema
+    return this.handleUpdateRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
+        const data = this.getBodyParams<AccountUpdateSchema>(request)
 
-      request.log.info(
-        { userId, accountId: id, updateData: data },
-        'Atualizando conta',
-      )
-      const account = await this.accountService.update(id, data, userId)
-      request.log.info(
-        { accountId: account.id, name: account.name },
-        'Conta atualizada com sucesso',
-      )
-
-      // Convert dates to seconds for frontend
-      const convertedAccount = {
-        ...account,
-        createdAt: account.createdAt
-          ? dateToSeconds(account.createdAt)
-          : undefined,
-        updatedAt: account.updatedAt
-          ? dateToSeconds(account.updatedAt)
-          : undefined,
-      }
-
-      return reply.status(200).send(convertedAccount)
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, accountId: id, error: error.message },
-        'Erro ao atualizar conta',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        const account = await this.accountService.update(id, data, userId)
+        return convertDatesToSeconds(account)
+      },
+      `Atualização de ${this.entityName}`,
+    )
   }
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+    return this.handleDeleteRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      request.log.info({ userId, accountId: id }, 'Deletando conta')
-      await this.accountService.delete(id, userId)
-      request.log.info({ accountId: id }, 'Conta deletada com sucesso')
-
-      return reply.status(204).send()
-    } catch (error: any) {
-      request.log.error(
-        { userId: request.user.sub, accountId: id, error: error.message },
-        'Erro ao deletar conta',
-      )
-      return handleError(error as FastifyError, reply)
-    }
+        await this.accountService.delete(id, userId)
+      },
+      `Exclusão de ${this.entityName}`,
+    )
   }
 
   async balance(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = request.user.sub
-      const { id } = request.params as IdParamSchema
+    return this.handleRequest(
+      request,
+      reply,
+      async () => {
+        const userId = this.getUserId(request)
+        const { id } = this.getPathParams<IdParamSchema>(request)
 
-      const balance = await this.accountService.getBalance(id, userId)
-
-      return reply.status(200).send(balance)
-    } catch (error) {
-      return handleError(error as FastifyError, reply)
-    }
+        const balanceData = await this.accountService.getBalance(id, userId)
+        return { balance: balanceData.balance.toString() }
+      },
+      `Consulta de saldo da ${this.entityName}`,
+    )
   }
 }

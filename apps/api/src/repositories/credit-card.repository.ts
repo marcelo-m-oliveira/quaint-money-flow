@@ -1,62 +1,10 @@
 import { Prisma, PrismaClient } from '@prisma/client'
 
-export class CreditCardRepository {
-  constructor(private prisma: PrismaClient) {}
+import { BaseRepository } from '@/repositories/base.repository'
 
-  async findMany(params: {
-    where?: Prisma.CreditCardWhereInput
-    skip?: number
-    take?: number
-    orderBy?: Prisma.CreditCardOrderByWithRelationInput
-    include?: Prisma.CreditCardInclude
-  }) {
-    return this.prisma.creditCard.findMany(params)
-  }
-
-  async findUnique(params: {
-    where: Prisma.CreditCardWhereUniqueInput
-    include?: Prisma.CreditCardInclude
-  }) {
-    return this.prisma.creditCard.findUnique(params)
-  }
-
-  async findFirst(params: {
-    where?: Prisma.CreditCardWhereInput
-    include?: Prisma.CreditCardInclude
-  }) {
-    return this.prisma.creditCard.findFirst(params)
-  }
-
-  async create(params: {
-    data: Prisma.CreditCardCreateInput
-    include?: Prisma.CreditCardInclude
-  }) {
-    return this.prisma.creditCard.create(params)
-  }
-
-  async update(params: {
-    where: Prisma.CreditCardWhereUniqueInput
-    data: Prisma.CreditCardUpdateInput
-    include?: Prisma.CreditCardInclude
-  }) {
-    return this.prisma.creditCard.update(params)
-  }
-
-  async delete(params: { where: Prisma.CreditCardWhereUniqueInput }) {
-    return this.prisma.creditCard.delete(params)
-  }
-
-  async count(params: { where?: Prisma.CreditCardWhereInput }) {
-    return this.prisma.creditCard.count(params)
-  }
-
-  async upsert(params: {
-    where: Prisma.CreditCardWhereUniqueInput
-    create: Prisma.CreditCardCreateInput
-    update: Prisma.CreditCardUpdateInput
-    include?: Prisma.CreditCardInclude
-  }) {
-    return this.prisma.creditCard.upsert(params)
+export class CreditCardRepository extends BaseRepository<'creditCard'> {
+  constructor(prisma: PrismaClient) {
+    super(prisma, 'creditCard')
   }
 
   // Métodos específicos de negócio
@@ -80,7 +28,7 @@ export class CreditCardRepository {
     name: string,
     userId: string,
     excludeId?: string,
-  ) {
+  ): Promise<boolean> {
     const where: Prisma.CreditCardWhereInput = {
       name,
       userId,
@@ -111,6 +59,52 @@ export class CreditCardRepository {
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     })
+  }
+
+  async getCreditCardUsage(creditCardId: string, userId: string) {
+    const entries = await this.prisma.entry.findMany({
+      where: {
+        creditCardId,
+        userId,
+        type: 'expense',
+      },
+      select: {
+        amount: true,
+      },
+    })
+
+    return entries.reduce((acc, entry) => {
+      const amount = Number(entry.amount)
+      return acc + amount
+    }, 0)
+  }
+
+  async getCreditCardsSummary(userId: string) {
+    const creditCards = await this.prisma.creditCard.findMany({
+      where: { userId },
+      include: {
+        _count: {
+          select: {
+            entries: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return creditCards.map((creditCard) => ({
+      id: creditCard.id,
+      name: creditCard.name,
+      icon: creditCard.icon,
+      iconType: creditCard.iconType,
+      limit: creditCard.limit,
+      closingDay: creditCard.closingDay,
+      dueDay: creditCard.dueDay,
+      entriesCount: creditCard._count.entries,
+      createdAt: creditCard.createdAt,
+      updatedAt: creditCard.updatedAt,
+    }))
   }
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import { useCrudToast } from '@/lib'
 import { categoriesService } from '@/lib/services/categories'
 import {
   CategoriesQueryParams,
@@ -9,8 +10,6 @@ import {
   Category,
   CategoryFormData,
 } from '@/lib/types'
-
-import { useCrudToast } from './use-crud-toast'
 
 export function useCategories(shouldFetch = true) {
   const [categories, setCategories] = useState<Category[]>([])
@@ -32,7 +31,7 @@ export function useCategories(shouldFetch = true) {
     try {
       setIsLoading(true)
       const response = await categoriesService.getAll(params)
-      setCategories(response.categories)
+      setCategories(response.data)
       setPagination(response.pagination)
     } catch (err) {
       console.error('Error fetching categories:', err)

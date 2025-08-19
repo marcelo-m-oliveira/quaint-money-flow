@@ -12,14 +12,14 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
     "types/**/*.d.ts",
-    "__tests__/**/*.ts",
-    "__tests__/**/*.tsx",
-    "jest.setup.js"
+    "jest.setup.js",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
+    ".next/**",
+    "__tests__/**",
     "e2e",
     "playwright.config.ts"
   ]

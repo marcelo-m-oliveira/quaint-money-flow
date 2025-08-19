@@ -71,15 +71,17 @@ export { accountsService } from './services/accounts'
 export { creditCardsService } from './services/credit-cards'
 export { userPreferencesService } from './services/user-preferences'
 export { overviewService } from './services/overview'
+export { authService } from './services/auth'
+export { userService } from './services/user'
 
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - HOOKS
 // ============================================================================
 
-export { usePreferences } from './hooks/use-preferences'
 export { useUserPreferencesWithAutoInit } from './hooks/use-user-preferences'
 export { useInfiniteScroll } from './hooks/use-infinite-scroll'
 export { useCrudToast } from './hooks/use-crud-toast'
+export { useSession, signIn, signOut, getCsrfToken } from './hooks/use-session'
 
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - UTILITÁRIOS

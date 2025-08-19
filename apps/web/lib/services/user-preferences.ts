@@ -1,5 +1,4 @@
-import { apiClient } from '../api'
-import { UserPreferences, UserPreferencesFormData } from '../types'
+import { apiClient, UserPreferences, UserPreferencesFormData } from '@/lib'
 
 export const userPreferencesService = {
   async get(): Promise<UserPreferences> {
@@ -11,10 +10,14 @@ export const userPreferencesService = {
   },
 
   async upsert(data: UserPreferencesFormData): Promise<UserPreferences> {
-    return apiClient.post<UserPreferences>('/user-preferences', data)
+    return apiClient.post<UserPreferences>('/user-preferences/upsert', data)
   },
 
   async reset(): Promise<UserPreferences> {
     return apiClient.post<UserPreferences>('/user-preferences/reset')
+  },
+
+  async createDefault(): Promise<UserPreferences> {
+    return apiClient.post<UserPreferences>('/user-preferences/default')
   },
 }

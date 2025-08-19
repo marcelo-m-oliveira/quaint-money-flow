@@ -4,14 +4,14 @@ import { dateToSeconds } from '@saas/utils'
 import { useEffect, useState } from 'react'
 
 import {
+  categoriesService,
   Category,
   CategoryFormData,
+  entriesService,
   Entry,
   EntryFormData,
   useCrudToast,
 } from '@/lib'
-
-import { dateStringToTimestamp } from '../format'
 
 export function useFinancialData() {
   const [entries, setEntries] = useState<Entry[]>([])
@@ -25,50 +25,11 @@ export function useFinancialData() {
       try {
         setIsLoading(true)
 
-        // Carregar entries da API usando o apiClient
-        const entriesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/entries`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer dev-token-123',
-            },
-          }
-        )
-        if (entriesResponse.ok) {
-          const entriesData = await entriesResponse.json()
-          const parsedEntries = entriesData.entries?.map(
-            (entry: Record<string, unknown>) => ({
-              ...entry,
-              date: new Date(entry.date as string),
-              createdAt: new Date(entry.createdAt as string),
-              updatedAt: new Date(entry.updatedAt as string),
-              paid: entry.paid ?? false,
-            }),
-          ) || []
-          setEntries(parsedEntries)
-        }
+        const entriesData = await entriesService.getAll()
+        setEntries(entriesData.entries ?? [])
 
-        // Carregar categories da API usando o apiClient
-        const categoriesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/categories`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer dev-token-123',
-            },
-          }
-        )
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json()
-          const parsedCategories = categoriesData.categories?.map(
-            (category: Record<string, unknown>) => ({
-              ...category,
-              createdAt: new Date(category.createdAt as string),
-            }),
-          ) || []
-          setCategories(parsedCategories)
-        }
+        const categoriesData = await categoriesService.getAll()
+        setCategories(categoriesData.data ?? [])
       } catch (error) {
         console.error('Erro ao carregar dados da API:', error)
       } finally {
@@ -92,45 +53,12 @@ export function useFinancialData() {
   // Adicionar entry
   const addEntry = async (data: EntryFormData) => {
     try {
-      const newEntry: Omit<Entry, 'id' | 'createdAt' | 'updatedAt'> = {
-        description: data.description,
-        amount: parseFloat(data.amount),
-        type: data.type,
-        categoryId: data.categoryId,
-        accountId: data.accountId || undefined,
-        creditCardId: data.creditCardId || undefined,
-        date: dateStringToTimestamp(data.date),
-        paid: data.paid,
-      }
+      const createdEntry = await entriesService.create(data)
+      const updatedEntries = [...entries, createdEntry]
+      updateEntriesState(updatedEntries)
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/entries`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer dev-token-123',
-          },
-          body: JSON.stringify(newEntry),
-        },
-      )
-
-      if (response.ok) {
-        const createdEntry = await response.json()
-        const parsedEntry = {
-          ...createdEntry,
-          date: new Date(createdEntry.date),
-          createdAt: new Date(createdEntry.createdAt),
-          updatedAt: new Date(createdEntry.updatedAt),
-        }
-        const updatedEntries = [...entries, parsedEntry]
-        updateEntriesState(updatedEntries)
-
-        const entryType = data.type === 'income' ? 'Receita' : 'Despesa'
-        success.create(entryType)
-      } else {
-        throw new Error('Falha ao criar entry')
-      }
+      const entryType = data.type === 'income' ? 'Receita' : 'Despesa'
+      success.create(entryType)
     } catch (err) {
       const entryType = data.type === 'income' ? 'receita' : 'despesa'
       error.create(entryType)
@@ -140,48 +68,14 @@ export function useFinancialData() {
   // Editar entry
   const updateEntry = async (id: string, data: EntryFormData) => {
     try {
-      const updatedEntryData = {
-        description: data.description,
-        amount: parseFloat(data.amount),
-        type: data.type,
-        categoryId: data.categoryId,
-        accountId: data.accountId || undefined,
-        creditCardId: data.creditCardId || undefined,
-        date: dateStringToTimestamp(data.date),
-        paid: data.paid,
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/entries/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer dev-token-123',
-          },
-          body: JSON.stringify(updatedEntryData),
-        },
+      const updatedEntry = await entriesService.update(id, data)
+      const updatedEntries = entries.map((entry) =>
+        entry.id === id ? updatedEntry : entry,
       )
+      updateEntriesState(updatedEntries)
 
-      if (response.ok) {
-        const updatedEntry = await response.json()
-        const parsedEntry = {
-          ...updatedEntry,
-          date: new Date(updatedEntry.date),
-          createdAt: new Date(updatedEntry.createdAt),
-          updatedAt: new Date(updatedEntry.updatedAt),
-        }
-
-        const updatedEntries = entries.map((entry) =>
-          entry.id === id ? parsedEntry : entry,
-        )
-        updateEntriesState(updatedEntries)
-
-        const entryType = data.type === 'income' ? 'Receita' : 'Despesa'
-        success.update(entryType)
-      } else {
-        throw new Error('Falha ao atualizar entry')
-      }
+      const entryType = data.type === 'income' ? 'Receita' : 'Despesa'
+      success.update(entryType)
     } catch (err) {
       const entryType = data.type === 'income' ? 'receita' : 'despesa'
       error.update(entryType)
@@ -191,32 +85,11 @@ export function useFinancialData() {
   // Atualizar campos específicos da entry
   const updateEntryStatus = async (id: string, updates: Partial<Entry>) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/entries/${id}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer dev-token-123',
-          },
-          body: JSON.stringify(updates),
-        },
+      const updatedEntry = await entriesService.patch(id, updates as any)
+      const updatedEntries = entries.map((entry) =>
+        entry.id === id ? updatedEntry : entry,
       )
-
-      if (response.ok) {
-        const updatedEntry = await response.json()
-        const parsedEntry = {
-          ...updatedEntry,
-          date: new Date(updatedEntry.date),
-          createdAt: new Date(updatedEntry.createdAt),
-          updatedAt: new Date(updatedEntry.updatedAt),
-        }
-
-        const updatedEntries = entries.map((entry) =>
-          entry.id === id ? parsedEntry : entry,
-        )
-        updateEntriesState(updatedEntries)
-      }
+      updateEntriesState(updatedEntries)
     } catch (err) {
       console.error('Erro ao atualizar status da entry:', err)
     }
@@ -226,27 +99,12 @@ export function useFinancialData() {
   const deleteEntry = async (id: string) => {
     try {
       const entryToDelete = entries.find((e) => e.id === id)
+      await entriesService.delete(id)
+      const updatedEntries = entries.filter((entry) => entry.id !== id)
+      updateEntriesState(updatedEntries)
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/entries/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer dev-token-123',
-          },
-        },
-      )
-
-      if (response.ok) {
-        const updatedEntries = entries.filter((entry) => entry.id !== id)
-        updateEntriesState(updatedEntries)
-
-        const entryType =
-          entryToDelete?.type === 'income' ? 'Receita' : 'Despesa'
-        success.delete(entryType)
-      } else {
-        throw new Error('Falha ao deletar entry')
-      }
+      const entryType = entryToDelete?.type === 'income' ? 'Receita' : 'Despesa'
+      success.delete(entryType)
     } catch (err) {
       error.delete('entrada')
     }
@@ -289,31 +147,10 @@ export function useFinancialData() {
         icon: icon || 'FileText',
         parentId: data.parentId,
       }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer dev-token-123',
-          },
-          body: JSON.stringify(newCategoryData),
-        },
-      )
-
-      if (response.ok) {
-        const createdCategory = await response.json()
-        const parsedCategory = {
-          ...createdCategory,
-          createdAt: new Date(createdCategory.createdAt),
-        }
-        const updatedCategories = [...categories, parsedCategory]
-        updateCategoriesState(updatedCategories)
-        success.create('Categoria')
-      } else {
-        throw new Error('Falha ao criar categoria')
-      }
+      const createdCategory = await categoriesService.create(newCategoryData)
+      const updatedCategories = [...categories, createdCategory]
+      updateCategoriesState(updatedCategories)
+      success.create('Categoria')
     } catch (err) {
       error.create('categoria')
     }
@@ -359,51 +196,33 @@ export function useFinancialData() {
         icon: icon || categoryBeingUpdated?.icon || 'FileText',
         parentId: data.parentId,
       }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer dev-token-123',
-          },
-          body: JSON.stringify(updatedCategoryData),
-        },
+      const updatedCategory = await categoriesService.update(
+        id,
+        updatedCategoryData,
       )
 
-      if (response.ok) {
-        const updatedCategory = await response.json()
-        const parsedCategory = {
-          ...updatedCategory,
-          createdAt: new Date(updatedCategory.createdAt),
+      const updatedCategories = categories.map((category) => {
+        if (category.id === id) {
+          return updatedCategory
         }
 
-        const updatedCategories = categories.map((category) => {
-          if (category.id === id) {
-            return parsedCategory
-          }
-
-          // Se esta categoria é uma subcategoria da categoria que está sendo editada
-          // e ela herdou o ícone da categoria pai, atualizar o ícone
-          if (category.parentId === id && categoryBeingUpdated) {
-            // Verificar se a subcategoria está usando o ícone da categoria pai
-            if (category.icon === categoryBeingUpdated.icon || !category.icon) {
-              return {
-                ...category,
-                icon: data.icon || 'FileText',
-              }
+        // Se esta categoria é uma subcategoria da categoria que está sendo editada
+        // e ela herdou o ícone da categoria pai, atualizar o ícone
+        if (category.parentId === id && categoryBeingUpdated) {
+          // Verificar se a subcategoria está usando o ícone da categoria pai
+          if (category.icon === categoryBeingUpdated.icon || !category.icon) {
+            return {
+              ...category,
+              icon: data.icon || 'FileText',
             }
           }
+        }
 
-          return category
-        })
+        return category
+      })
 
-        updateCategoriesState(updatedCategories)
-        success.update('Categoria')
-      } else {
-        throw new Error('Falha ao atualizar categoria')
-      }
+      updateCategoriesState(updatedCategories)
+      success.update('Categoria')
     } catch (err) {
       error.update('categoria')
     }
@@ -422,25 +241,12 @@ export function useFinancialData() {
         return
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer dev-token-123',
-          },
-        },
+      await categoriesService.delete(id)
+      const updatedCategories = categories.filter(
+        (category) => category.id !== id,
       )
-
-      if (response.ok) {
-        const updatedCategories = categories.filter(
-          (category) => category.id !== id,
-        )
-        updateCategoriesState(updatedCategories)
-        success.delete('Categoria')
-      } else {
-        throw new Error('Falha ao deletar categoria')
-      }
+      updateCategoriesState(updatedCategories)
+      success.delete('Categoria')
     } catch (err) {
       error.delete('categoria')
     }

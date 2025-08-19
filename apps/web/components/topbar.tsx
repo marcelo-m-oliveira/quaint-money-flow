@@ -15,8 +15,11 @@ import {
   Zap,
 } from 'lucide-react'
 import Link from 'next/link'
+import { signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
+
+import { useSession } from '@/lib/hooks/use-session'
 
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
@@ -31,8 +34,20 @@ import {
 
 export function Topbar() {
   const { setTheme } = useTheme()
-  const [userName] = useState('Marcelo Oliveira')
-  const [userInitials] = useState('MO')
+  const { data } = useSession()
+  const userName = data?.user?.name || ''
+  const userEmail = data?.user?.email || ''
+  const userImage =
+    (data?.user as any)?.avatarUrl ||
+    ((data?.user as any)?.image as string | undefined)
+  const [userInitials] = useState(
+    (userName || '')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('') || 'U',
+  )
 
   return (
     <header className="border-b bg-card">
@@ -170,7 +185,7 @@ export function Topbar() {
                   className="flex h-auto items-center gap-2 px-2 py-2"
                 >
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src="" alt={userName} />
+                    <AvatarImage src={userImage || ''} alt={userName} />
                     <AvatarFallback className="text-xs">
                       {userInitials}
                     </AvatarFallback>
@@ -180,7 +195,7 @@ export function Topbar() {
                       {userName}
                     </span>
                     <span className="text-xs leading-tight text-muted-foreground">
-                      Plano Gratuito
+                      {userEmail || ' '}
                     </span>
                   </div>
                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -193,15 +208,17 @@ export function Topbar() {
                       {userName}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      marcelo@example.com
+                      {userEmail}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
-                </DropdownMenuItem>
+                <Link href="/configuracoes/perfil">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </DropdownMenuItem>
+                </Link>
                 <Link href="/configuracoes">
                   <DropdownMenuItem>
                     <Settings className="mr-2 h-4 w-4" />
@@ -213,7 +230,7 @@ export function Topbar() {
                   <span>Upgrade</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>

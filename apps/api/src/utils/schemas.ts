@@ -34,6 +34,8 @@ import {
   creditCardBaseSchema,
   type CreditCardCreateSchema,
   creditCardCreateSchema,
+  type CreditCardFiltersSchema,
+  creditCardFiltersSchema,
   type CreditCardListResponseSchema,
   creditCardListResponseSchema,
   type CreditCardResponseSchema,
@@ -107,6 +109,7 @@ export {
   accountUpdateSchema,
   creditCardCreateSchema,
   creditCardUpdateSchema,
+  creditCardFiltersSchema,
   preferencesCreateSchema,
   preferencesUpdateSchema,
 }
@@ -174,6 +177,7 @@ export type {
   AccountUpdateSchema,
   CreditCardCreateSchema,
   CreditCardUpdateSchema,
+  CreditCardFiltersSchema,
   PreferencesCreateSchema,
   PreferencesUpdateSchema,
 }
@@ -331,7 +335,9 @@ export const cashflowReportResponseSchema = z.object({
 export const accountsReportFiltersSchema = z.object({
   startDate: z.coerce.number().optional(), // timestamp em segundos
   endDate: z.coerce.number().optional(), // timestamp em segundos
-  accountFilter: z.enum(['all', 'bank_accounts', 'credit_cards']).default('all'),
+  accountFilter: z
+    .enum(['all', 'bank_accounts', 'credit_cards'])
+    .default('all'),
 })
 
 // Schema para dados de conta no relatório

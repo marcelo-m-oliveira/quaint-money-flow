@@ -2,12 +2,7 @@ import 'fastify'
 
 declare module 'fastify' {
   export interface FastifyRequest {
-    user: {
-      id: string
-      email: string
-      name: string
-      sub: string
-    }
+    user: any
     getCurrentUserId(): Promise<string>
     getUserMembership(slug: string): Promise<{
       account: Account
@@ -16,6 +11,8 @@ declare module 'fastify' {
       entry: Entry
       userPreferences: UserPreferences
       user: User
+      userProvider: UserProvider
+      refreshToken: RefreshToken
     }>
   }
 }

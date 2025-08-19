@@ -1,7 +1,11 @@
 import { PrismaClient } from '@prisma/client'
 
-export class OverviewRepository {
-  constructor(private prisma: PrismaClient) {}
+import { BaseRepository } from '@/repositories/base.repository'
+
+export class OverviewRepository extends BaseRepository<'entry'> {
+  constructor(prisma: PrismaClient) {
+    super(prisma, 'entry')
+  }
 
   // Buscar resumo geral do mês atual
   async getMonthlyOverview(userId: string, year: number, month: number) {

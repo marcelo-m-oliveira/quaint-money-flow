@@ -3,6 +3,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
+import { AuthSessionProvider } from '@/components/auth-session-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { AccountsProvider } from '@/lib/contexts/accounts-context'
@@ -25,21 +26,23 @@ export default function RootLayout({
   return (
     <html lang="pt-br" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AccountsProvider>
-            <CreditCardsProvider>
-              <BankIconsProvider>
-                <UserPreferencesProvider>{children}</UserPreferencesProvider>
-              </BankIconsProvider>
-            </CreditCardsProvider>
-          </AccountsProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AuthSessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AccountsProvider>
+              <CreditCardsProvider>
+                <BankIconsProvider>
+                  <UserPreferencesProvider>{children}</UserPreferencesProvider>
+                </BankIconsProvider>
+              </CreditCardsProvider>
+            </AccountsProvider>
+            <Toaster />
+          </ThemeProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   )

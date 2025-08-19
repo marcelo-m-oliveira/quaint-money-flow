@@ -8,3 +8,30 @@ services:
       - POSTGRES_USER=docker
       - POSTGRES_PASSWORD=docker
       - POSTGRES_DB=saas-quaint-money
+    volumes:
+      - postgresql_data:/bitnami/postgresql
+    networks:
+      - quaint-money-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - quaint-money-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgresql_data:
+  redis_data:
+
+networks:
+  quaint-money-network:
+    driver: bridge

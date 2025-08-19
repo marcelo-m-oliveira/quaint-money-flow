@@ -1,8 +1,7 @@
-import { env } from '@saas/env'
-
 import type { ApiResponse, PaginatedResponse } from './types'
 
-const API_BASE_URL = env.NEXT_PUBLIC_API_URL
+// Use internal proxy so that cookies/session are available and we can inject auth
+const API_BASE_URL = '/api/proxy'
 
 export type { ApiResponse, PaginatedResponse }
 
@@ -19,14 +18,12 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
-    // Para desenvolvimento, usar um token fixo
-    // Em produção, isso deve vir do contexto de autenticação
-    const token = 'dev-token-123'
+    // Read access token from NextAuth session (server or client-safe header injection)
+    // Token is injected by proxy route; no need to read here
 
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
         ...options.headers,
       },
       ...options,
@@ -37,9 +34,8 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`,
-        )
+        const message = errorData && (errorData.message || errorData.error)
+        throw new Error(message || `HTTP error! status: ${response.status}`)
       }
 
       return await response.json()
@@ -53,18 +49,48 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'GET' })
   }
 
-  async post<T>(endpoint: string, data?: unknown): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    data?: unknown,
+    options?: RequestInit,
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+      ...options,
     })
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
+    const url = `${this.baseURL}${endpoint}`
+
+    const config: RequestInit = {
       method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: data ? JSON.stringify(data) : undefined,
-    })
+    }
+
+    try {
+      const response = await fetch(url, config)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const message = errorData && (errorData.message || errorData.error)
+        throw new Error(message || `HTTP error! status: ${response.status}`)
+      }
+
+      // Para PUT que retorna 204 No Content, não tentar fazer parse do JSON
+      if (response.status === 204) {
+        return undefined as T
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('API request failed:', error)
+      throw error
+    }
   }
 
   async patch<T>(endpoint: string, data?: unknown): Promise<T> {
@@ -77,14 +103,9 @@ class ApiClient {
   async delete<T>(endpoint: string): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
-    // Para desenvolvimento, usar um token fixo
-    // Em produção, isso deve vir do contexto de autenticação
-    const token = 'dev-token-123'
-
     const config: RequestInit = {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`,
         // Não incluir Content-Type para DELETE sem body
       },
     }
@@ -94,9 +115,8 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`,
-        )
+        const message = errorData && (errorData.message || errorData.error)
+        throw new Error(message || `HTTP error! status: ${response.status}`)
       }
 
       // Para DELETE que retorna 204 No Content, não tentar fazer parse do JSON

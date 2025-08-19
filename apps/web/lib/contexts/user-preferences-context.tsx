@@ -2,9 +2,12 @@
 
 import React, { createContext, useCallback, useContext, useState } from 'react'
 
-import { useCrudToast } from '../hooks/use-crud-toast'
-import { userPreferencesService } from '../services/user-preferences'
-import { UserPreferences, UserPreferencesFormData } from '../types'
+import {
+  useCrudToast,
+  UserPreferences,
+  UserPreferencesFormData,
+  userPreferencesService,
+} from '@/lib'
 
 interface UserPreferencesContextType {
   preferences: UserPreferences | null
@@ -51,7 +54,7 @@ export function UserPreferencesProvider({
       console.error('Erro ao carregar preferências:', err)
       // Se não encontrar preferências, criar com valores padrão
       try {
-        const defaultPreferences = await userPreferencesService.upsert({})
+        const defaultPreferences = await userPreferencesService.createDefault()
 
         // Mapear campos da API para o frontend
         const preferencesWithDates = {

@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 
+import { BaseController } from '@/controllers/base.controller'
 import { ReportsService } from '@/services/reports.service'
 import { handleError } from '@/utils/errors'
 
@@ -25,26 +25,22 @@ interface AccountsReportQueryFilters {
 }
 
 // Extend FastifyRequest to include user property
-declare module 'fastify' {
-  interface FastifyRequest {
-    user: {
-      id: string
-      email: string
-      name: string
-      sub: string
-    }
-  }
-}
+// Tipagem do user já provida pelo projeto através de declarações globais.
 
-export class ReportsController {
-  constructor(private reportsService: ReportsService) {}
+export class ReportsController extends BaseController {
+  constructor(private reportsService: ReportsService) {
+    super({ entityName: 'relatório', entityNamePlural: 'relatórios' })
+  }
 
   async categories(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
       const filters = request.query as CategoriesReportQueryFilters
 
-      request.log.info({ userId, filters }, 'Gerando relatório de categorias')
+      request.log.info(
+        { userId, filters },
+        `Gerando ${this.entityName} de categorias`,
+      )
 
       // Convert timestamp filters to Date objects
       const processedFilters = {
@@ -67,7 +63,7 @@ export class ReportsController {
           totalIncome: result.summary.totalIncome,
           totalExpense: result.summary.totalExpense,
         },
-        'Relatório de categorias gerado com sucesso',
+        `${this.entityName} de categorias gerado com sucesso`,
       )
 
       reply.type('application/json')
@@ -75,7 +71,7 @@ export class ReportsController {
     } catch (error: any) {
       request.log.error(
         { error: error.message },
-        'Erro ao gerar relatório de categorias',
+        `Erro ao gerar ${this.entityName} de categorias`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -83,12 +79,12 @@ export class ReportsController {
 
   async cashflow(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
       const filters = request.query as CashflowReportQueryFilters
 
       request.log.info(
         { userId, filters },
-        'Gerando relatório de fluxo de caixa',
+        `Gerando ${this.entityName} de fluxo de caixa`,
       )
 
       // Convert timestamp filters to Date objects
@@ -114,7 +110,7 @@ export class ReportsController {
           totalExpense: result.summary.totalExpense,
           viewMode: filters.viewMode,
         },
-        'Relatório de fluxo de caixa gerado com sucesso',
+        `${this.entityName} de fluxo de caixa gerado com sucesso`,
       )
 
       reply.type('application/json')
@@ -122,7 +118,7 @@ export class ReportsController {
     } catch (error: any) {
       request.log.error(
         { error: error.message },
-        'Erro ao gerar relatório de fluxo de caixa',
+        `Erro ao gerar ${this.entityName} de fluxo de caixa`,
       )
       return handleError(error as FastifyError, reply)
     }
@@ -130,10 +126,13 @@ export class ReportsController {
 
   async accounts(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const userId = request.user.sub
+      const userId = this.getUserId(request)
       const filters = request.query as AccountsReportQueryFilters
 
-      request.log.info({ userId, filters }, 'Gerando relatório de contas')
+      request.log.info(
+        { userId, filters },
+        `Gerando ${this.entityName} de contas`,
+      )
 
       // Convert timestamp filters to Date objects
       const processedFilters = {
@@ -158,7 +157,7 @@ export class ReportsController {
           totalExpense: result.summary.totalExpense,
           accountFilter: filters.accountFilter,
         },
-        'Relatório de contas gerado com sucesso',
+        `${this.entityName} de contas gerado com sucesso`,
       )
 
       reply.type('application/json')
@@ -166,7 +165,7 @@ export class ReportsController {
     } catch (error: any) {
       request.log.error(
         { error: error.message },
-        'Erro ao gerar relatório de contas',
+        `Erro ao gerar ${this.entityName} de contas`,
       )
       return handleError(error as FastifyError, reply)
     }

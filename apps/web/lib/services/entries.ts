@@ -7,6 +7,7 @@ import type {
   Entry,
   EntryFormData,
 } from '@/lib/types'
+import { buildQuery } from '@/lib/utils'
 
 // Helper function to convert API response to proper types
 function convertEntryFromApi(
@@ -22,20 +23,10 @@ function convertEntryFromApi(
 export const entriesService = {
   // Listar lançamentos com filtros
   async getAll(params?: EntriesQueryParams): Promise<EntriesResponse> {
-    const queryParams = new URLSearchParams()
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value))
-        }
-      })
-    }
-
-    // Adicionar cache-busting para forçar nova requisição
-    queryParams.append('_t', Date.now().toString())
-
-    const endpoint = `/entries?${queryParams.toString()}`
+    const qs = buildQuery(params as Record<string, unknown>, {
+      cacheBust: true,
+    })
+    const endpoint = `/entries${qs}`
     const response = await apiClient.get<EntriesResponse>(endpoint)
 
     // Convert entries to proper types
@@ -122,5 +113,12 @@ export const entriesService = {
   // Deletar lançamento
   async delete(id: string): Promise<void> {
     await apiClient.delete<void>(`/entries/${id}`)
+  },
+
+  // Deletar todas as entradas do usuário
+  async deleteAll(): Promise<{ message: string; deletedCount: number }> {
+    return apiClient.delete<{ message: string; deletedCount: number }>(
+      '/entries/all',
+    )
   },
 }

@@ -1,9 +1,15 @@
-import { IconType, Prisma, PrismaClient } from '@prisma/client'
-
 import { CreditCardRepository } from '../credit-card.repository'
 
-// Mock do Prisma
-const mockPrisma = {
+// Declarações para Jest
+declare const jest: any
+declare const expect: any
+declare const describe: any
+declare const it: any
+declare const beforeEach: any
+declare const afterEach: any
+
+// Mock do PrismaClient
+const mockPrismaClient = {
   creditCard: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
@@ -14,239 +20,309 @@ const mockPrisma = {
     count: jest.fn(),
     upsert: jest.fn(),
   },
-  entry: {
-    aggregate: jest.fn(),
-  },
-} as unknown as PrismaClient
+}
 
-describe('CreditCardRepository', () => {
+describe('Credit Card Repository', () => {
   let creditCardRepository: CreditCardRepository
-  const userId = 'user-123'
 
   beforeEach(() => {
-    creditCardRepository = new CreditCardRepository(mockPrisma)
     jest.clearAllMocks()
+    creditCardRepository = new CreditCardRepository(mockPrismaClient as any)
   })
 
   describe('findMany', () => {
-    it('should call prisma.creditCard.findMany with correct parameters', async () => {
+    it('should find many credit cards with filters', async () => {
       const mockCreditCards = [
         {
-          id: 'credit-card-1',
-          name: 'Cartão Visa',
+          id: '1',
+          name: 'Cartão Principal',
           limit: 5000,
-          userId,
+          userId: 'user-1',
+        },
+        {
+          id: '2',
+          name: 'Cartão Secundário',
+          limit: 3000,
+          userId: 'user-1',
         },
       ]
 
-      ;(mockPrisma.creditCard.findMany as jest.Mock).mockResolvedValue(
-        mockCreditCards,
-      )
+      mockPrismaClient.creditCard.findMany.mockResolvedValue(mockCreditCards)
 
-      const options = {
-        where: { userId },
+      const result = await creditCardRepository.findMany({
+        where: { userId: 'user-1' },
         skip: 0,
-        take: 20,
-        orderBy: { createdAt: Prisma.SortOrder.desc },
-      }
+        take: 10,
+      })
 
-      const result = await creditCardRepository.findMany(options)
+      expect(mockPrismaClient.creditCard.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        skip: 0,
+        take: 10,
+      })
+      expect(result).toEqual(mockCreditCards)
+    })
 
-      expect(mockPrisma.creditCard.findMany).toHaveBeenCalledWith(options)
+    it('should find many credit cards with include', async () => {
+      const mockCreditCards = [
+        {
+          id: '1',
+          name: 'Cartão Principal',
+          entries: [],
+          defaultPaymentAccount: { id: 'account-1', name: 'Conta Principal' },
+        },
+      ]
+
+      mockPrismaClient.creditCard.findMany.mockResolvedValue(mockCreditCards)
+
+      const result = await creditCardRepository.findMany({
+        include: { entries: true, defaultPaymentAccount: true },
+      })
+
+      expect(mockPrismaClient.creditCard.findMany).toHaveBeenCalledWith({
+        include: { entries: true, defaultPaymentAccount: true },
+      })
       expect(result).toEqual(mockCreditCards)
     })
   })
 
   describe('findUnique', () => {
-    it('should call prisma.creditCard.findUnique with correct parameters', async () => {
+    it('should find unique credit card by ID', async () => {
       const mockCreditCard = {
-        id: 'credit-card-1',
-        name: 'Cartão Visa',
-        userId,
+        id: '1',
+        name: 'Cartão Principal',
+        limit: 5000,
+        userId: 'user-1',
       }
 
-      ;(mockPrisma.creditCard.findUnique as jest.Mock).mockResolvedValue(
-        mockCreditCard,
-      )
+      mockPrismaClient.creditCard.findUnique.mockResolvedValue(mockCreditCard)
 
-      const options = { where: { id: 'credit-card-1' } }
-      const result = await creditCardRepository.findUnique(options)
+      const result = await creditCardRepository.findById('1')
 
-      expect(mockPrisma.creditCard.findUnique).toHaveBeenCalledWith(options)
+      expect(mockPrismaClient.creditCard.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+      })
+      expect(result).toEqual(mockCreditCard)
+    })
+
+    it('should find unique credit card with include', async () => {
+      const mockCreditCard = {
+        id: '1',
+        name: 'Cartão Principal',
+        defaultPaymentAccount: { id: 'account-1', name: 'Conta Principal' },
+      }
+
+      mockPrismaClient.creditCard.findUnique.mockResolvedValue(mockCreditCard)
+
+      const result = await creditCardRepository.findById('1', {
+        include: { defaultPaymentAccount: true },
+      })
+
+      expect(mockPrismaClient.creditCard.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+        include: { defaultPaymentAccount: true },
+      })
       expect(result).toEqual(mockCreditCard)
     })
   })
 
   describe('findFirst', () => {
-    it('should call prisma.creditCard.findFirst with correct parameters', async () => {
+    it('should find first credit card with filters', async () => {
       const mockCreditCard = {
-        id: 'credit-card-1',
-        name: 'Cartão Visa',
-        userId,
+        id: '1',
+        name: 'Cartão Principal',
+        limit: 5000,
+        userId: 'user-1',
       }
 
-      ;(mockPrisma.creditCard.findFirst as jest.Mock).mockResolvedValue(
-        mockCreditCard,
-      )
+      mockPrismaClient.creditCard.findFirst.mockResolvedValue(mockCreditCard)
 
-      const options = { where: { name: 'Cartão Visa', userId } }
-      const result = await creditCardRepository.findFirst(options)
+      const result = await creditCardRepository.findFirst({
+        name: 'Cartão Principal',
+        userId: 'user-1',
+      })
 
-      expect(mockPrisma.creditCard.findFirst).toHaveBeenCalledWith(options)
+      expect(mockPrismaClient.creditCard.findFirst).toHaveBeenCalledWith({
+        where: { name: 'Cartão Principal', userId: 'user-1' },
+      })
       expect(result).toEqual(mockCreditCard)
     })
   })
 
   describe('create', () => {
-    it('should call prisma.creditCard.create with correct parameters', async () => {
-      const mockCreditCard = {
-        id: 'credit-card-1',
+    it('should create a new credit card', async () => {
+      const creditCardData = {
         name: 'Novo Cartão',
-        icon: 'credit-card',
-        iconType: 'generic' as IconType,
         limit: 3000,
+        icon: 'visa-icon',
+        iconType: 'visa',
         closingDay: 15,
-        dueDay: 10,
-        userId,
+        dueDay: 20,
+        user: { connect: { id: 'user-1' } },
+      }
+
+      const createdCreditCard = {
+        id: '1',
+        ...creditCardData,
+        userId: 'user-1',
         createdAt: new Date(),
         updatedAt: new Date(),
-        defaultPaymentAccountId: null,
       }
 
-      ;(mockPrisma.creditCard.create as jest.Mock).mockResolvedValue(
-        mockCreditCard,
-      )
+      mockPrismaClient.creditCard.create.mockResolvedValue(createdCreditCard)
 
-      const createData = {
-        data: {
-          name: 'Novo Cartão',
-          icon: 'credit-card',
-          iconType: 'generic' as IconType,
-          limit: 3000,
-          closingDay: 15,
-          dueDay: 10,
-          user: { connect: { id: userId } },
-        },
+      const result = await creditCardRepository.create(creditCardData)
+
+      expect(mockPrismaClient.creditCard.create).toHaveBeenCalledWith({
+        data: creditCardData,
+      })
+      expect(result).toEqual(createdCreditCard)
+    })
+
+    it('should create credit card with include', async () => {
+      const creditCardData = {
+        name: 'Novo Cartão',
+        limit: 3000,
+        user: { connect: { id: 'user-1' } },
       }
 
-      const result = await creditCardRepository.create(createData)
+      const createdCreditCard = {
+        id: '1',
+        ...creditCardData,
+        defaultPaymentAccount: { id: 'account-1', name: 'Conta Principal' },
+      }
 
-      expect(mockPrisma.creditCard.create).toHaveBeenCalledWith(createData)
-      expect(result).toEqual(mockCreditCard)
+      mockPrismaClient.creditCard.create.mockResolvedValue(createdCreditCard)
+
+      const result = await creditCardRepository.create(creditCardData, {
+        include: { defaultPaymentAccount: true },
+      })
+
+      expect(mockPrismaClient.creditCard.create).toHaveBeenCalledWith({
+        data: creditCardData,
+        include: { defaultPaymentAccount: true },
+      })
+      expect(result).toEqual(createdCreditCard)
     })
   })
 
   describe('update', () => {
-    it('should call prisma.creditCard.update with correct parameters', async () => {
-      const mockUpdatedCreditCard = {
-        id: 'credit-card-1',
+    it('should update an existing credit card', async () => {
+      const updateData = {
         name: 'Cartão Atualizado',
-        limit: 7000,
-        userId,
+        limit: 6000,
       }
 
-      ;(mockPrisma.creditCard.update as jest.Mock).mockResolvedValue(
-        mockUpdatedCreditCard,
-      )
-
-      const updateOptions = {
-        where: { id: 'credit-card-1', userId },
-        data: { name: 'Cartão Atualizado', limit: 7000 },
+      const updatedCreditCard = {
+        id: '1',
+        name: 'Cartão Atualizado',
+        limit: 6000,
+        userId: 'user-1',
+        updatedAt: new Date(),
       }
 
-      const result = await creditCardRepository.update(updateOptions)
+      mockPrismaClient.creditCard.update.mockResolvedValue(updatedCreditCard)
 
-      expect(mockPrisma.creditCard.update).toHaveBeenCalledWith(updateOptions)
-      expect(result).toEqual(mockUpdatedCreditCard)
+      const result = await creditCardRepository.update('1', updateData)
+
+      expect(mockPrismaClient.creditCard.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: updateData,
+      })
+      expect(result).toEqual(updatedCreditCard)
     })
   })
 
   describe('delete', () => {
-    it('should call prisma.creditCard.delete with correct parameters', async () => {
-      const mockDeletedCreditCard = {
-        id: 'credit-card-1',
+    it('should delete a credit card', async () => {
+      const deletedCreditCard = {
+        id: '1',
         name: 'Cartão Deletado',
-        userId,
+        userId: 'user-1',
       }
 
-      ;(mockPrisma.creditCard.delete as jest.Mock).mockResolvedValue(
-        mockDeletedCreditCard,
-      )
+      mockPrismaClient.creditCard.delete.mockResolvedValue(deletedCreditCard)
 
-      const deleteOptions = { where: { id: 'credit-card-1', userId } }
-      const result = await creditCardRepository.delete(deleteOptions)
+      const result = await creditCardRepository.delete('1')
 
-      expect(mockPrisma.creditCard.delete).toHaveBeenCalledWith(deleteOptions)
-      expect(result).toEqual(mockDeletedCreditCard)
+      expect(mockPrismaClient.creditCard.delete).toHaveBeenCalledWith({
+        where: { id: '1' },
+      })
+      expect(result).toEqual(deletedCreditCard)
     })
   })
 
   describe('count', () => {
-    it('should call prisma.creditCard.count with correct parameters', async () => {
-      ;(mockPrisma.creditCard.count as jest.Mock).mockResolvedValue(5)
+    it('should count credit cards with filters', async () => {
+      mockPrismaClient.creditCard.count.mockResolvedValue(5)
 
-      const countOptions = { where: { userId } }
-      const result = await creditCardRepository.count(countOptions)
+      const result = await creditCardRepository.count({ userId: 'user-1' })
 
-      expect(mockPrisma.creditCard.count).toHaveBeenCalledWith(countOptions)
+      expect(mockPrismaClient.creditCard.count).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      })
       expect(result).toBe(5)
     })
   })
 
   describe('upsert', () => {
-    it('should call prisma.creditCard.upsert with correct parameters', async () => {
-      const mockUpsertedCreditCard = {
-        id: 'credit-card-1',
-        name: 'Cartão Upsert',
-        userId,
+    it('should upsert a credit card', async () => {
+      const upsertData = {
+        where: { id: '1' },
+        create: {
+          name: 'Novo Cartão',
+          limit: 3000,
+          user: { connect: { id: 'user-1' } },
+        },
+        update: {
+          name: 'Cartão Atualizado',
+          limit: 6000,
+        },
       }
 
-      ;(mockPrisma.creditCard.upsert as jest.Mock).mockResolvedValue(
-        mockUpsertedCreditCard,
+      const upsertedCreditCard = {
+        id: '1',
+        name: 'Cartão Atualizado',
+        limit: 6000,
+        userId: 'user-1',
+      }
+
+      mockPrismaClient.creditCard.upsert.mockResolvedValue(upsertedCreditCard)
+
+      const result = await creditCardRepository.upsert(
+        { id: '1' },
+        upsertData.create,
+        upsertData.update,
       )
 
-      const upsertOptions = {
-        where: { id: 'credit-card-1' },
-        create: {
-          name: 'Cartão Upsert',
-          icon: 'credit-card',
-          iconType: 'generic' as IconType,
-          limit: 5000,
-          closingDay: 15,
-          dueDay: 10,
-          user: { connect: { id: userId } },
-        },
-        update: { name: 'Cartão Upsert Atualizado' },
-      }
-
-      const result = await creditCardRepository.upsert(upsertOptions)
-
-      expect(mockPrisma.creditCard.upsert).toHaveBeenCalledWith(upsertOptions)
-      expect(result).toEqual(mockUpsertedCreditCard)
+      expect(mockPrismaClient.creditCard.upsert).toHaveBeenCalledWith({
+        where: { id: '1' },
+        create: upsertData.create,
+        update: upsertData.update,
+      })
+      expect(result).toEqual(upsertedCreditCard)
     })
   })
 
   describe('findByUserId', () => {
-    it('should find credit cards by user ID with default parameters', async () => {
+    it('should find credit cards by user ID without entries', async () => {
       const mockCreditCards = [
         {
-          id: 'credit-card-1',
-          name: 'Cartão 1',
-          userId,
+          id: '1',
+          name: 'Cartão Principal',
+          userId: 'user-1',
           entries: [],
-          defaultPaymentAccount: null,
+          defaultPaymentAccount: { id: 'account-1', name: 'Conta Principal' },
           _count: { entries: 0 },
         },
       ]
 
-      ;(mockPrisma.creditCard.findMany as jest.Mock).mockResolvedValue(
-        mockCreditCards,
-      )
+      mockPrismaClient.creditCard.findMany.mockResolvedValue(mockCreditCards)
 
-      const result = await creditCardRepository.findByUserId(userId)
+      const result = await creditCardRepository.findByUserId('user-1', false)
 
-      expect(mockPrisma.creditCard.findMany).toHaveBeenCalledWith({
-        where: { userId },
+      expect(mockPrismaClient.creditCard.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
         include: {
           entries: false,
           defaultPaymentAccount: true,
@@ -261,26 +337,24 @@ describe('CreditCardRepository', () => {
       expect(result).toEqual(mockCreditCards)
     })
 
-    it('should find credit cards by user ID with entries included', async () => {
+    it('should find credit cards by user ID with entries', async () => {
       const mockCreditCards = [
         {
-          id: 'credit-card-1',
-          name: 'Cartão 1',
-          userId,
-          entries: [{ id: 'entry-1', amount: 100 }],
-          defaultPaymentAccount: null,
+          id: '1',
+          name: 'Cartão Principal',
+          userId: 'user-1',
+          entries: [{ id: 'entry-1', amount: '100', type: 'expense' }],
+          defaultPaymentAccount: { id: 'account-1', name: 'Conta Principal' },
           _count: { entries: 1 },
         },
       ]
 
-      ;(mockPrisma.creditCard.findMany as jest.Mock).mockResolvedValue(
-        mockCreditCards,
-      )
+      mockPrismaClient.creditCard.findMany.mockResolvedValue(mockCreditCards)
 
-      const result = await creditCardRepository.findByUserId(userId, true)
+      const result = await creditCardRepository.findByUserId('user-1', true)
 
-      expect(mockPrisma.creditCard.findMany).toHaveBeenCalledWith({
-        where: { userId },
+      expect(mockPrismaClient.creditCard.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
         include: {
           entries: true,
           defaultPaymentAccount: true,
@@ -297,56 +371,56 @@ describe('CreditCardRepository', () => {
   })
 
   describe('existsByNameAndUserId', () => {
-    it('should return true when credit card exists', async () => {
-      const mockCreditCard = {
-        id: 'credit-card-1',
-        name: 'Cartão Existente',
-        userId,
+    it('should check if credit card exists by name and user ID', async () => {
+      const existingCreditCard = {
+        id: '1',
+        name: 'Cartão Principal',
+        userId: 'user-1',
       }
 
-      ;(mockPrisma.creditCard.findFirst as jest.Mock).mockResolvedValue(
-        mockCreditCard,
+      mockPrismaClient.creditCard.findFirst.mockResolvedValue(
+        existingCreditCard,
       )
 
       const result = await creditCardRepository.existsByNameAndUserId(
-        'Cartão Existente',
-        userId,
+        'Cartão Principal',
+        'user-1',
       )
 
-      expect(mockPrisma.creditCard.findFirst).toHaveBeenCalledWith({
-        where: {
-          name: 'Cartão Existente',
-          userId,
-        },
+      expect(mockPrismaClient.creditCard.findFirst).toHaveBeenCalledWith({
+        where: { name: 'Cartão Principal', userId: 'user-1' },
       })
       expect(result).toBe(true)
     })
 
     it('should return false when credit card does not exist', async () => {
-      ;(mockPrisma.creditCard.findFirst as jest.Mock).mockResolvedValue(null)
+      mockPrismaClient.creditCard.findFirst.mockResolvedValue(null)
 
       const result = await creditCardRepository.existsByNameAndUserId(
         'Cartão Inexistente',
-        userId,
+        'user-1',
       )
 
+      expect(mockPrismaClient.creditCard.findFirst).toHaveBeenCalledWith({
+        where: { name: 'Cartão Inexistente', userId: 'user-1' },
+      })
       expect(result).toBe(false)
     })
 
     it('should exclude specific ID when checking existence', async () => {
-      ;(mockPrisma.creditCard.findFirst as jest.Mock).mockResolvedValue(null)
+      mockPrismaClient.creditCard.findFirst.mockResolvedValue(null)
 
       const result = await creditCardRepository.existsByNameAndUserId(
-        'Cartão Teste',
-        userId,
-        'credit-card-to-exclude',
+        'Cartão Principal',
+        'user-1',
+        'exclude-id',
       )
 
-      expect(mockPrisma.creditCard.findFirst).toHaveBeenCalledWith({
+      expect(mockPrismaClient.creditCard.findFirst).toHaveBeenCalledWith({
         where: {
-          name: 'Cartão Teste',
-          userId,
-          NOT: { id: 'credit-card-to-exclude' },
+          name: 'Cartão Principal',
+          userId: 'user-1',
+          NOT: { id: 'exclude-id' },
         },
       })
       expect(result).toBe(false)
@@ -354,31 +428,28 @@ describe('CreditCardRepository', () => {
   })
 
   describe('getCreditCardsWithUsage', () => {
-    it('should get credit cards with usage information', async () => {
+    it('should get credit cards with usage data', async () => {
       const mockCreditCards = [
         {
-          id: 'credit-card-1',
-          name: 'Cartão 1',
-          userId,
+          id: '1',
+          name: 'Cartão Principal',
+          limit: 5000,
+          userId: 'user-1',
           entries: [
-            { amount: 100, type: 'expense' },
-            { amount: 200, type: 'expense' },
+            { amount: '100', type: 'expense' },
+            { amount: '200', type: 'expense' },
           ],
-          defaultPaymentAccount: {
-            id: 'account-1',
-            name: 'Conta Corrente',
-          },
+          defaultPaymentAccount: { id: 'account-1', name: 'Conta Principal' },
         },
       ]
 
-      ;(mockPrisma.creditCard.findMany as jest.Mock).mockResolvedValue(
-        mockCreditCards,
-      )
+      mockPrismaClient.creditCard.findMany.mockResolvedValue(mockCreditCards)
 
-      const result = await creditCardRepository.getCreditCardsWithUsage(userId)
+      const result =
+        await creditCardRepository.getCreditCardsWithUsage('user-1')
 
-      expect(mockPrisma.creditCard.findMany).toHaveBeenCalledWith({
-        where: { userId },
+      expect(mockPrismaClient.creditCard.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
         include: {
           entries: {
             select: {
@@ -393,8 +464,36 @@ describe('CreditCardRepository', () => {
             },
           },
         },
+        orderBy: { createdAt: 'desc' },
       })
       expect(result).toEqual(mockCreditCards)
+    })
+  })
+
+  describe('error handling', () => {
+    it('should handle Prisma errors gracefully', async () => {
+      const prismaError = new Error('Database connection failed')
+      mockPrismaClient.creditCard.findMany.mockRejectedValue(prismaError)
+
+      await expect(
+        creditCardRepository.findMany({ where: { userId: 'user-1' } }),
+      ).rejects.toThrow('Database connection failed')
+    })
+
+    it('should handle unique constraint violations', async () => {
+      const uniqueConstraintError = new Error('Unique constraint failed')
+      mockPrismaClient.creditCard.create.mockRejectedValue(
+        uniqueConstraintError,
+      )
+
+      await expect(
+        creditCardRepository.create({
+          data: {
+            name: 'Cartão Duplicado',
+            user: { connect: { id: 'user-1' } },
+          },
+        }),
+      ).rejects.toThrow('Unique constraint failed')
     })
   })
 })
