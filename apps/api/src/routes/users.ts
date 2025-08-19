@@ -180,4 +180,76 @@ export async function userRoutes(app: FastifyInstance) {
       return reply.status(204).send()
     },
   )
+
+  // GET /users/account-status - Verificar status da conta
+  app.get(
+    '/users/account-status',
+    {
+      schema: {
+        tags: ['👤 Usuários'],
+        summary: 'Verificar status da conta do usuário autenticado',
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: z.object({
+            hasGoogleProvider: z.boolean(),
+            needsPasswordSetup: z.boolean(),
+            hasValidPassword: z.boolean(),
+            providers: z.array(
+              z.object({
+                provider: z.string(),
+                providerUserId: z.string(),
+                createdAt: z.string(),
+              }),
+            ),
+          }),
+        },
+      },
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
+    },
+    async (request, reply) => {
+      const decoded = request.user as any
+      const userId = decoded?.sub as string
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          providers: true,
+        },
+      })
+
+      if (!user) {
+        return ResponseFormatter.error(
+          reply,
+          'Usuário não encontrado',
+          undefined,
+          404,
+        )
+      }
+
+      // Verificar se tem vínculo com Google
+      const hasGoogleProvider = user.providers.some(
+        (p) => p.provider === 'google',
+      )
+
+      // Verificar se precisa configurar senha (usuário criado via Google sem senha definida)
+      // Usar o campo passwordConfigured para determinar se a senha foi configurada pelo usuário
+      const hasValidPassword = user.passwordConfigured
+      const needsPasswordSetup = !hasValidPassword
+
+      return reply.send({
+        hasGoogleProvider,
+        needsPasswordSetup,
+        hasValidPassword,
+        providers: user.providers.map((p) => ({
+          provider: p.provider,
+          providerUserId: p.providerUserId,
+          createdAt: p.createdAt.toISOString(),
+        })),
+      })
+    },
+  )
 }

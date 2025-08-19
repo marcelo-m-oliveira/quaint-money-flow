@@ -61,6 +61,11 @@ export async function GET(request: Request) {
     params.set('refreshToken', data.refreshToken)
     params.set('user', JSON.stringify(data.user))
 
+    // Incluir metadados se disponíveis
+    if (data.metadata) {
+      params.set('metadata', JSON.stringify(data.metadata))
+    }
+
     return NextResponse.redirect(
       new URL(`/auth/google/complete?${params.toString()}`, request.url),
     )

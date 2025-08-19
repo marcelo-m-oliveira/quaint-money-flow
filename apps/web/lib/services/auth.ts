@@ -23,3 +23,28 @@ export const authService = {
     return apiClient.post<AuthResponse>('/auth/register', payload)
   },
 }
+
+export async function setupPassword(
+  password: string,
+  confirmPassword: string,
+  accessToken: string,
+) {
+  const response = await fetch('/api/proxy/auth/setup-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      password,
+      confirmPassword,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Erro ao configurar senha')
+  }
+
+  return response.json()
+}

@@ -6,6 +6,9 @@ import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
 import { getRedisClient } from '@/lib/redis'
+import { authMiddleware } from '@/middleware/auth.middleware'
+import { performanceMiddleware } from '@/middleware/performance.middleware'
+import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
 import { ResponseFormatter } from '@/utils/response'
 import { loginSchema } from '@/utils/schemas'
 
@@ -191,7 +194,12 @@ export async function authRoutes(app: FastifyInstance) {
       }
       const hashed = await bcrypt.hash(password, 10)
       const user = await prisma.user.create({
-        data: { name, email, password: hashed },
+        data: {
+          name,
+          email,
+          password: hashed,
+          passwordConfigured: true, // Usuários que se registram com email/senha já têm senha configurada
+        },
       })
 
       const payload = {
@@ -341,31 +349,74 @@ export async function authRoutes(app: FastifyInstance) {
           )
         }
 
-        // Upsert usuário
-        let user = await prisma.user.findUnique({ where: { email } })
+        // Verificar se já existe um usuário com este email
+        let user = await prisma.user.findUnique({
+          where: { email },
+          include: {
+            providers: {
+              where: { provider: 'google' },
+            },
+          },
+        })
+
+        let isNewUser = false
+        let needsPasswordSetup = false
+
         if (!user) {
+          // Usuário não existe - criar novo
           const randomPasswordHash = await bcrypt.hash(randomUUID(), 10)
           user = await prisma.user.create({
             data: {
               email,
               name,
               password: randomPasswordHash,
+              passwordConfigured: false, // Senha não foi configurada pelo usuário
               avatarUrl: picture,
             },
+            include: {
+              providers: {
+                where: { provider: 'google' },
+              },
+            },
           })
+          isNewUser = true
+          needsPasswordSetup = true
           request.log.info(
             { userId: user.id, email },
             'Novo usuário criado via Google OAuth',
           )
-        } else if (!user.avatarUrl && picture) {
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: { avatarUrl: picture },
-          })
-          request.log.info(
-            { userId: user.id, email },
-            'Avatar do usuário atualizado via Google OAuth',
-          )
+        } else {
+          // Usuário existe - verificar se já tem vínculo com Google
+          const hasGoogleProvider = user.providers.length > 0
+
+          if (!hasGoogleProvider) {
+            // Usuário existe mas não tem vínculo com Google - vincular
+            request.log.info(
+              { userId: user.id, email },
+              'Vinculando conta existente com Google OAuth',
+            )
+          }
+
+          // Atualizar avatar se necessário
+          if (!user.avatarUrl && picture) {
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { avatarUrl: picture },
+              include: {
+                providers: {
+                  where: { provider: 'google' },
+                },
+              },
+            })
+            request.log.info(
+              { userId: user.id, email },
+              'Avatar do usuário atualizado via Google OAuth',
+            )
+          }
+
+          // Verificar se precisa configurar senha (usuário criado via Google sem senha definida)
+          // Usar o campo passwordConfigured para determinar se a senha foi configurada pelo usuário
+          needsPasswordSetup = !user.passwordConfigured
         }
 
         // Vincular/atualizar provedor
@@ -396,7 +447,7 @@ export async function authRoutes(app: FastifyInstance) {
         const refresh = await signRefreshToken(user.id)
 
         request.log.info(
-          { userId: user.id, email },
+          { userId: user.id, email, isNewUser, needsPasswordSetup },
           'Login via Google OAuth realizado com sucesso',
         )
 
@@ -408,6 +459,11 @@ export async function authRoutes(app: FastifyInstance) {
             email: user.email,
             name: user.name,
             avatarUrl: user.avatarUrl ?? null,
+          },
+          metadata: {
+            isNewUser,
+            needsPasswordSetup,
+            hasGoogleProvider: user.providers.length > 0,
           },
         })
       } catch (error) {
@@ -425,6 +481,129 @@ export async function authRoutes(app: FastifyInstance) {
           500,
         )
       }
+    },
+  )
+
+  // POST /auth/setup-password - Configurar senha para usuários Google
+  app.post(
+    '/auth/setup-password',
+    {
+      schema: {
+        tags: ['🔐 Autenticação'],
+        summary: 'Configurar senha para usuários que se registraram via Google',
+        security: [{ bearerAuth: [] }],
+        body: z
+          .object({
+            password: z
+              .string()
+              .min(8, 'Senha deve ter pelo menos 8 caracteres')
+              .regex(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                'Senha deve conter pelo menos uma letra minúscula, uma maiúscula, um número e um caractere especial',
+              ),
+            confirmPassword: z
+              .string()
+              .min(1, 'Confirmação de senha é obrigatória'),
+          })
+          .refine((data) => data.password === data.confirmPassword, {
+            message: 'Senhas não coincidem',
+            path: ['confirmPassword'],
+          })
+          .strict(),
+        response: {
+          200: z.object({
+            message: z.string(),
+            user: z.object({
+              id: z.string(),
+              email: z.string().email(),
+              name: z.string(),
+              avatarUrl: z.string().url().nullable().optional(),
+            }),
+          }),
+        },
+      },
+      preHandler: [
+        authMiddleware,
+        performanceMiddleware(),
+        rateLimitMiddlewares.authenticated(),
+      ],
+    },
+    async (request, reply) => {
+      const { password, confirmPassword } = request.body as any
+      const decoded = request.user as any
+      const userId = decoded?.sub as string
+
+      if (password !== confirmPassword) {
+        return ResponseFormatter.error(
+          reply,
+          'Senhas não coincidem',
+          undefined,
+          400,
+        )
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          providers: {
+            where: { provider: 'google' },
+          },
+        },
+      })
+
+      if (!user) {
+        return ResponseFormatter.error(
+          reply,
+          'Usuário não encontrado',
+          undefined,
+          404,
+        )
+      }
+
+      // Verificar se o usuário tem vínculo com Google
+      if (user.providers.length === 0) {
+        return ResponseFormatter.error(
+          reply,
+          'Esta funcionalidade é apenas para usuários que se registraram via Google',
+          undefined,
+          400,
+        )
+      }
+
+      // Verificar se já tem uma senha configurada pelo usuário
+      if (user.passwordConfigured) {
+        return ResponseFormatter.error(
+          reply,
+          'Senha já foi configurada para esta conta',
+          undefined,
+          400,
+        )
+      }
+
+      // Configurar nova senha
+      const hashedPassword = await bcrypt.hash(password, 10)
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword,
+          passwordConfigured: true, // Marcar que a senha foi configurada pelo usuário
+        },
+      })
+
+      request.log.info(
+        { userId: user.id, email: user.email },
+        'Senha configurada para usuário Google',
+      )
+
+      return reply.status(200).send({
+        message: 'Senha configurada com sucesso',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatarUrl: user.avatarUrl ?? null,
+        },
+      })
     },
   )
 
