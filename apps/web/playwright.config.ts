@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { env } from '@saas/env'
 
 /**
  * Configuração do Playwright para testes E2E
@@ -10,11 +11,11 @@ export default defineConfig({
   /* Executar testes em paralelo */
   fullyParallel: true,
   /* Falhar o build se você deixar test.only no código */
-  forbidOnly: !!process.env.CI,
+  forbidOnly: !!env.CI,
   /* Retry nos testes apenas no CI */
-  retries: process.env.CI ? 2 : 0,
+  retries: env.CI ? 2 : 0,
   /* Opt out do paralelismo no CI */
-  workers: process.env.CI ? 1 : undefined,
+  workers: env.CI ? 1 : undefined,
   /* Reporter para usar */
   reporter: 'html',
   /* Configurações compartilhadas para todos os projetos */
@@ -74,7 +75,7 @@ export default defineConfig({
   webServer: {
     command: 'pnpm dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !env.CI,
     timeout: 120 * 1000,
   },
 })

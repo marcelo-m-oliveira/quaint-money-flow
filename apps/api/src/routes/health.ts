@@ -1,3 +1,4 @@
+import { env } from '@saas/env'
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
@@ -49,7 +50,7 @@ export async function healthRoutes(app: FastifyInstance) {
         status: redisConnected ? 'healthy' : 'degraded',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        version: process.env.API_VERSION || '1.0.0',
+        version: env.API_VERSION,
         services: {
           redis: redisConnected ? 'connected' : 'disconnected',
         },
@@ -62,7 +63,7 @@ export async function healthRoutes(app: FastifyInstance) {
         data: healthData,
         meta: {
           timestamp: Date.now(),
-          version: process.env.API_VERSION || '1.0.0',
+          version: env.API_VERSION,
         },
       })
     },
@@ -115,7 +116,7 @@ export async function healthRoutes(app: FastifyInstance) {
             message: 'Redis não está conectado',
             meta: {
               timestamp: Date.now(),
-              version: process.env.API_VERSION || '1.0.0',
+              version: env.API_VERSION,
             },
           })
         }
@@ -139,7 +140,7 @@ export async function healthRoutes(app: FastifyInstance) {
           data: redisData,
           meta: {
             timestamp: Date.now(),
-            version: process.env.API_VERSION || '1.0.0',
+            version: env.API_VERSION,
           },
         })
       } catch (error: any) {
@@ -148,7 +149,7 @@ export async function healthRoutes(app: FastifyInstance) {
           message: `Erro ao verificar Redis: ${error.message}`,
           meta: {
             timestamp: Date.now(),
-            version: process.env.API_VERSION || '1.0.0',
+            version: env.API_VERSION,
           },
         })
       }
@@ -202,7 +203,7 @@ export async function healthRoutes(app: FastifyInstance) {
         data: performanceReport,
         meta: {
           timestamp: Date.now(),
-          version: process.env.API_VERSION || '1.0.0',
+          version: env.API_VERSION,
         },
       })
     },
@@ -245,7 +246,7 @@ export async function healthRoutes(app: FastifyInstance) {
           message: 'Cache limpo com sucesso',
           meta: {
             timestamp: Date.now(),
-            version: process.env.API_VERSION || '1.0.0',
+            version: env.API_VERSION,
           },
         })
       } catch (error: any) {
@@ -254,7 +255,7 @@ export async function healthRoutes(app: FastifyInstance) {
           message: `Erro ao limpar cache: ${error.message}`,
           meta: {
             timestamp: Date.now(),
-            version: process.env.API_VERSION || '1.0.0',
+            version: env.API_VERSION,
           },
         })
       }

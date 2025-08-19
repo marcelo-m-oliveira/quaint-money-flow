@@ -73,12 +73,6 @@ export default function PerfilPage() {
   }, [reset])
 
   const avatarUrl = watch('avatarUrl') || (data?.user as any)?.image || ''
-  const initials = (data?.user?.name || 'U')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -142,7 +136,7 @@ export default function PerfilPage() {
                   acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
                   uploadToServer={true}
                   onUploadStart={() => setUploading(true)}
-                  onUploadSuccess={(url) => {
+                  onUploadSuccess={() => {
                     setUploading(false)
                     success.update('Foto de perfil')
                   }}

@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { env } from '@saas/env'
+
 import { prisma } from '@/lib/prisma'
 
 import { ReportsController } from '../controllers/reports.controller'
@@ -20,7 +22,7 @@ export class ReportsFactory {
 
   static getRepository(): ReportsRepository {
     // Em desenvolvimento, sempre criar nova instância para evitar cache
-    if (process.env.NODE_ENV === 'development') {
+    if (env.NODE_ENV === 'development') {
       return new ReportsRepository(prisma)
     }
     if (!this.reportsRepository) {
@@ -31,7 +33,7 @@ export class ReportsFactory {
 
   static getService(): ReportsService {
     // Em desenvolvimento, sempre criar nova instância para evitar cache
-    if (process.env.NODE_ENV === 'development') {
+    if (env.NODE_ENV === 'development') {
       const repository = this.getRepository()
       return new ReportsService(repository)
     }
@@ -44,7 +46,7 @@ export class ReportsFactory {
 
   static getController(): ReportsController {
     // Em desenvolvimento, sempre criar nova instância para evitar cache
-    if (process.env.NODE_ENV === 'development') {
+    if (env.NODE_ENV === 'development') {
       const service = this.getService()
       return new ReportsController(service)
     }

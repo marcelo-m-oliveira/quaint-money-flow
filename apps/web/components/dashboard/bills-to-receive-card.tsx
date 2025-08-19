@@ -46,9 +46,9 @@ export function BillsToReceiveCard({
   onUpdateEntry,
   onEditEntry,
 }: BillsToReceiveCardProps) {
-  const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(3)
+  const [visibleOverdueReceivables, setVisibleOverdueReceivables] = useState(5)
   const [visibleUpcomingReceivables, setVisibleUpcomingReceivables] =
-    useState(3)
+    useState(5)
   const { error } = useCrudToast()
   const { generalOverview, isLoading } = useOverviewContext()
   const [receivedEntries, setReceivedEntries] = useState<Set<string>>(new Set())

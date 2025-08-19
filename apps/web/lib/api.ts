@@ -20,7 +20,6 @@ class ApiClient {
 
     // Read access token from NextAuth session (server or client-safe header injection)
     // Token is injected by proxy route; no need to read here
-    const token: string | undefined = undefined
 
     const config: RequestInit = {
       headers: {
@@ -103,8 +102,6 @@ class ApiClient {
 
   async delete<T>(endpoint: string): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
-
-    const token: string | undefined = undefined
 
     const config: RequestInit = {
       method: 'DELETE',

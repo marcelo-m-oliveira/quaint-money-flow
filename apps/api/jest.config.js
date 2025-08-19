@@ -14,8 +14,13 @@ module.exports = {
     ],
     '^.+\\.js$': 'babel-jest',
   },
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
   transformIgnorePatterns: [
-    'node_modules/(?!(@t3-oss|@saas|@t3-oss/env-nextjs|@t3-oss/env-core)/)',
+    'node_modules/(?!(@t3-oss|@saas|@t3-oss/env-nextjs|@t3-oss/env-core|@saas/env)/)',
   ],
   extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [

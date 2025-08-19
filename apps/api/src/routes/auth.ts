@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
+import { env } from '@saas/env'
 import bcrypt from 'bcryptjs'
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
@@ -17,11 +18,11 @@ export async function authRoutes(app: FastifyInstance) {
   const redis = getRedisClient()
 
   function getJwtExpiresIn() {
-    return (process.env.JWT_EXPIRES_IN as string) || '15m'
+    return env.JWT_EXPIRES_IN
   }
 
   function getRefreshTokenExpiresInSeconds(): number {
-    const value = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'
+    const value = env.REFRESH_TOKEN_EXPIRES_IN
     // Parse like 30d/12h/900s or number of seconds
     const match = value.match(/^(\d+)([smhd])?$/)
     if (!match) return 60 * 60 * 24 * 30

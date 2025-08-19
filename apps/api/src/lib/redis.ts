@@ -1,11 +1,12 @@
+import { env } from '@saas/env'
 import Redis from 'ioredis'
 
 // Configuração do Redis
 const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD,
-  db: parseInt(process.env.REDIS_DB || '0'),
+  host: env.REDIS_HOST,
+  port: env.REDIS_PORT,
+  password: env.REDIS_PASSWORD,
+  db: env.REDIS_DB,
   retryDelayOnFailover: 100,
   maxRetriesPerRequest: 3,
   // Connect eagerly so routes depending on Redis don't fail on first call

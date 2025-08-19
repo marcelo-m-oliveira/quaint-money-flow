@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process'
 
 import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
+import { env } from '@saas/env'
 import fastify from 'fastify'
 import {
   serializerCompiler,
@@ -25,7 +26,7 @@ import { errorHandler } from '@/utils/errors'
 
 // Configuração do logger e encoding UTF-8 no Windows
 const isWindows = process.platform === 'win32'
-const isDevelopment = process.env.NODE_ENV !== 'production'
+const isDevelopment = env.NODE_ENV !== 'production'
 
 // Força UTF-8 no console do Windows para exibir acentuação corretamente
 if (isWindows) {
@@ -130,7 +131,7 @@ if (require.main === module) {
         {
           port: env.PORT,
           host: '0.0.0.0',
-          environment: process.env.NODE_ENV || 'development',
+          environment: env.NODE_ENV,
           apiVersion: env.API_VERSION,
           apiPrefix: env.API_PREFIX,
           swaggerEnabled: env.SWAGGER_ENABLED,

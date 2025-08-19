@@ -1,3 +1,4 @@
+import { env } from '@saas/env'
 import type { FastifyError, FastifyInstance, FastifyReply } from 'fastify'
 import { ZodError } from 'zod'
 
@@ -30,7 +31,7 @@ export const errorHandler: FastifyErrorHandler = (error, request, reply) => {
     return ResponseFormatter.error(reply, error.message, undefined, 404)
   }
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (env.NODE_ENV !== 'test') {
     console.error(error)
   }
 
@@ -62,7 +63,7 @@ export const handleError = (error: FastifyError, reply: FastifyReply) => {
     return ResponseFormatter.error(reply, error.message, undefined, 404)
   }
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (env.NODE_ENV !== 'test') {
     console.error(error)
   }
 

@@ -3,6 +3,42 @@ import { FastifyInstance } from 'fastify'
 
 import { createApp } from '@/server'
 
+// Mock do package @saas/env para testes
+const mockEnv = {
+  PORT: 3333,
+  API_VERSION: 'v1',
+  API_PREFIX: '/api',
+  RATE_LIMIT_WINDOW_MS: 900000,
+  RATE_LIMIT_MAX: 100,
+  CORS_ORIGIN: 'http://localhost:3000',
+  DATABASE_URL: 'postgresql://docker:docker@localhost:5432/saas-quaint-money',
+  DATABASE_URL_TEST:
+    'postgresql://docker:docker@localhost:5432/saas-quaint-money-test',
+  JWT_SECRET: 'your-super-secret-jwt-key-change-this-in-production',
+  JWT_EXPIRES_IN: '7d',
+  REFRESH_TOKEN_EXPIRES_IN: '30d',
+  GOOGLE_CLIENT_ID:
+    '800618207324-q718np1big2b75ic1dgu0aaihpls0ab2.apps.googleusercontent.com',
+  GOOGLE_CLIENT_SECRET: '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',
+  GOOGLE_REDIRECT_URI: 'http://localhost:3000/auth/google/callback',
+  REDIS_HOST: 'localhost',
+  REDIS_PORT: 6379,
+  REDIS_PASSWORD: undefined,
+  REDIS_DB: 0,
+  NODE_ENV: 'test',
+  SWAGGER_ENABLED: true,
+  SWAGGER_PATH: '/docs',
+  CI: false,
+  NEXT_PUBLIC_API_URL: 'http://localhost:3333/api/v1',
+  NEXTAUTH_SECRET: 'your-super-secret-jwt-key-change-this-in-production',
+  NEXTAUTH_URL: 'http://localhost:3000',
+}
+
+// Mock do import do @saas/env
+jest.mock('@saas/env', () => ({
+  env: mockEnv,
+}))
+
 // Importar Jest para testes
 declare const jest: any
 declare const expect: any
@@ -32,7 +68,7 @@ export class TestUtils {
       this.prisma = new PrismaClient({
         datasources: {
           db: {
-            url: process.env.DATABASE_URL_TEST || process.env.DATABASE_URL,
+            url: mockEnv.DATABASE_URL_TEST || mockEnv.DATABASE_URL,
           },
         },
       })
@@ -61,9 +97,7 @@ export class TestUtils {
     // Gera um JWT válido para testes (assinado pela instância do app)
     // Observação: como utilitário isolado, quando não houver app disponível,
     // os testes podem optar por fazer login via rota /auth/login.
-    const secret =
-      process.env.JWT_SECRET ||
-      'your-super-secret-jwt-key-change-this-in-production'
+    const secret = mockEnv.JWT_SECRET
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const jwt = require('jsonwebtoken') as typeof import('jsonwebtoken')
     return jwt.sign(
