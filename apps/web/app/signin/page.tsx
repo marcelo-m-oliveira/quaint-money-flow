@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, LogIn, Mail, MoveRight, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { getSession, signIn } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -30,17 +30,6 @@ export default function SignInPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<SignInSchema>({ resolver: zodResolver(signInSchema) })
-
-  // Verificar se o usuário já está logado
-  useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession()
-      if (session) {
-        router.push('/')
-      }
-    }
-    checkSession()
-  }, [router])
 
   // Verificar se há erro na URL (vindo do NextAuth)
   useEffect(() => {
