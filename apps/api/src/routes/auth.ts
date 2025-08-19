@@ -9,6 +9,7 @@ import { getRedisClient } from '@/lib/redis'
 import { authMiddleware } from '@/middleware/auth.middleware'
 import { performanceMiddleware } from '@/middleware/performance.middleware'
 import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
+import { createDefaultCategories } from '@/utils/default-categories'
 import { ResponseFormatter } from '@/utils/response'
 import { loginSchema } from '@/utils/schemas'
 
@@ -202,6 +203,24 @@ export async function authRoutes(app: FastifyInstance) {
         },
       })
 
+      // Criar categorias padrão para o novo usuário
+      try {
+        await createDefaultCategories(user.id, prisma)
+        request.log.info(
+          { userId: user.id, email: user.email },
+          'Categorias padrão criadas para novo usuário',
+        )
+      } catch (error) {
+        request.log.warn(
+          {
+            userId: user.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          'Erro ao criar categorias padrão, mas usuário foi criado com sucesso',
+        )
+        // Não falhar o registro se houver erro ao criar categorias
+      }
+
       const payload = {
         sub: user.id,
         id: user.id,
@@ -385,6 +404,24 @@ export async function authRoutes(app: FastifyInstance) {
             { userId: user.id, email },
             'Novo usuário criado via Google OAuth',
           )
+
+          // Criar categorias padrão para o novo usuário Google
+          try {
+            await createDefaultCategories(user.id, prisma)
+            request.log.info(
+              { userId: user.id, email },
+              'Categorias padrão criadas para novo usuário Google',
+            )
+          } catch (error) {
+            request.log.warn(
+              {
+                userId: user.id,
+                error: error instanceof Error ? error.message : 'Unknown error',
+              },
+              'Erro ao criar categorias padrão para usuário Google, mas usuário foi criado com sucesso',
+            )
+            // Não falhar o registro se houver erro ao criar categorias
+          }
         } else {
           // Usuário existe - verificar se já tem vínculo com Google
           const hasGoogleProvider = user.providers.length > 0
