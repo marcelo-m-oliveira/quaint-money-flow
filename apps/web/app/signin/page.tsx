@@ -3,8 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, LogIn, Mail, MoveRight, Shield } from 'lucide-react'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { getSession, signIn } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -20,11 +21,36 @@ type SignInSchema = z.infer<typeof signInSchema>
 export default function SignInPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<SignInSchema>({ resolver: zodResolver(signInSchema) })
+
+  // Verificar se o usuário já está logado
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await getSession()
+      if (session) {
+        router.push('/')
+      }
+    }
+    checkSession()
+  }, [router])
+
+  // Verificar se há erro na URL (vindo do NextAuth)
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'CredentialsSignin') {
+      setError(
+        'Email ou senha incorretos. Verifique suas credenciais e tente novamente.',
+      )
+    }
+  }, [searchParams])
 
   return (
     <div className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-md place-items-center px-4 py-10">
@@ -39,16 +65,35 @@ export default function SignInPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
+
         <form
           className="space-y-3"
           onSubmit={handleSubmit(async (data) => {
             setLoading(true)
-            await signIn('credentials', {
+            setError(null)
+
+            const result = await signIn('credentials', {
               email: data.email,
               password: data.password,
-              callbackUrl: '/',
+              redirect: false,
             })
-            setLoading(false)
+
+            if (result?.error) {
+              setError(
+                'Email ou senha incorretos. Verifique suas credenciais e tente novamente.',
+              )
+              setLoading(false)
+            } else if (result?.ok) {
+              router.push('/')
+            } else {
+              setError('Erro inesperado. Tente novamente.')
+              setLoading(false)
+            }
           })}
         >
           <div className="space-y-1">
