@@ -73,6 +73,7 @@ export default function ConfiguracoesPage() {
   const { data: session } = useSession()
   const [userProviders, setUserProviders] = useState<string[]>([])
   const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
 
   useEffect(() => {
     // Verificar status da conta do usuário
@@ -101,6 +102,57 @@ export default function ConfiguracoesPage() {
       checkAccountStatus()
     }
   }, [session])
+
+  // Verificar se acabou de retornar de uma autenticação Google
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const googleConnected = urlParams.get('google_connected')
+
+    if (googleConnected === 'true') {
+      // Remover o parâmetro da URL
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+
+      // Recarregar o status da conta
+      refreshAccountStatus()
+      setIsConnecting(false)
+    }
+  }, [])
+
+  // Função para conectar com Google
+  const handleConnectGoogle = async () => {
+    try {
+      setIsConnecting(true)
+      // Redirecionar para o fluxo OAuth do Google com parâmetro de vinculação
+      // Adicionar state parameter para indicar que é uma vinculação
+      window.location.href = '/api/auth/google?link_account=true'
+    } catch (error) {
+      console.error('Erro ao conectar com Google:', error)
+      setIsConnecting(false)
+    }
+  }
+
+  // Função para recarregar o status da conta após conexão
+  const refreshAccountStatus = async () => {
+    try {
+      const response = await fetch('/api/proxy/users/account-status')
+      if (response.ok) {
+        const accountStatus = await response.json()
+
+        // Definir provedores baseado no status
+        const providers = []
+        if (accountStatus.hasGoogleProvider) {
+          providers.push('google')
+        }
+        setUserProviders(providers)
+
+        // Definir se precisa configurar senha
+        setNeedsPasswordSetup(accountStatus.needsPasswordSetup)
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status da conta:', error)
+    }
+  }
 
   const { categories, isLoading: categoriesLoading } = useFinancialData()
   const { accounts, isLoading: accountsLoading } = useAccountsWithAutoInit()
@@ -202,8 +254,13 @@ export default function ConfiguracoesPage() {
               {userProviders.includes('google') ? (
                 <Badge variant="default">Conectado</Badge>
               ) : (
-                <Button variant="outline" size="sm">
-                  Conectar
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleConnectGoogle}
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? 'Conectando...' : 'Conectar'}
                 </Button>
               )}
             </div>

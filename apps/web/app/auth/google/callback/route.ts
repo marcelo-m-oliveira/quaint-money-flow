@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
+  const state = searchParams.get('state')
 
   // Handle Google OAuth errors
   if (error) {
@@ -56,7 +57,12 @@ export async function GET(request: Request) {
 
     // Redirect to a client bridge page that will call signIn('credentials') on the client
     const params = new URLSearchParams()
-    params.set('callbackUrl', '/')
+
+    // Verificar se é uma vinculação de conta baseado no state
+    const isLinking = state && state.includes('_link')
+    const callbackUrl = isLinking ? '/configuracoes?google_connected=true' : '/'
+
+    params.set('callbackUrl', callbackUrl)
     params.set('accessToken', data.accessToken)
     params.set('refreshToken', data.refreshToken)
     params.set('user', JSON.stringify(data.user))

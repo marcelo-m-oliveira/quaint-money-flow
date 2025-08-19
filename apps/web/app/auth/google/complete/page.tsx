@@ -25,7 +25,12 @@ export default function GoogleCompletePage() {
       if (metadata) {
         try {
           const metadataObj = JSON.parse(metadata)
+          console.log('🔍 Metadata do Google OAuth:', metadataObj)
+
           if (metadataObj.needsPasswordSetup) {
+            console.log(
+              '⚠️ Usuário precisa configurar senha - redirecionando para setup-password',
+            )
             // Redirecionar para página de configuração de senha
             const params = new URLSearchParams()
             params.set('accessToken', accessToken)
@@ -34,10 +39,16 @@ export default function GoogleCompletePage() {
             params.set('callbackUrl', callbackUrl)
             router.replace(`/auth/setup-password?${params.toString()}`)
             return
+          } else {
+            console.log(
+              '✅ Usuário não precisa configurar senha - fazendo login normal',
+            )
           }
         } catch (error) {
           console.error('Erro ao parsear metadados:', error)
         }
+      } else {
+        console.log('ℹ️ Nenhum metadata recebido')
       }
 
       // Login normal

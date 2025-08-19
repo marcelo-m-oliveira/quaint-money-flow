@@ -414,9 +414,23 @@ export async function authRoutes(app: FastifyInstance) {
             )
           }
 
-          // Verificar se precisa configurar senha (usuário criado via Google sem senha definida)
-          // Usar o campo passwordConfigured para determinar se a senha foi configurada pelo usuário
+          // Verificar se precisa configurar senha
+          // Usuários que já têm senha configurada (passwordConfigured: true) não precisam configurar
+          // Usuários que foram criados via Google (passwordConfigured: false) precisam configurar
           needsPasswordSetup = !user.passwordConfigured
+
+          request.log.info(
+            {
+              userId: user.id,
+              email,
+              passwordConfigured: user.passwordConfigured,
+              needsPasswordSetup,
+              isExistingUser: true,
+              userPasswordLength: user.password?.length || 0,
+              hasValidPassword: user.passwordConfigured,
+            },
+            'Verificação de configuração de senha para usuário existente',
+          )
         }
 
         // Vincular/atualizar provedor
@@ -447,11 +461,18 @@ export async function authRoutes(app: FastifyInstance) {
         const refresh = await signRefreshToken(user.id)
 
         request.log.info(
-          { userId: user.id, email, isNewUser, needsPasswordSetup },
+          {
+            userId: user.id,
+            email,
+            isNewUser,
+            needsPasswordSetup,
+            passwordConfigured: user.passwordConfigured,
+            hasGoogleProvider: user.providers.length > 0,
+          },
           'Login via Google OAuth realizado com sucesso',
         )
 
-        return reply.status(200).send({
+        const responseData = {
           accessToken,
           refreshToken: refresh.token,
           user: {
@@ -465,7 +486,17 @@ export async function authRoutes(app: FastifyInstance) {
             needsPasswordSetup,
             hasGoogleProvider: user.providers.length > 0,
           },
-        })
+        }
+
+        request.log.info(
+          {
+            metadata: responseData.metadata,
+            needsPasswordSetup: responseData.metadata.needsPasswordSetup,
+          },
+          'Resposta do callback do Google OAuth',
+        )
+
+        return reply.status(200).send(responseData)
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error'

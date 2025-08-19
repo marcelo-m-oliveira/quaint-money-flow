@@ -12,11 +12,14 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { email: 'user@example.com' },
-    update: {},
+    update: {
+      passwordConfigured: true, // Garantir que usuário existente tenha senha configurada
+    },
     create: {
       email: 'user@example.com',
       name: 'Usuário Exemplo',
       password: passwordHash,
+      passwordConfigured: true, // Usuário criado via seed tem senha configurada
       avatarUrl: faker.image?.avatar(),
     },
   })

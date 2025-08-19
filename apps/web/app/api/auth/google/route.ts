@@ -6,12 +6,18 @@ import { NextResponse } from 'next/server'
 
 const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const linkAccount = searchParams.get('link_account')
+
   const clientId = env.GOOGLE_CLIENT_ID
   // Redirect to frontend callback first, not directly to backend
   const redirectUri = 'http://localhost:3000/auth/google/callback'
   const scope = encodeURIComponent('openid email profile')
-  const state = Math.random().toString(36).slice(2)
+
+  // Incluir informação de vinculação no state
+  const baseState = Math.random().toString(36).slice(2)
+  const state = linkAccount === 'true' ? `${baseState}_link` : baseState
 
   if (!clientId) {
     return NextResponse.redirect(
