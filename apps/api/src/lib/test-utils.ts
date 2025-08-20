@@ -35,6 +35,7 @@ const mockEnv = {
 }
 
 // Mock do import do @saas/env
+// eslint-disable-next-line no-use-before-define
 jest.mock('@saas/env', () => ({
   env: mockEnv,
 }))

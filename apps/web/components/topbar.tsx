@@ -15,11 +15,10 @@ import {
   Zap,
 } from 'lucide-react'
 import Link from 'next/link'
-import { signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
-import { useSession } from '@/lib/hooks/use-session'
+import { useAuth } from '@/lib/hooks/use-auth'
 
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
@@ -34,12 +33,10 @@ import {
 
 export function Topbar() {
   const { setTheme } = useTheme()
-  const { data } = useSession()
-  const userName = data?.user?.name || ''
-  const userEmail = data?.user?.email || ''
-  const userImage =
-    (data?.user as any)?.avatarUrl ||
-    ((data?.user as any)?.image as string | undefined)
+  const { user, logout } = useAuth()
+  const userName = user?.name || ''
+  const userEmail = user?.email || ''
+  const userImage = user?.avatarUrl || ''
   const [userInitials] = useState(
     (userName || '')
       .split(' ')
@@ -48,6 +45,14 @@ export function Topbar() {
       .map((n) => n[0])
       .join('') || 'U',
   )
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+    }
+  }
 
   return (
     <header className="border-b bg-card">
@@ -230,7 +235,7 @@ export function Topbar() {
                   <span>Upgrade</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>

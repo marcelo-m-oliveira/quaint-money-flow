@@ -7,9 +7,9 @@ import { useEffect, useState } from 'react'
 
 import { useOverviewContext } from '@/lib/contexts/overview-context'
 import { formatCurrency, getDayPeriod } from '@/lib/format'
+import { useAuth } from '@/lib/hooks/use-auth'
 import { useCategories } from '@/lib/hooks/use-categories'
 import { useEntries } from '@/lib/hooks/use-entries'
-import { useSession } from '@/lib/hooks/use-session'
 import { Entry, EntryFormData, PendingAccount } from '@/lib/types'
 
 import {
@@ -66,8 +66,8 @@ export function FinancialDashboard() {
 
   // Estado para armazenar o período do dia
   const [dayPeriod, setDayPeriod] = useState(getDayPeriod())
-  const { data } = useSession()
-  const displayName = data?.user?.name || ''
+  const { user } = useAuth()
+  const displayName = user?.name || ''
 
   // Atualiza o período do dia a cada minuto
   useEffect(() => {

@@ -792,32 +792,79 @@ export async function authRoutes(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { refreshToken } = request.body as any
       try {
-        const decoded = app.jwt.verify(refreshToken) as any
-        if (decoded.type !== 'refresh' || !decoded.jti) {
+        const { refreshToken } = request.body as any
+        
+        if (!refreshToken) {
+          request.log.warn('Logout: refreshToken não fornecido')
           return ResponseFormatter.error(
             reply,
-            'Refresh token inválido',
+            'Refresh token não fornecido',
             undefined,
-            401,
+            400,
           )
         }
 
-        await redis.del(`refresh:${decoded.jti}`)
-        await prisma.refreshToken.update({
-          where: { jti: decoded.jti as string },
-          data: { revokedAt: new Date() },
-        })
+        request.log.info('Logout: iniciando processo de logout')
 
+        let decoded: any
+        try {
+          decoded = app.jwt.verify(refreshToken) as any
+        } catch (jwtError) {
+          request.log.warn('Logout: JWT inválido', { 
+            error: jwtError instanceof Error ? jwtError.message : 'Unknown error' 
+          })
+          // Mesmo com JWT inválido, retornar sucesso para não quebrar o fluxo
+          return ResponseFormatter.noContent(reply)
+        }
+        
+        if (decoded.type !== 'refresh' || !decoded.jti) {
+          request.log.warn('Logout: refresh token inválido', { 
+            type: decoded.type, 
+            hasJti: !!decoded.jti 
+          })
+          // Mesmo com token inválido, retornar sucesso para não quebrar o fluxo
+          return ResponseFormatter.noContent(reply)
+        }
+
+        request.log.info('Logout: revogando refresh token', { jti: decoded.jti })
+
+        // Revogar no Redis (não falhar se não conseguir)
+        try {
+          await redis.del(`refresh:${decoded.jti}`)
+          request.log.info('Logout: token removido do Redis')
+        } catch (redisError) {
+          request.log.warn('Logout: erro ao remover token do Redis (não crítico)', { 
+            error: redisError instanceof Error ? redisError.message : 'Unknown error' 
+          })
+          // Não falhar se o Redis estiver indisponível
+        }
+
+        // Revogar no banco de dados (não falhar se não conseguir)
+        try {
+          await prisma.refreshToken.update({
+            where: { jti: decoded.jti as string },
+            data: { revokedAt: new Date() },
+          })
+          request.log.info('Logout: token marcado como revogado no banco')
+        } catch (dbError) {
+          request.log.warn('Logout: erro ao revogar token no banco (não crítico)', { 
+            error: dbError instanceof Error ? dbError.message : 'Unknown error' 
+          })
+          // Não falhar se o banco estiver indisponível
+        }
+
+        request.log.info('Logout: processo concluído com sucesso')
         return ResponseFormatter.noContent(reply)
       } catch (error: any) {
-        return ResponseFormatter.error(
-          reply,
-          'Refresh token inválido',
-          undefined,
-          401,
-        )
+        request.log.error('Logout: erro inesperado', { 
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        })
+        
+        // Para qualquer erro, retornar sucesso para não quebrar o fluxo de logout
+        // O importante é que o front-end limpe os tokens locais
+        return ResponseFormatter.noContent(reply)
       }
     },
   )

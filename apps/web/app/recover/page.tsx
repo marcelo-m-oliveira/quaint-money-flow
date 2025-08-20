@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { authService } from '@/lib/services/auth'
 
 export default function RecoverPage() {
   const [email, setEmail] = useState('')
@@ -16,27 +17,25 @@ export default function RecoverPage() {
     setLoading(true)
     setMessage(null)
     try {
-      // For now, we just check if the email exists by attempting login with empty password
-      // or call a hypothetical endpoint. This can be wired when backend provides it.
-      const resp = await fetch('/api/proxy/auth/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password: '' }),
-      })
-      if (resp.status === 401 || resp.status === 400 || resp.status === 500) {
-        // Show generic recovery guidance
+      // Por enquanto, apenas verificamos se o email existe tentando login com senha vazia
+      // Isso pode ser conectado quando o backend fornecer um endpoint específico para recuperação
+      await authService.login({ email, password: '' })
+      setMessage(
+        'Sua conta existe. Você pode prosseguir para a página de login.',
+      )
+    } catch (error: any) {
+      // Se der erro 401, 400 ou 500, significa que o email existe mas a senha está incorreta
+      if (
+        error?.status === 401 ||
+        error?.status === 400 ||
+        error?.status === 500
+      ) {
         setMessage(
           'Se o email existir, você receberá instruções para recuperar sua conta. Verifique sua caixa de entrada.',
-        )
-      } else if (resp.ok) {
-        setMessage(
-          'Sua conta existe. Você pode prosseguir para a página de login.',
         )
       } else {
         setMessage('Verifique seu email. Se existir, enviaremos instruções.')
       }
-    } catch {
-      setMessage('Verifique seu email. Se existir, enviaremos instruções.')
     } finally {
       setLoading(false)
     }

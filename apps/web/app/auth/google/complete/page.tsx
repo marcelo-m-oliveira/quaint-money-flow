@@ -1,69 +1,75 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { signIn } from 'next-auth/react'
-import { useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
-export default function GoogleCompletePage() {
+import { useAuth } from '@/lib/hooks/use-auth'
+
+function GoogleCompleteForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { googleLogin } = useAuth()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const accessToken = searchParams.get('accessToken')
-    const refreshToken = searchParams.get('refreshToken')
-    const user = searchParams.get('user')
-    const metadata = searchParams.get('metadata')
-    const callbackUrl = searchParams.get('callbackUrl') || '/'
+    const code = searchParams.get('code')
 
     async function run() {
-      if (!accessToken || !refreshToken || !user) {
-        router.replace('/error?error=invalid_backend_response')
+      if (!code) {
+        setError('Código de autorização não fornecido')
         return
       }
 
-      // Verificar se precisa configurar senha
-      if (metadata) {
-        try {
-          const metadataObj = JSON.parse(metadata)
-          console.log('🔍 Metadata do Google OAuth:', metadataObj)
-
-          if (metadataObj.needsPasswordSetup) {
-            console.log(
-              '⚠️ Usuário precisa configurar senha - redirecionando para setup-password',
-            )
-            // Redirecionar para página de configuração de senha
-            const params = new URLSearchParams()
-            params.set('accessToken', accessToken)
-            params.set('refreshToken', refreshToken)
-            params.set('user', user)
-            params.set('callbackUrl', callbackUrl)
-            router.replace(`/auth/setup-password?${params.toString()}`)
-            return
-          } else {
-            console.log(
-              '✅ Usuário não precisa configurar senha - fazendo login normal',
-            )
-          }
-        } catch (error) {
-          console.error('Erro ao parsear metadados:', error)
-        }
-      } else {
-        console.log('ℹ️ Nenhum metadata recebido')
+      try {
+        await googleLogin(code)
+        // O redirecionamento será feito automaticamente pelo hook useAuth
+      } catch (error) {
+        console.error('Erro no login com Google:', error)
+        setError('Erro na autenticação com Google. Tente novamente.')
+        // Redirecionar para página de erro após 3 segundos
+        setTimeout(() => {
+          router.push('/signin?error=google_auth_failed')
+        }, 3000)
       }
-
-      // Login normal
-      await signIn('credentials', {
-        accessToken,
-        refreshToken,
-        user,
-        callbackUrl,
-        redirect: true,
-      })
     }
 
     // eslint-disable-next-line no-void
     void run()
-  }, [searchParams, router])
+  }, [searchParams, router, googleLogin])
 
-  return null
+  if (error) {
+    return (
+      <div className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-md place-items-center px-4 py-10">
+        <div className="w-full space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+          <div className="space-y-2">
+            <div className="text-2xl font-bold text-destructive">
+              Erro na Autenticação
+            </div>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-md place-items-center px-4 py-10">
+      <div className="w-full space-y-6 rounded-xl border bg-card p-6 shadow-sm">
+        <div className="space-y-2">
+          <div className="text-2xl font-bold">Autenticando...</div>
+          <p className="text-sm text-muted-foreground">
+            Aguarde enquanto completamos sua autenticação com o Google.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function GoogleCompletePage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <GoogleCompleteForm />
+    </Suspense>
+  )
 }

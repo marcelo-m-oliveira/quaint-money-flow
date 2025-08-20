@@ -10,7 +10,8 @@ import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { authService } from '@/lib'
+import { useAuth } from '@/lib/hooks/use-auth'
+import { authService } from '@/lib/services/auth'
 
 const signUpSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -37,6 +38,8 @@ export default function SignUpPage() {
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(
     null,
   )
+  const { register: registerUser } = useAuth()
+
   const {
     register,
     handleSubmit,
@@ -65,7 +68,7 @@ export default function SignUpPage() {
     setSuccess(null)
     setRedirectCountdown(null)
     try {
-      await authService.register(data)
+      await registerUser(data)
       setSuccess('Conta criada com sucesso! Você já pode entrar.')
       setRedirectCountdown(5) // Iniciar countdown de 5 segundos
       reset()
@@ -74,6 +77,11 @@ export default function SignUpPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGoogleSignup = () => {
+    const googleAuthUrl = authService.getGoogleAuthUrl()
+    window.location.href = googleAuthUrl
   }
 
   return (
@@ -146,9 +154,7 @@ export default function SignUpPage() {
               variant="outline"
               className="w-full"
               type="button"
-              onClick={() => {
-                window.location.href = '/api/auth/google'
-              }}
+              onClick={handleGoogleSignup}
             >
               <Mail className="h-4 w-4" /> Criar conta com Google
             </Button>

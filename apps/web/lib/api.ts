@@ -1,7 +1,9 @@
+import { env } from '@saas/env'
+
 import type { ApiResponse, PaginatedResponse } from './types'
 
-// Use internal proxy so that cookies/session are available and we can inject auth
-const API_BASE_URL = '/api/proxy'
+// Chamadas diretas para a API backend
+const API_BASE_URL = env.NEXT_PUBLIC_API_URL
 
 export type { ApiResponse, PaginatedResponse }
 
@@ -12,14 +14,65 @@ class ApiClient {
     this.baseURL = baseURL
   }
 
+  private async getAuthToken(): Promise<string | null> {
+    // Em ambiente cliente, buscar token do localStorage ou sessionStorage
+    if (typeof window !== 'undefined') {
+      return (
+        localStorage.getItem('accessToken') ||
+        sessionStorage.getItem('accessToken')
+      )
+    }
+    return null
+  }
+
+  private async refreshToken(): Promise<string | null> {
+    try {
+      const refreshToken =
+        localStorage.getItem('refreshToken') ||
+        sessionStorage.getItem('refreshToken')
+      if (!refreshToken) return null
+
+      const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      })
+
+      if (!response.ok) {
+        // Se o refresh falhou, limpar tokens e redirecionar para login
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        sessionStorage.removeItem('accessToken')
+        sessionStorage.removeItem('refreshToken')
+        if (typeof window !== 'undefined') {
+          window.location.href = '/signin'
+        }
+        return null
+      }
+
+      const data = await response.json()
+
+      // Salvar novos tokens
+      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('refreshToken', data.refreshToken)
+
+      return data.accessToken
+    } catch (error) {
+      console.error('Erro ao renovar token:', error)
+      return null
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
-    // Read access token from NextAuth session (server or client-safe header injection)
-    // Token is injected by proxy route; no need to read here
+    // Obter token de autenticação
+    const accessToken = await this.getAuthToken()
 
     const config: RequestInit = {
       headers: {
@@ -29,8 +82,39 @@ class ApiClient {
       ...options,
     }
 
+    // Adicionar token de autenticação se disponível
+    if (accessToken) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${accessToken}`,
+      }
+    }
+
     try {
       const response = await fetch(url, config)
+
+      // Se receber 401, tentar renovar o token
+      if (response.status === 401 && accessToken) {
+        const newToken = await this.refreshToken()
+        if (newToken) {
+          // Refazer a requisição com o novo token
+          config.headers = {
+            ...config.headers,
+            Authorization: `Bearer ${newToken}`,
+          }
+          const retryResponse = await fetch(url, config)
+
+          if (!retryResponse.ok) {
+            const errorData = await retryResponse.json().catch(() => ({}))
+            const message = errorData && (errorData.message || errorData.error)
+            throw new Error(
+              message || `HTTP error! status: ${retryResponse.status}`,
+            )
+          }
+
+          return await retryResponse.json()
+        }
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -64,12 +148,20 @@ class ApiClient {
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
+    const accessToken = await this.getAuthToken()
     const config: RequestInit = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
       body: data ? JSON.stringify(data) : undefined,
+    }
+
+    if (accessToken) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${accessToken}`,
+      }
     }
 
     try {
@@ -103,11 +195,19 @@ class ApiClient {
   async delete<T>(endpoint: string): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
 
+    const accessToken = await this.getAuthToken()
     const config: RequestInit = {
       method: 'DELETE',
       headers: {
         // Não incluir Content-Type para DELETE sem body
       },
+    }
+
+    if (accessToken) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${accessToken}`,
+      }
     }
 
     try {

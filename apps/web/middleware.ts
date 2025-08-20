@@ -1,15 +1,16 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
-import { env } from '@saas/env'
 
 const PUBLIC_PATHS = [
   '/signin',
+  '/signup',
+  '/auth',
   '/api/auth',
-  '/api/proxy',
   '/_next',
   '/favicon.ico',
   '/icons',
+  '/error',
+  '/recover',
 ]
 
 function isPublicPath(pathname: string) {
@@ -18,16 +19,19 @@ function isPublicPath(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  if (isPublicPath(pathname)) return NextResponse.next()
+  
+  if (isPublicPath(pathname)) {
+    return NextResponse.next()
+  }
 
-  const token = await getToken({
-    req: request,
-    secret: env.NEXTAUTH_SECRET,
-  })
-  if (!token) {
+  // Verificar se há token de acesso nos cookies
+  const accessToken = request.cookies.get('accessToken')?.value
+
+  if (!accessToken) {
     const signInUrl = new URL('/signin', request.url)
     return NextResponse.redirect(signInUrl)
   }
+
   return NextResponse.next()
 }
 

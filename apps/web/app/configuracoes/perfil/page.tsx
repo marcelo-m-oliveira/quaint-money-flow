@@ -12,7 +12,7 @@ import { FileUpload } from '@/components/ui/file-upload'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { useCrudToast } from '@/lib'
-import { useSession } from '@/lib/hooks/use-session'
+import { useAuth } from '@/lib/hooks/use-auth'
 import { userService } from '@/lib/services/user'
 
 const profileSchema = z.object({
@@ -36,7 +36,7 @@ const passwordSchema = z.object({
 type PasswordSchema = z.infer<typeof passwordSchema>
 
 export default function PerfilPage() {
-  const { data } = useSession()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [pwLoading, setPwLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -72,7 +72,7 @@ export default function PerfilPage() {
     })()
   }, [reset])
 
-  const avatarUrl = watch('avatarUrl') || (data?.user as any)?.image || ''
+  const avatarUrl = watch('avatarUrl') || user?.avatarUrl || ''
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -113,7 +113,7 @@ export default function PerfilPage() {
                 </div>
                 <div>
                   <label className="text-sm text-muted-foreground">Email</label>
-                  <Input value={data?.user?.email || ''} disabled />
+                  <Input value={user?.email || ''} disabled />
                 </div>
               </div>
 
@@ -131,7 +131,7 @@ export default function PerfilPage() {
                     register('avatarUrl').onChange(event)
                   }}
                   placeholder="Selecionar foto de perfil"
-                  fallbackText={data?.user?.name || 'Usuário'}
+                  fallbackText={user?.name || 'Usuário'}
                   maxSize={5}
                   acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
                   uploadToServer={true}

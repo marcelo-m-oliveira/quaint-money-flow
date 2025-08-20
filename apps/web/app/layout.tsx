@@ -3,10 +3,10 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
-import { AuthSessionProvider } from '@/components/auth-session-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { AccountsProvider } from '@/lib/contexts/accounts-context'
+import { AuthProvider } from '@/lib/contexts/auth-context'
 import { BankIconsProvider } from '@/lib/contexts/bank-icons-context'
 import { CreditCardsProvider } from '@/lib/contexts/credit-cards-context'
 import { UserPreferencesProvider } from '@/lib/contexts/user-preferences-context'
@@ -26,13 +26,13 @@ export default function RootLayout({
   return (
     <html lang="pt-br" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthSessionProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
             <AccountsProvider>
               <CreditCardsProvider>
                 <BankIconsProvider>
@@ -40,9 +40,9 @@ export default function RootLayout({
                 </BankIconsProvider>
               </CreditCardsProvider>
             </AccountsProvider>
-            <Toaster />
-          </ThemeProvider>
-        </AuthSessionProvider>
+          </AuthProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

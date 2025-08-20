@@ -1,50 +1,249 @@
-import { apiClient } from '@/lib/api'
+import { env } from '@saas/env'
 
-interface RegisterPayload {
+export interface LoginCredentials {
+  email: string
+  password: string
+}
+
+export interface RegisterData {
   name: string
   email: string
   password: string
 }
 
-interface AuthUser {
-  id: string
-  name: string
-  email: string
-}
-
-interface AuthResponse {
+export interface AuthResponse {
   accessToken: string
   refreshToken: string
-  user: AuthUser
+  user: {
+    id: string
+    email: string
+    name: string
+    avatarUrl?: string | null
+  }
+  metadata?: {
+    isNewUser?: boolean
+    needsPasswordSetup?: boolean
+    hasGoogleProvider?: boolean
+  }
 }
 
-export const authService = {
-  async register(payload: RegisterPayload): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>('/auth/register', payload)
-  },
+export interface SetupPasswordData {
+  password: string
+  confirmPassword: string
 }
 
-export async function setupPassword(
-  password: string,
-  confirmPassword: string,
-  accessToken: string,
-) {
-  const response = await fetch('/api/proxy/auth/setup-password', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      password,
-      confirmPassword,
-    }),
-  })
+class AuthService {
+  private baseURL = env.NEXT_PUBLIC_API_URL
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Erro ao configurar senha')
+  private saveTokens(accessToken: string, refreshToken: string) {
+    if (typeof window !== 'undefined') {
+      // Salvar no localStorage
+      localStorage.setItem('accessToken', accessToken)
+      localStorage.setItem('refreshToken', refreshToken)
+
+      // Salvar em cookies para o middleware
+      document.cookie = `accessToken=${accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`
+      document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Strict`
+    }
   }
 
-  return response.json()
+  private clearTokens() {
+    if (typeof window !== 'undefined') {
+      // Limpar localStorage
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      sessionStorage.removeItem('accessToken')
+      sessionStorage.removeItem('refreshToken')
+
+      // Limpar cookies
+      document.cookie =
+        'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      document.cookie =
+        'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    }
+  }
+
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    const response = await fetch(`${this.baseURL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const message = errorData?.message || errorData?.error || 'Erro no login'
+      throw new Error(message)
+    }
+
+    const data = await response.json()
+    this.saveTokens(data.accessToken, data.refreshToken)
+    return data
+  }
+
+  async register(data: RegisterData): Promise<AuthResponse> {
+    const response = await fetch(`${this.baseURL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const message =
+        errorData?.message || errorData?.error || 'Erro no registro'
+      throw new Error(message)
+    }
+
+    const responseData = await response.json()
+    this.saveTokens(responseData.accessToken, responseData.refreshToken)
+    return responseData
+  }
+
+  async googleLogin(code: string): Promise<AuthResponse> {
+    const response = await fetch(
+      `${this.baseURL}/auth/google/callback?code=${encodeURIComponent(code)}`,
+      {
+        method: 'GET',
+      },
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const message =
+        errorData?.message || errorData?.error || 'Erro no login com Google'
+      throw new Error(message)
+    }
+
+    const data = await response.json()
+    this.saveTokens(data.accessToken, data.refreshToken)
+    return data
+  }
+
+  async setupPassword(
+    data: SetupPasswordData,
+  ): Promise<{ message: string; user: any }> {
+    const accessToken =
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('accessToken')
+
+    if (!accessToken) {
+      throw new Error('Token de acesso não encontrado')
+    }
+
+    const response = await fetch(`${this.baseURL}/auth/setup-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const message =
+        errorData?.message || errorData?.error || 'Erro ao configurar senha'
+      throw new Error(message)
+    }
+
+    return await response.json()
+  }
+
+  async logout(): Promise<void> {
+    const refreshToken =
+      localStorage.getItem('refreshToken') ||
+      sessionStorage.getItem('refreshToken')
+
+    if (refreshToken) {
+      try {
+        const response = await fetch(`${this.baseURL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refreshToken }),
+        })
+
+        if (!response.ok) {
+          console.warn('Logout no servidor falhou, mas tokens locais serão limpos', {
+            status: response.status,
+            statusText: response.statusText,
+          })
+        } else {
+          console.log('Logout realizado com sucesso no servidor')
+        }
+      } catch (error) {
+        console.warn('Erro ao fazer logout no servidor, mas tokens locais serão limpos:', error)
+        // Não falhar o logout local mesmo se o servidor não responder
+      }
+    }
+
+    // Sempre limpar tokens locais, independente da resposta do servidor
+    this.clearTokens()
+  }
+
+  async refreshTokens(): Promise<AuthResponse> {
+    const refreshToken =
+      localStorage.getItem('refreshToken') ||
+      sessionStorage.getItem('refreshToken')
+
+    if (!refreshToken) {
+      throw new Error('Refresh token não encontrado')
+    }
+
+    const response = await fetch(`${this.baseURL}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    if (!response.ok) {
+      this.clearTokens()
+      throw new Error('Falha ao renovar tokens')
+    }
+
+    const data = await response.json()
+    this.saveTokens(data.accessToken, data.refreshToken)
+    return data
+  }
+
+  getAccessToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return (
+        localStorage.getItem('accessToken') ||
+        sessionStorage.getItem('accessToken')
+      )
+    }
+    return null
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getAccessToken()
+  }
+
+  getGoogleAuthUrl(): string {
+    const clientId = env.GOOGLE_CLIENT_ID
+    const redirectUri = env.GOOGLE_REDIRECT_URI
+    const scope = 'openid email profile'
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope,
+      access_type: 'offline',
+      prompt: 'consent',
+    })
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+  }
 }
+
+export const authService = new AuthService()

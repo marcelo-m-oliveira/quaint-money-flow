@@ -3,14 +3,15 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, LogIn, Mail, MoveRight, Shield } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { signIn } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useAuth } from '@/lib/hooks/use-auth'
+import { authService } from '@/lib/services/auth'
 
 const signInSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -18,12 +19,13 @@ const signInSchema = z.object({
 })
 type SignInSchema = z.infer<typeof signInSchema>
 
-export default function SignInPage() {
+function SignInForm() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+
   const searchParams = useSearchParams()
+  const { login } = useAuth()
 
   const {
     register,
@@ -31,15 +33,18 @@ export default function SignInPage() {
     formState: { errors },
   } = useForm<SignInSchema>({ resolver: zodResolver(signInSchema) })
 
-  // Verificar se há erro na URL (vindo do NextAuth)
+  // Verificar se há erro na URL
   useEffect(() => {
     const errorParam = searchParams.get('error')
-    if (errorParam === 'CredentialsSignin') {
-      setError(
-        'Email ou senha incorretos. Verifique suas credenciais e tente novamente.',
-      )
+    if (errorParam) {
+      setError('Erro na autenticação. Tente novamente.')
     }
   }, [searchParams])
+
+  const handleGoogleLogin = () => {
+    const googleAuthUrl = authService.getGoogleAuthUrl()
+    window.location.href = googleAuthUrl
+  }
 
   return (
     <div className="mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-md place-items-center px-4 py-10">
@@ -66,21 +71,16 @@ export default function SignInPage() {
             setLoading(true)
             setError(null)
 
-            const result = await signIn('credentials', {
-              email: data.email,
-              password: data.password,
-              redirect: false,
-            })
-
-            if (result?.error) {
+            try {
+              await login({
+                email: data.email,
+                password: data.password,
+              })
+            } catch (error) {
               setError(
                 'Email ou senha incorretos. Verifique suas credenciais e tente novamente.',
               )
-              setLoading(false)
-            } else if (result?.ok) {
-              router.push('/')
-            } else {
-              setError('Erro inesperado. Tente novamente.')
+            } finally {
               setLoading(false)
             }
           })}
@@ -145,9 +145,7 @@ export default function SignInPage() {
               variant="outline"
               className="w-full"
               type="button"
-              onClick={() => {
-                window.location.href = '/api/auth/google'
-              }}
+              onClick={handleGoogleLogin}
             >
               <Mail className="h-4 w-4" /> Entrar com Google
             </Button>
@@ -165,5 +163,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <SignInForm />
+    </Suspense>
   )
 }

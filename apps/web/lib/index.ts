@@ -81,7 +81,7 @@ export { userService } from './services/user'
 export { useUserPreferencesWithAutoInit } from './hooks/use-user-preferences'
 export { useInfiniteScroll } from './hooks/use-infinite-scroll'
 export { useCrudToast } from './hooks/use-crud-toast'
-export { useSession, signIn, signOut, getCsrfToken } from './hooks/use-session'
+export { useAuth } from './hooks/use-auth'
 
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - UTILITÁRIOS

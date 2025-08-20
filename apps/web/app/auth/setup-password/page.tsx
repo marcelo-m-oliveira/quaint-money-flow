@@ -2,14 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Lock, Shield } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useSetupPassword } from '@/lib/hooks/use-setup-password'
+import { useAuth } from '@/lib/hooks/use-auth'
 
 const setupPasswordSchema = z
   .object({
@@ -32,36 +31,33 @@ type SetupPasswordForm = z.infer<typeof setupPasswordSchema>
 export default function SetupPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const searchParams = useSearchParams()
-
-  const accessToken = searchParams.get('accessToken')
-  const refreshToken = searchParams.get('refreshToken')
-  const user = searchParams.get('user')
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
-
-  const { handleSetupPassword, isLoading } = useSetupPassword({
-    accessToken,
-    refreshToken,
-    user,
-    callbackUrl,
-  })
+  const [error, setError] = useState<string | null>(null)
+  const { setupPassword } = useAuth()
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setError,
+    setError: setFormError,
   } = useForm<SetupPasswordForm>({
     resolver: zodResolver(setupPasswordSchema),
   })
 
   const onSubmit = async (data: SetupPasswordForm) => {
     if (data.password !== data.confirmPassword) {
-      setError('confirmPassword', { message: 'Senhas não coincidem' })
+      setFormError('confirmPassword', { message: 'Senhas não coincidem' })
       return
     }
 
-    await handleSetupPassword(data.password, data.confirmPassword)
+    try {
+      setError(null)
+      await setupPassword({
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+      })
+    } catch (error: any) {
+      setError(error?.message || 'Erro ao configurar senha')
+    }
   }
 
   return (
@@ -77,6 +73,12 @@ export default function SetupPasswordPage() {
             sistema.
           </p>
         </div>
+
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
 
         <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-1">
@@ -154,18 +156,9 @@ export default function SetupPasswordPage() {
           </div>
 
           <div className="space-y-3 pt-2">
-            <Button className="w-full" disabled={isLoading} type="submit">
-              {isLoading ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Configurando...
-                </>
-              ) : (
-                <>
-                  <Lock className="mr-2 h-4 w-4" />
-                  Configurar Senha
-                </>
-              )}
+            <Button className="w-full" type="submit">
+              <Lock className="mr-2 h-4 w-4" />
+              Configurar Senha
             </Button>
           </div>
         </form>

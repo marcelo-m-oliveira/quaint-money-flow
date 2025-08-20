@@ -13,7 +13,6 @@ import {
   User,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -27,8 +26,11 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { useAccountStatus } from '@/lib/hooks/use-account-status'
 import { useAccountsWithAutoInit } from '@/lib/hooks/use-accounts'
+import { useAuth } from '@/lib/hooks/use-auth'
 import { useFinancialData } from '@/lib/hooks/use-financial-data'
+import { authService } from '@/lib/services/auth'
 
 const quickActions = [
   {
@@ -70,38 +72,13 @@ const quickActions = [
 ]
 
 export default function ConfiguracoesPage() {
-  const { data: session } = useSession()
-  const [userProviders, setUserProviders] = useState<string[]>([])
-  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false)
+  const { user } = useAuth()
+  const {
+    accountStatus,
+    isLoading: accountStatusLoading,
+    refreshAccountStatus,
+  } = useAccountStatus()
   const [isConnecting, setIsConnecting] = useState(false)
-
-  useEffect(() => {
-    // Verificar status da conta do usuário
-    const checkAccountStatus = async () => {
-      try {
-        const response = await fetch('/api/proxy/users/account-status')
-        if (response.ok) {
-          const accountStatus = await response.json()
-
-          // Definir provedores baseado no status
-          const providers = []
-          if (accountStatus.hasGoogleProvider) {
-            providers.push('google')
-          }
-          setUserProviders(providers)
-
-          // Definir se precisa configurar senha
-          setNeedsPasswordSetup(accountStatus.needsPasswordSetup)
-        }
-      } catch (error) {
-        console.error('Erro ao verificar status da conta:', error)
-      }
-    }
-
-    if (session) {
-      checkAccountStatus()
-    }
-  }, [session])
 
   // Verificar se acabou de retornar de uma autenticação Google
   useEffect(() => {
@@ -117,40 +94,18 @@ export default function ConfiguracoesPage() {
       refreshAccountStatus()
       setIsConnecting(false)
     }
-  }, [])
+  }, [refreshAccountStatus])
 
   // Função para conectar com Google
   const handleConnectGoogle = async () => {
     try {
       setIsConnecting(true)
       // Redirecionar para o fluxo OAuth do Google com parâmetro de vinculação
-      // Adicionar state parameter para indicar que é uma vinculação
-      window.location.href = '/api/auth/google?link_account=true'
+      const googleAuthUrl = authService.getGoogleAuthUrl()
+      window.location.href = googleAuthUrl
     } catch (error) {
       console.error('Erro ao conectar com Google:', error)
       setIsConnecting(false)
-    }
-  }
-
-  // Função para recarregar o status da conta após conexão
-  const refreshAccountStatus = async () => {
-    try {
-      const response = await fetch('/api/proxy/users/account-status')
-      if (response.ok) {
-        const accountStatus = await response.json()
-
-        // Definir provedores baseado no status
-        const providers = []
-        if (accountStatus.hasGoogleProvider) {
-          providers.push('google')
-        }
-        setUserProviders(providers)
-
-        // Definir se precisa configurar senha
-        setNeedsPasswordSetup(accountStatus.needsPasswordSetup)
-      }
-    } catch (error) {
-      console.error('Erro ao verificar status da conta:', error)
     }
   }
 
@@ -162,6 +117,10 @@ export default function ConfiguracoesPage() {
   const incomeCategories = categories.filter((cat) => cat.type === 'income')
   const connectedAccounts = accounts.length
   const activeAlerts = 0 // Por enquanto fixo, pode ser implementado futuramente
+
+  // Extrair informações do status da conta
+  const hasGoogleProvider = accountStatus?.hasGoogleProvider ?? false
+  const needsPasswordSetup = accountStatus?.needsPasswordSetup ?? false
 
   return (
     <div className="container mx-auto space-y-6 p-6">
@@ -189,17 +148,12 @@ export default function ConfiguracoesPage() {
           {/* Informações do Usuário */}
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-              <h3 className="font-semibold">{session?.user?.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {session?.user?.email}
-              </p>
+              <h3 className="font-semibold">{user?.name}</h3>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
             <Avatar className="h-10 w-10">
-              <AvatarImage
-                src={session?.user?.image || ''}
-                alt={session?.user?.name || ''}
-              />
-              <AvatarFallback>{session?.user?.name?.charAt(0)}</AvatarFallback>
+              <AvatarImage src={user?.avatarUrl || ''} alt={user?.name || ''} />
+              <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
           </div>
 
@@ -251,7 +205,9 @@ export default function ConfiguracoesPage() {
                   </p>
                 </div>
               </div>
-              {userProviders.includes('google') ? (
+              {accountStatusLoading ? (
+                <Badge variant="secondary">Carregando...</Badge>
+              ) : hasGoogleProvider ? (
                 <Badge variant="default">Conectado</Badge>
               ) : (
                 <Button
@@ -267,7 +223,7 @@ export default function ConfiguracoesPage() {
           </div>
 
           {/* Aviso sobre Configuração de Senha */}
-          {userProviders.includes('google') && needsPasswordSetup && (
+          {hasGoogleProvider && needsPasswordSetup && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
               <div className="flex items-start gap-3">
                 <AlertCircle className="mt-0.5 h-5 w-5 text-blue-600" />
@@ -297,7 +253,7 @@ export default function ConfiguracoesPage() {
           )}
 
           {/* Informações sobre Vinculação */}
-          {userProviders.includes('google') && (
+          {hasGoogleProvider && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
               <div className="flex items-start gap-3">
                 <CheckCircle className="mt-0.5 h-5 w-5 text-green-600" />

@@ -3,6 +3,7 @@
 import { AlertTriangle, ArrowLeft, Home } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { Button } from '@/components/ui/button'
 
@@ -14,7 +15,7 @@ const errorMessages = {
   callback_error: 'Erro durante o processo de login. Tente novamente.',
 }
 
-export default function ErrorPage() {
+function ErrorForm() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
   const message = searchParams.get('message')
@@ -55,5 +56,13 @@ export default function ErrorPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ErrorPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <ErrorForm />
+    </Suspense>
   )
 }
