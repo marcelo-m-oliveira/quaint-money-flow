@@ -25,7 +25,7 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(null)
 
   const searchParams = useSearchParams()
-  const { login } = useAuth()
+  const { login, googleLoginPopup } = useAuth()
 
   const {
     register,
@@ -43,11 +43,23 @@ function SignInForm() {
 
   const handleGoogleLogin = async () => {
     try {
-      const googleAuthUrl = await authService.getGoogleAuthUrl()
-      window.location.href = googleAuthUrl
+      setLoading(true)
+      setError(null)
+
+      const authResponse = await authService.openGoogleAuthPopup()
+
+      // Se chegou aqui, a autenticação foi bem-sucedida
+      // Usar a nova função do hook para atualizar o contexto
+      await googleLoginPopup(authResponse)
     } catch (error) {
-      console.error('Erro ao obter URL do Google OAuth:', error)
-      setError('Erro ao conectar com Google. Tente novamente.')
+      console.error('Erro ao fazer login com Google:', error)
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError('Erro ao conectar com Google. Tente novamente.')
+      }
+    } finally {
+      setLoading(false)
     }
   }
 

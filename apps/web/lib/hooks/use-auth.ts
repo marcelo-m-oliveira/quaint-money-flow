@@ -24,6 +24,7 @@ interface UseAuthReturn {
   login: (credentials: LoginCredentials) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   googleLogin: (code: string) => Promise<void>
+  googleLoginPopup: (authResponse: any) => Promise<void>
   setupPassword: (data: SetupPasswordData) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
@@ -134,6 +135,28 @@ export function useAuth(): UseAuthReturn {
     [router],
   )
 
+  const googleLoginPopup = useCallback(
+    async (authResponse: any) => {
+      try {
+        setIsLoading(true)
+        setUser(authResponse.user)
+
+        // Verificar se precisa configurar senha
+        if (authResponse.metadata?.needsPasswordSetup) {
+          router.push('/auth/setup-password')
+        } else {
+          router.push('/')
+        }
+      } catch (error) {
+        console.error('Erro no login com Google via popup:', error)
+        throw error
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [router],
+  )
+
   const setupPassword = useCallback(
     async (data: SetupPasswordData) => {
       try {
@@ -178,6 +201,7 @@ export function useAuth(): UseAuthReturn {
     login,
     register,
     googleLogin,
+    googleLoginPopup,
     setupPassword,
     logout,
     refreshUser,

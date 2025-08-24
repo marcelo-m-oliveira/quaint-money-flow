@@ -247,6 +247,76 @@ class AuthService {
       throw new Error('Failed to get Google OAuth URL')
     }
   }
+
+  async openGoogleAuthPopup(): Promise<AuthResponse> {
+    return new Promise((resolve, reject) => {
+      try {
+        // Obter a URL do Google OAuth
+        this.getGoogleAuthUrl()
+          .then((authUrl) => {
+            // Configurar a popup
+            const popupWidth = 500
+            const popupHeight = 600
+            const left = window.screenX + (window.outerWidth - popupWidth) / 2
+            const top = window.screenY + (window.outerHeight - popupHeight) / 2
+
+            const popup = window.open(
+              authUrl,
+              'googleAuth',
+              `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,resizable=yes`,
+            )
+
+            if (!popup) {
+              reject(
+                new Error(
+                  'Popup bloqueada pelo navegador. Permita popups para este site.',
+                ),
+              )
+              return
+            }
+
+            // Monitorar a popup
+            const checkClosed = setInterval(() => {
+              if (popup.closed) {
+                clearInterval(checkClosed)
+                reject(new Error('Autenticação cancelada pelo usuário'))
+              }
+            }, 1000)
+
+            // Listener para mensagens da popup
+            const messageListener = (event: MessageEvent) => {
+              // Verificar se a mensagem é da nossa popup
+              if (event.origin !== window.location.origin) {
+                return
+              }
+
+              if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
+                clearInterval(checkClosed)
+                window.removeEventListener('message', messageListener)
+                popup.close()
+
+                // Processar o código de autorização
+                this.googleLogin(event.data.code).then(resolve).catch(reject)
+              } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
+                clearInterval(checkClosed)
+                window.removeEventListener('message', messageListener)
+                popup.close()
+                reject(
+                  new Error(
+                    event.data.error || 'Erro na autenticação com Google',
+                  ),
+                )
+              }
+            }
+
+            window.addEventListener('message', messageListener)
+          })
+          .catch(reject)
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
 }
 
 export const authService = new AuthService()
