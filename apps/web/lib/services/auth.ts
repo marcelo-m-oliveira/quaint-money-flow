@@ -177,8 +177,6 @@ class AuthService {
               statusText: response.statusText,
             },
           )
-        } else {
-          console.log('Logout realizado com sucesso no servidor')
         }
       } catch (error) {
         console.warn(

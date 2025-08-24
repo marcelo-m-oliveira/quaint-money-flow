@@ -784,11 +784,9 @@ export async function authRoutes(app: FastifyInstance) {
         tags: ['🔐 Autenticação'],
         summary: 'Logout: invalida o refresh token informado',
         security: [],
-        body: {
-          type: 'object',
-          properties: { refreshToken: { type: 'string' } },
-          required: ['refreshToken'],
-        },
+        body: z.object({
+          refreshToken: z.string(),
+        }),
       },
     },
     async (request, reply) => {
@@ -805,8 +803,6 @@ export async function authRoutes(app: FastifyInstance) {
           )
         }
 
-        request.log.info('Logout: iniciando processo de logout')
-
         let decoded: any
         try {
           decoded = app.jwt.verify(refreshToken) as any
@@ -818,6 +814,12 @@ export async function authRoutes(app: FastifyInstance) {
           return ResponseFormatter.noContent(reply)
         }
 
+        // Verificar se decoded é válido e tem as propriedades necessárias
+        if (!decoded || typeof decoded !== 'object') {
+          request.log.warn('Logout: decoded token inválido')
+          return ResponseFormatter.noContent(reply)
+        }
+
         if (decoded.type !== 'refresh' || !decoded.jti) {
           request.log.warn(
             `Logout: refresh token inválido - type: ${decoded.type}, hasJti: ${!!decoded.jti}`,
@@ -826,14 +828,11 @@ export async function authRoutes(app: FastifyInstance) {
           return ResponseFormatter.noContent(reply)
         }
 
-        request.log.info(
-          `Logout: revogando refresh token - jti: ${decoded.jti}`,
-        )
-
         // Revogar no Redis (não falhar se não conseguir)
         try {
-          await redis.del(`refresh:${decoded.jti}`)
-          request.log.info('Logout: token removido do Redis')
+          if (redis && typeof redis.del === 'function') {
+            await redis.del(`refresh:${decoded.jti}`)
+          }
         } catch (redisError) {
           request.log.warn(
             `Logout: erro ao remover token do Redis (não crítico) - ${redisError instanceof Error ? redisError.message : 'Unknown error'}`,
@@ -843,19 +842,25 @@ export async function authRoutes(app: FastifyInstance) {
 
         // Revogar no banco de dados (não falhar se não conseguir)
         try {
-          await prisma.refreshToken.update({
-            where: { jti: decoded.jti as string },
-            data: { revokedAt: new Date() },
-          })
-          request.log.info('Logout: token marcado como revogado no banco')
+          if (prisma && prisma.refreshToken) {
+            // Verificar se o token existe antes de tentar atualizar
+            const existingToken = await prisma.refreshToken.findUnique({
+              where: { jti: decoded.jti as string },
+            })
+
+            if (existingToken) {
+              await prisma.refreshToken.update({
+                where: { jti: decoded.jti as string },
+                data: { revokedAt: new Date() },
+              })
+            }
+          }
         } catch (dbError) {
           request.log.warn(
             `Logout: erro ao revogar token no banco (não crítico) - ${dbError instanceof Error ? dbError.message : 'Unknown error'}`,
           )
           // Não falhar se o banco estiver indisponível
         }
-
-        request.log.info('Logout: processo concluído com sucesso')
         return ResponseFormatter.noContent(reply)
       } catch (error: any) {
         request.log.error(
