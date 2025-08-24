@@ -99,7 +99,8 @@ export function useAuth(): UseAuthReturn {
         setIsLoading(true)
         const response = await authService.register(data)
         setUser(response.user)
-        router.push('/')
+        // Removido o redirecionamento automático para permitir que a página controle o fluxo
+        // router.push('/')
       } catch (error) {
         console.error('Erro no registro:', error)
         throw error

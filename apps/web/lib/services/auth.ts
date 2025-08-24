@@ -170,15 +170,21 @@ class AuthService {
         })
 
         if (!response.ok) {
-          console.warn('Logout no servidor falhou, mas tokens locais serão limpos', {
-            status: response.status,
-            statusText: response.statusText,
-          })
+          console.warn(
+            'Logout no servidor falhou, mas tokens locais serão limpos',
+            {
+              status: response.status,
+              statusText: response.statusText,
+            },
+          )
         } else {
           console.log('Logout realizado com sucesso no servidor')
         }
       } catch (error) {
-        console.warn('Erro ao fazer logout no servidor, mas tokens locais serão limpos:', error)
+        console.warn(
+          'Erro ao fazer logout no servidor, mas tokens locais serão limpos:',
+          error,
+        )
         // Não falhar o logout local mesmo se o servidor não responder
       }
     }
