@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "bundler",
+    "module": "esnext",
     "types": ["node"],
     "isolatedModules": true
   }

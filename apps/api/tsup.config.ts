@@ -5,7 +5,7 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   clean: true,
-  format: ['cjs'],
+  format: ['esm'],
   target: 'node18',
   external: ['@prisma/client'],
 })
