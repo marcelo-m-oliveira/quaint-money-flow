@@ -41,9 +41,14 @@ function SignInForm() {
     }
   }, [searchParams])
 
-  const handleGoogleLogin = () => {
-    const googleAuthUrl = authService.getGoogleAuthUrl()
-    window.location.href = googleAuthUrl
+  const handleGoogleLogin = async () => {
+    try {
+      const googleAuthUrl = await authService.getGoogleAuthUrl()
+      window.location.href = googleAuthUrl
+    } catch (error) {
+      console.error('Erro ao obter URL do Google OAuth:', error)
+      setError('Erro ao conectar com Google. Tente novamente.')
+    }
   }
 
   return (

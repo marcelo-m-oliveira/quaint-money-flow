@@ -79,9 +79,14 @@ export default function SignUpPage() {
     }
   }
 
-  const handleGoogleSignup = () => {
-    const googleAuthUrl = authService.getGoogleAuthUrl()
-    window.location.href = googleAuthUrl
+  const handleGoogleSignup = async () => {
+    try {
+      const googleAuthUrl = await authService.getGoogleAuthUrl()
+      window.location.href = googleAuthUrl
+    } catch (error) {
+      console.error('Erro ao obter URL do Google OAuth:', error)
+      setError('Erro ao conectar com Google. Tente novamente.')
+    }
   }
 
   return (

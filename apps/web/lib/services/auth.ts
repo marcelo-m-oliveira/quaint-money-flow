@@ -232,21 +232,20 @@ class AuthService {
     return !!this.getAccessToken()
   }
 
-  getGoogleAuthUrl(): string {
-    const clientId = env.GOOGLE_CLIENT_ID
-    const redirectUri = env.GOOGLE_REDIRECT_URI
-    const scope = 'openid email profile'
+  async getGoogleAuthUrl(): Promise<string> {
+    try {
+      const response = await fetch('/api/auth/google/url')
 
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      scope,
-      access_type: 'offline',
-      prompt: 'consent',
-    })
+      if (!response.ok) {
+        throw new Error('Failed to get Google OAuth URL')
+      }
 
-    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+      const data = await response.json()
+      return data.authUrl
+    } catch (error) {
+      console.error('Error getting Google OAuth URL:', error)
+      throw new Error('Failed to get Google OAuth URL')
+    }
   }
 }
 

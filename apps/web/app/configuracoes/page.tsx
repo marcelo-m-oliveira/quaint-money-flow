@@ -101,7 +101,7 @@ export default function ConfiguracoesPage() {
     try {
       setIsConnecting(true)
       // Redirecionar para o fluxo OAuth do Google com parâmetro de vinculação
-      const googleAuthUrl = authService.getGoogleAuthUrl()
+      const googleAuthUrl = await authService.getGoogleAuthUrl()
       window.location.href = googleAuthUrl
     } catch (error) {
       console.error('Erro ao conectar com Google:', error)
