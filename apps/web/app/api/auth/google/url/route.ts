@@ -1,7 +1,7 @@
 import { env } from '@saas/env'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const clientId = env.GOOGLE_CLIENT_ID
     const redirectUri = env.GOOGLE_REDIRECT_URI

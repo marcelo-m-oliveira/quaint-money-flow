@@ -23,7 +23,9 @@ export const env = createEnv({
     DATABASE_URL_TEST: z
       .url()
       .optional()
-      .default('postgresql://docker:docker@localhost:5432/saas-quaint-money-test'),
+      .default(
+        'postgresql://docker:docker@localhost:5432/saas-quaint-money-test',
+      ),
 
     // JWT
     JWT_SECRET: z
@@ -43,7 +45,9 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z
       .string()
       .default('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'),
-    GOOGLE_REDIRECT_URI: z.string().default('http://localhost:3000/auth/google/callback'),
+    GOOGLE_REDIRECT_URI: z
+      .string()
+      .default('http://localhost:3000/auth/google/callback'),
 
     // Redis
     REDIS_HOST: z.string().default('localhost'),
@@ -52,7 +56,9 @@ export const env = createEnv({
     REDIS_DB: z.coerce.number().default(0),
 
     // Environment
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: z
+      .enum(['development', 'production', 'test'])
+      .default('development'),
 
     // Swagger
     SWAGGER_ENABLED: z.coerce.boolean().default(true),
@@ -63,7 +69,10 @@ export const env = createEnv({
   },
   client: {},
   shared: {
-    NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3333/api/v1'),
+    NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3000/api/v1'),
+    NEXT_PUBLIC_BACKEND_API_URL: z
+      .url()
+      .default('http://localhost:3333/api/v1'),
     NEXTAUTH_SECRET: z
       .string()
       .default('your-super-secret-jwt-key-change-this-in-production'),
@@ -93,6 +102,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     CI: process.env.CI,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_BACKEND_API_URL: process.env.NEXT_PUBLIC_BACKEND_API_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   },
