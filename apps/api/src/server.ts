@@ -18,6 +18,7 @@ import { creditCardRoutes } from '@/routes/credit-cards'
 import { entryRoutes } from '@/routes/entries'
 import { healthRoutes } from '@/routes/health'
 import { overviewRoutes } from '@/routes/overview'
+import { permissionRoutes } from '@/routes/permissions'
 import { reportRoutes } from '@/routes/reports'
 import { uploadRoutes } from '@/routes/upload'
 import { userPreferencesRoutes } from '@/routes/user-preferences'
@@ -117,6 +118,10 @@ export async function createApp() {
   })
 
   app.register(uploadRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
+
+  app.register(permissionRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
   })
 

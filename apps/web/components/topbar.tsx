@@ -19,6 +19,9 @@ import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
 import { useAuth } from '@/lib/hooks/use-auth'
+import { useUserRole } from '@/lib/hooks/use-permissions'
+import { RoleGuard } from './permissions/permissions-guard'
+import { UserRoleDisplay } from './permissions/user-role-display'
 
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
@@ -34,6 +37,7 @@ import {
 export function Topbar() {
   const { setTheme } = useTheme()
   const { user, logout } = useAuth()
+  const { isAdmin } = useUserRole()
   const userName = user?.name || ''
   const userEmail = user?.email || ''
   const userImage = user?.avatarUrl || ''
@@ -179,6 +183,15 @@ export function Topbar() {
                     <span>Atividades</span>
                   </DropdownMenuItem>
                 </Link>
+                <RoleGuard roles="ADMIN" showFallback={false}>
+                  <DropdownMenuSeparator />
+                  <Link href="/configuracoes/admin">
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Administração</span>
+                    </DropdownMenuItem>
+                  </Link>
+                </RoleGuard>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -199,9 +212,12 @@ export function Topbar() {
                     <span className="text-sm font-medium leading-tight text-foreground">
                       {userName}
                     </span>
-                    <span className="text-xs leading-tight text-muted-foreground">
-                      {userEmail || ' '}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs leading-tight text-muted-foreground">
+                        {userEmail || ' '}
+                      </span>
+                      <UserRoleDisplay showIcon={false} />
+                    </div>
                   </div>
                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </Button>
@@ -215,6 +231,7 @@ export function Topbar() {
                     <p className="text-xs leading-none text-muted-foreground">
                       {userEmail}
                     </p>
+                    <UserRoleDisplay showIcon={true} className="mt-1" />
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

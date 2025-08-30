@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { AccountRepository } from '@/repositories/account.repository'
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { BaseService } from '@/services/base.service'
+import { PermissionService } from '@/services/permission.service'
 import {
   type AccountCreateSchema,
   type AccountUpdateSchema,
@@ -92,6 +93,14 @@ export class AccountService extends BaseService<'account'> {
   }
 
   async create(data: AccountCreateSchema, userId: string) {
+    // Verificar limites do plano antes da criação
+    const limits = await PermissionService.checkPlanLimits(userId, 'accounts')
+    if (!limits.allowed) {
+      throw new BadRequestError(
+        `Limite de contas atingido. Máximo permitido: ${limits.limit}. Considere fazer upgrade do seu plano.`
+      )
+    }
+
     // Verificar se já existe uma conta com o mesmo nome
     const existingAccount = await this.accountRepository.findFirst({
       name: data.name,

@@ -9,6 +9,7 @@ import { AccountsProvider } from '@/lib/contexts/accounts-context'
 import { AuthProvider } from '@/lib/contexts/auth-context'
 import { BankIconsProvider } from '@/lib/contexts/bank-icons-context'
 import { CreditCardsProvider } from '@/lib/contexts/credit-cards-context'
+import { PermissionsProvider } from '@/lib/contexts/permissions-context'
 import { UserPreferencesProvider } from '@/lib/contexts/user-preferences-context'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -33,13 +34,15 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <AccountsProvider>
-              <CreditCardsProvider>
-                <BankIconsProvider>
-                  <UserPreferencesProvider>{children}</UserPreferencesProvider>
-                </BankIconsProvider>
-              </CreditCardsProvider>
-            </AccountsProvider>
+            <PermissionsProvider>
+              <AccountsProvider>
+                <CreditCardsProvider>
+                  <BankIconsProvider>
+                    <UserPreferencesProvider>{children}</UserPreferencesProvider>
+                  </BankIconsProvider>
+                </CreditCardsProvider>
+              </AccountsProvider>
+            </PermissionsProvider>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>

@@ -15,6 +15,8 @@ import {
 import { useState } from 'react'
 
 import { AccountFormModal } from '@/components/account-form-modal'
+import { Can } from '@/components/permissions/can-component'
+import { PlanLimitsIndicator } from '@/components/permissions/plan-limits-indicator'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
@@ -113,13 +115,19 @@ export default function AccountsPage() {
                 Configure suas contas bancárias e cartões
               </p>
             </div>
-            <Button onClick={handleAddAccount} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nova conta
-            </Button>
+            <Can action="create" subject="Account">
+              <Button onClick={handleAddAccount} className="gap-2" data-testid="create-account-button">
+                <Plus className="h-4 w-4" />
+                Nova conta
+              </Button>
+            </Can>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Indicador de Limites */}
+          <div className="mb-6">
+            <PlanLimitsIndicator resource="accounts" showDetails={false} />
+          </div>
           {accounts.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
               <CreditCard className="mx-auto mb-4 h-12 w-12 opacity-50" />
@@ -129,10 +137,12 @@ export default function AccountsPage() {
               <p className="mb-4 text-sm">
                 Adicione suas contas bancárias e cartões para começar
               </p>
-              <Button onClick={handleAddAccount} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Adicionar primeira conta
-              </Button>
+              <Can action="create" subject="Account">
+                <Button onClick={handleAddAccount} className="gap-2" data-testid="create-account-button">
+                  <Plus className="h-4 w-4" />
+                  Adicionar primeira conta
+                </Button>
+              </Can>
             </div>
           ) : (
             <div className="space-y-6">

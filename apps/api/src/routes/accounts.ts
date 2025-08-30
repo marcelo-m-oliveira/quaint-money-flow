@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
 import { authMiddleware } from '@/middleware/auth.middleware'
+import { authorize } from '@/middleware/permissions.middleware'
 import { performanceMiddleware } from '@/middleware/performance.middleware'
 import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
 import { redisCacheMiddlewares } from '@/middleware/redis-cache.middleware'
@@ -46,6 +47,7 @@ export async function accountRoutes(app: FastifyInstance) {
       },
       preHandler: [
         authMiddleware,
+        authorize({ action: 'read', subject: 'Account' }),
         performanceMiddleware(),
         redisCacheMiddlewares.list(), // Cache por 5 minutos
         rateLimitMiddlewares.authenticated(),
@@ -101,6 +103,7 @@ Lista todas as contas bancárias do usuário.
       },
       preHandler: [
         authMiddleware,
+        authorize({ action: 'read', subject: 'Account' }),
         performanceMiddleware(),
         validateQuery(accountFiltersSchema),
         // redisCacheMiddlewares.list(), // Cache por 5 minutos - DESABILITADO TEMPORARIAMENTE
@@ -137,6 +140,7 @@ Lista todas as contas bancárias do usuário.
       },
       preHandler: [
         authMiddleware,
+        authorize({ action: 'read', subject: 'Account' }),
         performanceMiddleware(),
         validateParams(idParamSchema),
         // redisCacheMiddlewares.detail(), // Cache por 10 minutos - DESABILITADO TEMPORARIAMENTE
@@ -185,6 +189,7 @@ Cria uma nova conta bancária.
       },
       preHandler: [
         authMiddleware,
+        authorize({ action: 'create', subject: 'Account' }),
         performanceMiddleware(),
         validateBody(accountCreateSchema),
         rateLimitMiddlewares.create(),
@@ -223,6 +228,7 @@ Cria uma nova conta bancária.
       },
       preHandler: [
         authMiddleware,
+        authorize({ action: 'update', subject: 'Account' }),
         performanceMiddleware(),
         validateParams(idParamSchema),
         validateBody(accountUpdateSchema),
@@ -257,6 +263,7 @@ Cria uma nova conta bancária.
       },
       preHandler: [
         authMiddleware,
+        authorize({ action: 'delete', subject: 'Account' }),
         performanceMiddleware(),
         validateParams(idParamSchema),
         rateLimitMiddlewares.authenticated(),

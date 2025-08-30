@@ -2,29 +2,90 @@ import { faker } from '@faker-js/faker'
 import { PrismaClient } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
 
+import { seedPlans } from './seed-plans'
+
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Starting database seed...')
 
-  // Criar usuário de exemplo
-  const passwordHash = await bcrypt.hash('@Password123', 10)
+  // Criar usuários de exemplo com diferentes roles
+  const passwordHash = await bcrypt.hash('password123', 10)
 
+  // Usuário básico
   const user = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
+    where: { email: 'user@test.com' },
     update: {
-      passwordConfigured: true, // Garantir que usuário existente tenha senha configurada
+      passwordConfigured: true,
+      role: 'USER',
     },
     create: {
-      email: 'user@example.com',
-      name: 'Usuário Exemplo',
+      email: 'user@test.com',
+      name: 'Usuário Básico',
       password: passwordHash,
-      passwordConfigured: true, // Usuário criado via seed tem senha configurada
+      passwordConfigured: true,
+      role: 'USER',
       avatarUrl: faker.image?.avatar(),
     },
   })
 
-  console.log('👤 User created:', user.email)
+  // Usuário premium
+  const premiumUser = await prisma.user.upsert({
+    where: { email: 'premium@test.com' },
+    update: {
+      passwordConfigured: true,
+      role: 'PREMIUM',
+    },
+    create: {
+      email: 'premium@test.com',
+      name: 'Usuário Premium',
+      password: passwordHash,
+      passwordConfigured: true,
+      role: 'PREMIUM',
+      avatarUrl: faker.image?.avatar(),
+    },
+  })
+
+  // Usuário administrador
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@test.com' },
+    update: {
+      passwordConfigured: true,
+      role: 'ADMIN',
+    },
+    create: {
+      email: 'admin@test.com',
+      name: 'Administrador',
+      password: passwordHash,
+      passwordConfigured: true,
+      role: 'ADMIN',
+      avatarUrl: faker.image?.avatar(),
+    },
+  })
+
+  // Usuário original para compatibilidade
+  const originalUser = await prisma.user.upsert({
+    where: { email: 'user@example.com' },
+    update: {
+      passwordConfigured: true,
+      role: 'USER',
+    },
+    create: {
+      email: 'user@example.com',
+      name: 'Usuário Exemplo',
+      password: await bcrypt.hash('@Password123', 10),
+      passwordConfigured: true,
+      role: 'USER',
+      avatarUrl: faker.image?.avatar(),
+    },
+  })
+
+  console.log('👤 Users created:', {
+    basic: user.email,
+    premium: premiumUser.email,
+    admin: adminUser.email,
+    original: originalUser.email,
+  })
 
   // Criar categorias variadas de receita usando ícones do ICON_MAP
   const incomeCategories = [
@@ -47,7 +108,7 @@ async function main() {
         color: category.color,
         type: 'income',
         icon: category.icon,
-        userId: user.id,
+        userId: originalUser.id,
       },
     })
     createdIncomeCategories.push(createdCategory)
@@ -82,7 +143,7 @@ async function main() {
         color: category.color,
         type: 'expense',
         icon: category.icon,
-        userId: user.id,
+        userId: originalUser.id,
       },
     })
     createdExpenseCategories.push(createdCategory)
@@ -138,7 +199,7 @@ async function main() {
         icon: accountData.icon,
         iconType: accountData.iconType as any,
         includeInGeneralBalance: accountData.includeInGeneralBalance,
-        userId: user.id,
+        userId: originalUser.id,
       },
     })
     createdAccounts.push(account)
@@ -184,7 +245,7 @@ async function main() {
         limit: cardData.limit,
         closingDay: cardData.closingDay,
         dueDay: cardData.dueDay,
-        userId: user.id,
+        userId: originalUser.id,
       },
     })
     createdCreditCards.push(creditCard)
@@ -369,7 +430,7 @@ async function main() {
       categoryId: category.id,
       accountId: selectedAccount?.id || null,
       creditCardId: selectedCreditCard?.id || null,
-      userId: user.id,
+      userId: originalUser.id,
       paid,
     })
   }
@@ -393,7 +454,7 @@ async function main() {
         ?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('Nubank'))?.id,
       creditCardId: null,
-      userId: user.id,
+      userId: originalUser.id,
       paid: true,
     },
     {
@@ -406,7 +467,7 @@ async function main() {
       )?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('Inter'))?.id,
       creditCardId: null,
-      userId: user.id,
+      userId: originalUser.id,
       paid: true,
     },
     {
@@ -419,7 +480,7 @@ async function main() {
       )?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('C6'))?.id,
       creditCardId: null,
-      userId: user.id,
+      userId: originalUser.id,
       paid: false, // A receber
     },
     // DESPESAS
@@ -432,7 +493,7 @@ async function main() {
         ?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('Nubank'))?.id,
       creditCardId: null,
-      userId: user.id,
+      userId: originalUser.id,
       paid: true,
     },
     {
@@ -447,7 +508,7 @@ async function main() {
       creditCardId: createdCreditCards.find((card) =>
         card.name.includes('Nubank'),
       )?.id,
-      userId: user.id,
+      userId: originalUser.id,
       paid: false, // Cartão - pendente
     },
     {
@@ -460,7 +521,7 @@ async function main() {
       )?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('Inter'))?.id,
       creditCardId: null,
-      userId: user.id,
+      userId: originalUser.id,
       paid: true,
     },
     {
@@ -474,7 +535,7 @@ async function main() {
       creditCardId: createdCreditCards.find((card) =>
         card.name.includes('Inter'),
       )?.id,
-      userId: user.id,
+      userId: originalUser.id,
       paid: false, // Cartão - pendente
     },
     {
@@ -486,7 +547,7 @@ async function main() {
         ?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('C6'))?.id,
       creditCardId: null,
-      userId: user.id,
+      userId: originalUser.id,
       paid: true,
     },
     {
@@ -500,7 +561,7 @@ async function main() {
       accountId: null,
       creditCardId: createdCreditCards.find((card) => card.name.includes('C6'))
         ?.id,
-      userId: user.id,
+      userId: originalUser.id,
       paid: false, // Cartão - pendente
     },
     {
@@ -513,7 +574,7 @@ async function main() {
       )?.id,
       accountId: createdAccounts.find((acc) => acc.name.includes('Nubank'))?.id,
       creditCardId: null,
-      userId: user.id,
+      userId: originalUser.id,
       paid: false, // A pagar
     },
   ]
@@ -538,7 +599,7 @@ async function main() {
     where: { userId: user.id },
     update: {},
     create: {
-      userId: user.id,
+      userId: originalUser.id,
       entryOrder: 'descending',
       defaultNavigationPeriod: 'monthly',
       showDailyBalance: false,
@@ -548,6 +609,10 @@ async function main() {
   })
 
   console.log('⚙️ User preferences created')
+
+  // Criar planos de assinatura
+  await seedPlans()
+
   console.log('✅ Seed completed successfully!')
   console.log(
     `📊 Summary: ${createdAccounts.length} accounts, ${createdCreditCards.length} credit cards, ${allCategories.length} categories, ${transactions.length + validCurrentMonthTransactions.length} transactions (${transactions.length} historical + ${validCurrentMonthTransactions.length} current month)`,

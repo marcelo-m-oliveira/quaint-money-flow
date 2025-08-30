@@ -16,8 +16,10 @@ import { z } from 'zod'
 
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
 import { Account } from '@/lib/types'
+import { usePlanLimits } from '@/lib/hooks/use-permissions'
 
 import { IconSelector } from './icon-selector'
+import { PlanLimitsIndicator } from './permissions/plan-limits-indicator'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
@@ -105,6 +107,7 @@ export function AccountFormModal({
     },
   })
   const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false)
+  const accountLimits = usePlanLimits('accounts')
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -313,13 +316,19 @@ export function AccountFormModal({
               </div>
             </div>
 
+            {/* Plan Limits Indicator (apenas para criação) */}
+            {!account && (
+              <PlanLimitsIndicator resource="accounts" showDetails={true} />
+            )}
+
             {/* Action Button */}
             <Button
               type="submit"
               className="w-full"
-              disabled={!watch('name')?.trim()}
+              disabled={!watch('name')?.trim() || (!account && !accountLimits.allowed)}
             >
               {account ? 'Atualizar conta' : 'Adicionar conta'}
+              {!account && !accountLimits.allowed && ' (Limite atingido)'}
             </Button>
           </form>
         </DialogContent>
