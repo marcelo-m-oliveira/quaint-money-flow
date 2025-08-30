@@ -16,9 +16,12 @@ import { z } from 'zod'
 
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
 import { Account } from '@/lib/types'
+import { useUser } from '@/lib/contexts/permissions-context'
+import { getPlanLimitInfo } from '@/lib/casl'
 
 import { IconSelector } from './icon-selector'
 import { Button } from './ui/button'
+import { PlanLimitWarning } from './plan-limit-warning'
 import { Checkbox } from './ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
@@ -54,6 +57,7 @@ interface AccountFormModalProps {
   onSubmit: (data: AccountCreateSchema) => void
   account?: Account
   title?: string
+  currentAccountsCount?: number
 }
 
 const GENERIC_ICON_MAP = {
@@ -86,7 +90,11 @@ export function AccountFormModal({
   onSubmit,
   account,
   title = 'Nova conta manual',
+  currentAccountsCount = 0,
 }: AccountFormModalProps) {
+  const { user } = useUser()
+  const limitInfo = getPlanLimitInfo(user, 'accounts')
+  
   const {
     register,
     handleSubmit,
@@ -317,9 +325,17 @@ export function AccountFormModal({
             <Button
               type="submit"
               className="w-full"
-              disabled={!watch('name')?.trim()}
+              disabled={
+                !watch('name')?.trim() || 
+                (!account && !limitInfo.canCreate(currentAccountsCount))
+              }
             >
-              {account ? 'Atualizar conta' : 'Adicionar conta'}
+              {!account && !limitInfo.canCreate(currentAccountsCount) 
+                ? 'Limite atingido - Faça upgrade' 
+                : account 
+                  ? 'Atualizar conta' 
+                  : 'Adicionar conta'
+              }
             </Button>
           </form>
         </DialogContent>

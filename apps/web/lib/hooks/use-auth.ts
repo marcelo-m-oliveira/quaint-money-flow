@@ -10,11 +10,14 @@ import {
   type SetupPasswordData,
 } from '@/lib/services/auth'
 
+
+
 interface User {
   id: string
   email: string
   name: string
   avatarUrl?: string | null
+  role?: string
 }
 
 interface UseAuthReturn {
@@ -83,7 +86,14 @@ export function useAuth(): UseAuthReturn {
         setIsLoading(true)
         const response = await authService.login(credentials)
         setUser(response.user)
-        router.push('/')
+        
+        // Disparar evento de mudança de autenticação
+        window.dispatchEvent(new CustomEvent('auth:changed'))
+        
+        // Aguardar um pouco para garantir que o contexto de permissões seja atualizado
+        setTimeout(() => {
+          router.push('/')
+        }, 200)
       } catch (error) {
         console.error('Erro no login:', error)
         throw error
@@ -178,11 +188,19 @@ export function useAuth(): UseAuthReturn {
       setIsLoading(true)
       await authService.logout()
       setUser(null)
+      
+      // Disparar evento de mudança de autenticação
+      window.dispatchEvent(new CustomEvent('auth:changed'))
+      
       router.push('/signin')
     } catch (error) {
       console.error('Erro no logout:', error)
       // Mesmo com erro, limpar estado local
       setUser(null)
+      
+      // Disparar evento de mudança de autenticação
+      window.dispatchEvent(new CustomEvent('auth:changed'))
+      
       router.push('/signin')
     } finally {
       setIsLoading(false)
@@ -193,6 +211,8 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     refreshUser()
   }, [refreshUser])
+
+
 
   return {
     user,

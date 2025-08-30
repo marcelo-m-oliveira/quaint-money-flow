@@ -19,17 +19,21 @@ model User {
   password            String // Campo para autenticação
   passwordConfigured  Boolean  @default(false) // Indica se a senha foi configurada pelo usuário
   avatarUrl           String?
+  role                UserRole @default(user) // Novo campo para perfil do usuário
+  planId              String?  // Novo campo para plano do usuário
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   // Relacionamentos
-  accounts    Account[]
-  creditCards CreditCard[]
-  categories  Category[]
-  entries     Entry[]
-  preferences UserPreferences?
-  providers   UserProvider[]
+  accounts      Account[]
+  creditCards   CreditCard[]
+  categories    Category[]
+  entries       Entry[]
+  preferences   UserPreferences?
+  providers     UserProvider[]
   refreshTokens RefreshToken[]
+  plan          Plan?         @relation(fields: [planId], references: [id])
+  coupons       UserCoupon[]  // Cupons utilizados pelo usuário
 
   @@map("users")
   @@schema("auth")
@@ -219,5 +223,77 @@ enum ViewMode {
   cashflow
 
   @@map("view_mode")
+  @@schema("auth")
+}
+
+enum UserRole {
+  user
+  admin
+
+  @@map("user_role")
+  @@schema("auth")
+}
+
+enum PlanType {
+  free
+  monthly
+  annual
+
+  @@map("plan_type")
+  @@schema("auth")
+}
+
+// Modelo para planos de assinatura
+model Plan {
+  id          String   @id @default(uuid(7))
+  name        String
+  type        PlanType
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  features    Json     // Armazenar features como JSON
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  users User[]
+
+  @@map("plans")
+  @@schema("auth")
+}
+
+// Modelo para cupons de desconto
+model Coupon {
+  id           String     @id @default(uuid(7))
+  code         String     @unique
+  discountType String     // 'percentage' ou 'fixed'
+  discountValue Decimal   @db.Decimal(10, 2)
+  maxUses      Int?       // Número máximo de usos (null = ilimitado)
+  currentUses  Int        @default(0)
+  expiresAt    DateTime?  // Data de expiração (null = sem expiração)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relacionamentos
+  userCoupons UserCoupon[]
+
+  @@map("coupons")
+  @@schema("auth")
+}
+
+// Modelo para relacionar usuários com cupons utilizados
+model UserCoupon {
+  id       String   @id @default(uuid(7))
+  userId   String
+  couponId String
+  usedAt   DateTime @default(now())
+
+  // Relacionamentos
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, couponId])
+  @@map("user_coupons")
   @@schema("auth")
 }

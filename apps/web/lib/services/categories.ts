@@ -1,4 +1,4 @@
-import { apiClient, PaginatedResponse } from '@/lib/api'
+import { api, PaginatedResponse } from '@/lib/api'
 import type {
   CategoriesQueryParams,
   Category,
@@ -20,32 +20,32 @@ export const categoriesService = {
       parentId: params?.parentId,
     })
     const endpoint = `/categories${qs}`
-    return apiClient.get<PaginatedResponse<Category>>(endpoint)
+    return api.get<PaginatedResponse<Category>>(endpoint)
   },
 
   async getById(id: string): Promise<Category> {
-    return apiClient.get<Category>(`/categories/${id}`)
+    return api.get<Category>(`/categories/${id}`)
   },
 
   async create(data: CategoryFormData): Promise<Category> {
-    return apiClient.post<Category>('/categories', data)
+    return api.post<Category>('/categories', data)
   },
 
   async update(id: string, data: Partial<CategoryFormData>): Promise<Category> {
-    return apiClient.put<Category>(`/categories/${id}`, data)
+    return api.put<Category>(`/categories/${id}`, data)
   },
 
   async delete(id: string): Promise<void> {
-    return apiClient.delete<void>(`/categories/${id}`)
+    return api.delete<void>(`/categories/${id}`)
   },
 
   async getSelectOptions(type?: 'income' | 'expense'): Promise<SelectOption[]> {
     const qs = buildQuery({ type })
     const endpoint = `/categories/select-options${qs}`
-    return apiClient.get<SelectOption[]>(endpoint)
+    return api.get<SelectOption[]>(endpoint)
   },
 
   async getUsageStats(): Promise<CategoryUsage[]> {
-    return apiClient.get<CategoryUsage[]>('/categories/usage')
+    return api.get<CategoryUsage[]>('/categories/usage')
   },
 }

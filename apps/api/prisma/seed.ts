@@ -7,24 +7,136 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Starting database seed...')
 
+  // Criar planos primeiro
+  const freePlan = await prisma.plan.upsert({
+    where: { id: 'plan_free' },
+    update: {},
+    create: {
+      id: 'plan_free',
+      name: 'Plano Free',
+      type: 'free',
+      price: 0,
+      description: 'Plano gratuito com funcionalidades básicas',
+      features: {
+        entries: { unlimited: true },
+        categories: { limited: true, max: 10 },
+        accounts: { limited: true, max: 1 },
+        creditCards: { limited: true, max: 2 },
+        reports: { basic: true },
+      },
+    },
+  })
+
+  const monthlyPlan = await prisma.plan.upsert({
+    where: { id: 'plan_monthly' },
+    update: {},
+    create: {
+      id: 'plan_monthly',
+      name: 'Plano Mensal',
+      type: 'monthly',
+      price: 19.90,
+      description: 'Plano mensal com todas as funcionalidades',
+      features: {
+        entries: { unlimited: true },
+        categories: { unlimited: true },
+        accounts: { unlimited: true },
+        creditCards: { unlimited: true },
+        reports: { advanced: true },
+      },
+    },
+  })
+
+  const annualPlan = await prisma.plan.upsert({
+    where: { id: 'plan_annual' },
+    update: {},
+    create: {
+      id: 'plan_annual',
+      name: 'Plano Anual',
+      type: 'annual',
+      price: 203.15, // 15% de desconto sobre 12 meses (19.90 * 12 * 0.85)
+      description: 'Plano anual com 15% de desconto e todas as funcionalidades',
+      features: {
+        entries: { unlimited: true },
+        categories: { unlimited: true },
+        accounts: { unlimited: true },
+        creditCards: { unlimited: true },
+        reports: { advanced: true },
+        discount: 15,
+      },
+    },
+  })
+
+  console.log('📋 Plans created')
+
+  // Criar cupons de exemplo
+  await prisma.coupon.upsert({
+    where: { code: 'WELCOME10' },
+    update: {},
+    create: {
+      code: 'WELCOME10',
+      discountType: 'percentage',
+      discountValue: 10,
+      maxUses: 100,
+      currentUses: 0,
+      expiresAt: new Date('2025-12-31'),
+    },
+  })
+
+  await prisma.coupon.upsert({
+    where: { code: 'FIRST50' },
+    update: {},
+    create: {
+      code: 'FIRST50',
+      discountType: 'percentage',
+      discountValue: 50,
+      maxUses: 50,
+      currentUses: 0,
+      expiresAt: new Date('2025-06-30'),
+    },
+  })
+
+  console.log('🎫 Coupons created')
+
   // Criar usuário de exemplo
   const passwordHash = await bcrypt.hash('@Password123', 10)
 
   const user = await prisma.user.upsert({
     where: { email: 'user@example.com' },
     update: {
-      passwordConfigured: true, // Garantir que usuário existente tenha senha configurada
+      passwordConfigured: true,
+      planId: freePlan.id, // Atribuir plano free
     },
     create: {
       email: 'user@example.com',
       name: 'Usuário Exemplo',
       password: passwordHash,
-      passwordConfigured: true, // Usuário criado via seed tem senha configurada
+      passwordConfigured: true,
       avatarUrl: faker.image?.avatar(),
+      role: 'user',
+      planId: freePlan.id,
     },
   })
 
-  console.log('👤 User created:', user.email)
+  // Criar usuário admin
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: {
+      passwordConfigured: true,
+      role: 'admin',
+      planId: monthlyPlan.id,
+    },
+    create: {
+      email: 'admin@example.com',
+      name: 'Administrador',
+      password: passwordHash,
+      passwordConfigured: true,
+      avatarUrl: faker.image?.avatar(),
+      role: 'admin',
+      planId: monthlyPlan.id,
+    },
+  })
+
+  console.log('👤 Users created:', user.email, admin.email)
 
   // Criar categorias variadas de receita usando ícones do ICON_MAP
   const incomeCategories = [

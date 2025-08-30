@@ -9,6 +9,7 @@ import {
   Moon,
   MoreHorizontal,
   Settings,
+  Shield,
   Sun,
   Tag,
   User,
@@ -30,10 +31,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
+import { useUser } from '@/lib/contexts/permissions-context'
 
 export function Topbar() {
   const { setTheme } = useTheme()
   const { user, logout } = useAuth()
+  const { user: permUser } = useUser()
   const userName = user?.name || ''
   const userEmail = user?.email || ''
   const userImage = user?.avatarUrl || ''
@@ -104,6 +107,22 @@ export function Topbar() {
                 Metas
               </Button>
             </Link>
+            
+            {/* Link Admin - apenas para administradores */}
+            {permUser?.role === 'admin' && (
+              <Link href="/admin">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="px-3 py-2 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-950"
+                >
+                  <Shield className="mr-1 h-4 w-4" />
+                  Admin
+                </Button>
+              </Link>
+            )}
+            
+
           </nav>
 
           {/* Menu de Ações */}

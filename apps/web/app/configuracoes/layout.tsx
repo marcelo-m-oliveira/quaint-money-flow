@@ -15,6 +15,7 @@ import { usePathname } from 'next/navigation'
 import { PageLayout } from '@/components/layouts/page-layout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useUser } from '@/lib/contexts/permissions-context'
 
 interface ConfigLayoutProps {
   children: React.ReactNode
@@ -88,6 +89,7 @@ const menuItems = [
 
 export default function ConfigLayout({ children }: ConfigLayoutProps) {
   const pathname = usePathname()
+  const { user } = useUser()
 
   return (
     <PageLayout>
@@ -143,6 +145,31 @@ export default function ConfigLayout({ children }: ConfigLayoutProps) {
                     </Link>
                   )
                 })}
+
+                {/* Admin Quick Access */}
+                {user?.role === 'admin' && (
+                  <>
+                    <div className="my-2">
+                      <div className="h-px bg-border" />
+                    </div>
+                    <Link href="/admin">
+                      <Button
+                        variant="ghost"
+                        className="h-auto w-full justify-start gap-3 p-3 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950"
+                      >
+                        <Shield className="h-4 w-4 flex-shrink-0" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">
+                            Painel Admin
+                          </div>
+                          <div className="mt-1 hidden text-xs text-muted-foreground sm:block">
+                            Acesso ao painel administrativo
+                          </div>
+                        </div>
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

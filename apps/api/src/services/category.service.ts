@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Category, Prisma, PrismaClient } from '@prisma/client'
 
+import { checkPlanLimits } from '@/lib/casl'
 import { CategoryRepository } from '@/repositories/category.repository'
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { BaseService } from '@/services/base.service'
@@ -121,6 +122,31 @@ export class CategoryService extends BaseService<'category'> {
   }
 
   async create(data: CategoryCreateSchema, userId: string) {
+    // Buscar usuário com plano para verificar limites
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { plan: true },
+    })
+
+    if (!user) {
+      throw new BadRequestError('Usuário não encontrado')
+    }
+
+    // Verificar limites do plano (apenas para usuários não-admin)
+    if (user.role !== 'admin') {
+      const currentCategoriesCount = await this.prisma.category.count({
+        where: { userId },
+      })
+
+      if (!checkPlanLimits(user, 'categories', currentCategoriesCount)) {
+        const planFeatures = user.plan?.features as any
+        const maxCategories = planFeatures?.categories?.max || 0
+        throw new BadRequestError(
+          `Limite de categorias atingido. Seu plano permite no máximo ${maxCategories} categoria(s). Faça upgrade para criar mais categorias.`
+        )
+      }
+    }
+
     // Verificar se já existe uma categoria com o mesmo nome
     const existingCategory = await this.categoryRepository.findFirst({
       name: data.name,

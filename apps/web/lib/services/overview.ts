@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api'
+import { api as apiClient } from '@/lib/api'
 import type {
   GeneralOverview,
   QuickStats,

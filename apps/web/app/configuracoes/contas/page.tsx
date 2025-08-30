@@ -274,6 +274,7 @@ export default function AccountsPage() {
         onClose={handleCloseModal}
         onSubmit={handleSubmitAccount}
         account={editingAccount}
+        currentAccountsCount={accounts?.length || 0}
       />
 
       {/* Confirmation dialog */}

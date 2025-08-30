@@ -11,13 +11,17 @@ import {
 } from 'fastify-type-provider-zod'
 
 import { setupSwagger } from '@/lib/swagger'
+import { authorizationPlugin } from '@/middleware/authorization.middleware'
 import { accountRoutes } from '@/routes/accounts'
+import { adminUsersRoutes } from '@/routes/admin/users'
 import { authRoutes } from '@/routes/auth'
 import { categoryRoutes } from '@/routes/categories'
+import { couponsRoutes } from '@/routes/coupons'
 import { creditCardRoutes } from '@/routes/credit-cards'
 import { entryRoutes } from '@/routes/entries'
 import { healthRoutes } from '@/routes/health'
 import { overviewRoutes } from '@/routes/overview'
+import { plansRoutes } from '@/routes/plans'
 import { reportRoutes } from '@/routes/reports'
 import { uploadRoutes } from '@/routes/upload'
 import { userPreferencesRoutes } from '@/routes/user-preferences'
@@ -76,6 +80,9 @@ export async function createApp() {
 
   app.register(fastifyCors)
 
+  // Registrar plugin de autorização
+  app.register(authorizationPlugin)
+
   // Registrar rotas com prefixo
   app.register(authRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
@@ -118,6 +125,18 @@ export async function createApp() {
 
   app.register(uploadRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}`,
+  })
+
+  app.register(plansRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}/plans`,
+  })
+
+  app.register(couponsRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}/coupons`,
+  })
+
+  app.register(adminUsersRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}/admin/users`,
   })
 
   return app

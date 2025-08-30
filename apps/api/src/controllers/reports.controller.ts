@@ -10,18 +10,21 @@ interface CategoriesReportQueryFilters {
   endDate?: number
   type?: 'income' | 'expense'
   categoryId?: string
+  advanced?: boolean
 }
 
 interface CashflowReportQueryFilters {
   startDate?: number
   endDate?: number
   viewMode?: 'daily' | 'weekly' | 'monthly'
+  advanced?: boolean
 }
 
 interface AccountsReportQueryFilters {
   startDate?: number
   endDate?: number
   accountFilter?: 'all' | 'bank_accounts' | 'credit_cards'
+  advanced?: boolean
 }
 
 // Extend FastifyRequest to include user property
@@ -54,6 +57,7 @@ export class ReportsController extends BaseController {
       const result = await this.reportsService.getCategoriesReport(
         userId,
         processedFilters,
+        filters.advanced || false,
       )
 
       request.log.info(
@@ -100,6 +104,7 @@ export class ReportsController extends BaseController {
       const result = await this.reportsService.getCashflowReport(
         userId,
         processedFilters,
+        filters.advanced || false,
       )
 
       request.log.info(
@@ -147,6 +152,7 @@ export class ReportsController extends BaseController {
       const result = await this.reportsService.getAccountsReport(
         userId,
         processedFilters,
+        filters.advanced || false,
       )
 
       request.log.info(

@@ -2,7 +2,12 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { AccountFactory } from '@/factories/account.factory'
+import { Actions } from '@/lib/casl'
 import { authMiddleware } from '@/middleware/auth.middleware'
+import { 
+  loadUserAbilities, 
+  requirePermission 
+} from '@/middleware/authorization.middleware'
 import { performanceMiddleware } from '@/middleware/performance.middleware'
 import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'
 import { redisCacheMiddlewares } from '@/middleware/redis-cache.middleware'
@@ -46,6 +51,8 @@ export async function accountRoutes(app: FastifyInstance) {
       },
       preHandler: [
         authMiddleware,
+        loadUserAbilities,
+        requirePermission(Actions.READ, 'Account'),
         performanceMiddleware(),
         redisCacheMiddlewares.list(), // Cache por 5 minutos
         rateLimitMiddlewares.authenticated(),
@@ -101,6 +108,8 @@ Lista todas as contas bancárias do usuário.
       },
       preHandler: [
         authMiddleware,
+        loadUserAbilities,
+        requirePermission(Actions.READ, 'Account'),
         performanceMiddleware(),
         validateQuery(accountFiltersSchema),
         // redisCacheMiddlewares.list(), // Cache por 5 minutos - DESABILITADO TEMPORARIAMENTE
@@ -137,6 +146,8 @@ Lista todas as contas bancárias do usuário.
       },
       preHandler: [
         authMiddleware,
+        loadUserAbilities,
+        requirePermission(Actions.READ, 'Account'),
         performanceMiddleware(),
         validateParams(idParamSchema),
         // redisCacheMiddlewares.detail(), // Cache por 10 minutos - DESABILITADO TEMPORARIAMENTE
@@ -185,6 +196,8 @@ Cria uma nova conta bancária.
       },
       preHandler: [
         authMiddleware,
+        loadUserAbilities,
+        requirePermission(Actions.CREATE, 'Account'),
         performanceMiddleware(),
         validateBody(accountCreateSchema),
         rateLimitMiddlewares.create(),
@@ -223,6 +236,8 @@ Cria uma nova conta bancária.
       },
       preHandler: [
         authMiddleware,
+        loadUserAbilities,
+        requirePermission(Actions.UPDATE, 'Account'),
         performanceMiddleware(),
         validateParams(idParamSchema),
         validateBody(accountUpdateSchema),
@@ -257,6 +272,8 @@ Cria uma nova conta bancária.
       },
       preHandler: [
         authMiddleware,
+        loadUserAbilities,
+        requirePermission(Actions.DELETE, 'Account'),
         performanceMiddleware(),
         validateParams(idParamSchema),
         rateLimitMiddlewares.authenticated(),
@@ -292,6 +309,8 @@ Cria uma nova conta bancária.
       },
       preHandler: [
         authMiddleware,
+        loadUserAbilities,
+        requirePermission(Actions.READ, 'Account'),
         performanceMiddleware(),
         validateParams(idParamSchema),
         redisCacheMiddlewares.balance(), // Cache por 2 minutos (saldo muda frequentemente)

@@ -23,6 +23,8 @@
     "test:all": "pnpm test:ci && pnpm test:e2e"
   },
   "dependencies": {
+    "@casl/ability": "^6.7.3",
+    "@casl/react": "^5.0.0",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -44,6 +46,7 @@
     "@saas/env": "workspace:*",
     "@saas/utils": "workspace:*",
     "@saas/validations": "workspace:*",
+    "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

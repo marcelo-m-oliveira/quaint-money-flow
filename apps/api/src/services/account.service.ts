@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
+import { checkPlanLimits } from '@/lib/casl'
 import { AccountRepository } from '@/repositories/account.repository'
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { BaseService } from '@/services/base.service'
@@ -92,6 +93,31 @@ export class AccountService extends BaseService<'account'> {
   }
 
   async create(data: AccountCreateSchema, userId: string) {
+    // Buscar usuário com plano para verificar limites
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { plan: true },
+    })
+
+    if (!user) {
+      throw new BadRequestError('Usuário não encontrado')
+    }
+
+    // Verificar limites do plano (apenas para usuários não-admin)
+    if (user.role !== 'admin') {
+      const currentAccountsCount = await this.prisma.account.count({
+        where: { userId },
+      })
+
+      if (!checkPlanLimits(user, 'accounts', currentAccountsCount)) {
+        const planFeatures = user.plan?.features as any
+        const maxAccounts = planFeatures?.accounts?.max || 0
+        throw new BadRequestError(
+          `Limite de contas atingido. Seu plano permite no máximo ${maxAccounts} conta(s). Faça upgrade para criar mais contas.`
+        )
+      }
+    }
+
     // Verificar se já existe uma conta com o mesmo nome
     const existingAccount = await this.accountRepository.findFirst({
       name: data.name,

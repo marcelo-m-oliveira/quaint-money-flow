@@ -10,6 +10,8 @@ import type {
 } from '@/repositories/reports.repository'
 import { ReportsRepository } from '@/repositories/reports.repository'
 import { BaseService } from '@/services/base.service'
+import { hasAdvancedReports } from '@/lib/casl'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
 
 // Interface para filtros do serviço (com Date opcional)
 interface ServiceCategoriesReportFilters {
@@ -37,9 +39,29 @@ export class ReportsService extends BaseService<'entry'> {
     super(reportsRepository as any, (reportsRepository as any).prisma)
   }
 
+  private async checkUserReportAccess(userId: string, isAdvancedReport = false) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { plan: true },
+    })
+
+    if (!user) {
+      throw new BadRequestError('Usuário não encontrado')
+    }
+
+    if (isAdvancedReport && !hasAdvancedReports(user)) {
+      throw new BadRequestError(
+        'Acesso negado: relatórios avançados disponíveis apenas nos planos pagos. Faça upgrade para acessar esta funcionalidade.'
+      )
+    }
+
+    return user
+  }
+
   async getCategoriesReport(
     userId: string,
     filters: ServiceCategoriesReportFilters,
+    isAdvanced = false,
   ): Promise<{
     categories: (CategoryReportData & { percentage: number })[]
     summary: {
@@ -48,6 +70,8 @@ export class ReportsService extends BaseService<'entry'> {
       totalBalance: number
     }
   }> {
+    // Verificar acesso do usuário
+    await this.checkUserReportAccess(userId, isAdvanced)
     try {
       // Garantir que as datas sejam válidas para o repositório
       const repositoryFilters: CategoriesReportFilters = {
@@ -100,6 +124,7 @@ export class ReportsService extends BaseService<'entry'> {
   async getCashflowReport(
     userId: string,
     filters: ServiceCashflowReportFilters,
+    isAdvanced = false,
   ): Promise<{
     data: CashflowReportData[]
     summary: {
@@ -111,6 +136,8 @@ export class ReportsService extends BaseService<'entry'> {
       averageBalance: number
     }
   }> {
+    // Verificar acesso do usuário
+    await this.checkUserReportAccess(userId, isAdvanced)
     try {
       // Garantir que as datas sejam válidas para o repositório
       const repositoryFilters: CashflowReportFilters = {
@@ -153,6 +180,7 @@ export class ReportsService extends BaseService<'entry'> {
   async getAccountsReport(
     userId: string,
     filters: ServiceAccountsReportFilters,
+    isAdvanced = false,
   ): Promise<{
     accounts: (AccountReportData & {
       incomePercentage: number
@@ -166,6 +194,8 @@ export class ReportsService extends BaseService<'entry'> {
       creditCardsBalance: number
     }
   }> {
+    // Verificar acesso do usuário
+    await this.checkUserReportAccess(userId, isAdvanced)
     try {
       // Usar accountFilter diretamente do filtro recebido
       const repositoryFilters: AccountsReportFilters = {

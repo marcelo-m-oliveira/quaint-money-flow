@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
+import { checkPlanLimits } from '@/lib/casl'
 import { CreditCardRepository } from '@/repositories/credit-card.repository'
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { BaseService } from '@/services/base.service'
@@ -90,6 +91,31 @@ export class CreditCardService extends BaseService<'creditCard'> {
   }
 
   async create(data: CreditCardCreateSchema, userId: string) {
+    // Buscar usuário com plano para verificar limites
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { plan: true },
+    })
+
+    if (!user) {
+      throw new BadRequestError('Usuário não encontrado')
+    }
+
+    // Verificar limites do plano (apenas para usuários não-admin)
+    if (user.role !== 'admin') {
+      const currentCreditCardsCount = await this.prisma.creditCard.count({
+        where: { userId },
+      })
+
+      if (!checkPlanLimits(user, 'creditCards', currentCreditCardsCount)) {
+        const planFeatures = user.plan?.features as any
+        const maxCreditCards = planFeatures?.creditCards?.max || 0
+        throw new BadRequestError(
+          `Limite de cartões de crédito atingido. Seu plano permite no máximo ${maxCreditCards} cartão(ões). Faça upgrade para criar mais cartões.`
+        )
+      }
+    }
+
     // Verificar se já existe um cartão com o mesmo nome
     const existingCreditCard = await this.creditCardRepository.findFirst({
       name: data.name,

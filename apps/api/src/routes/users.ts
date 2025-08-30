@@ -13,6 +13,14 @@ const userResponseSchema = z.object({
   email: z.string().email(),
   name: z.string(),
   avatarUrl: z.string().url().nullable().optional(),
+  role: z.enum(['user', 'admin']),
+  plan: z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.enum(['free', 'monthly', 'annual']),
+    price: z.number(),
+    features: z.any(),
+  }).nullable().optional(),
 })
 
 export async function userRoutes(app: FastifyInstance) {
@@ -37,7 +45,12 @@ export async function userRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const decoded = request.user as any
       const userId = decoded?.sub as string
-      const user = await prisma.user.findUnique({ where: { id: userId } })
+      const user = await prisma.user.findUnique({ 
+        where: { id: userId },
+        include: {
+          plan: true,
+        },
+      })
       if (!user) {
         return ResponseFormatter.error(
           reply,
@@ -51,6 +64,14 @@ export async function userRoutes(app: FastifyInstance) {
         email: user.email,
         name: user.name,
         avatarUrl: user.avatarUrl ?? null,
+        role: user.role,
+        plan: user.plan ? {
+          id: user.plan.id,
+          name: user.plan.name,
+          type: user.plan.type,
+          price: Number(user.plan.price),
+          features: user.plan.features,
+        } : null,
       })
     },
   )

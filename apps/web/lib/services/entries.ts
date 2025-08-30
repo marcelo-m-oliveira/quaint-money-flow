@@ -1,6 +1,6 @@
 import { dateToSeconds } from '@saas/utils'
 
-import { apiClient } from '@/lib/api'
+import { api as apiClient } from '@/lib/api'
 import type {
   EntriesQueryParams,
   EntriesResponse,
