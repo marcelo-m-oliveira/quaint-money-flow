@@ -1,9 +1,9 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
     'loading',
@@ -120,5 +120,24 @@ export default function GoogleCallbackPage() {
         <p className="text-muted-foreground">{message}</p>
       </div>
     </div>
+  )
+}
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="space-y-4 p-8 text-center">
+            <div className="mx-auto h-16 w-16">
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+            <h2 className="text-xl font-semibold">Carregando...</h2>
+          </div>
+        </div>
+      }
+    >
+      <GoogleCallbackContent />
+    </Suspense>
   )
 }
