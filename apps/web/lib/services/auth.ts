@@ -1,5 +1,7 @@
 import { env } from '@saas/env'
 
+import { getCookie, removeCookie, setCookie } from '@/lib/utils/cookies'
+
 export interface LoginCredentials {
   email: string
   password: string
@@ -37,29 +39,17 @@ class AuthService {
 
   private saveTokens(accessToken: string, refreshToken: string) {
     if (typeof window !== 'undefined') {
-      // Salvar no localStorage
-      localStorage.setItem('accessToken', accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
-
-      // Salvar em cookies para o middleware
-      document.cookie = `accessToken=${accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`
-      document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Strict`
+      // Salvar em cookies
+      setCookie('accessToken', accessToken, 7 * 24 * 60 * 60) // 7 dias
+      setCookie('refreshToken', refreshToken, 30 * 24 * 60 * 60) // 30 dias
     }
   }
 
   private clearTokens() {
     if (typeof window !== 'undefined') {
-      // Limpar localStorage
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      sessionStorage.removeItem('accessToken')
-      sessionStorage.removeItem('refreshToken')
-
       // Limpar cookies
-      document.cookie =
-        'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      document.cookie =
-        'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      removeCookie('accessToken')
+      removeCookie('refreshToken')
     }
   }
 
@@ -127,9 +117,7 @@ class AuthService {
   async setupPassword(
     data: SetupPasswordData,
   ): Promise<{ message: string; user: any }> {
-    const accessToken =
-      localStorage.getItem('accessToken') ||
-      sessionStorage.getItem('accessToken')
+    const accessToken = getCookie('accessToken')
 
     if (!accessToken) {
       throw new Error('Token de acesso não encontrado')
@@ -155,9 +143,7 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    const refreshToken =
-      localStorage.getItem('refreshToken') ||
-      sessionStorage.getItem('refreshToken')
+    const refreshToken = getCookie('refreshToken')
 
     if (refreshToken) {
       try {
@@ -192,9 +178,7 @@ class AuthService {
   }
 
   async refreshTokens(): Promise<AuthResponse> {
-    const refreshToken =
-      localStorage.getItem('refreshToken') ||
-      sessionStorage.getItem('refreshToken')
+    const refreshToken = getCookie('refreshToken')
 
     if (!refreshToken) {
       throw new Error('Refresh token não encontrado')
@@ -220,10 +204,7 @@ class AuthService {
 
   getAccessToken(): string | null {
     if (typeof window !== 'undefined') {
-      return (
-        localStorage.getItem('accessToken') ||
-        sessionStorage.getItem('accessToken')
-      )
+      return getCookie('accessToken')
     }
     return null
   }

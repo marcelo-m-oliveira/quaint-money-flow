@@ -1,6 +1,7 @@
 import { env } from '@saas/env'
 
 import type { ApiResponse, PaginatedResponse } from './types'
+import { getCookie, removeCookie, setCookie } from './utils/cookies'
 
 // Chamadas diretas para a API backend
 const API_BASE_URL = env.NEXT_PUBLIC_API_URL
@@ -15,21 +16,16 @@ class ApiClient {
   }
 
   private async getAuthToken(): Promise<string | null> {
-    // Em ambiente cliente, buscar token do localStorage ou sessionStorage
+    // Em ambiente cliente, buscar token dos cookies
     if (typeof window !== 'undefined') {
-      return (
-        localStorage.getItem('accessToken') ||
-        sessionStorage.getItem('accessToken')
-      )
+      return getCookie('accessToken')
     }
     return null
   }
 
   private async refreshToken(): Promise<string | null> {
     try {
-      const refreshToken =
-        localStorage.getItem('refreshToken') ||
-        sessionStorage.getItem('refreshToken')
+      const refreshToken = getCookie('refreshToken')
       if (!refreshToken) return null
 
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
@@ -42,10 +38,8 @@ class ApiClient {
 
       if (!response.ok) {
         // Se o refresh falhou, limpar tokens e redirecionar para login
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        sessionStorage.removeItem('accessToken')
-        sessionStorage.removeItem('refreshToken')
+        removeCookie('accessToken')
+        removeCookie('refreshToken')
         if (typeof window !== 'undefined') {
           window.location.href = '/signin'
         }
@@ -54,9 +48,9 @@ class ApiClient {
 
       const data = await response.json()
 
-      // Salvar novos tokens
-      localStorage.setItem('accessToken', data.accessToken)
-      localStorage.setItem('refreshToken', data.refreshToken)
+      // Salvar novos tokens nos cookies
+      setCookie('accessToken', data.accessToken, 7 * 24 * 60 * 60) // 7 dias
+      setCookie('refreshToken', data.refreshToken, 30 * 24 * 60 * 60) // 30 dias
 
       return data.accessToken
     } catch (error) {
