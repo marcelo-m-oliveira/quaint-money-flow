@@ -1,8 +1,10 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
-import { BaseController } from './base.controller'
+
 import { UserManagementService } from '@/services/user-management.service'
 import { convertDatesToSeconds } from '@/utils/response'
+
+import { BaseController } from './base.controller'
 
 // Schemas de validação
 const UserCreateSchema = z.object({
@@ -53,15 +55,15 @@ export class UserManagementController extends BaseController {
   }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleListRequest(
+    return this.handlePaginatedRequest(
       request,
       reply,
       async () => {
         const query = UserQuerySchema.parse(request.query)
         const result = await this.userManagementService.getAll(query)
-        
+
         return {
-          users: result.users.map(user => {
+          items: result.users.map((user) => {
             const { password, ...userWithoutPassword } = user
             return convertDatesToSeconds(userWithoutPassword)
           }),
@@ -79,11 +81,11 @@ export class UserManagementController extends BaseController {
       async () => {
         const { id } = this.getPathParams<{ id: string }>(request)
         const user = await this.userManagementService.getById(id)
-        
+
         if (!user) {
           throw new Error(`${this.entityName} não encontrado`)
         }
-        
+
         const { password, ...userWithoutPassword } = user
         return convertDatesToSeconds(userWithoutPassword)
       },
@@ -98,7 +100,7 @@ export class UserManagementController extends BaseController {
       async () => {
         const data = UserCreateSchema.parse(request.body)
         const user = await this.userManagementService.create(data)
-        
+
         const { password, ...userWithoutPassword } = user
         return convertDatesToSeconds(userWithoutPassword)
       },
@@ -114,7 +116,7 @@ export class UserManagementController extends BaseController {
         const { id } = this.getPathParams<{ id: string }>(request)
         const data = UserUpdateSchema.parse(request.body)
         const user = await this.userManagementService.update(id, data)
-        
+
         const { password, ...userWithoutPassword } = user
         return convertDatesToSeconds(userWithoutPassword)
       },
@@ -142,9 +144,9 @@ export class UserManagementController extends BaseController {
       async () => {
         const { id } = this.getPathParams<{ id: string }>(request)
         const { newPassword } = ChangePasswordSchema.parse(request.body)
-        
+
         await this.userManagementService.changePassword(id, newPassword)
-        
+
         return {
           success: true,
           message: 'Senha alterada com sucesso',
@@ -161,9 +163,9 @@ export class UserManagementController extends BaseController {
       async () => {
         const { id } = this.getPathParams<{ id: string }>(request)
         const { planId } = ChangePlanSchema.parse(request.body)
-        
+
         const user = await this.userManagementService.changePlan(id, planId)
-        
+
         const { password, ...userWithoutPassword } = user
         return convertDatesToSeconds(userWithoutPassword)
       },
@@ -172,7 +174,7 @@ export class UserManagementController extends BaseController {
   }
 
   async stats(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleListRequest(
+    return this.handleRequest(
       request,
       reply,
       async () => {
@@ -183,4 +185,3 @@ export class UserManagementController extends BaseController {
     )
   }
 }
-

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { hasAdvancedReports } from '@/lib/casl'
 import type {
   AccountReportData,
   AccountsReportFilters,
@@ -9,9 +10,8 @@ import type {
   CategoryReportData,
 } from '@/repositories/reports.repository'
 import { ReportsRepository } from '@/repositories/reports.repository'
-import { BaseService } from '@/services/base.service'
-import { hasAdvancedReports } from '@/lib/casl'
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { BaseService } from '@/services/base.service'
 
 // Interface para filtros do serviço (com Date opcional)
 interface ServiceCategoriesReportFilters {
@@ -39,7 +39,10 @@ export class ReportsService extends BaseService<'entry'> {
     super(reportsRepository as any, (reportsRepository as any).prisma)
   }
 
-  private async checkUserReportAccess(userId: string, isAdvancedReport = false) {
+  private async checkUserReportAccess(
+    userId: string,
+    isAdvancedReport = false,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { plan: true },
@@ -51,7 +54,7 @@ export class ReportsService extends BaseService<'entry'> {
 
     if (isAdvancedReport && !hasAdvancedReports(user)) {
       throw new BadRequestError(
-        'Acesso negado: relatórios avançados disponíveis apenas nos planos pagos. Faça upgrade para acessar esta funcionalidade.'
+        'Acesso negado: relatórios avançados disponíveis apenas nos planos pagos. Faça upgrade para acessar esta funcionalidade.',
       )
     }
 

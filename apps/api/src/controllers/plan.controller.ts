@@ -1,8 +1,10 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
-import { BaseController } from './base.controller'
+
 import { PlanService } from '@/services/plan.service'
 import { convertDatesToSeconds } from '@/utils/response'
+
+import { BaseController } from './base.controller'
 
 // Schemas de validação
 const PlanCreateSchema = z.object({
@@ -17,7 +19,10 @@ const PlanCreateSchema = z.object({
 const PlanUpdateSchema = PlanCreateSchema.partial()
 
 const PlanQuerySchema = z.object({
-  includeInactive: z.string().optional().transform(val => val === 'true'),
+  includeInactive: z
+    .string()
+    .optional()
+    .transform((val) => val === 'true'),
 })
 
 interface PlanFilters {
@@ -35,11 +40,11 @@ export class PlanController extends BaseController {
       const plans = await this.planService.getAll({
         includeInactive: query.includeInactive,
       })
-      
+
       reply.code(200).send({
         success: true,
         data: {
-          plans: plans.map(plan => convertDatesToSeconds(plan)),
+          plans: plans.map((plan) => convertDatesToSeconds(plan)),
         },
       })
     } catch (error: any) {
@@ -55,14 +60,14 @@ export class PlanController extends BaseController {
     try {
       const { id } = request.params as { id: string }
       const plan = await this.planService.getById(id)
-      
+
       if (!plan) {
         return reply.code(404).send({
           success: false,
           message: 'Plano não encontrado',
         })
       }
-      
+
       reply.code(200).send({
         success: true,
         data: convertDatesToSeconds(plan),
@@ -80,7 +85,7 @@ export class PlanController extends BaseController {
     try {
       const data = PlanCreateSchema.parse(request.body)
       const plan = await this.planService.create(data)
-      
+
       reply.code(201).send({
         success: true,
         data: convertDatesToSeconds(plan),
@@ -148,7 +153,7 @@ export class PlanController extends BaseController {
   }
 
   async stats(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleListRequest(
+    return this.handleRequest(
       request,
       reply,
       async () => {

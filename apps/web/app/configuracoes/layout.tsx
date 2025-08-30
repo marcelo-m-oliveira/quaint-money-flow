@@ -6,6 +6,7 @@ import {
   CreditCard,
   Database,
   Settings,
+  Shield,
   Tag,
   User,
 } from 'lucide-react'

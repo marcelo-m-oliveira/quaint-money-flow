@@ -1,10 +1,11 @@
 import { FastifyInstance } from 'fastify'
+
 import { PlanFactory } from '@/factories/plan.factory'
 import { Actions } from '@/lib/casl'
 import { authMiddleware } from '@/middleware/auth.middleware'
-import { 
-  loadUserAbilities, 
-  requirePermission 
+import {
+  loadUserAbilities,
+  requirePermission,
 } from '@/middleware/authorization.middleware'
 
 export async function plansRoutes(fastify: FastifyInstance) {
@@ -12,18 +13,12 @@ export async function plansRoutes(fastify: FastifyInstance) {
 
   // Rotas públicas (usuários podem ver planos disponíveis)
   fastify.get('/', {
-    preHandler: [
-      authMiddleware,
-      loadUserAbilities,
-    ],
+    preHandler: [authMiddleware, loadUserAbilities],
     handler: planController.index.bind(planController),
   })
 
   fastify.get('/:id', {
-    preHandler: [
-      authMiddleware,
-      loadUserAbilities,
-    ],
+    preHandler: [authMiddleware, loadUserAbilities],
     handler: planController.show.bind(planController),
   })
 
@@ -71,14 +66,5 @@ export async function plansRoutes(fastify: FastifyInstance) {
       requirePermission(Actions.UPDATE, 'Plan'),
     ],
     handler: planController.activate.bind(planController),
-  })
-
-  fastify.get('/admin/stats', {
-    preHandler: [
-      authMiddleware,
-      loadUserAbilities,
-      requirePermission(Actions.READ, 'Plan'),
-    ],
-    handler: planController.stats.bind(planController),
   })
 }

@@ -1,5 +1,5 @@
-import { PlanService } from '@/services/plan.service'
 import { PlanController } from '@/controllers/plan.controller'
+import { PlanService } from '@/services/plan.service'
 
 export class PlanFactory {
   private static planService: PlanService

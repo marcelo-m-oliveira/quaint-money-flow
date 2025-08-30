@@ -1,4 +1,5 @@
 import { Coupon } from '@prisma/client'
+
 import { prisma } from '@/lib/prisma'
 
 export interface CouponCreateData {
@@ -21,11 +22,7 @@ export interface CouponWithUsage extends Coupon {
 export class CouponService {
   protected prisma = prisma
 
-  protected calculatePagination(
-    total: number,
-    page: number,
-    limit: number,
-  ) {
+  protected calculatePagination(total: number, page: number, limit: number) {
     const totalPages = Math.ceil(total / limit)
     return {
       page,
@@ -42,16 +39,18 @@ export class CouponService {
     includeUsage?: boolean
   }): Promise<CouponWithUsage[]> {
     const where = options?.includeInactive ? {} : { isActive: true }
-    
+
     return this.prisma.coupon.findMany({
       where,
-      include: options?.includeUsage ? {
-        _count: {
-          select: {
-            userCoupons: true,
-          },
-        },
-      } : undefined,
+      include: options?.includeUsage
+        ? {
+            _count: {
+              select: {
+                userCoupons: true,
+              },
+            },
+          }
+        : undefined,
       orderBy: {
         createdAt: 'desc',
       },
@@ -133,7 +132,11 @@ export class CouponService {
     }
 
     // Validar dados
-    if (data.discountType === 'percentage' && data.discountValue && data.discountValue > 100) {
+    if (
+      data.discountType === 'percentage' &&
+      data.discountValue &&
+      data.discountValue > 100
+    ) {
       throw new Error('Desconto percentual não pode ser maior que 100%')
     }
 
@@ -171,7 +174,10 @@ export class CouponService {
     })
   }
 
-  async validateCoupon(code: string, userId: string): Promise<{
+  async validateCoupon(
+    code: string,
+    userId: string,
+  ): Promise<{
     valid: boolean
     coupon?: CouponWithUsage
     error?: string
@@ -236,23 +242,19 @@ export class CouponService {
   }
 
   async getCouponStats() {
-    const [
-      totalCoupons,
-      activeCoupons,
-      expiredCoupons,
-      usedCoupons,
-    ] = await Promise.all([
-      this.prisma.coupon.count(),
-      this.prisma.coupon.count({ where: { isActive: true } }),
-      this.prisma.coupon.count({
-        where: {
-          expiresAt: {
-            lt: new Date(),
+    const [totalCoupons, activeCoupons, expiredCoupons, usedCoupons] =
+      await Promise.all([
+        this.prisma.coupon.count(),
+        this.prisma.coupon.count({ where: { isActive: true } }),
+        this.prisma.coupon.count({
+          where: {
+            expiresAt: {
+              lt: new Date(),
+            },
           },
-        },
-      }),
-      this.prisma.userCoupon.count(),
-    ])
+        }),
+        this.prisma.userCoupon.count(),
+      ])
 
     return {
       totalCoupons,

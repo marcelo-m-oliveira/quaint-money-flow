@@ -1,7 +1,7 @@
-import { User, UserRole, Prisma } from '@prisma/client'
-import { prisma } from '@/lib/prisma'
-import { BaseService } from './base.service'
+import { Prisma, User, UserRole } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
+
+import { prisma } from '@/lib/prisma'
 
 export interface UserCreateData {
   email: string
@@ -47,11 +47,7 @@ export interface UserFilters {
 export class UserManagementService {
   protected prisma = prisma
 
-  protected calculatePagination(
-    total: number,
-    page: number,
-    limit: number,
-  ) {
+  protected calculatePagination(total: number, page: number, limit: number) {
     const totalPages = Math.ceil(total / limit)
     return {
       page,
@@ -245,7 +241,7 @@ export class UserManagementService {
 
   async changePassword(id: string, newPassword: string): Promise<void> {
     const passwordHash = await bcrypt.hash(newPassword, 10)
-    
+
     await this.prisma.user.update({
       where: { id },
       data: {
@@ -272,28 +268,24 @@ export class UserManagementService {
   }
 
   async getUserStats() {
-    const [
-      totalUsers,
-      adminUsers,
-      activeUsers,
-      usersByPlan,
-    ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.user.count({ where: { role: 'admin' } }),
-      this.prisma.user.count({
-        where: {
-          createdAt: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // últimos 30 dias
+    const [totalUsers, adminUsers, activeUsers, usersByPlan] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.user.count({ where: { role: 'admin' } }),
+        this.prisma.user.count({
+          where: {
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // últimos 30 dias
+            },
           },
-        },
-      }),
-      this.prisma.user.groupBy({
-        by: ['planId'],
-        _count: {
-          id: true,
-        },
-      }),
-    ])
+        }),
+        this.prisma.user.groupBy({
+          by: ['planId'],
+          _count: {
+            id: true,
+          },
+        }),
+      ])
 
     return {
       totalUsers,

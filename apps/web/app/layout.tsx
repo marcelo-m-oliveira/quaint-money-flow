@@ -38,7 +38,9 @@ export default function RootLayout({
               <AccountsProvider>
                 <CreditCardsProvider>
                   <BankIconsProvider>
-                    <UserPreferencesProvider>{children}</UserPreferencesProvider>
+                    <UserPreferencesProvider>
+                      {children}
+                    </UserPreferencesProvider>
                   </BankIconsProvider>
                 </CreditCardsProvider>
               </AccountsProvider>

@@ -128,9 +128,12 @@ async function proxyRequest(
 
     // Ler o conteúdo da resposta apenas se houver
     let responseBody: string | null = null
-    
+
     // Verificar se há conteúdo na resposta (status 204 No Content não tem body)
-    if (response.status !== 204 && response.headers.get('content-length') !== '0') {
+    if (
+      response.status !== 204 &&
+      response.headers.get('content-length') !== '0'
+    ) {
       try {
         responseBody = await response.text()
       } catch (error) {

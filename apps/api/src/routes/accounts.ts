@@ -4,9 +4,9 @@ import { z } from 'zod'
 import { AccountFactory } from '@/factories/account.factory'
 import { Actions } from '@/lib/casl'
 import { authMiddleware } from '@/middleware/auth.middleware'
-import { 
-  loadUserAbilities, 
-  requirePermission 
+import {
+  loadUserAbilities,
+  requirePermission,
 } from '@/middleware/authorization.middleware'
 import { performanceMiddleware } from '@/middleware/performance.middleware'
 import { rateLimitMiddlewares } from '@/middleware/rate-limit.middleware'

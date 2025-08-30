@@ -1,10 +1,11 @@
 import { FastifyInstance } from 'fastify'
+
 import { CouponFactory } from '@/factories/coupon.factory'
 import { Actions } from '@/lib/casl'
 import { authMiddleware } from '@/middleware/auth.middleware'
-import { 
-  loadUserAbilities, 
-  requirePermission 
+import {
+  loadUserAbilities,
+  requirePermission,
 } from '@/middleware/authorization.middleware'
 
 export async function couponsRoutes(fastify: FastifyInstance) {
@@ -58,19 +59,13 @@ export async function couponsRoutes(fastify: FastifyInstance) {
 
   // Rota para validar cupom (usuários podem validar cupons)
   fastify.post('/validate', {
-    preHandler: [
-      authMiddleware,
-      loadUserAbilities,
-    ],
+    preHandler: [authMiddleware, loadUserAbilities],
     handler: couponController.validate.bind(couponController),
   })
 
   // Rota para usar cupom (usuários podem usar cupons)
   fastify.post('/:id/use', {
-    preHandler: [
-      authMiddleware,
-      loadUserAbilities,
-    ],
+    preHandler: [authMiddleware, loadUserAbilities],
     handler: couponController.use.bind(couponController),
   })
 

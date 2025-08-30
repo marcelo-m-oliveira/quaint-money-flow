@@ -111,7 +111,7 @@ export class CreditCardService extends BaseService<'creditCard'> {
         const planFeatures = user.plan?.features as any
         const maxCreditCards = planFeatures?.creditCards?.max || 0
         throw new BadRequestError(
-          `Limite de cartões de crédito atingido. Seu plano permite no máximo ${maxCreditCards} cartão(ões). Faça upgrade para criar mais cartões.`
+          `Limite de cartões de crédito atingido. Seu plano permite no máximo ${maxCreditCards} cartão(ões). Faça upgrade para criar mais cartões.`,
         )
       }
     }

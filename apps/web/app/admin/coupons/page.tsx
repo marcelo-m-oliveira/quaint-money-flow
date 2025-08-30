@@ -1,25 +1,29 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { 
-  Ticket, 
-  Plus, 
-  Search, 
+import {
   Calendar,
-  Percent,
-  DollarSign,
-  Users,
-  Settings,
   Copy,
-  MoreHorizontal,
+  DollarSign,
   Edit,
-  Trash2
+  MoreHorizontal,
+  Percent,
+  Plus,
+  Search,
+  Ticket,
+  Trash2,
 } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -28,12 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { api } from '@/lib/api'
 
 interface Coupon {
@@ -75,8 +73,8 @@ export default function AdminCouponsPage() {
     }
   }
 
-  const filteredCoupons = coupons.filter(coupon =>
-    coupon.code.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCoupons = coupons.filter((coupon) =>
+    coupon.code.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const getDiscountText = (coupon: Coupon) => {
@@ -93,15 +91,15 @@ export default function AdminCouponsPage() {
     if (!coupon.isActive) {
       return <Badge variant="destructive">Inativo</Badge>
     }
-    
+
     if (coupon.expiresAt && new Date(coupon.expiresAt * 1000) < new Date()) {
       return <Badge variant="destructive">Expirado</Badge>
     }
-    
+
     if (coupon.maxUses && coupon.currentUses >= coupon.maxUses) {
       return <Badge variant="destructive">Esgotado</Badge>
     }
-    
+
     return <Badge className="bg-green-100 text-green-800">Ativo</Badge>
   }
 
@@ -169,7 +167,9 @@ export default function AdminCouponsPage() {
           <CardContent className="p-4">
             <div className="text-center">
               <div className="text-2xl font-bold">{coupons.length}</div>
-              <div className="text-sm text-muted-foreground">Total de Cupons</div>
+              <div className="text-sm text-muted-foreground">
+                Total de Cupons
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -178,7 +178,7 @@ export default function AdminCouponsPage() {
           <CardContent className="p-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {coupons.filter(c => c.isActive).length}
+                {coupons.filter((c) => c.isActive).length}
               </div>
               <div className="text-sm text-muted-foreground">Ativos</div>
             </div>
@@ -202,9 +202,13 @@ export default function AdminCouponsPage() {
           ) : filteredCoupons.length === 0 ? (
             <div className="p-8 text-center">
               <Ticket className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-2 text-lg font-medium">Nenhum cupom encontrado</h3>
+              <h3 className="mt-2 text-lg font-medium">
+                Nenhum cupom encontrado
+              </h3>
               <p className="text-muted-foreground">
-                {searchTerm ? 'Nenhum cupom corresponde à sua busca' : 'Comece criando seu primeiro cupom'}
+                {searchTerm
+                  ? 'Nenhum cupom corresponde à sua busca'
+                  : 'Comece criando seu primeiro cupom'}
               </p>
               <Button className="mt-4">
                 <Plus className="mr-2 h-4 w-4" />
@@ -228,7 +232,7 @@ export default function AdminCouponsPage() {
                   <TableRow key={coupon.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <code className="rounded bg-muted px-2 py-1 text-sm font-mono">
+                        <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
                           {coupon.code}
                         </code>
                         <Button
@@ -247,7 +251,9 @@ export default function AdminCouponsPage() {
                         ) : (
                           <DollarSign className="h-4 w-4 text-green-600" />
                         )}
-                        <span className="font-medium">{getDiscountText(coupon)}</span>
+                        <span className="font-medium">
+                          {getDiscountText(coupon)}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -267,12 +273,12 @@ export default function AdminCouponsPage() {
                           {formatDate(coupon.expiresAt)}
                         </div>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Sem expiração</span>
+                        <span className="text-sm text-muted-foreground">
+                          Sem expiração
+                        </span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {getStatusBadge(coupon)}
-                    </TableCell>
+                    <TableCell>{getStatusBadge(coupon)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -306,4 +312,3 @@ export default function AdminCouponsPage() {
     </div>
   )
 }
-

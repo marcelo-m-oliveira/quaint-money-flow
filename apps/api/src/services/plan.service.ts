@@ -1,4 +1,5 @@
 import { Plan, PlanType } from '@prisma/client'
+
 import { prisma } from '@/lib/prisma'
 
 export interface PlanCreateData {
@@ -15,11 +16,7 @@ export interface PlanUpdateData extends Partial<PlanCreateData> {}
 export class PlanService {
   protected prisma = prisma
 
-  protected calculatePagination(
-    total: number,
-    page: number,
-    limit: number,
-  ) {
+  protected calculatePagination(total: number, page: number, limit: number) {
     const totalPages = Math.ceil(total / limit)
     return {
       page,
@@ -31,17 +28,12 @@ export class PlanService {
     }
   }
 
-  async getAll(options?: {
-    includeInactive?: boolean
-  }): Promise<Plan[]> {
+  async getAll(options?: { includeInactive?: boolean }): Promise<Plan[]> {
     const where = options?.includeInactive ? {} : { isActive: true }
-    
+
     return this.prisma.plan.findMany({
       where,
-      orderBy: [
-        { type: 'asc' },
-        { price: 'asc' },
-      ],
+      orderBy: [{ type: 'asc' }, { price: 'asc' }],
     })
   }
 
@@ -95,7 +87,9 @@ export class PlanService {
     })
 
     if (usersCount > 0) {
-      throw new Error('Não é possível excluir um plano que está sendo usado por usuários')
+      throw new Error(
+        'Não é possível excluir um plano que está sendo usado por usuários',
+      )
     }
 
     await this.prisma.plan.delete({
@@ -112,11 +106,7 @@ export class PlanService {
   }
 
   async getPlanStats() {
-    const [
-      totalPlans,
-      activePlans,
-      planUsage,
-    ] = await Promise.all([
+    const [totalPlans, activePlans, planUsage] = await Promise.all([
       this.prisma.plan.count(),
       this.prisma.plan.count({ where: { isActive: true } }),
       this.prisma.plan.findMany({
@@ -133,7 +123,7 @@ export class PlanService {
     return {
       totalPlans,
       activePlans,
-      planUsage: planUsage.map(plan => ({
+      planUsage: planUsage.map((plan) => ({
         id: plan.id,
         name: plan.name,
         type: plan.type,

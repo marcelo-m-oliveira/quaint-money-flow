@@ -1,11 +1,11 @@
-import { createPrismaAbility, PrismaQuery, Subjects } from '@casl/prisma'
-import { PureAbility, AbilityBuilder, ForcedSubject } from '@casl/ability'
-import type { User, Account, Category, Entry, CreditCard, Plan, Coupon } from '@prisma/client'
+import { AbilityBuilder, ForcedSubject, PureAbility } from '@casl/ability'
+import { createPrismaAbility, PrismaQuery } from '@casl/prisma'
+import type { Plan, User } from '@prisma/client'
 
 // Definir os subjects que podem ser controlados pelo CASL
-type AppSubjects = 
+type AppSubjects =
   | 'User'
-  | 'Account' 
+  | 'Account'
   | 'Category'
   | 'Entry'
   | 'CreditCard'
@@ -15,7 +15,7 @@ type AppSubjects =
 
 type AppAbilities = [
   string,
-  AppSubjects | ForcedSubject<Exclude<AppSubjects, 'all'>>
+  AppSubjects | ForcedSubject<Exclude<AppSubjects, 'all'>>,
 ]
 
 export type AppAbility = PureAbility<AppAbilities, PrismaQuery>
@@ -36,7 +36,9 @@ interface UserWithPlan extends User {
 
 // Definir permissões baseadas no plano do usuário
 export function defineAbilityFor(user: UserWithPlan): AppAbility {
-  const { can, cannot, build } = new AbilityBuilder<AppAbility>(createPrismaAbility)
+  const { can, cannot, build } = new AbilityBuilder<AppAbility>(
+    createPrismaAbility,
+  )
 
   // Permissões básicas para todos os usuários autenticados
   if (user) {
@@ -95,7 +97,7 @@ export function defineAbilityFor(user: UserWithPlan): AppAbility {
       cannot(Actions.MANAGE, 'User')
       cannot(Actions.MANAGE, 'Plan')
       cannot(Actions.MANAGE, 'Coupon')
-      
+
       // Mas podem ler seus próprios dados
       can(Actions.READ, 'User', { id: user.id })
     }
@@ -105,24 +107,28 @@ export function defineAbilityFor(user: UserWithPlan): AppAbility {
 }
 
 // Helper para verificar limites baseados no plano
-export function checkPlanLimits(user: UserWithPlan, resource: string, currentCount: number): boolean {
+export function checkPlanLimits(
+  user: UserWithPlan,
+  resource: string,
+  currentCount: number,
+): boolean {
   if (user.role === 'admin') return true
-  
+
   const planFeatures = user.plan?.features as any
   const resourceConfig = planFeatures?.[resource]
-  
+
   if (resourceConfig?.unlimited) return true
   if (resourceConfig?.limited && resourceConfig?.max) {
     return currentCount < resourceConfig.max
   }
-  
+
   return false
 }
 
 // Helper para verificar se o usuário tem acesso a relatórios avançados
 export function hasAdvancedReports(user: UserWithPlan): boolean {
   if (user.role === 'admin') return true
-  
+
   const planFeatures = user.plan?.features as any
   return planFeatures?.reports?.advanced === true
 }

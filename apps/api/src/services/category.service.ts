@@ -142,7 +142,7 @@ export class CategoryService extends BaseService<'category'> {
         const planFeatures = user.plan?.features as any
         const maxCategories = planFeatures?.categories?.max || 0
         throw new BadRequestError(
-          `Limite de categorias atingido. Seu plano permite no máximo ${maxCategories} categoria(s). Faça upgrade para criar mais categorias.`
+          `Limite de categorias atingido. Seu plano permite no máximo ${maxCategories} categoria(s). Faça upgrade para criar mais categorias.`,
         )
       }
     }

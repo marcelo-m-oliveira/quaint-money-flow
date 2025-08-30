@@ -41,7 +41,7 @@ export interface PlanStats {
   }>
 }
 
-class PlansService {
+class Plans {
   private baseUrl = '/plans'
 
   async getAll(includeInactive = false): Promise<{ plans: Plan[] }> {
@@ -79,7 +79,7 @@ class PlansService {
   }
 
   async getStats(): Promise<PlanStats> {
-    return api.get(`${this.baseUrl}/admin/stats`)
+    return api.get('/admin/plans/stats')
   }
 
   // Helpers para definições de planos
@@ -101,7 +101,7 @@ class PlansService {
       monthly: {
         name: 'Plano Mensal',
         type: 'monthly' as const,
-        price: 19.90,
+        price: 19.9,
         description: 'Plano mensal com todas as funcionalidades',
         features: {
           entries: { unlimited: true },
@@ -115,7 +115,8 @@ class PlansService {
         name: 'Plano Anual',
         type: 'annual' as const,
         price: 203.15, // 15% de desconto
-        description: 'Plano anual com 15% de desconto e todas as funcionalidades',
+        description:
+          'Plano anual com 15% de desconto e todas as funcionalidades',
         features: {
           entries: { unlimited: true },
           categories: { unlimited: true },
@@ -162,5 +163,4 @@ class PlansService {
   }
 }
 
-export const plansService = new PlansService()
-
+export const plansService = new Plans()

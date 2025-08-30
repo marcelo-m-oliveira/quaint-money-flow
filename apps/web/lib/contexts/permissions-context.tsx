@@ -1,10 +1,11 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { AppAbility, defineAbilityFor, UserWithPlan } from '@/lib/casl'
 import { createContextualCan } from '@casl/react'
-import { useAuth } from '@/lib/hooks/use-auth'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+
 import { api } from '@/lib/api'
+import { AppAbility, defineAbilityFor, UserWithPlan } from '@/lib/casl'
+import { useAuth } from '@/lib/hooks/use-auth'
 
 interface PermissionsContextType {
   ability: AppAbility
@@ -14,16 +15,20 @@ interface PermissionsContextType {
   isLoading: boolean
 }
 
-const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined)
+const PermissionsContext = createContext<PermissionsContextType | undefined>(
+  undefined,
+)
 
-export function PermissionsProvider({ 
+export function PermissionsProvider({
   children,
-}: { 
+}: {
   children: React.ReactNode
 }) {
   const { user: authUser, isAuthenticated } = useAuth()
   const [user, setUser] = useState<UserWithPlan | null>(null)
-  const [ability, setAbility] = useState<AppAbility>(() => defineAbilityFor(null))
+  const [ability, setAbility] = useState<AppAbility>(() =>
+    defineAbilityFor(null),
+  )
   const [isLoading, setIsLoading] = useState(false)
 
   // Criar o componente Can contextual
@@ -33,8 +38,6 @@ export function PermissionsProvider({
     setUser(newUser)
     setAbility(defineAbilityFor(newUser))
   }
-
-
 
   // Buscar dados completos do usuário quando autenticado
   useEffect(() => {
@@ -47,15 +50,15 @@ export function PermissionsProvider({
 
       try {
         setIsLoading(true)
-        
+
         // Verificar se api está disponível
         if (!api || typeof api.get !== 'function') {
           throw new Error('API client não disponível')
         }
-        
+
         // Buscar dados completos do usuário incluindo plano
         const userResponse = await api.get('/users/me')
-        
+
         // Transformar para o formato esperado pelo CASL
         const userWithPlan: UserWithPlan = {
           id: userResponse.id,
@@ -95,8 +98,6 @@ export function PermissionsProvider({
     }
   }, [isAuthenticated, authUser])
 
-
-
   // Escutar eventos de mudança de autenticação
   useEffect(() => {
     const handleAuthChange = () => {
@@ -105,13 +106,13 @@ export function PermissionsProvider({
         const fetchUserWithPlan = async () => {
           try {
             setIsLoading(true)
-            
+
             if (!api || typeof api.get !== 'function') {
               throw new Error('API client não disponível')
             }
-            
+
             const userResponse = await api.get('/users/me')
-            
+
             const userWithPlan: UserWithPlan = {
               id: userResponse.id,
               email: userResponse.email,
@@ -137,7 +138,7 @@ export function PermissionsProvider({
             setIsLoading(false)
           }
         }
-        
+
         fetchUserWithPlan()
       } else {
         setUser(null)
@@ -147,20 +148,22 @@ export function PermissionsProvider({
 
     // Adicionar listener para eventos de mudança de auth
     window.addEventListener('auth:changed', handleAuthChange)
-    
+
     return () => {
       window.removeEventListener('auth:changed', handleAuthChange)
     }
   }, [authUser, isAuthenticated])
 
   return (
-    <PermissionsContext.Provider value={{ 
-      ability, 
-      user, 
-      updateUser,
-      Can,
-      isLoading,
-    }}>
+    <PermissionsContext.Provider
+      value={{
+        ability,
+        user,
+        updateUser,
+        Can,
+        isLoading,
+      }}
+    >
       {children}
     </PermissionsContext.Provider>
   )

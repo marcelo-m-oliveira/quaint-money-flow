@@ -1,5 +1,5 @@
-import { UserManagementService } from '@/services/user-management.service'
 import { UserManagementController } from '@/controllers/user-management.controller'
+import { UserManagementService } from '@/services/user-management.service'
 
 export class UserManagementFactory {
   private static userManagementService: UserManagementService
@@ -15,9 +15,10 @@ export class UserManagementFactory {
   static getUserManagementController(): UserManagementController {
     if (!this.userManagementController) {
       const userManagementService = this.getUserManagementService()
-      this.userManagementController = new UserManagementController(userManagementService)
+      this.userManagementController = new UserManagementController(
+        userManagementService,
+      )
     }
     return this.userManagementController
   }
 }
-

@@ -14,14 +14,13 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { getPlanLimitInfo } from '@/lib/casl'
+import { useUser } from '@/lib/contexts/permissions-context'
 import { BANK_ICONS, findBankByName } from '@/lib/data/banks'
 import { Account } from '@/lib/types'
-import { useUser } from '@/lib/contexts/permissions-context'
-import { getPlanLimitInfo } from '@/lib/casl'
 
 import { IconSelector } from './icon-selector'
 import { Button } from './ui/button'
-import { PlanLimitWarning } from './plan-limit-warning'
 import { Checkbox } from './ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Input } from './ui/input'
@@ -94,7 +93,7 @@ export function AccountFormModal({
 }: AccountFormModalProps) {
   const { user } = useUser()
   const limitInfo = getPlanLimitInfo(user, 'accounts')
-  
+
   const {
     register,
     handleSubmit,
@@ -326,16 +325,15 @@ export function AccountFormModal({
               type="submit"
               className="w-full"
               disabled={
-                !watch('name')?.trim() || 
+                !watch('name')?.trim() ||
                 (!account && !limitInfo.canCreate(currentAccountsCount))
               }
             >
-              {!account && !limitInfo.canCreate(currentAccountsCount) 
-                ? 'Limite atingido - Faça upgrade' 
-                : account 
-                  ? 'Atualizar conta' 
-                  : 'Adicionar conta'
-              }
+              {!account && !limitInfo.canCreate(currentAccountsCount)
+                ? 'Limite atingido - Faça upgrade'
+                : account
+                  ? 'Atualizar conta'
+                  : 'Adicionar conta'}
             </Button>
           </form>
         </DialogContent>

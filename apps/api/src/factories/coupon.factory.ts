@@ -1,5 +1,5 @@
-import { CouponService } from '@/services/coupon.service'
 import { CouponController } from '@/controllers/coupon.controller'
+import { CouponService } from '@/services/coupon.service'
 
 export class CouponFactory {
   private static couponService: CouponService

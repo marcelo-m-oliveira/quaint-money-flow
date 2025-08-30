@@ -1,25 +1,31 @@
 'use client'
 
-import React from 'react'
-import { 
-  Shield, 
-  Crown, 
-  User, 
-  CreditCard, 
-  Tag, 
+import {
+  AlertTriangle,
   BarChart3,
   CheckCircle,
+  CreditCard,
+  Crown,
+  Shield,
+  Tag,
+  User,
   XCircle,
-  AlertTriangle
 } from 'lucide-react'
+import React from 'react'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Can, CanCreate, CanManage } from '@/components/permissions/can'
+import { PlanBadge, PlanFeatureList } from '@/components/plan-limit-warning'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Can, CanCreate, CanManage } from '@/components/permissions/can'
-import { useUser, usePermissions } from '@/lib/contexts/permissions-context'
-import { Actions, hasAdvancedReports, getPlanLimitInfo } from '@/lib/casl'
-import { PlanBadge, PlanFeatureList } from '@/components/plan-limit-warning'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Actions, getPlanLimitInfo, hasAdvancedReports } from '@/lib/casl'
+import { usePermissions, useUser } from '@/lib/contexts/permissions-context'
 
 export function PermissionsDemo() {
   const { user } = useUser()
@@ -78,16 +84,18 @@ export function PermissionsDemo() {
                     </Badge>
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">{user?.email}</div>
+                <div className="text-sm text-muted-foreground">
+                  {user?.email}
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm">Plano:</span>
                   <PlanBadge plan={user?.plan} />
                 </div>
               </div>
             </div>
-            
+
             <div>
-              <h4 className="font-medium mb-2">Funcionalidades do Plano:</h4>
+              <h4 className="mb-2 font-medium">Funcionalidades do Plano:</h4>
               <PlanFeatureList plan={user?.plan} />
             </div>
           </div>
@@ -109,9 +117,12 @@ export function PermissionsDemo() {
           <div className="grid gap-3 md:grid-cols-2">
             {permissions.map((perm) => {
               const hasPermission = ability.can(perm.action, perm.subject)
-              
+
               return (
-                <div key={`${perm.action}-${perm.subject}`} className="flex items-center justify-between rounded-lg border p-3">
+                <div
+                  key={`${perm.action}-${perm.subject}`}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
                   <span className="text-sm">{perm.label}</span>
                   {hasPermission ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
@@ -141,39 +152,47 @@ export function PermissionsDemo() {
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-lg border p-3">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium">Contas</span>
                     <CreditCard className="h-4 w-4 text-blue-600" />
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {accountLimits.isUnlimited ? 'Ilimitado' : `Máximo: ${accountLimits.max}`}
+                    {accountLimits.isUnlimited
+                      ? 'Ilimitado'
+                      : `Máximo: ${accountLimits.max}`}
                   </div>
                 </div>
 
                 <div className="rounded-lg border p-3">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium">Categorias</span>
                     <Tag className="h-4 w-4 text-green-600" />
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {categoryLimits.isUnlimited ? 'Ilimitado' : `Máximo: ${categoryLimits.max}`}
+                    {categoryLimits.isUnlimited
+                      ? 'Ilimitado'
+                      : `Máximo: ${categoryLimits.max}`}
                   </div>
                 </div>
 
                 <div className="rounded-lg border p-3">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium">Cartões</span>
                     <CreditCard className="h-4 w-4 text-purple-600" />
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {creditCardLimits.isUnlimited ? 'Ilimitado' : `Máximo: ${creditCardLimits.max}`}
+                    {creditCardLimits.isUnlimited
+                      ? 'Ilimitado'
+                      : `Máximo: ${creditCardLimits.max}`}
                   </div>
                 </div>
               </div>
 
               <div className="rounded-lg border p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Relatórios Avançados</span>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    Relatórios Avançados
+                  </span>
                   <BarChart3 className="h-4 w-4 text-orange-600" />
                 </div>
                 <div className="flex items-center gap-2">
@@ -183,7 +202,9 @@ export function PermissionsDemo() {
                     <XCircle className="h-4 w-4 text-red-600" />
                   )}
                   <span className="text-xs text-muted-foreground">
-                    {hasAdvancedReports(user) ? 'Disponível' : 'Requer plano pago'}
+                    {hasAdvancedReports(user)
+                      ? 'Disponível'
+                      : 'Requer plano pago'}
                   </span>
                 </div>
               </div>
@@ -200,13 +221,14 @@ export function PermissionsDemo() {
             Exemplo de Componentes Condicionais
           </CardTitle>
           <CardDescription>
-            Demonstração do uso do componente `Can` para renderização condicional
+            Demonstração do uso do componente `Can` para renderização
+            condicional
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="rounded-lg border p-4">
-              <h4 className="font-medium mb-3">Apenas para Admins:</h4>
+              <h4 className="mb-3 font-medium">Apenas para Admins:</h4>
               <div className="space-y-2">
                 <CanManage subject="User">
                   <Button variant="outline" size="sm">
@@ -232,7 +254,7 @@ export function PermissionsDemo() {
             </div>
 
             <div className="rounded-lg border p-4">
-              <h4 className="font-medium mb-3">Para Todos os Usuários:</h4>
+              <h4 className="mb-3 font-medium">Para Todos os Usuários:</h4>
               <div className="space-y-2">
                 <CanCreate subject="Account">
                   <Button variant="outline" size="sm">
@@ -262,4 +284,3 @@ export function PermissionsDemo() {
     </div>
   )
 }
-

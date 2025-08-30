@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
+import { useUser } from '@/lib/contexts/permissions-context'
 import { useAuth } from '@/lib/hooks/use-auth'
 
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -31,7 +32,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { useUser } from '@/lib/contexts/permissions-context'
 
 export function Topbar() {
   const { setTheme } = useTheme()
@@ -107,22 +107,20 @@ export function Topbar() {
                 Metas
               </Button>
             </Link>
-            
+
             {/* Link Admin - apenas para administradores */}
             {permUser?.role === 'admin' && (
               <Link href="/admin">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="px-3 py-2 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-950"
+                  className="px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-purple-950 dark:hover:text-purple-300"
                 >
                   <Shield className="mr-1 h-4 w-4" />
                   Admin
                 </Button>
               </Link>
             )}
-            
-
           </nav>
 
           {/* Menu de Ações */}

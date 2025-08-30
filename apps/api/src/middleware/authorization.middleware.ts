@@ -1,6 +1,7 @@
+import { ForbiddenError } from '@casl/ability'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { ForbiddenError, subject } from '@casl/ability'
-import { defineAbilityFor, AppAbility } from '@/lib/casl'
+
+import { AppAbility, defineAbilityFor } from '@/lib/casl'
 import { prisma } from '@/lib/prisma'
 import { ResponseFormatter } from '@/utils/response'
 
@@ -46,7 +47,7 @@ export async function loadUserAbilities(
 
     // Definir as permissões do usuário
     request.ability = defineAbilityFor(user)
-    
+
     // Adicionar o usuário completo ao request para uso posterior
     request.user = { ...request.user, ...user }
   } catch (error: any) {
@@ -113,7 +114,11 @@ export function requirePermission(action: string, subject: string) {
 }
 
 // Middleware para verificar se o usuário pode acessar um recurso específico
-export function requireResourcePermission(action: string, subject: string, getResource: (request: FastifyRequest) => any) {
+export function requireResourcePermission(
+  action: string,
+  subject: string,
+  getResource: (request: FastifyRequest) => any,
+) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       if (!request.ability) {
@@ -126,7 +131,7 @@ export function requireResourcePermission(action: string, subject: string, getRe
       }
 
       const resource = await getResource(request)
-      
+
       if (!resource) {
         return ResponseFormatter.error(
           reply,
@@ -138,7 +143,7 @@ export function requireResourcePermission(action: string, subject: string, getRe
 
       // Verificar se o usuário tem permissão para acessar este recurso específico
       const resourceSubject = subject(subject, resource)
-      
+
       if (!request.ability.can(action, resourceSubject)) {
         return ResponseFormatter.error(
           reply,
@@ -174,23 +179,26 @@ export function requireResourcePermission(action: string, subject: string, getRe
 export async function authorizationPlugin(fastify: FastifyInstance) {
   // Registrar o middleware de carregamento de permissões
   fastify.decorate('loadUserAbilities', loadUserAbilities)
-  
+
   // Registrar os middlewares de verificação de permissões
   fastify.decorate('requirePermission', requirePermission)
   fastify.decorate('requireResourcePermission', requireResourcePermission)
-  
+
   // Helper para verificar permissões programaticamente
-  fastify.decorate('checkPermission', (ability: AppAbility, action: string, subjectOrResource: any) => {
-    try {
-      ForbiddenError.from(ability).throwUnlessCan(action, subjectOrResource)
-      return true
-    } catch (error) {
-      if (error instanceof ForbiddenError) {
-        return false
+  fastify.decorate(
+    'checkPermission',
+    (ability: AppAbility, action: string, subjectOrResource: any) => {
+      try {
+        ForbiddenError.from(ability).throwUnlessCan(action, subjectOrResource)
+        return true
+      } catch (error) {
+        if (error instanceof ForbiddenError) {
+          return false
+        }
+        throw error
       }
-      throw error
-    }
-  })
+    },
+  )
 }
 
 // Tipos para extensão do Fastify
@@ -199,6 +207,10 @@ declare module 'fastify' {
     loadUserAbilities: typeof loadUserAbilities
     requirePermission: typeof requirePermission
     requireResourcePermission: typeof requireResourcePermission
-    checkPermission: (ability: AppAbility, action: string, subjectOrResource: any) => boolean
+    checkPermission: (
+      ability: AppAbility,
+      action: string,
+      subjectOrResource: any,
+    ) => boolean
   }
 }

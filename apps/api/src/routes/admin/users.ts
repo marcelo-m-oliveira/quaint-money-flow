@@ -1,10 +1,11 @@
 import { FastifyInstance } from 'fastify'
+
 import { UserManagementFactory } from '@/factories/user-management.factory'
 import { Actions } from '@/lib/casl'
 import { authMiddleware } from '@/middleware/auth.middleware'
-import { 
-  loadUserAbilities, 
-  requirePermission 
+import {
+  loadUserAbilities,
+  requirePermission,
 } from '@/middleware/authorization.middleware'
 
 export async function adminUsersRoutes(fastify: FastifyInstance) {

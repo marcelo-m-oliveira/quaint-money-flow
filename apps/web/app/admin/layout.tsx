@@ -1,23 +1,23 @@
 'use client'
 
-import React from 'react'
+import {
+  ArrowLeft,
+  BarChart3,
+  Crown,
+  Home,
+  Shield,
+  Ticket,
+  Users,
+} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  Users, 
-  Crown, 
-  Ticket, 
-  BarChart3, 
-  ArrowLeft,
-  Shield,
-  Home
-} from 'lucide-react'
+import React from 'react'
 
+import { PageLayout } from '@/components/layouts/page-layout'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { useUser } from '@/lib/contexts/permissions-context'
-import { PageLayout } from '@/components/layouts/page-layout'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -106,25 +106,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <PageLayout>
       <div className="space-y-6">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">
-            Dashboard
-          </Link>
-          <span>/</span>
-          <Link href="/admin" className="hover:text-foreground">
-            Admin
-          </Link>
-          {!isMainAdminPage && pathname !== '/admin' && (
-            <>
-              <span>/</span>
-              <span className="text-foreground">
-                {adminMenuItems.find(item => pathname.startsWith(item.href))?.label || 'Página'}
-              </span>
-            </>
-          )}
-        </div>
-
         {/* Admin Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -134,7 +115,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div>
               <h1 className="text-2xl font-bold">Painel Administrativo</h1>
               <p className="text-sm text-muted-foreground">
-                Bem-vindo, {user?.name || 'Admin'}
+                Bem-vindo, {user?.name || 'Admin'} | Gerencie usuários, planos e
+                configurações do sistema
               </p>
             </div>
           </div>
@@ -151,7 +133,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <div className="flex gap-2 overflow-x-auto">
                 {adminMenuItems.map((item) => {
                   const Icon = item.icon
-                  const isActive = pathname === item.href || 
+                  const isActive =
+                    pathname === item.href ||
                     (item.href !== '/admin' && pathname.startsWith(item.href))
 
                   return (

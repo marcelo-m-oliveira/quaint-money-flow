@@ -113,7 +113,7 @@ export class AccountService extends BaseService<'account'> {
         const planFeatures = user.plan?.features as any
         const maxAccounts = planFeatures?.accounts?.max || 0
         throw new BadRequestError(
-          `Limite de contas atingido. Seu plano permite no máximo ${maxAccounts} conta(s). Faça upgrade para criar mais contas.`
+          `Limite de contas atingido. Seu plano permite no máximo ${maxAccounts} conta(s). Faça upgrade para criar mais contas.`,
         )
       }
     }

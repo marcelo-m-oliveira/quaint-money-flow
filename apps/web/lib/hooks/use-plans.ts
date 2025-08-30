@@ -1,6 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
-import { plansService, type Plan, type PlanFormData, type PlanStats } from '@/lib/services/plans.service'
+import { useCallback, useEffect, useState } from 'react'
+
 import { useCrudToast } from '@/lib/hooks/use-crud-toast'
+import {
+  type Plan,
+  type PlanFormData,
+  plansService,
+  type PlanStats,
+} from '@/lib/services/plans'
 
 export function usePlans(includeInactive = false) {
   const [plans, setPlans] = useState<Plan[]>([])
@@ -32,7 +38,7 @@ export function usePlans(includeInactive = false) {
       try {
         setError(null)
         const newPlan = await plansService.create(data)
-        setPlans(prev => [...prev, newPlan])
+        setPlans((prev) => [...prev, newPlan])
         success.create('plano')
         return newPlan
       } catch (err: any) {
@@ -50,8 +56,8 @@ export function usePlans(includeInactive = false) {
       try {
         setError(null)
         const updatedPlan = await plansService.update(id, data)
-        setPlans(prev =>
-          prev.map(plan => (plan.id === id ? updatedPlan : plan)),
+        setPlans((prev) =>
+          prev.map((plan) => (plan.id === id ? updatedPlan : plan)),
         )
         success.update('plano')
         return updatedPlan
@@ -70,7 +76,7 @@ export function usePlans(includeInactive = false) {
       try {
         setError(null)
         await plansService.delete(id)
-        setPlans(prev => prev.filter(plan => plan.id !== id))
+        setPlans((prev) => prev.filter((plan) => plan.id !== id))
         success.delete('plano')
         return true
       } catch (err: any) {
@@ -88,8 +94,8 @@ export function usePlans(includeInactive = false) {
       try {
         setError(null)
         const updatedPlan = await plansService.activate(id)
-        setPlans(prev =>
-          prev.map(plan => (plan.id === id ? updatedPlan : plan)),
+        setPlans((prev) =>
+          prev.map((plan) => (plan.id === id ? updatedPlan : plan)),
         )
         success.update('plano', 'Plano ativado com sucesso')
         return true
@@ -108,8 +114,8 @@ export function usePlans(includeInactive = false) {
       try {
         setError(null)
         const updatedPlan = await plansService.deactivate(id)
-        setPlans(prev =>
-          prev.map(plan => (plan.id === id ? updatedPlan : plan)),
+        setPlans((prev) =>
+          prev.map((plan) => (plan.id === id ? updatedPlan : plan)),
         )
         success.update('plano', 'Plano desativado com sucesso')
         return true
@@ -124,7 +130,7 @@ export function usePlans(includeInactive = false) {
   )
 
   const getPlanById = useCallback(
-    (id: string) => plans.find(plan => plan.id === id),
+    (id: string) => plans.find((plan) => plan.id === id),
     [plans],
   )
 
@@ -176,4 +182,3 @@ export function usePlanStats() {
     refetch: loadStats,
   }
 }
-

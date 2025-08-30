@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+
 import { usePermissions } from '@/lib/contexts/permissions-context'
 
 export interface CanProps {
@@ -64,23 +65,38 @@ export function Can({
 }
 
 // Convenience components for common actions
-export const CanCreate = ({ subject, ...props }: Omit<CanProps, 'I'> & { subject: string }) => (
+export const CanCreate = ({
+  subject,
+  ...props
+}: Omit<CanProps, 'I'> & { subject: string }) => (
   <Can I="create" a={subject} {...props} />
 )
 
-export const CanRead = ({ subject, ...props }: Omit<CanProps, 'I'> & { subject: string }) => (
+export const CanRead = ({
+  subject,
+  ...props
+}: Omit<CanProps, 'I'> & { subject: string }) => (
   <Can I="read" a={subject} {...props} />
 )
 
-export const CanUpdate = ({ subject, ...props }: Omit<CanProps, 'I'> & { subject: string }) => (
+export const CanUpdate = ({
+  subject,
+  ...props
+}: Omit<CanProps, 'I'> & { subject: string }) => (
   <Can I="update" a={subject} {...props} />
 )
 
-export const CanDelete = ({ subject, ...props }: Omit<CanProps, 'I'> & { subject: string }) => (
+export const CanDelete = ({
+  subject,
+  ...props
+}: Omit<CanProps, 'I'> & { subject: string }) => (
   <Can I="delete" a={subject} {...props} />
 )
 
-export const CanManage = ({ subject, ...props }: Omit<CanProps, 'I'> & { subject: string }) => (
+export const CanManage = ({
+  subject,
+  ...props
+}: Omit<CanProps, 'I'> & { subject: string }) => (
   <Can I="manage" a={subject} {...props} />
 )
 
@@ -88,13 +104,16 @@ export const CanManage = ({ subject, ...props }: Omit<CanProps, 'I'> & { subject
 export function withPermissions<T extends Record<string, any>>(
   WrappedComponent: React.ComponentType<T>,
   requiredPermission: { action: string; subject: string },
-  fallbackComponent?: React.ComponentType<T>
+  fallbackComponent?: React.ComponentType<T>,
 ) {
   return function PermissionWrapper(props: T) {
     const { ability } = usePermissions()
-    
-    const allowed = ability.can(requiredPermission.action, requiredPermission.subject)
-    
+
+    const allowed = ability.can(
+      requiredPermission.action,
+      requiredPermission.subject,
+    )
+
     if (!allowed) {
       if (fallbackComponent) {
         const FallbackComponent = fallbackComponent
@@ -102,8 +121,7 @@ export function withPermissions<T extends Record<string, any>>(
       }
       return null
     }
-    
+
     return <WrappedComponent {...props} />
   }
 }
-
