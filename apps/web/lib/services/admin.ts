@@ -7,6 +7,7 @@ export interface AdminUser {
   name: string
   avatarUrl?: string | null
   role: 'user' | 'admin'
+  isActive: boolean
   plan?: {
     id: string
     name: string
@@ -26,7 +27,7 @@ export interface AdminPlan {
   id: string
   name: string
   type: 'free' | 'monthly' | 'annual'
-  price: number
+  price: string | number
   description?: string
   features: any
   isActive: boolean
@@ -113,6 +114,16 @@ export const adminUsersService = {
 
   async changePlan(id: string, planId: string): Promise<void> {
     return apiClient.patch<void>(`/admin/users/${id}/plan`, { planId })
+  },
+
+  async toggleActive(id: string, isActive: boolean): Promise<void> {
+    return apiClient.patch<void>(`/admin/users/${id}/active`, { isActive })
+  },
+
+  async changePassword(id: string, password: string): Promise<void> {
+    return apiClient.patch<void>(`/admin/users/${id}/password`, {
+      newPassword: password,
+    })
   },
 }
 

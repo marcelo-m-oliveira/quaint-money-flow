@@ -2,7 +2,10 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 
 import { UserManagementService } from '@/services/user-management.service'
-import { convertDatesToSeconds } from '@/utils/response'
+import {
+  convertUserForResponse,
+  convertUsersForResponse,
+} from '@/utils/response'
 
 import { BaseController } from './base.controller'
 
@@ -23,6 +26,7 @@ const UserUpdateSchema = z.object({
   planId: z.string().optional(),
   avatarUrl: z.string().url().optional(),
   passwordConfigured: z.boolean().optional(),
+  isActive: z.boolean().optional(),
 })
 
 const ChangePasswordSchema = z.object({
@@ -31,6 +35,10 @@ const ChangePasswordSchema = z.object({
 
 const ChangePlanSchema = z.object({
   planId: z.string().min(1, 'ID do plano é obrigatório'),
+})
+
+const ToggleActiveSchema = z.object({
+  isActive: z.boolean(),
 })
 
 const UserQuerySchema = z.object({
@@ -59,10 +67,7 @@ export class UserManagementController extends BaseController {
       const query = UserQuerySchema.parse(request.query)
       const result = await this.userManagementService.getAll(query)
 
-      const usersWithConvertedDates = result.users.map((user) => {
-        const { password, ...userWithoutPassword } = user
-        return convertDatesToSeconds(userWithoutPassword)
-      })
+      const usersWithConvertedDates = convertUsersForResponse(result.users)
 
       return reply.status(200).send({
         users: usersWithConvertedDates,
@@ -88,8 +93,7 @@ export class UserManagementController extends BaseController {
         })
       }
 
-      const { password, ...userWithoutPassword } = user
-      return reply.status(200).send(convertDatesToSeconds(userWithoutPassword))
+      return reply.status(200).send(convertUserForResponse(user))
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'show' },
@@ -104,8 +108,7 @@ export class UserManagementController extends BaseController {
       const data = UserCreateSchema.parse(request.body)
       const user = await this.userManagementService.create(data)
 
-      const { password, ...userWithoutPassword } = user
-      return reply.status(201).send(convertDatesToSeconds(userWithoutPassword))
+      return reply.status(201).send(convertUserForResponse(user))
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'store' },
@@ -121,8 +124,7 @@ export class UserManagementController extends BaseController {
       const data = UserUpdateSchema.parse(request.body)
       const user = await this.userManagementService.update(id, data)
 
-      const { password, ...userWithoutPassword } = user
-      return reply.status(200).send(convertDatesToSeconds(userWithoutPassword))
+      return reply.status(200).send(convertUserForResponse(user))
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'update' },
@@ -173,12 +175,28 @@ export class UserManagementController extends BaseController {
 
       const user = await this.userManagementService.changePlan(id, planId)
 
-      const { password, ...userWithoutPassword } = user
-      return reply.status(200).send(convertDatesToSeconds(userWithoutPassword))
+      return reply.status(200).send(convertUserForResponse(user))
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'changePlan' },
         'Erro na alteração de plano',
+      )
+      throw error
+    }
+  }
+
+  async toggleActive(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const { isActive } = ToggleActiveSchema.parse(request.body)
+
+      const user = await this.userManagementService.toggleActive(id, isActive)
+
+      return reply.status(200).send(convertUserForResponse(user))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'toggleActive' },
+        'Erro na alteração de status do usuário',
       )
       throw error
     }

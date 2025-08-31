@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { UserEditModal } from '@/components/user-edit-modal'
 import { useAdminUsers } from '@/lib'
 import type { AdminUser } from '@/lib/services/admin'
 
@@ -44,9 +45,13 @@ export default function AdminUsersPage() {
     deleteUser,
     changeUserPassword,
     changeUserPlan,
+    updateUser,
+    toggleUserActive,
     refetch,
   } = useAdminUsers()
   const [searchTerm, setSearchTerm] = useState('')
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<AdminUser | undefined>()
 
   const filteredUsers = users.filter(
     (user) =>
@@ -108,12 +113,79 @@ export default function AdminUsersPage() {
     )
   }
 
+  const getStatusBadge = (isActive: boolean) => {
+    if (isActive) {
+      return (
+        <Badge className="bg-green-100 text-green-800">
+          <div className="mr-1 h-2 w-2 rounded-full bg-green-500" />
+          Ativo
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="border-red-200 text-red-600">
+        <div className="mr-1 h-2 w-2 rounded-full bg-red-500" />
+        Inativo
+      </Badge>
+    )
+  }
+
   const formatDate = (timestamp: number) => {
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
     }).format(new Date(timestamp * 1000))
+  }
+
+  const handleEditUser = (user: AdminUser) => {
+    setEditingUser(user)
+    setIsEditModalOpen(true)
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    const success = await deleteUser(userId)
+    if (success) {
+      // Usuário já foi removido da lista pelo hook
+    }
+  }
+
+  const handleSubmitEdit = async (data: {
+    name: string
+    email: string
+    planId: string
+    isActive: boolean
+  }) => {
+    if (!editingUser) return
+
+    const updateData: Partial<AdminUser> = {
+      name: data.name,
+      email: data.email,
+    }
+
+    // Atualizar usuário
+    const updatedUser = await updateUser(editingUser.id, updateData)
+    if (updatedUser) {
+      // Se o plano mudou, atualizar o plano
+      if (data.planId !== editingUser.plan?.id) {
+        if (data.planId && data.planId !== 'none') {
+          await changeUserPlan(editingUser.id, data.planId)
+        } else {
+          // Remover plano (definir como null)
+          await changeUserPlan(editingUser.id, '')
+        }
+      }
+
+      // Se o status ativo mudou, atualizar o status
+      if (data.isActive !== editingUser.isActive) {
+        await toggleUserActive(editingUser.id, data.isActive)
+      }
+    }
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setEditingUser(undefined)
   }
 
   if (error) {
@@ -218,6 +290,7 @@ export default function AdminUsersPage() {
                 <TableRow>
                   <TableHead>Usuário</TableHead>
                   <TableHead>Plano</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Recursos</TableHead>
                   <TableHead>Cadastro</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -247,6 +320,7 @@ export default function AdminUsersPage() {
                       </div>
                     </TableCell>
                     <TableCell>{getPlanBadge(user.plan)}</TableCell>
+                    <TableCell>{getStatusBadge(user.isActive)}</TableCell>
                     <TableCell>
                       {user._count && (
                         <div className="space-y-1 text-sm text-muted-foreground">
@@ -269,11 +343,16 @@ export default function AdminUsersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEditUser(user)}
+                          >
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Excluir
                           </DropdownMenuItem>
@@ -287,6 +366,17 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de edição de usuário */}
+      <UserEditModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        user={editingUser}
+        onSubmit={handleSubmitEdit}
+        onDelete={
+          editingUser ? () => handleDeleteUser(editingUser.id) : undefined
+        }
+      />
     </div>
   )
 }

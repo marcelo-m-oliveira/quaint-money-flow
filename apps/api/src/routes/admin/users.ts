@@ -80,4 +80,14 @@ export async function adminUsersRoutes(fastify: FastifyInstance) {
     ],
     handler: userController.changePlan.bind(userController),
   })
+
+  // Ativar/desativar usuário
+  fastify.patch('/:id/active', {
+    preHandler: [
+      authMiddleware,
+      loadUserAbilities,
+      requirePermission(Actions.MANAGE, 'User'),
+    ],
+    handler: userController.toggleActive.bind(userController),
+  })
 }

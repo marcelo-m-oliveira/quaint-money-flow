@@ -21,6 +21,7 @@ model User {
   avatarUrl           String?
   role                UserRole @default(user) // Novo campo para perfil do usuário
   planId              String?  // Novo campo para plano do usuário
+  isActive            Boolean  @default(true) // Campo para habilitar/desabilitar usuário
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

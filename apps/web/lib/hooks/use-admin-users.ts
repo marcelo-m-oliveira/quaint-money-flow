@@ -120,6 +120,25 @@ export function useAdminUsers() {
     [success, showError, loadUsers],
   )
 
+  const toggleUserActive = useCallback(
+    async (id: string, isActive: boolean): Promise<boolean> => {
+      try {
+        setError(null)
+        await adminUsersService.toggleActive(id, isActive)
+        // Recarregar usuários para atualizar o status
+        await loadUsers()
+        success.update('status do usuário')
+        return true
+      } catch (err: any) {
+        const errorMessage = err?.message || 'Erro ao alterar status do usuário'
+        setError(errorMessage)
+        showError.update('status do usuário', errorMessage)
+        return false
+      }
+    },
+    [success, showError, loadUsers],
+  )
+
   const getUserById = useCallback(
     (id: string) => users.find((user) => user.id === id),
     [users],
@@ -138,6 +157,7 @@ export function useAdminUsers() {
     deleteUser,
     changeUserPassword,
     changeUserPlan,
+    toggleUserActive,
     getUserById,
     refetch,
   }

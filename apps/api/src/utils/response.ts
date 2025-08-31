@@ -106,3 +106,45 @@ export const convertArrayDatesToSeconds = <T extends Record<string, any>>(
 ): T[] => {
   return array.map((item) => convertDatesToSeconds(item, dateFields))
 }
+
+// Utilitário para converter campos Decimal para number
+export const convertDecimalsToNumbers = <T extends Record<string, any>>(
+  obj: T,
+  decimalFields: (keyof T)[] = ['price', 'amount', 'limit', 'discountValue'],
+): T => {
+  const converted = { ...obj } as any
+
+  for (const field of decimalFields) {
+    if (converted[field] !== null && converted[field] !== undefined) {
+      converted[field] = Number(converted[field])
+    }
+  }
+
+  return converted as T
+}
+
+// Utilitário para converter arrays de objetos com campos Decimal
+export const convertArrayDecimalsToNumbers = <T extends Record<string, any>>(
+  array: T[],
+  decimalFields: (keyof T)[] = ['price', 'amount', 'limit', 'discountValue'],
+): T[] => {
+  return array.map((item) => convertDecimalsToNumbers(item, decimalFields))
+}
+
+// Utilitário para converter usuários (datas + decimais)
+export const convertUserForResponse = <T extends Record<string, any>>(
+  user: T,
+): T => {
+  const userWithoutPassword = { ...user }
+  delete userWithoutPassword.password
+
+  const userWithConvertedDates = convertDatesToSeconds(userWithoutPassword)
+  return convertDecimalsToNumbers(userWithConvertedDates)
+}
+
+// Utilitário para converter arrays de usuários
+export const convertUsersForResponse = <T extends Record<string, any>>(
+  users: T[],
+): T[] => {
+  return users.map((user) => convertUserForResponse(user))
+}

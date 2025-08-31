@@ -19,6 +19,7 @@ export interface UserUpdateData {
   planId?: string
   avatarUrl?: string
   passwordConfigured?: boolean
+  isActive?: boolean
 }
 
 export interface UserWithPlan extends User {
@@ -264,6 +265,32 @@ export class UserManagementService {
     return this.prisma.user.update({
       where: { id: userId },
       data: { planId: newPlanId },
+    })
+  }
+
+  async toggleActive(userId: string, isActive: boolean): Promise<User> {
+    const existingUser = await this.getById(userId)
+    if (!existingUser) {
+      throw new Error('Usuário não encontrado')
+    }
+
+    // Verificar se é o último admin ativo
+    if (existingUser.role === 'admin' && !isActive) {
+      const activeAdminCount = await this.prisma.user.count({
+        where: {
+          role: 'admin',
+          isActive: true,
+        },
+      })
+
+      if (activeAdminCount <= 1) {
+        throw new Error('Não é possível desativar o último administrador ativo')
+      }
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive },
     })
   }
 

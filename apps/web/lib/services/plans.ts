@@ -131,11 +131,11 @@ class Plans {
     }
   }
 
-  static formatPrice(price: number): string {
+  static formatPrice(price: number | string): string {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(price)
+    }).format(Number(price))
   }
 
   static getPlanBadgeColor(type: Plan['type']): string {

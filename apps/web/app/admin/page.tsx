@@ -173,7 +173,8 @@ export default function AdminDashboard() {
                   currency: 'BRL',
                 }).format(
                   stats?.planUsage?.reduce(
-                    (total, plan) => total + plan.price * plan.userCount,
+                    (total, plan) =>
+                      total + Number(plan.price) * plan.userCount,
                     0,
                   ) || 0,
                 )}
