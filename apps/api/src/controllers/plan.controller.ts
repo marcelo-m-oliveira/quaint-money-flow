@@ -10,7 +10,18 @@ import { BaseController } from './base.controller'
 const PlanCreateSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   type: z.enum(['free', 'monthly', 'annual']),
-  price: z.number().min(0, 'Preço deve ser maior ou igual a zero'),
+  price: z.union([z.string(), z.number()]).transform((val) => {
+    if (typeof val === 'string') {
+      // Remover formatação de moeda e converter para número
+      const cleanValue = val.replace(/[^\d,.-]/g, '').replace(',', '.')
+      const numValue = parseFloat(cleanValue)
+      if (isNaN(numValue)) {
+        throw new Error('Preço deve ser um número válido')
+      }
+      return numValue
+    }
+    return val
+  }),
   description: z.string().optional(),
   features: z.any(), // Simplificado para evitar problemas com z.record
   isActive: z.boolean().optional().default(true),
@@ -37,11 +48,11 @@ export class PlanController extends BaseController {
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
       const query = PlanQuerySchema.parse(request.query)
-      const plans = await this.planService.getAll({
+      const plans = await this.planService.findMany({
         includeInactive: query.includeInactive,
       })
 
-      const plansWithConvertedDates = plans.map((plan) =>
+      const plansWithConvertedDates = plans.map((plan: any) =>
         convertDatesToSeconds(plan),
       )
 
@@ -60,13 +71,7 @@ export class PlanController extends BaseController {
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
       const { id } = this.getPathParams<{ id: string }>(request)
-      const plan = await this.planService.getById(id)
-
-      if (!plan) {
-        return reply.status(404).send({
-          message: `${this.entityName} não encontrado`,
-        })
-      }
+      const plan = await this.planService.findById(id)
 
       return reply.status(200).send(convertDatesToSeconds(plan))
     } catch (error: any) {

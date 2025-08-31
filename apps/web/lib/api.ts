@@ -70,10 +70,17 @@ class ApiClient {
 
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
         ...options.headers,
       },
       ...options,
+    }
+
+    // Só adicionar Content-Type se houver body ou se for explicitamente definido
+    if (options.body || options.headers?.['Content-Type']) {
+      config.headers = {
+        'Content-Type': 'application/json',
+        ...config.headers,
+      }
     }
 
     // Adicionar token de autenticação se disponível

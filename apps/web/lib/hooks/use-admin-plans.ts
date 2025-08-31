@@ -38,7 +38,7 @@ export function useAdminPlans(includeInactive = false) {
         return newPlan
       } catch (err: any) {
         const errorMessage = err?.message || 'Erro ao criar plano'
-        setError(errorMessage)
+        // Não definir setError para erros de operação que devem ser tratados apenas com toast
         showError.create('plano', errorMessage)
         return null
       }
@@ -58,7 +58,7 @@ export function useAdminPlans(includeInactive = false) {
         return updatedPlan
       } catch (err: any) {
         const errorMessage = err?.message || 'Erro ao atualizar plano'
-        setError(errorMessage)
+        // Não definir setError para erros de operação que devem ser tratados apenas com toast
         showError.update('plano', errorMessage)
         return null
       }
@@ -75,7 +75,7 @@ export function useAdminPlans(includeInactive = false) {
       return true
     } catch (err: any) {
       const errorMessage = err?.message || 'Erro ao excluir plano'
-      setError(errorMessage)
+      // Não definir setError para erros de operação que devem ser tratados apenas com toast
       showError.delete('plano', errorMessage)
       return false
     }
@@ -92,7 +92,7 @@ export function useAdminPlans(includeInactive = false) {
       return true
     } catch (err: any) {
       const errorMessage = err?.message || 'Erro ao ativar plano'
-      setError(errorMessage)
+      // Não definir setError para erros de operação que devem ser tratados apenas com toast
       showError.update('plano', errorMessage)
       return false
     }
@@ -109,7 +109,7 @@ export function useAdminPlans(includeInactive = false) {
       return true
     } catch (err: any) {
       const errorMessage = err?.message || 'Erro ao desativar plano'
-      setError(errorMessage)
+      // Não definir setError para erros de operação que devem ser tratados apenas com toast
       showError.update('plano', errorMessage)
       return false
     }

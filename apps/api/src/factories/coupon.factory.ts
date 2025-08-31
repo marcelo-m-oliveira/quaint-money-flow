@@ -1,13 +1,24 @@
 import { CouponController } from '@/controllers/coupon.controller'
+import { prisma } from '@/lib/prisma'
+import { CouponRepository } from '@/repositories/coupon.repository'
 import { CouponService } from '@/services/coupon.service'
 
 export class CouponFactory {
+  private static couponRepository: CouponRepository
   private static couponService: CouponService
   private static couponController: CouponController
 
+  static getCouponRepository(): CouponRepository {
+    if (!this.couponRepository) {
+      this.couponRepository = new CouponRepository(prisma)
+    }
+    return this.couponRepository
+  }
+
   static getCouponService(): CouponService {
     if (!this.couponService) {
-      this.couponService = new CouponService()
+      const couponRepository = this.getCouponRepository()
+      this.couponService = new CouponService(couponRepository, prisma)
     }
     return this.couponService
   }

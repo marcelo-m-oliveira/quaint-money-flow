@@ -1,10 +1,13 @@
-import { Plan, PlanType } from '@prisma/client'
+import { PlanType, Prisma, PrismaClient } from '@prisma/client'
 
-import { prisma } from '@/lib/prisma'
+import { PlanRepository } from '@/repositories/plan.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { PlanInUseError } from '@/routes/_errors/plan-in-use-error'
+import { BaseService } from '@/services/base.service'
 
 export interface PlanCreateData {
   name: string
-  type: PlanType
+  type: PlanType | string
   price: number
   description?: string
   features: any
@@ -13,117 +16,177 @@ export interface PlanCreateData {
 
 export interface PlanUpdateData extends Partial<PlanCreateData> {}
 
-export class PlanService {
-  protected prisma = prisma
-
-  protected calculatePagination(total: number, page: number, limit: number) {
-    const totalPages = Math.ceil(total / limit)
-    return {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    }
+export class PlanService extends BaseService<'plan'> {
+  constructor(
+    private planRepository: PlanRepository,
+    prisma: PrismaClient,
+  ) {
+    super(planRepository, prisma)
   }
 
-  async getAll(options?: { includeInactive?: boolean }): Promise<Plan[]> {
+  private validatePlanType(type: PlanType | string): PlanType {
+    if (typeof type === 'string') {
+      if (type === 'free' || type === 'monthly' || type === 'annual') {
+        return type as PlanType
+      }
+      throw new BadRequestError(`Tipo de plano inválido: ${type}`)
+    }
+    return type
+  }
+
+  async findMany(options?: { includeInactive?: boolean }) {
     const where = options?.includeInactive ? {} : { isActive: true }
 
-    return this.prisma.plan.findMany({
+    const plans = await this.planRepository.findMany({
       where,
       orderBy: [{ type: 'asc' }, { price: 'asc' }],
     })
+
+    return plans
   }
 
-  async getById(id: string): Promise<Plan | null> {
-    return this.prisma.plan.findUnique({
-      where: { id },
-    })
-  }
+  async findById(id: string) {
+    const plan = await this.planRepository.findById(id)
 
-  async create(data: PlanCreateData): Promise<Plan> {
-    return this.prisma.plan.create({
-      data: {
-        name: data.name,
-        type: data.type,
-        price: data.price,
-        description: data.description,
-        features: data.features,
-        isActive: data.isActive ?? true,
-      },
-    })
-  }
-
-  async update(id: string, data: PlanUpdateData): Promise<Plan> {
-    const existingPlan = await this.getById(id)
-    if (!existingPlan) {
-      throw new Error('Plano não encontrado')
+    if (!plan) {
+      throw new BadRequestError('Plano não encontrado')
     }
 
-    return this.prisma.plan.update({
-      where: { id },
-      data: {
-        name: data.name,
-        type: data.type,
-        price: data.price,
-        description: data.description,
-        features: data.features,
-        isActive: data.isActive,
-      },
-    })
+    return plan
   }
 
-  async delete(id: string): Promise<void> {
-    const existingPlan = await this.getById(id)
-    if (!existingPlan) {
-      throw new Error('Plano não encontrado')
+  async create(data: PlanCreateData) {
+    // Validar e converter o tipo
+    const planType = this.validatePlanType(data.type)
+
+    // Verificar se já existe um plano com o mesmo nome
+    const existingPlan = await this.planRepository.findByName(data.name)
+
+    if (existingPlan) {
+      throw new BadRequestError('Já existe um plano com este nome')
     }
+
+    const plan = await this.planRepository.create({
+      name: data.name,
+      type: planType,
+      price: new Prisma.Decimal(data.price || 0),
+      description: data.description,
+      features: data.features || {},
+      isActive: data.isActive ?? true,
+    })
+
+    this.logOperation('CREATE_PLAN', 'admin', {
+      planId: plan.id,
+      planName: plan.name,
+    })
+
+    return plan
+  }
+
+  async update(id: string, data: PlanUpdateData) {
+    // Verificar se o plano existe
+    await this.findById(id)
+
+    const updateData: any = {}
+
+    if (data.name !== undefined) {
+      // Verificar se já existe outro plano com o mesmo nome
+      const duplicatePlan = await this.planRepository.findByNameExcludingId(
+        data.name,
+        id,
+      )
+
+      if (duplicatePlan) {
+        throw new BadRequestError('Já existe um plano com este nome')
+      }
+
+      updateData.name = data.name
+    }
+
+    if (data.type !== undefined) {
+      updateData.type = this.validatePlanType(data.type)
+    }
+
+    if (data.price !== undefined) {
+      updateData.price = new Prisma.Decimal(data.price)
+    }
+
+    if (data.description !== undefined) {
+      updateData.description = data.description
+    }
+
+    if (data.features !== undefined) {
+      updateData.features = data.features || {}
+    }
+
+    if (data.isActive !== undefined) {
+      updateData.isActive = data.isActive
+    }
+
+    const plan = await this.planRepository.update(id, updateData)
+
+    this.logOperation('UPDATE_PLAN', 'admin', {
+      planId: plan.id,
+      planName: plan.name,
+    })
+
+    return plan
+  }
+
+  async delete(id: string) {
+    // Verificar se o plano existe
+    const plan = await this.findById(id)
 
     // Verificar se há usuários usando este plano
-    const usersCount = await this.prisma.user.count({
-      where: { planId: id },
-    })
+    const usersCount = await this.planRepository.countUsersByPlan(id)
 
     if (usersCount > 0) {
-      throw new Error(
+      throw new PlanInUseError(
         'Não é possível excluir um plano que está sendo usado por usuários',
       )
     }
 
-    await this.prisma.plan.delete({
-      where: { id },
+    await this.planRepository.delete(id)
+
+    this.logOperation('DELETE_PLAN', 'admin', {
+      planId: id,
+      planName: plan.name,
     })
+
+    return plan
   }
 
-  async deactivate(id: string): Promise<Plan> {
+  async deactivate(id: string) {
+    // Verificar se o plano existe
+    const plan = await this.findById(id)
+
+    // Verificar se há usuários usando este plano
+    const usersCount = await this.planRepository.countUsersByPlan(id)
+
+    if (usersCount > 0) {
+      throw new PlanInUseError(
+        'Não é possível desativar um plano que está sendo usado por usuários',
+      )
+    }
+
     return this.update(id, { isActive: false })
   }
 
-  async activate(id: string): Promise<Plan> {
+  async activate(id: string) {
     return this.update(id, { isActive: true })
   }
 
   async getPlanStats() {
     const [totalPlans, activePlans, planUsage] = await Promise.all([
-      this.prisma.plan.count(),
-      this.prisma.plan.count({ where: { isActive: true } }),
-      this.prisma.plan.findMany({
-        include: {
-          _count: {
-            select: {
-              users: true,
-            },
-          },
-        },
-      }),
+      this.planRepository.count(),
+      this.planRepository.count({ isActive: true }),
+      this.planRepository.findWithUserCount(),
     ])
 
     return {
       totalPlans,
       activePlans,
-      planUsage: planUsage.map((plan) => ({
+      planUsage: planUsage.map((plan: any) => ({
         id: plan.id,
         name: plan.name,
         type: plan.type,

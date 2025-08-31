@@ -65,7 +65,7 @@ export class UserManagementController extends BaseController {
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
       const query = UserQuerySchema.parse(request.query)
-      const result = await this.userManagementService.getAll(query)
+      const result = await this.userManagementService.findMany(query)
 
       const usersWithConvertedDates = convertUsersForResponse(result.users)
 
@@ -85,13 +85,7 @@ export class UserManagementController extends BaseController {
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
       const { id } = this.getPathParams<{ id: string }>(request)
-      const user = await this.userManagementService.getById(id)
-
-      if (!user) {
-        return reply.status(404).send({
-          message: `${this.entityName} não encontrado`,
-        })
-      }
+      const user = await this.userManagementService.findById(id)
 
       return reply.status(200).send(convertUserForResponse(user))
     } catch (error: any) {

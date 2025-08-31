@@ -53,12 +53,12 @@ export class CouponController extends BaseController {
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
       const query = CouponQuerySchema.parse(request.query)
-      const coupons = await this.couponService.getAll({
+      const coupons = await this.couponService.findMany({
         includeInactive: query.includeInactive,
         includeUsage: query.includeUsage,
       })
 
-      const couponsWithConvertedDates = coupons.map((coupon) =>
+      const couponsWithConvertedDates = coupons.map((coupon: any) =>
         convertDatesToSeconds(coupon),
       )
 
@@ -77,13 +77,7 @@ export class CouponController extends BaseController {
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
       const { id } = this.getPathParams<{ id: string }>(request)
-      const coupon = await this.couponService.getById(id)
-
-      if (!coupon) {
-        return reply.status(404).send({
-          message: `${this.entityName} não encontrado`,
-        })
-      }
+      const coupon = await this.couponService.findById(id)
 
       return reply.status(200).send(convertDatesToSeconds(coupon))
     } catch (error: any) {

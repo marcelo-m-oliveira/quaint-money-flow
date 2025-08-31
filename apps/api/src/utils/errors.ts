@@ -4,6 +4,7 @@ import { ZodError } from 'zod'
 
 import { BadRequestError } from '@/routes/_errors/bad-request-error'
 import { NotFoundError } from '@/routes/_errors/not-found-error'
+import { PlanInUseError } from '@/routes/_errors/plan-in-use-error'
 import { UnauthorizedError } from '@/routes/_errors/unauthorized-error'
 import { ResponseFormatter } from '@/utils/response'
 
@@ -29,6 +30,10 @@ export const errorHandler: FastifyErrorHandler = (error, request, reply) => {
 
   if (error instanceof NotFoundError) {
     return ResponseFormatter.error(reply, error.message, undefined, 404)
+  }
+
+  if (error instanceof PlanInUseError) {
+    return ResponseFormatter.error(reply, error.message, undefined, 409)
   }
 
   if (env.NODE_ENV !== 'test') {
@@ -61,6 +66,10 @@ export const handleError = (error: FastifyError, reply: FastifyReply) => {
 
   if (error instanceof NotFoundError) {
     return ResponseFormatter.error(reply, error.message, undefined, 404)
+  }
+
+  if (error instanceof PlanInUseError) {
+    return ResponseFormatter.error(reply, error.message, undefined, 409)
   }
 
   if (env.NODE_ENV !== 'test') {

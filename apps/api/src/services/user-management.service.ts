@@ -1,7 +1,12 @@
-import { Prisma, User, UserRole } from '@prisma/client'
+import { Prisma, PrismaClient, User, UserRole } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
 
-import { prisma } from '@/lib/prisma'
+import {
+  UserManagementRepository,
+  type UserWithPlan,
+} from '@/repositories/user-management.repository'
+import { BadRequestError } from '@/routes/_errors/bad-request-error'
+import { BaseService } from '@/services/base.service'
 
 export interface UserCreateData {
   email: string
@@ -22,21 +27,6 @@ export interface UserUpdateData {
   isActive?: boolean
 }
 
-export interface UserWithPlan extends User {
-  plan?: {
-    id: string
-    name: string
-    type: string
-    price: number
-  } | null
-  _count?: {
-    accounts: number
-    categories: number
-    creditCards: number
-    entries: number
-  }
-}
-
 export interface UserFilters {
   role?: UserRole
   planId?: string
@@ -45,22 +35,15 @@ export interface UserFilters {
   limit?: number
 }
 
-export class UserManagementService {
-  protected prisma = prisma
-
-  protected calculatePagination(total: number, page: number, limit: number) {
-    const totalPages = Math.ceil(total / limit)
-    return {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    }
+export class UserManagementService extends BaseService<'user'> {
+  constructor(
+    private userManagementRepository: UserManagementRepository,
+    prisma: PrismaClient,
+  ) {
+    super(userManagementRepository, prisma)
   }
 
-  async getAll(filters?: UserFilters): Promise<{
+  async findMany(filters?: UserFilters): Promise<{
     users: UserWithPlan[]
     pagination?: any
   }> {
@@ -86,33 +69,8 @@ export class UserManagementService {
     }
 
     const [users, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        include: {
-          plan: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              price: true,
-            },
-          },
-          _count: {
-            select: {
-              accounts: true,
-              categories: true,
-              creditCards: true,
-              entries: true,
-            },
-          },
-        },
-        skip,
-        take: limit,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      this.prisma.user.count({ where }),
+      this.userManagementRepository.findWithPlanAndCounts(where, skip, limit),
+      this.userManagementRepository.count(where),
     ])
 
     const pagination = this.calculatePagination(total, page, limit)
@@ -123,203 +81,185 @@ export class UserManagementService {
     }
   }
 
-  async getById(id: string): Promise<UserWithPlan | null> {
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        plan: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            price: true,
-          },
-        },
-        _count: {
-          select: {
-            accounts: true,
-            categories: true,
-            creditCards: true,
-            entries: true,
-          },
-        },
-      },
-    })
+  async findById(id: string): Promise<UserWithPlan> {
+    const user = await this.userManagementRepository.findWithPlan(id)
+
+    if (!user) {
+      throw new BadRequestError('Usuário não encontrado')
+    }
+
+    return user
   }
 
   async create(data: UserCreateData): Promise<User> {
-    // Verificar se email já existe
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    })
+    // Verificar se já existe um usuário com o mesmo email
+    const existingUser = await this.userManagementRepository.findByEmail(
+      data.email,
+    )
 
     if (existingUser) {
-      throw new Error('Email já está em uso')
+      throw new BadRequestError('Já existe um usuário com este email')
     }
 
     // Verificar se o plano existe (se fornecido)
     if (data.planId) {
-      const plan = await this.prisma.plan.findUnique({
-        where: { id: data.planId },
-      })
-
-      if (!plan || !plan.isActive) {
-        throw new Error('Plano não encontrado ou inativo')
-      }
+      await this.validateForeignKey(
+        this.prisma.plan as any,
+        data.planId,
+        'planId',
+        'Plano',
+      )
     }
 
     // Hash da senha
-    const passwordHash = await bcrypt.hash(data.password, 10)
+    const hashedPassword = await bcrypt.hash(data.password, 10)
 
-    return this.prisma.user.create({
-      data: {
-        email: data.email,
-        name: data.name,
-        password: passwordHash,
-        passwordConfigured: true,
-        role: data.role || 'user',
-        planId: data.planId,
-        avatarUrl: data.avatarUrl,
-      },
+    const user = await this.userManagementRepository.create({
+      email: data.email,
+      name: data.name,
+      password: hashedPassword,
+      role: data.role || 'user',
+      planId: data.planId,
+      avatarUrl: data.avatarUrl,
+      passwordConfigured: true,
+      isActive: true,
     })
+
+    this.logOperation('CREATE_USER', 'admin', {
+      userId: user.id,
+      userEmail: user.email,
+    })
+
+    return user
   }
 
   async update(id: string, data: UserUpdateData): Promise<User> {
-    const existingUser = await this.getById(id)
-    if (!existingUser) {
-      throw new Error('Usuário não encontrado')
+    // Verificar se o usuário existe
+    await this.findById(id)
+
+    const updateData: any = {}
+
+    if (data.name !== undefined) {
+      updateData.name = data.name
     }
 
-    // Verificar se email já existe (se fornecido)
-    if (data.email && data.email !== existingUser.email) {
-      const emailExists = await this.prisma.user.findUnique({
-        where: { email: data.email },
-      })
+    if (data.email !== undefined) {
+      // Verificar se já existe outro usuário com o mesmo email
+      const duplicateUser =
+        await this.userManagementRepository.findByEmailExcludingId(
+          data.email,
+          id,
+        )
 
-      if (emailExists) {
-        throw new Error('Email já está em uso')
+      if (duplicateUser) {
+        throw new BadRequestError('Já existe um usuário com este email')
+      }
+
+      updateData.email = data.email
+    }
+
+    if (data.role !== undefined) {
+      updateData.role = data.role
+    }
+
+    if (data.planId !== undefined) {
+      if (data.planId) {
+        // Verificar se o plano existe
+        await this.validateForeignKey(
+          this.prisma.plan as any,
+          data.planId,
+          'planId',
+          'Plano',
+        )
+      }
+      updateData.planId = data.planId
+    }
+
+    if (data.avatarUrl !== undefined) {
+      updateData.avatarUrl = data.avatarUrl
+    }
+
+    if (data.passwordConfigured !== undefined) {
+      updateData.passwordConfigured = data.passwordConfigured
+    }
+
+    if (data.isActive !== undefined) {
+      updateData.isActive = data.isActive
+    }
+
+    const user = await this.userManagementRepository.update(id, updateData)
+
+    this.logOperation('UPDATE_USER', 'admin', {
+      userId: user.id,
+      userEmail: user.email,
+    })
+
+    return user
+  }
+
+  async delete(id: string): Promise<User> {
+    // Verificar se o usuário existe
+    const user = await this.findById(id)
+
+    // Verificar se há dados associados ao usuário
+    const userWithCounts = await this.userManagementRepository.findWithPlan(id)
+    const counts = userWithCounts?._count
+
+    if (counts) {
+      const totalItems =
+        counts.accounts +
+        counts.categories +
+        counts.creditCards +
+        counts.entries
+      if (totalItems > 0) {
+        throw new BadRequestError(
+          'Não é possível excluir um usuário que possui dados associados',
+        )
       }
     }
 
-    // Verificar se o plano existe (se fornecido)
-    if (data.planId) {
-      const plan = await this.prisma.plan.findUnique({
-        where: { id: data.planId },
-      })
+    await this.userManagementRepository.delete(id)
 
-      if (!plan || !plan.isActive) {
-        throw new Error('Plano não encontrado ou inativo')
-      }
-    }
-
-    return this.prisma.user.update({
-      where: { id },
-      data,
+    this.logOperation('DELETE_USER', 'admin', {
+      userId: id,
+      userEmail: user.email,
     })
+
+    return user
   }
 
-  async delete(id: string): Promise<void> {
-    const existingUser = await this.getById(id)
-    if (!existingUser) {
-      throw new Error('Usuário não encontrado')
-    }
-
-    // Verificar se é o último admin
-    if (existingUser.role === 'admin') {
-      const adminCount = await this.prisma.user.count({
-        where: { role: 'admin' },
-      })
-
-      if (adminCount <= 1) {
-        throw new Error('Não é possível excluir o último administrador')
-      }
-    }
-
-    await this.prisma.user.delete({
-      where: { id },
-    })
+  async deactivate(id: string): Promise<User> {
+    return this.update(id, { isActive: false })
   }
 
-  async changePassword(id: string, newPassword: string): Promise<void> {
-    const passwordHash = await bcrypt.hash(newPassword, 10)
-
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        password: passwordHash,
-        passwordConfigured: true,
-      },
-    })
-  }
-
-  async changePlan(userId: string, newPlanId: string): Promise<User> {
-    // Verificar se o plano existe
-    const plan = await this.prisma.plan.findUnique({
-      where: { id: newPlanId },
-    })
-
-    if (!plan || !plan.isActive) {
-      throw new Error('Plano não encontrado ou inativo')
-    }
-
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { planId: newPlanId },
-    })
-  }
-
-  async toggleActive(userId: string, isActive: boolean): Promise<User> {
-    const existingUser = await this.getById(userId)
-    if (!existingUser) {
-      throw new Error('Usuário não encontrado')
-    }
-
-    // Verificar se é o último admin ativo
-    if (existingUser.role === 'admin' && !isActive) {
-      const activeAdminCount = await this.prisma.user.count({
-        where: {
-          role: 'admin',
-          isActive: true,
-        },
-      })
-
-      if (activeAdminCount <= 1) {
-        throw new Error('Não é possível desativar o último administrador ativo')
-      }
-    }
-
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { isActive },
-    })
+  async activate(id: string): Promise<User> {
+    return this.update(id, { isActive: true })
   }
 
   async getUserStats() {
-    const [totalUsers, adminUsers, activeUsers, usersByPlan] =
+    const [totalUsers, activeUsers, usersByRole, usersByPlan] =
       await Promise.all([
-        this.prisma.user.count(),
-        this.prisma.user.count({ where: { role: 'admin' } }),
-        this.prisma.user.count({
-          where: {
-            createdAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // últimos 30 dias
-            },
-          },
+        this.userManagementRepository.count(),
+        this.userManagementRepository.count({ isActive: true }),
+        this.userManagementRepository.groupBy(['role'], undefined, {
+          role: 'asc',
         }),
-        this.prisma.user.groupBy({
-          by: ['planId'],
-          _count: {
-            id: true,
-          },
+        this.userManagementRepository.groupBy(['planId'], undefined, {
+          planId: 'asc',
         }),
       ])
 
     return {
       totalUsers,
-      adminUsers,
-      regularUsers: totalUsers - adminUsers,
       activeUsers,
-      usersByPlan,
+      usersByRole: usersByRole.map((group: any) => ({
+        role: group.role,
+        count: group._count,
+      })),
+      usersByPlan: usersByPlan.map((group: any) => ({
+        planId: group.planId,
+        count: group._count,
+      })),
     }
   }
 }

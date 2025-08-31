@@ -68,6 +68,16 @@ export async function adminUsersRoutes(fastify: FastifyInstance) {
       loadUserAbilities,
       requirePermission(Actions.MANAGE, 'User'),
     ],
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          newPassword: { type: 'string', minLength: 1 },
+        },
+        required: ['newPassword'],
+        additionalProperties: false,
+      },
+    },
     handler: userController.changePassword.bind(userController),
   })
 
@@ -78,6 +88,16 @@ export async function adminUsersRoutes(fastify: FastifyInstance) {
       loadUserAbilities,
       requirePermission(Actions.MANAGE, 'User'),
     ],
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          planId: { type: 'string', minLength: 1 },
+        },
+        required: ['planId'],
+        additionalProperties: false,
+      },
+    },
     handler: userController.changePlan.bind(userController),
   })
 
@@ -88,6 +108,16 @@ export async function adminUsersRoutes(fastify: FastifyInstance) {
       loadUserAbilities,
       requirePermission(Actions.MANAGE, 'User'),
     ],
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          isActive: { type: 'boolean' },
+        },
+        required: ['isActive'],
+        additionalProperties: false,
+      },
+    },
     handler: userController.toggleActive.bind(userController),
   })
 }
