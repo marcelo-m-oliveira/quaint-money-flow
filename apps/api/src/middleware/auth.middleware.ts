@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
+import { prisma } from '@/lib/prisma'
 import { ResponseFormatter } from '@/utils/response'
 
 // Middleware real para validar JWT em requisições autenticadas
@@ -9,6 +10,24 @@ export async function authenticateRequest(
 ) {
   try {
     await request.jwtVerify()
+
+    // Verificar se o usuário está ativo
+    const decoded = request.user as any
+    if (decoded?.sub) {
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { isActive: true },
+      })
+
+      if (user && !user.isActive) {
+        return ResponseFormatter.error(
+          reply,
+          'Conta desativada. Entre em contato com o administrador.',
+          undefined,
+          403,
+        )
+      }
+    }
   } catch (error: any) {
     request.log.warn(
       {

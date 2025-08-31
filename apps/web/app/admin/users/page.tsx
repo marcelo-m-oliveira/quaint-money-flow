@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +53,13 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<AdminUser | undefined>()
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+    variant?: 'default' | 'destructive'
+  }>({ isOpen: false, title: '', description: '', onConfirm: () => {} })
 
   const filteredUsers = users.filter(
     (user) =>
@@ -143,11 +151,25 @@ export default function AdminUsersPage() {
     setIsEditModalOpen(true)
   }
 
-  const handleDeleteUser = async (userId: string) => {
-    const success = await deleteUser(userId)
-    if (success) {
-      // Usuário já foi removido da lista pelo hook
-    }
+  const handleDeleteUser = (user: AdminUser) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Excluir usuário',
+      description: `Tem certeza que deseja excluir o usuário "${user.name}" (${user.email})? Esta ação não pode ser desfeita e todos os dados do usuário serão perdidos permanentemente.`,
+      variant: 'destructive',
+      onConfirm: async () => {
+        const success = await deleteUser(user.id)
+        if (success) {
+          // Usuário já foi removido da lista pelo hook
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: '',
+          description: '',
+          onConfirm: () => {},
+        })
+      },
+    })
   }
 
   const handleSubmitEdit = async (data: {
@@ -351,7 +373,7 @@ export default function AdminUsersPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteUser(user.id)}
+                            onClick={() => handleDeleteUser(user)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Excluir
@@ -373,9 +395,24 @@ export default function AdminUsersPage() {
         onClose={handleCloseEditModal}
         user={editingUser}
         onSubmit={handleSubmitEdit}
-        onDelete={
-          editingUser ? () => handleDeleteUser(editingUser.id) : undefined
+        onDelete={editingUser ? () => handleDeleteUser(editingUser) : undefined}
+      />
+
+      {/* Dialog de Confirmação */}
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: '',
+            description: '',
+            onConfirm: () => {},
+          })
         }
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant}
       />
     </div>
   )

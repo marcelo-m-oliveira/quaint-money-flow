@@ -107,6 +107,16 @@ export async function authRoutes(app: FastifyInstance) {
         )
       }
 
+      // Verificar se o usuário está ativo
+      if (!user.isActive) {
+        return ResponseFormatter.error(
+          reply,
+          'Conta desativada. Entre em contato com o administrador.',
+          undefined,
+          403,
+        )
+      }
+
       const passwordOk = await bcrypt.compare(password, user.password)
       if (!passwordOk) {
         return ResponseFormatter.error(
@@ -378,6 +388,16 @@ export async function authRoutes(app: FastifyInstance) {
             },
           },
         })
+
+        // Se o usuário existe mas está desativado, não permitir login
+        if (user && !user.isActive) {
+          return ResponseFormatter.error(
+            reply,
+            'Conta desativada. Entre em contato com o administrador.',
+            undefined,
+            403,
+          )
+        }
 
         let isNewUser = false
         let needsPasswordSetup = false
@@ -742,6 +762,16 @@ export async function authRoutes(app: FastifyInstance) {
             'Usuário não encontrado',
             undefined,
             401,
+          )
+        }
+
+        // Verificar se o usuário está ativo
+        if (!user.isActive) {
+          return ResponseFormatter.error(
+            reply,
+            'Conta desativada. Entre em contato com o administrador.',
+            undefined,
+            403,
           )
         }
 
