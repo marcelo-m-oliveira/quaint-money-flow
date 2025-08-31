@@ -14,12 +14,15 @@ const CouponCreateSchema = z.object({
     .max(20, 'Código deve ter no máximo 20 caracteres'),
   discountType: z.enum(['percentage', 'fixed']),
   discountValue: z.number().positive('Valor do desconto deve ser positivo'),
-  maxUses: z.number().positive().optional(),
+  maxUses: z
+    .union([z.number().positive(), z.null()])
+    .optional()
+    .transform((val) => (val === null ? undefined : val)),
   expiresAt: z
-    .union([z.string().datetime(), z.number()])
+    .union([z.string().datetime(), z.number(), z.null()])
     .optional()
     .transform((val) => {
-      if (!val) return undefined
+      if (!val || val === null) return undefined
       if (typeof val === 'number') {
         // Se for timestamp em segundos, converte para Date
         return new Date(val * 1000)
