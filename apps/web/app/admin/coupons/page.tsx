@@ -94,8 +94,15 @@ export default function AdminCouponsPage() {
       return <Badge variant="destructive">Inativo</Badge>
     }
 
-    if (coupon.expiresAt && new Date(coupon.expiresAt * 1000) < new Date()) {
-      return <Badge variant="destructive">Expirado</Badge>
+    if (coupon.expiresAt && coupon.expiresAt > 0) {
+      try {
+        const expiryDate = new Date(coupon.expiresAt * 1000)
+        if (!isNaN(expiryDate.getTime()) && expiryDate < new Date()) {
+          return <Badge variant="destructive">Expirado</Badge>
+        }
+      } catch (error) {
+        console.error('Erro ao processar data de expiração:', error)
+      }
     }
 
     if (coupon.maxUses && coupon.currentUses >= coupon.maxUses) {
@@ -106,11 +113,25 @@ export default function AdminCouponsPage() {
   }
 
   const formatDate = (timestamp: number) => {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(timestamp * 1000))
+    if (!timestamp || timestamp <= 0) {
+      return 'Data inválida'
+    }
+
+    try {
+      const date = new Date(timestamp * 1000)
+      if (isNaN(date.getTime())) {
+        return 'Data inválida'
+      }
+
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(date)
+    } catch (error) {
+      console.error('Erro ao formatar data:', error)
+      return 'Data inválida'
+    }
   }
 
   const copyToClipboard = (code: string) => {
@@ -269,7 +290,7 @@ export default function AdminCouponsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {coupon.expiresAt ? (
+                      {coupon.expiresAt && coupon.expiresAt > 0 ? (
                         <div className="flex items-center gap-1 text-sm">
                           <Calendar className="h-3 w-3" />
                           {formatDate(coupon.expiresAt)}

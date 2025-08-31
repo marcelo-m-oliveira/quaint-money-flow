@@ -23,7 +23,7 @@ export function usePlans(includeInactive = false) {
     } catch (err: any) {
       const errorMessage = err?.message || 'Erro ao carregar planos'
       setError(errorMessage)
-      showError.read('planos', errorMessage)
+      showError.general(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -97,7 +97,7 @@ export function usePlans(includeInactive = false) {
         setPlans((prev) =>
           prev.map((plan) => (plan.id === id ? updatedPlan : plan)),
         )
-        success.update('plano', 'Plano ativado com sucesso')
+        success.update('plano')
         return true
       } catch (err: any) {
         const errorMessage = err?.message || 'Erro ao ativar plano'
@@ -117,7 +117,7 @@ export function usePlans(includeInactive = false) {
         setPlans((prev) =>
           prev.map((plan) => (plan.id === id ? updatedPlan : plan)),
         )
-        success.update('plano', 'Plano desativado com sucesso')
+        success.update('plano')
         return true
       } catch (err: any) {
         const errorMessage = err?.message || 'Erro ao desativar plano'

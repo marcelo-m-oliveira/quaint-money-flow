@@ -34,8 +34,6 @@ export function PermissionsProvider({
   )
   const [isLoading, setIsLoading] = useState(false)
 
-
-
   const updateUser = (newUser: UserWithPlan) => {
     setUser(newUser)
     setAbility(defineAbilityFor(newUser))
@@ -59,7 +57,13 @@ export function PermissionsProvider({
         }
 
         // Buscar dados completos do usuário incluindo plano
-        const userResponse = await api.get('/users/me')
+        const userResponse = (await api.get('/users/me')) as {
+          id: string
+          email: string
+          name: string
+          role?: 'user' | 'admin'
+          plan?: any
+        }
 
         // Transformar para o formato esperado pelo CASL
         const userWithPlan: UserWithPlan = {
@@ -79,7 +83,7 @@ export function PermissionsProvider({
           id: authUser.id,
           email: authUser.email,
           name: authUser.name,
-          role: authUser.role || 'user', // Usar role do auth se disponível
+          role: (authUser.role as 'user' | 'admin') || 'user', // Usar role do auth se disponível
           plan: null,
         }
         setUser(basicUser)
@@ -113,7 +117,13 @@ export function PermissionsProvider({
               throw new Error('API client não disponível')
             }
 
-            const userResponse = await api.get('/users/me')
+            const userResponse = (await api.get('/users/me')) as {
+              id: string
+              email: string
+              name: string
+              role?: 'user' | 'admin'
+              plan?: any
+            }
 
             const userWithPlan: UserWithPlan = {
               id: userResponse.id,
@@ -131,7 +141,7 @@ export function PermissionsProvider({
               id: authUser.id,
               email: authUser.email,
               name: authUser.name,
-              role: authUser.role || 'user',
+              role: (authUser.role as 'user' | 'admin') || 'user',
               plan: null,
             }
             setUser(basicUser)
@@ -186,7 +196,7 @@ export function useAbility() {
 }
 
 // Hook para verificar se pode executar uma ação
-export function useCan(action: string, subject: string) {
+export function useCan(action: string, subject: AppSubjects) {
   const ability = useAbility()
   return ability.can(action, subject)
 }
@@ -198,4 +208,4 @@ export function useUser() {
 }
 
 // Exportar tipos para uso em outros componentes
-export { AppSubjects }
+export type { AppSubjects }

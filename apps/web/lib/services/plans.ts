@@ -50,7 +50,9 @@ class Plans {
       params.append('includeInactive', 'true')
     }
 
-    const response = await api.get(`${this.baseUrl}?${params}`)
+    const response = (await api.get(`${this.baseUrl}?${params}`)) as {
+      plans: Plan[]
+    }
     return response
   }
 
