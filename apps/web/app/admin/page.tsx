@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { usePermissions, useUser } from '@/lib/contexts/permissions-context'
+import { useUser } from '@/lib/contexts/permissions-context'
 import { usePlanStats } from '@/lib/hooks/use-plans'
 
 const adminSections = [
@@ -75,7 +75,6 @@ const adminSections = [
 
 export default function AdminDashboard() {
   const { user } = useUser()
-  const { Can } = usePermissions()
   const { stats, isLoading: statsLoading } = usePlanStats()
 
   // Redirect se não for admin

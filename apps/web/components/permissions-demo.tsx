@@ -9,6 +9,7 @@ import {
   Shield,
   Tag,
   User,
+  Users,
   XCircle,
 } from 'lucide-react'
 import React from 'react'
@@ -48,12 +49,32 @@ export function PermissionsDemo() {
   const creditCardLimits = getPlanLimitInfo(user, 'creditCards')
 
   const permissions = [
-    { action: Actions.CREATE, subject: 'Account', label: 'Criar Contas' },
-    { action: Actions.CREATE, subject: 'Category', label: 'Criar Categorias' },
-    { action: Actions.CREATE, subject: 'CreditCard', label: 'Criar Cartões' },
-    { action: Actions.CREATE, subject: 'Plan', label: 'Criar Planos' },
-    { action: Actions.MANAGE, subject: 'User', label: 'Gerenciar Usuários' },
-    { action: Actions.MANAGE, subject: 'Coupon', label: 'Gerenciar Cupons' },
+    {
+      action: Actions.CREATE,
+      subject: 'Account' as const,
+      label: 'Criar Contas',
+    },
+    {
+      action: Actions.CREATE,
+      subject: 'Category' as const,
+      label: 'Criar Categorias',
+    },
+    {
+      action: Actions.CREATE,
+      subject: 'CreditCard' as const,
+      label: 'Criar Cartões',
+    },
+    { action: Actions.CREATE, subject: 'Plan' as const, label: 'Criar Planos' },
+    {
+      action: Actions.MANAGE,
+      subject: 'User' as const,
+      label: 'Gerenciar Usuários',
+    },
+    {
+      action: Actions.MANAGE,
+      subject: 'Coupon' as const,
+      label: 'Gerenciar Cupons',
+    },
   ]
 
   return (

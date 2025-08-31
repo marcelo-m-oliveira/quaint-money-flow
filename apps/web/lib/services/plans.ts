@@ -164,3 +164,4 @@ class Plans {
 }
 
 export const plansService = new Plans()
+export { Plans }

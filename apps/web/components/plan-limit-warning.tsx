@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getPlanLimitInfo } from '@/lib/casl'
 import { useUser } from '@/lib/contexts/permissions-context'
-import { plansService } from '@/lib/services/plans'
+import { Plans } from '@/lib/services/plans'
 
 interface PlanLimitWarningProps {
   resource: 'accounts' | 'categories' | 'creditCards'
@@ -145,7 +145,7 @@ export function PlanBadge({ plan, className = '' }: PlanBadgeProps) {
     )
   }
 
-  const badgeColor = plansService.getPlanBadgeColor(plan.type as any)
+  const badgeColor = Plans.getPlanBadgeColor(plan.type as any)
 
   return (
     <Badge className={`text-xs ${badgeColor} ${className}`} variant="secondary">

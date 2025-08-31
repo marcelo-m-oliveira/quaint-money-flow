@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { usePlans } from '@/lib/hooks/use-plans'
-import { plansService } from '@/lib/services/plans'
+import { Plans } from '@/lib/services/plans'
 
 export default function AdminPlansPage() {
   const { plans, isLoading, error } = usePlans(true) // incluir inativos
@@ -121,7 +121,7 @@ export default function AdminPlansPage() {
                     </CardTitle>
                     <div className="flex gap-2">
                       <Badge className={getPlanTypeColor(plan.type)}>
-                        {plansService.getPlanTypeLabel(plan.type as any)}
+                        {Plans.getPlanTypeLabel(plan.type as any)}
                       </Badge>
                       {!plan.isActive && (
                         <Badge variant="destructive">Inativo</Badge>
@@ -129,7 +129,7 @@ export default function AdminPlansPage() {
                     </div>
                   </div>
                   <div className="text-3xl font-bold text-primary">
-                    {plansService.formatPrice(plan.price)}
+                    {Plans.formatPrice(plan.price)}
                     {plan.type === 'monthly' && (
                       <span className="text-sm font-normal text-muted-foreground">
                         /mês

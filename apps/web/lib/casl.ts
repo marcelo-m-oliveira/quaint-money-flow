@@ -51,7 +51,7 @@ export interface UserWithPlan {
 // Definir permissões baseadas no plano do usuário
 export function defineAbilityFor(user: UserWithPlan | null): AppAbility {
   if (!user) {
-    return defineAbility(() => {})
+    return defineAbility((can, cannot) => {}) as AppAbility
   }
 
   return defineAbility((can, cannot) => {
@@ -103,7 +103,7 @@ export function defineAbilityFor(user: UserWithPlan | null): AppAbility {
       cannot(Actions.MANAGE, 'Plan')
       cannot(Actions.MANAGE, 'Coupon')
     }
-  })
+  }) as AppAbility
 }
 
 // Helper para verificar se o usuário tem acesso a relatórios avançados
@@ -177,3 +177,6 @@ export function getPlanLimitInfo(
     canCreate: () => false,
   }
 }
+
+// Exportar tipos para uso em outros componentes
+export type { AppSubjects }

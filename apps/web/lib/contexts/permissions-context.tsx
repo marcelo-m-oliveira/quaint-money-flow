@@ -1,17 +1,20 @@
 'use client'
 
-import { createContextualCan } from '@casl/react'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
 import { api } from '@/lib/api'
-import { AppAbility, defineAbilityFor, UserWithPlan } from '@/lib/casl'
+import {
+  AppAbility,
+  AppSubjects,
+  defineAbilityFor,
+  UserWithPlan,
+} from '@/lib/casl'
 import { useAuth } from '@/lib/hooks/use-auth'
 
 interface PermissionsContextType {
   ability: AppAbility
   user: UserWithPlan | null
   updateUser: (user: UserWithPlan) => void
-  Can: ReturnType<typeof createContextualCan>
   isLoading: boolean
 }
 
@@ -31,8 +34,7 @@ export function PermissionsProvider({
   )
   const [isLoading, setIsLoading] = useState(false)
 
-  // Criar o componente Can contextual
-  const Can = createContextualCan(PermissionsContext.Consumer)
+
 
   const updateUser = (newUser: UserWithPlan) => {
     setUser(newUser)
@@ -160,7 +162,6 @@ export function PermissionsProvider({
         ability,
         user,
         updateUser,
-        Can,
         isLoading,
       }}
     >
@@ -195,3 +196,6 @@ export function useUser() {
   const { user, updateUser } = usePermissions()
   return { user, updateUser }
 }
+
+// Exportar tipos para uso em outros componentes
+export { AppSubjects }

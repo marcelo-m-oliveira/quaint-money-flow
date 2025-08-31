@@ -39,6 +39,7 @@ interface User {
   id: string
   email: string
   name: string
+  avatarUrl?: string | null
   role: 'user' | 'admin'
   plan?: {
     id: string
@@ -69,7 +70,7 @@ export default function AdminUsersPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await api.get('/admin/users')
+      const response = (await api.get('/admin/users')) as { users: User[] }
       setUsers(response.users || [])
     } catch (err: any) {
       setError('Erro ao carregar usuários')

@@ -63,7 +63,9 @@ export default function AdminCouponsPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await api.get('/coupons?includeUsage=true')
+      const response = (await api.get('/coupons?includeUsage=true')) as {
+        coupons: Coupon[]
+      }
       setCoupons(response.coupons || [])
     } catch (err: any) {
       setError('Erro ao carregar cupons')

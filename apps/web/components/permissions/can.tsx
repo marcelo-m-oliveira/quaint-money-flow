@@ -2,11 +2,11 @@
 
 import React from 'react'
 
-import { usePermissions } from '@/lib/contexts/permissions-context'
+import { AppSubjects, usePermissions } from '@/lib/contexts/permissions-context'
 
 export interface CanProps {
   I: string // action
-  a?: string // subject
+  a?: AppSubjects // subject
   this?: any // specific instance
   field?: string // specific field
   not?: boolean // invert check
@@ -68,42 +68,42 @@ export function Can({
 export const CanCreate = ({
   subject,
   ...props
-}: Omit<CanProps, 'I'> & { subject: string }) => (
+}: Omit<CanProps, 'I'> & { subject: AppSubjects }) => (
   <Can I="create" a={subject} {...props} />
 )
 
 export const CanRead = ({
   subject,
   ...props
-}: Omit<CanProps, 'I'> & { subject: string }) => (
+}: Omit<CanProps, 'I'> & { subject: AppSubjects }) => (
   <Can I="read" a={subject} {...props} />
 )
 
 export const CanUpdate = ({
   subject,
   ...props
-}: Omit<CanProps, 'I'> & { subject: string }) => (
+}: Omit<CanProps, 'I'> & { subject: AppSubjects }) => (
   <Can I="update" a={subject} {...props} />
 )
 
 export const CanDelete = ({
   subject,
   ...props
-}: Omit<CanProps, 'I'> & { subject: string }) => (
+}: Omit<CanProps, 'I'> & { subject: AppSubjects }) => (
   <Can I="delete" a={subject} {...props} />
 )
 
 export const CanManage = ({
   subject,
   ...props
-}: Omit<CanProps, 'I'> & { subject: string }) => (
+}: Omit<CanProps, 'I'> & { subject: AppSubjects }) => (
   <Can I="manage" a={subject} {...props} />
 )
 
 // Higher-order component to wrap components with permission checking
 export function withPermissions<T extends Record<string, any>>(
   WrappedComponent: React.ComponentType<T>,
-  requiredPermission: { action: string; subject: string },
+  requiredPermission: { action: string; subject: AppSubjects },
   fallbackComponent?: React.ComponentType<T>,
 ) {
   return function PermissionWrapper(props: T) {
