@@ -46,7 +46,7 @@ export function useCrudToast() {
       save: (entity: string) =>
         showSuccess('Sucesso', `${entity} salvo(a) com sucesso.`),
     }),
-    [showSuccess],
+    [],
   )
 
   const error = useMemo(
@@ -82,7 +82,7 @@ export function useCrudToast() {
             'Ops! Algo deu errado. Por favor, tente novamente mais tarde.',
         ),
     }),
-    [showError],
+    [],
   )
 
   const warning = useMemo(
@@ -96,7 +96,7 @@ export function useCrudToast() {
       constraint: (message: string) =>
         showWarning('Ação não permitida', message),
     }),
-    [showWarning],
+    [],
   )
 
   return {

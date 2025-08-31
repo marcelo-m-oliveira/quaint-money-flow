@@ -22,7 +22,7 @@ export function useAdminUsers() {
     } finally {
       setIsLoading(false)
     }
-  }, [showError])
+  }, [])
 
   useEffect(() => {
     loadUsers()
@@ -43,7 +43,7 @@ export function useAdminUsers() {
         return null
       }
     },
-    [success, showError],
+    [],
   )
 
   const updateUser = useCallback(
@@ -63,26 +63,23 @@ export function useAdminUsers() {
         return null
       }
     },
-    [success, showError],
+    [],
   )
 
-  const deleteUser = useCallback(
-    async (id: string): Promise<boolean> => {
-      try {
-        setError(null)
-        await adminUsersService.delete(id)
-        setUsers((prev) => prev.filter((user) => user.id !== id))
-        success.delete('usuário')
-        return true
-      } catch (err: any) {
-        const errorMessage = err?.message || 'Erro ao excluir usuário'
-        setError(errorMessage)
-        showError.delete('usuário', errorMessage)
-        return false
-      }
-    },
-    [success, showError],
-  )
+  const deleteUser = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      setError(null)
+      await adminUsersService.delete(id)
+      setUsers((prev) => prev.filter((user) => user.id !== id))
+      success.delete('usuário')
+      return true
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Erro ao excluir usuário'
+      setError(errorMessage)
+      showError.delete('usuário', errorMessage)
+      return false
+    }
+  }, [])
 
   const changeUserPassword = useCallback(
     async (id: string, password: string): Promise<boolean> => {
@@ -98,7 +95,7 @@ export function useAdminUsers() {
         return false
       }
     },
-    [success, showError],
+    [],
   )
 
   const changeUserPlan = useCallback(
@@ -117,7 +114,7 @@ export function useAdminUsers() {
         return false
       }
     },
-    [success, showError, loadUsers],
+    [loadUsers],
   )
 
   const toggleUserActive = useCallback(
@@ -136,7 +133,7 @@ export function useAdminUsers() {
         return false
       }
     },
-    [success, showError, loadUsers],
+    [loadUsers],
   )
 
   const getUserById = useCallback(

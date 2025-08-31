@@ -22,7 +22,7 @@ export function useAdminPlans(includeInactive = false) {
     } finally {
       setIsLoading(false)
     }
-  }, [includeInactive, showError])
+  }, [includeInactive])
 
   useEffect(() => {
     loadPlans()

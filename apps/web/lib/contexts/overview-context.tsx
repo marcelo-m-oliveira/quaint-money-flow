@@ -115,7 +115,7 @@ export function OverviewProvider({ children }: OverviewProviderProps) {
     }
 
     loadInitialData()
-  }, [refreshGeneralOverview, refreshTopExpenses])
+  }, [])
 
   const value: OverviewContextType = {
     generalOverview,
