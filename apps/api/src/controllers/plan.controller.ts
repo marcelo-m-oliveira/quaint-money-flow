@@ -41,43 +41,40 @@ export class PlanController extends BaseController {
         includeInactive: query.includeInactive,
       })
 
-      reply.code(200).send({
-        success: true,
-        data: {
-          plans: plans.map((plan) => convertDatesToSeconds(plan)),
-        },
+      const plansWithConvertedDates = plans.map((plan) =>
+        convertDatesToSeconds(plan),
+      )
+
+      return reply.status(200).send({
+        plans: plansWithConvertedDates,
       })
     } catch (error: any) {
-      reply.code(500).send({
-        success: false,
-        message: 'Erro interno do servidor',
-        error: error.message,
-      })
+      request.log.error(
+        { error: error.message, operation: 'index' },
+        `Erro na listagem de ${this.entityNamePlural}`,
+      )
+      throw error
     }
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { id } = request.params as { id: string }
+      const { id } = this.getPathParams<{ id: string }>(request)
       const plan = await this.planService.getById(id)
 
       if (!plan) {
-        return reply.code(404).send({
-          success: false,
-          message: 'Plano não encontrado',
+        return reply.status(404).send({
+          message: `${this.entityName} não encontrado`,
         })
       }
 
-      reply.code(200).send({
-        success: true,
-        data: convertDatesToSeconds(plan),
-      })
+      return reply.status(200).send(convertDatesToSeconds(plan))
     } catch (error: any) {
-      reply.code(500).send({
-        success: false,
-        message: 'Erro interno do servidor',
-        error: error.message,
-      })
+      request.log.error(
+        { error: error.message, operation: 'show' },
+        `Erro na busca de ${this.entityName}`,
+      )
+      throw error
     }
   }
 
@@ -85,82 +82,83 @@ export class PlanController extends BaseController {
     try {
       const data = PlanCreateSchema.parse(request.body)
       const plan = await this.planService.create(data)
-
-      reply.code(201).send({
-        success: true,
-        data: convertDatesToSeconds(plan),
-      })
+      return reply.status(201).send(convertDatesToSeconds(plan))
     } catch (error: any) {
-      reply.code(500).send({
-        success: false,
-        message: 'Erro ao criar plano',
-        error: error.message,
-      })
+      request.log.error(
+        { error: error.message, operation: 'store' },
+        `Erro na criação de ${this.entityName}`,
+      )
+      throw error
     }
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleUpdateRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const data = PlanUpdateSchema.parse(request.body)
-        const plan = await this.planService.update(id, data)
-        return convertDatesToSeconds(plan)
-      },
-      `Atualização de ${this.entityName}`,
-    )
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const data = PlanUpdateSchema.parse(request.body)
+      const plan = await this.planService.update(id, data)
+      return reply.status(200).send(convertDatesToSeconds(plan))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'update' },
+        `Erro na atualização de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleDeleteRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        await this.planService.delete(id)
-        return { deleted: true }
-      },
-      `Exclusão de ${this.entityName}`,
-    )
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      await this.planService.delete(id)
+      return reply.status(204).send()
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'destroy' },
+        `Erro na exclusão de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async deactivate(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleUpdateRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const plan = await this.planService.deactivate(id)
-        return convertDatesToSeconds(plan)
-      },
-      `Desativação de ${this.entityName}`,
-    )
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const plan = await this.planService.deactivate(id)
+      return reply.status(200).send(convertDatesToSeconds(plan))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'deactivate' },
+        `Erro na desativação de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async activate(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleUpdateRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const plan = await this.planService.activate(id)
-        return convertDatesToSeconds(plan)
-      },
-      `Ativação de ${this.entityName}`,
-    )
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const plan = await this.planService.activate(id)
+      return reply.status(200).send(convertDatesToSeconds(plan))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'activate' },
+        `Erro na ativação de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async stats(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleRequest(
-      request,
-      reply,
-      async () => {
-        const stats = await this.planService.getPlanStats()
-        return stats
-      },
-      'Estatísticas de Planos',
-    )
+    try {
+      const stats = await this.planService.getPlanStats()
+      return reply.status(200).send(stats)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'stats' },
+        'Erro ao buscar estatísticas de planos',
+      )
+      throw error
+    }
   }
 }

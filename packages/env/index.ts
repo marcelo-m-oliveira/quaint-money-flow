@@ -69,7 +69,7 @@ export const env = createEnv({
   },
   client: {},
   shared: {
-    NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3000/api/v1'),
+    NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3333/api/v1'),
     NEXT_PUBLIC_BACKEND_API_URL: z
       .url()
       .default('http://localhost:3333/api/v1'),

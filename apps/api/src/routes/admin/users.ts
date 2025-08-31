@@ -80,14 +80,4 @@ export async function adminUsersRoutes(fastify: FastifyInstance) {
     ],
     handler: userController.changePlan.bind(userController),
   })
-
-  // Estatísticas de usuários
-  fastify.get('/admin/stats', {
-    preHandler: [
-      authMiddleware,
-      loadUserAbilities,
-      requirePermission(Actions.MANAGE, 'User'),
-    ],
-    handler: userController.stats.bind(userController),
-  })
 }

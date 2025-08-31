@@ -51,152 +51,166 @@ export class CouponController extends BaseController {
   }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleRequest(
-      request,
-      reply,
-      async () => {
-        const query = CouponQuerySchema.parse(request.query)
-        const coupons = await this.couponService.getAll({
-          includeInactive: query.includeInactive,
-          includeUsage: query.includeUsage,
-        })
+    try {
+      const query = CouponQuerySchema.parse(request.query)
+      const coupons = await this.couponService.getAll({
+        includeInactive: query.includeInactive,
+        includeUsage: query.includeUsage,
+      })
 
-        return {
-          coupons: coupons.map((coupon) => convertDatesToSeconds(coupon)),
-        }
-      },
-      `Listagem de ${this.entityNamePlural}`,
-    )
+      const couponsWithConvertedDates = coupons.map((coupon) =>
+        convertDatesToSeconds(coupon),
+      )
+
+      return reply.status(200).send({
+        coupons: couponsWithConvertedDates,
+      })
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'index' },
+        `Erro na listagem de ${this.entityNamePlural}`,
+      )
+      throw error
+    }
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleShowRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const coupon = await this.couponService.getById(id)
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const coupon = await this.couponService.getById(id)
 
-        if (!coupon) {
-          throw new Error(`${this.entityName} não encontrado`)
-        }
+      if (!coupon) {
+        return reply.status(404).send({
+          message: `${this.entityName} não encontrado`,
+        })
+      }
 
-        return convertDatesToSeconds(coupon)
-      },
-      `Busca de ${this.entityName}`,
-    )
+      return reply.status(200).send(convertDatesToSeconds(coupon))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'show' },
+        `Erro na busca de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleCreateRequest(
-      request,
-      reply,
-      async () => {
-        const data = CouponCreateSchema.parse(request.body)
-        const coupon = await this.couponService.create(data)
-        return convertDatesToSeconds(coupon)
-      },
-      `Criação de ${this.entityName}`,
-    )
+    try {
+      const data = CouponCreateSchema.parse(request.body)
+      const coupon = await this.couponService.create(data)
+      return reply.status(201).send(convertDatesToSeconds(coupon))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'store' },
+        `Erro na criação de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleUpdateRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const data = CouponUpdateSchema.parse(request.body)
-        const coupon = await this.couponService.update(id, data)
-        return convertDatesToSeconds(coupon)
-      },
-      `Atualização de ${this.entityName}`,
-    )
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const data = CouponUpdateSchema.parse(request.body)
+      const coupon = await this.couponService.update(id, data)
+      return reply.status(200).send(convertDatesToSeconds(coupon))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'update' },
+        `Erro na atualização de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleDeleteRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        await this.couponService.delete(id)
-        return { deleted: true }
-      },
-      `Exclusão de ${this.entityName}`,
-    )
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      await this.couponService.delete(id)
+      return reply.status(204).send()
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'destroy' },
+        `Erro na exclusão de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async validate(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleShowRequest(
-      request,
-      reply,
-      async () => {
-        const userId = this.getUserId(request)
-        const { code } = ValidateCouponSchema.parse(request.body)
+    try {
+      const userId = this.getUserId(request)
+      const { code } = ValidateCouponSchema.parse(request.body)
 
-        const validation = await this.couponService.validateCoupon(code, userId)
+      const validation = await this.couponService.validateCoupon(code, userId)
 
-        if (!validation.valid) {
-          return {
-            valid: false,
-            error: validation.error,
-          }
-        }
+      if (!validation.valid) {
+        return reply.status(200).send({
+          valid: false,
+          error: validation.error,
+        })
+      }
 
-        return {
-          valid: true,
-          coupon: validation.coupon
-            ? convertDatesToSeconds(validation.coupon)
-            : null,
-        }
-      },
-      'Validação de Cupom',
-    )
+      return reply.status(200).send({
+        valid: true,
+        coupon: validation.coupon
+          ? convertDatesToSeconds(validation.coupon)
+          : null,
+      })
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'validate' },
+        'Erro na validação de cupom',
+      )
+      throw error
+    }
   }
 
   async use(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleCreateRequest(
-      request,
-      reply,
-      async () => {
-        const userId = this.getUserId(request)
-        const { id } = this.getPathParams<{ id: string }>(request)
+    try {
+      const userId = this.getUserId(request)
+      const { id } = this.getPathParams<{ id: string }>(request)
 
-        // Validar cupom antes de usar
-        const coupon = await this.couponService.getById(id)
-        if (!coupon) {
-          throw new Error('Cupom não encontrado')
-        }
+      // Validar cupom antes de usar
+      const coupon = await this.couponService.getById(id)
+      if (!coupon) {
+        throw new Error('Cupom não encontrado')
+      }
 
-        const validation = await this.couponService.validateCoupon(
-          coupon.code,
-          userId,
-        )
-        if (!validation.valid) {
-          throw new Error(validation.error || 'Cupom inválido')
-        }
+      const validation = await this.couponService.validateCoupon(
+        coupon.code,
+        userId,
+      )
+      if (!validation.valid) {
+        throw new Error(validation.error || 'Cupom inválido')
+      }
 
-        await this.couponService.useCoupon(id, userId)
+      await this.couponService.useCoupon(id, userId)
 
-        return {
-          success: true,
-          message: 'Cupom utilizado com sucesso',
-        }
-      },
-      'Uso de Cupom',
-    )
+      return reply.status(200).send({
+        success: true,
+        message: 'Cupom utilizado com sucesso',
+      })
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'use' },
+        'Erro no uso de cupom',
+      )
+      throw error
+    }
   }
 
   async stats(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleRequest(
-      request,
-      reply,
-      async () => {
-        const stats = await this.couponService.getCouponStats()
-        return stats
-      },
-      'Estatísticas de Cupons',
-    )
+    try {
+      const stats = await this.couponService.getCouponStats()
+      return reply.status(200).send(stats)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'stats' },
+        'Erro ao buscar estatísticas de cupons',
+      )
+      throw error
+    }
   }
 }

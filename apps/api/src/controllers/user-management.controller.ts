@@ -55,133 +55,145 @@ export class UserManagementController extends BaseController {
   }
 
   async index(request: FastifyRequest, reply: FastifyReply) {
-    return this.handlePaginatedRequest(
-      request,
-      reply,
-      async () => {
-        const query = UserQuerySchema.parse(request.query)
-        const result = await this.userManagementService.getAll(query)
+    try {
+      const query = UserQuerySchema.parse(request.query)
+      const result = await this.userManagementService.getAll(query)
 
-        return {
-          items: result.users.map((user) => {
-            const { password, ...userWithoutPassword } = user
-            return convertDatesToSeconds(userWithoutPassword)
-          }),
-          pagination: result.pagination,
-        }
-      },
-      `Listagem de ${this.entityNamePlural}`,
-    )
+      const usersWithConvertedDates = result.users.map((user) => {
+        const { password, ...userWithoutPassword } = user
+        return convertDatesToSeconds(userWithoutPassword)
+      })
+
+      return reply.status(200).send({
+        users: usersWithConvertedDates,
+        pagination: result.pagination,
+      })
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'index' },
+        `Erro na listagem de ${this.entityNamePlural}`,
+      )
+      throw error
+    }
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleShowRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const user = await this.userManagementService.getById(id)
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const user = await this.userManagementService.getById(id)
 
-        if (!user) {
-          throw new Error(`${this.entityName} não encontrado`)
-        }
+      if (!user) {
+        return reply.status(404).send({
+          message: `${this.entityName} não encontrado`,
+        })
+      }
 
-        const { password, ...userWithoutPassword } = user
-        return convertDatesToSeconds(userWithoutPassword)
-      },
-      `Busca de ${this.entityName}`,
-    )
+      const { password, ...userWithoutPassword } = user
+      return reply.status(200).send(convertDatesToSeconds(userWithoutPassword))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'show' },
+        `Erro na busca de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async store(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleCreateRequest(
-      request,
-      reply,
-      async () => {
-        const data = UserCreateSchema.parse(request.body)
-        const user = await this.userManagementService.create(data)
+    try {
+      const data = UserCreateSchema.parse(request.body)
+      const user = await this.userManagementService.create(data)
 
-        const { password, ...userWithoutPassword } = user
-        return convertDatesToSeconds(userWithoutPassword)
-      },
-      `Criação de ${this.entityName}`,
-    )
+      const { password, ...userWithoutPassword } = user
+      return reply.status(201).send(convertDatesToSeconds(userWithoutPassword))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'store' },
+        `Erro na criação de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleUpdateRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const data = UserUpdateSchema.parse(request.body)
-        const user = await this.userManagementService.update(id, data)
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const data = UserUpdateSchema.parse(request.body)
+      const user = await this.userManagementService.update(id, data)
 
-        const { password, ...userWithoutPassword } = user
-        return convertDatesToSeconds(userWithoutPassword)
-      },
-      `Atualização de ${this.entityName}`,
-    )
+      const { password, ...userWithoutPassword } = user
+      return reply.status(200).send(convertDatesToSeconds(userWithoutPassword))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'update' },
+        `Erro na atualização de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async destroy(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleDeleteRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        await this.userManagementService.delete(id)
-        return { deleted: true }
-      },
-      `Exclusão de ${this.entityName}`,
-    )
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      await this.userManagementService.delete(id)
+      return reply.status(204).send()
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'destroy' },
+        `Erro na exclusão de ${this.entityName}`,
+      )
+      throw error
+    }
   }
 
   async changePassword(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleUpdateRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const { newPassword } = ChangePasswordSchema.parse(request.body)
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const { newPassword } = ChangePasswordSchema.parse(request.body)
 
-        await this.userManagementService.changePassword(id, newPassword)
+      await this.userManagementService.changePassword(id, newPassword)
 
-        return {
-          success: true,
-          message: 'Senha alterada com sucesso',
-        }
-      },
-      'Alteração de Senha',
-    )
+      return reply.status(200).send({
+        success: true,
+        message: 'Senha alterada com sucesso',
+      })
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'changePassword' },
+        'Erro na alteração de senha',
+      )
+      throw error
+    }
   }
 
   async changePlan(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleUpdateRequest(
-      request,
-      reply,
-      async () => {
-        const { id } = this.getPathParams<{ id: string }>(request)
-        const { planId } = ChangePlanSchema.parse(request.body)
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const { planId } = ChangePlanSchema.parse(request.body)
 
-        const user = await this.userManagementService.changePlan(id, planId)
+      const user = await this.userManagementService.changePlan(id, planId)
 
-        const { password, ...userWithoutPassword } = user
-        return convertDatesToSeconds(userWithoutPassword)
-      },
-      'Alteração de Plano',
-    )
+      const { password, ...userWithoutPassword } = user
+      return reply.status(200).send(convertDatesToSeconds(userWithoutPassword))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'changePlan' },
+        'Erro na alteração de plano',
+      )
+      throw error
+    }
   }
 
   async stats(request: FastifyRequest, reply: FastifyReply) {
-    return this.handleRequest(
-      request,
-      reply,
-      async () => {
-        const stats = await this.userManagementService.getUserStats()
-        return stats
-      },
-      'Estatísticas de Usuários',
-    )
+    try {
+      const stats = await this.userManagementService.getUserStats()
+      return reply.status(200).send(stats)
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'stats' },
+        'Erro ao buscar estatísticas de usuários',
+      )
+      throw error
+    }
   }
 }
