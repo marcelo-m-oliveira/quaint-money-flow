@@ -6,11 +6,12 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { usePlans } from '@/lib/hooks/use-plans'
+import { useAdminPlans } from '@/lib'
 import { Plans } from '@/lib/services/plans'
 
 export default function AdminPlansPage() {
-  const { plans, isLoading, error } = usePlans(true) // incluir inativos
+  const { plans, isLoading, error, activatePlan, deactivatePlan } =
+    useAdminPlans()
 
   const getPlanTypeColor = (type: string) => {
     switch (type) {

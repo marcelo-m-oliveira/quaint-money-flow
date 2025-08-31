@@ -74,6 +74,18 @@ export { overviewService } from './services/overview'
 export { authService } from './services/auth'
 export { userService } from './services/user'
 
+// Admin services
+export {
+  adminUsersService,
+  adminPlansService,
+  adminCouponsService,
+  adminAnalyticsService,
+  type AdminUser,
+  type AdminPlan,
+  type AdminCoupon,
+  type AdminAnalytics,
+} from './services/admin'
+
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - HOOKS
 // ============================================================================
@@ -82,6 +94,11 @@ export { useUserPreferencesWithAutoInit } from './hooks/use-user-preferences'
 export { useInfiniteScroll } from './hooks/use-infinite-scroll'
 export { useCrudToast } from './hooks/use-crud-toast'
 export { useAuth } from './hooks/use-auth'
+
+// Admin hooks
+export { useAdminUsers } from './hooks/use-admin-users'
+export { useAdminPlans } from './hooks/use-admin-plans'
+export { useAdminCoupons } from './hooks/use-admin-coupons'
 
 // ============================================================================
 // EXPORTAÇÕES CENTRALIZADAS - UTILITÁRIOS

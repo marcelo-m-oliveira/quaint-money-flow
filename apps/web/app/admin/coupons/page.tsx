@@ -12,7 +12,7 @@ import {
   Ticket,
   Trash2,
 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,54 +32,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { api } from '@/lib/api'
-
-interface Coupon {
-  id: string
-  code: string
-  discountType: 'percentage' | 'fixed'
-  discountValue: number
-  maxUses?: number | null
-  currentUses: number
-  expiresAt?: number | null
-  isActive: boolean
-  createdAt: number
-  _count?: {
-    userCoupons: number
-  }
-}
+import { useAdminCoupons } from '@/lib'
+import type { AdminCoupon } from '@/lib/services/admin'
 
 export default function AdminCouponsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    coupons,
+    isLoading,
+    error,
+    activateCoupon,
+    deactivateCoupon,
+    refetch,
+  } = useAdminCoupons()
   const [searchTerm, setSearchTerm] = useState('')
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    loadCoupons()
-  }, [])
-
-  const loadCoupons = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const response = (await api.get('/coupons?includeUsage=true')) as {
-        coupons: Coupon[]
-      }
-      setCoupons(response.coupons || [])
-    } catch (err: any) {
-      setError('Erro ao carregar cupons')
-      console.error('Erro ao carregar cupons:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const filteredCoupons = coupons.filter((coupon) =>
     coupon.code.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const getDiscountText = (coupon: Coupon) => {
+  const getDiscountText = (coupon: AdminCoupon) => {
     if (coupon.discountType === 'percentage') {
       return `${coupon.discountValue}%`
     }
@@ -89,7 +60,7 @@ export default function AdminCouponsPage() {
     }).format(coupon.discountValue)
   }
 
-  const getStatusBadge = (coupon: Coupon) => {
+  const getStatusBadge = (coupon: AdminCoupon) => {
     if (!coupon.isActive) {
       return <Badge variant="destructive">Inativo</Badge>
     }
@@ -145,7 +116,7 @@ export default function AdminCouponsPage() {
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-red-600">{error}</p>
-            <Button onClick={loadCoupons} className="mt-4">
+            <Button onClick={refetch} className="mt-4">
               Tentar Novamente
             </Button>
           </div>

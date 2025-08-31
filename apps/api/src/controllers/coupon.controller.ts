@@ -213,4 +213,32 @@ export class CouponController extends BaseController {
       throw error
     }
   }
+
+  async activate(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const coupon = await this.couponService.activate(id)
+      return reply.status(200).send(convertDatesToSeconds(coupon))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'activate' },
+        `Erro na ativação de ${this.entityName}`,
+      )
+      throw error
+    }
+  }
+
+  async deactivate(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { id } = this.getPathParams<{ id: string }>(request)
+      const coupon = await this.couponService.deactivate(id)
+      return reply.status(200).send(convertDatesToSeconds(coupon))
+    } catch (error: any) {
+      request.log.error(
+        { error: error.message, operation: 'deactivate' },
+        `Erro na desativação de ${this.entityName}`,
+      )
+      throw error
+    }
+  }
 }

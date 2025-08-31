@@ -12,7 +12,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -33,52 +33,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { api } from '@/lib/api'
-
-interface User {
-  id: string
-  email: string
-  name: string
-  avatarUrl?: string | null
-  role: 'user' | 'admin'
-  plan?: {
-    id: string
-    name: string
-    type: string
-    price: number
-  } | null
-  createdAt: number
-  _count?: {
-    accounts: number
-    categories: number
-    creditCards: number
-    entries: number
-  }
-}
+import { useAdminUsers } from '@/lib'
+import type { AdminUser } from '@/lib/services/admin'
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    users,
+    isLoading,
+    error,
+    deleteUser,
+    changeUserPassword,
+    changeUserPlan,
+    refetch,
+  } = useAdminUsers()
   const [searchTerm, setSearchTerm] = useState('')
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    loadUsers()
-  }, [])
-
-  const loadUsers = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const response = (await api.get('/admin/users')) as { users: User[] }
-      setUsers(response.users || [])
-    } catch (err: any) {
-      setError('Erro ao carregar usuários')
-      console.error('Erro ao carregar usuários:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const filteredUsers = users.filter(
     (user) =>
@@ -112,7 +80,7 @@ export default function AdminUsersPage() {
     )
   }
 
-  const getPlanBadge = (plan: User['plan']) => {
+  const getPlanBadge = (plan: AdminUser['plan']) => {
     if (!plan) {
       return (
         <Badge variant="outline" className="text-gray-600">
@@ -154,7 +122,7 @@ export default function AdminUsersPage() {
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-red-600">{error}</p>
-            <Button onClick={loadUsers} className="mt-4">
+            <Button onClick={refetch} className="mt-4">
               Tentar Novamente
             </Button>
           </div>

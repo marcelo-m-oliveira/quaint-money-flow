@@ -263,4 +263,42 @@ export class CouponService {
       totalUsages: usedCoupons,
     }
   }
+
+  async activate(id: string): Promise<Coupon> {
+    const coupon = await this.prisma.coupon.findUnique({
+      where: { id },
+    })
+
+    if (!coupon) {
+      throw new Error('Cupom não encontrado')
+    }
+
+    if (coupon.isActive) {
+      throw new Error('Cupom já está ativo')
+    }
+
+    return this.prisma.coupon.update({
+      where: { id },
+      data: { isActive: true },
+    })
+  }
+
+  async deactivate(id: string): Promise<Coupon> {
+    const coupon = await this.prisma.coupon.findUnique({
+      where: { id },
+    })
+
+    if (!coupon) {
+      throw new Error('Cupom não encontrado')
+    }
+
+    if (!coupon.isActive) {
+      throw new Error('Cupom já está inativo')
+    }
+
+    return this.prisma.coupon.update({
+      where: { id },
+      data: { isActive: false },
+    })
+  }
 }

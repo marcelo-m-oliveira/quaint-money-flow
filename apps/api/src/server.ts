@@ -13,6 +13,7 @@ import {
 import { setupSwagger } from '@/lib/swagger'
 import { authorizationPlugin } from '@/middleware/authorization.middleware'
 import { accountRoutes } from '@/routes/accounts'
+import { adminCouponsRoutes } from '@/routes/admin/coupons'
 import { adminPlansRoutes } from '@/routes/admin/plans'
 import { adminUsersRoutes } from '@/routes/admin/users'
 import { authRoutes } from '@/routes/auth'
@@ -142,6 +143,10 @@ export async function createApp() {
 
   app.register(adminPlansRoutes, {
     prefix: `${env.API_PREFIX}/${env.API_VERSION}/admin/plans`,
+  })
+
+  app.register(adminCouponsRoutes, {
+    prefix: `${env.API_PREFIX}/${env.API_VERSION}/admin/coupons`,
   })
 
   return app
