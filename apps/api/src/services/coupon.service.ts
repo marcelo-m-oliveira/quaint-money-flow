@@ -204,4 +204,61 @@ export class CouponService extends BaseService<'coupon'> {
       })),
     }
   }
+
+  async validateCoupon(
+    code: string,
+    userId: string,
+  ): Promise<{
+    valid: boolean
+    coupon?: CouponWithUsage
+    error?: string
+  }> {
+    const coupon = await this.findByCode(code.toUpperCase())
+
+    if (!coupon) {
+      return { valid: false, error: 'Cupom não encontrado' }
+    }
+
+    if (!coupon.isActive) {
+      return { valid: false, error: 'Cupom inativo' }
+    }
+
+    // Verificar se expirou
+    if (coupon.expiresAt && new Date() > new Date(coupon.expiresAt)) {
+      return { valid: false, error: 'Cupom expirado' }
+    }
+
+    // Verificar limite de usos
+    if (coupon.maxUses && (coupon._count?.userCoupons || 0) >= coupon.maxUses) {
+      return { valid: false, error: 'Cupom esgotado' }
+    }
+
+    // Verificar se o usuário já usou este cupom
+    const userUsage = await this.prisma.userCoupon.findUnique({
+      where: {
+        userId_couponId: {
+          userId,
+          couponId: coupon.id,
+        },
+      },
+    })
+
+    if (userUsage) {
+      return { valid: false, error: 'Cupom já utilizado por este usuário' }
+    }
+
+    return { valid: true, coupon }
+  }
+
+  async useCoupon(couponId: string, userId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // Registrar uso pelo usuário
+      await tx.userCoupon.create({
+        data: {
+          userId,
+          couponId,
+        },
+      })
+    })
+  }
 }

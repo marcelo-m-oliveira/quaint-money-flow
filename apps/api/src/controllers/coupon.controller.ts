@@ -16,10 +16,17 @@ const CouponCreateSchema = z.object({
   discountValue: z.number().positive('Valor do desconto deve ser positivo'),
   maxUses: z.number().positive().optional(),
   expiresAt: z
-    .string()
-    .datetime()
+    .union([z.string().datetime(), z.number()])
     .optional()
-    .transform((val) => (val ? new Date(val) : undefined)),
+    .transform((val) => {
+      if (!val) return undefined
+      if (typeof val === 'number') {
+        // Se for timestamp em segundos, converte para Date
+        return new Date(val * 1000)
+      }
+      // Se for string datetime, converte diretamente
+      return new Date(val)
+    }),
   isActive: z.boolean().optional().default(true),
 })
 
@@ -53,13 +60,32 @@ export class CouponController extends BaseController {
   async index(request: FastifyRequest, reply: FastifyReply) {
     try {
       const query = CouponQuerySchema.parse(request.query)
+
+      request.log.info(
+        {
+          includeInactive: query.includeInactive,
+          includeUsage: query.includeUsage,
+          query: request.query,
+        },
+        'Listando cupons com filtros',
+      )
+
       const coupons = await this.couponService.findMany({
         includeInactive: query.includeInactive,
         includeUsage: query.includeUsage,
       })
 
+      request.log.info(
+        {
+          totalCoupons: coupons.length,
+          activeCoupons: coupons.filter((c) => c.isActive).length,
+          inactiveCoupons: coupons.filter((c) => !c.isActive).length,
+        },
+        'Cupons encontrados',
+      )
+
       const couponsWithConvertedDates = coupons.map((coupon: any) =>
-        convertDatesToSeconds(coupon),
+        convertDatesToSeconds(coupon, ['createdAt', 'updatedAt', 'expiresAt']),
       )
 
       return reply.status(200).send({
@@ -79,7 +105,15 @@ export class CouponController extends BaseController {
       const { id } = this.getPathParams<{ id: string }>(request)
       const coupon = await this.couponService.findById(id)
 
-      return reply.status(200).send(convertDatesToSeconds(coupon))
+      return reply
+        .status(200)
+        .send(
+          convertDatesToSeconds(coupon, [
+            'createdAt',
+            'updatedAt',
+            'expiresAt',
+          ]),
+        )
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'show' },
@@ -93,7 +127,15 @@ export class CouponController extends BaseController {
     try {
       const data = CouponCreateSchema.parse(request.body)
       const coupon = await this.couponService.create(data)
-      return reply.status(201).send(convertDatesToSeconds(coupon))
+      return reply
+        .status(201)
+        .send(
+          convertDatesToSeconds(coupon, [
+            'createdAt',
+            'updatedAt',
+            'expiresAt',
+          ]),
+        )
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'store' },
@@ -108,7 +150,15 @@ export class CouponController extends BaseController {
       const { id } = this.getPathParams<{ id: string }>(request)
       const data = CouponUpdateSchema.parse(request.body)
       const coupon = await this.couponService.update(id, data)
-      return reply.status(200).send(convertDatesToSeconds(coupon))
+      return reply
+        .status(200)
+        .send(
+          convertDatesToSeconds(coupon, [
+            'createdAt',
+            'updatedAt',
+            'expiresAt',
+          ]),
+        )
     } catch (error: any) {
       request.log.error(
         { error: error.message, operation: 'update' },
@@ -149,7 +199,11 @@ export class CouponController extends BaseController {
       return reply.status(200).send({
         valid: true,
         coupon: validation.coupon
-          ? convertDatesToSeconds(validation.coupon)
+          ? convertDatesToSeconds(validation.coupon, [
+              'createdAt',
+              'updatedAt',
+              'expiresAt',
+            ])
           : null,
       })
     } catch (error: any) {
@@ -167,10 +221,7 @@ export class CouponController extends BaseController {
       const { id } = this.getPathParams<{ id: string }>(request)
 
       // Validar cupom antes de usar
-      const coupon = await this.couponService.getById(id)
-      if (!coupon) {
-        throw new Error('Cupom não encontrado')
-      }
+      const coupon = await this.couponService.findById(id)
 
       const validation = await this.couponService.validateCoupon(
         coupon.code,

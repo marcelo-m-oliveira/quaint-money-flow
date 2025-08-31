@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Crown, Edit, Plus, Settings, Trash2 } from 'lucide-react'
+import { Check, Crown, Edit, Plus, Settings, Trash2, X } from 'lucide-react'
 import React, { useState } from 'react'
 
 import { PlanFormModal } from '@/components/plan-form-modal'
@@ -269,6 +269,7 @@ export default function AdminPlansPage() {
                               onClick={() => deactivatePlan(plan.id)}
                               className="text-orange-600"
                             >
+                              <X className="mr-2 h-4 w-4" />
                               Desativar
                             </DropdownMenuItem>
                           ) : (
@@ -276,6 +277,7 @@ export default function AdminPlansPage() {
                               onClick={() => activatePlan(plan.id)}
                               className="text-green-600"
                             >
+                              <Check className="mr-2 h-4 w-4" />
                               Ativar
                             </DropdownMenuItem>
                           )}

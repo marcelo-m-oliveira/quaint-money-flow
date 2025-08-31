@@ -170,6 +170,8 @@ export const adminPlansService = {
 export const adminCouponsService = {
   async getAll(includeUsage = false): Promise<{ coupons: AdminCoupon[] }> {
     const params = new URLSearchParams()
+    // Sempre incluir cupons inativos no painel admin
+    params.append('includeInactive', 'true')
     if (includeUsage) {
       params.append('includeUsage', 'true')
     }
