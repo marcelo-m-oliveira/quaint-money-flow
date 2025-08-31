@@ -1,17 +1,44 @@
 'use client'
 
-import { Check, Crown, Plus, Settings } from 'lucide-react'
-import React from 'react'
+import { Check, Crown, Edit, Plus, Settings, Trash2 } from 'lucide-react'
+import React, { useState } from 'react'
 
+import { PlanFormModal } from '@/components/plan-form-modal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useAdminPlans } from '@/lib'
+import { type AdminPlan } from '@/lib/services/admin'
 import { Plans } from '@/lib/services/plans'
 
 export default function AdminPlansPage() {
-  const { plans, isLoading, error, activatePlan, deactivatePlan } =
-    useAdminPlans()
+  const {
+    plans,
+    isLoading,
+    error,
+    createPlan,
+    updatePlan,
+    deletePlan,
+    activatePlan,
+    deactivatePlan,
+  } = useAdminPlans(true) // Incluir planos inativos
+
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false)
+  const [editingPlan, setEditingPlan] = useState<AdminPlan | undefined>()
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+    variant?: 'default' | 'destructive'
+  }>({ isOpen: false, title: '', description: '', onConfirm: () => {} })
 
   const getPlanTypeColor = (type: string) => {
     switch (type) {
@@ -35,29 +62,80 @@ export default function AdminPlansPage() {
 
     if (features?.categories?.unlimited) {
       featureList.push('Categorias ilimitadas')
-    } else if (features?.categories?.limited) {
-      featureList.push(`Até ${features.categories.max} categorias`)
+    } else {
+      featureList.push('Categorias limitadas')
     }
 
     if (features?.accounts?.unlimited) {
       featureList.push('Contas ilimitadas')
-    } else if (features?.accounts?.limited) {
-      featureList.push(`Até ${features.accounts.max} contas`)
+    } else {
+      featureList.push('Conta padrão')
     }
 
     if (features?.creditCards?.unlimited) {
-      featureList.push('Cartões ilimitados')
-    } else if (features?.creditCards?.limited) {
-      featureList.push(`Até ${features.creditCards.max} cartões`)
+      featureList.push('Cartões de crédito ilimitados')
+    } else {
+      featureList.push('Cartões de crédito limitados')
     }
 
-    if (features?.reports?.advanced) {
-      featureList.push('Relatórios avançados')
-    } else if (features?.reports?.basic) {
+    if (features?.reports?.canAccess) {
+      if (features?.reports?.advanced) {
+        featureList.push('Relatórios avançados')
+      } else {
+        featureList.push('Relatórios básicos')
+      }
+    } else {
       featureList.push('Relatórios básicos')
     }
 
     return featureList
+  }
+
+  const handleCreatePlan = () => {
+    setEditingPlan(undefined)
+    setIsFormModalOpen(true)
+  }
+
+  const handleEditPlan = (plan: AdminPlan) => {
+    setEditingPlan(plan)
+    setIsFormModalOpen(true)
+  }
+
+  const handleDeletePlan = (plan: AdminPlan) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Excluir plano',
+      description: `Tem certeza que deseja excluir o plano "${plan.name}"? Esta ação não pode ser desfeita.`,
+      variant: 'destructive',
+      onConfirm: async () => {
+        const success = await deletePlan(plan.id)
+        if (success) {
+          setConfirmDialog({
+            isOpen: false,
+            title: '',
+            description: '',
+            onConfirm: () => {},
+          })
+        }
+      },
+    })
+  }
+
+  const handleSubmitPlan = async (data: any, shouldClose = true) => {
+    if (editingPlan) {
+      await updatePlan(editingPlan.id, data)
+    } else {
+      await createPlan(data)
+    }
+    if (shouldClose) {
+      setIsFormModalOpen(false)
+      setEditingPlan(undefined)
+    }
+  }
+
+  const handleCloseModal = () => {
+    setIsFormModalOpen(false)
+    setEditingPlan(undefined)
   }
 
   if (error) {
@@ -85,7 +163,7 @@ export default function AdminPlansPage() {
             Configure planos de assinatura, preços e funcionalidades
           </p>
         </div>
-        <Button>
+        <Button onClick={handleCreatePlan}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Plano
         </Button>
@@ -168,28 +246,48 @@ export default function AdminPlansPage() {
 
                     {/* Actions */}
                     <div className="flex gap-2 border-t pt-4">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Settings className="mr-1 h-3 w-3" />
-                        Editar
-                      </Button>
-
-                      {plan.isActive ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-orange-600"
-                        >
-                          Desativar
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-green-600"
-                        >
-                          Ativar
-                        </Button>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <Settings className="mr-1 h-3 w-3" />
+                            Ações
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEditPlan(plan)}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          {plan.isActive ? (
+                            <DropdownMenuItem
+                              onClick={() => deactivatePlan(plan.id)}
+                              className="text-orange-600"
+                            >
+                              Desativar
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => activatePlan(plan.id)}
+                              className="text-green-600"
+                            >
+                              Ativar
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDeletePlan(plan)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </CardContent>
@@ -211,7 +309,7 @@ export default function AdminPlansPage() {
               <p className="text-muted-foreground">
                 Comece criando seu primeiro plano de assinatura
               </p>
-              <Button className="mt-4">
+              <Button className="mt-4" onClick={handleCreatePlan}>
                 <Plus className="mr-2 h-4 w-4" />
                 Criar Primeiro Plano
               </Button>
@@ -219,6 +317,31 @@ export default function AdminPlansPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de formulário de plano */}
+      <PlanFormModal
+        isOpen={isFormModalOpen}
+        onClose={handleCloseModal}
+        plan={editingPlan}
+        onSubmit={handleSubmitPlan}
+      />
+
+      {/* Dialog de Confirmação */}
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: '',
+            description: '',
+            onConfirm: () => {},
+          })
+        }
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant}
+      />
     </div>
   )
 }
